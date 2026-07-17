@@ -1,0 +1,36 @@
+name: Provider check diagnostics
+
+on:
+  pull_request:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "contexts/connections/**"
+      - "adapters/object-store-local/**"
+      - "adapters/provider-registry-memory/**"
+      - "crates/liaison-provider-sdk/**"
+      - ".github/workflows/provider-check-diagnostics.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture check output
+        run: |
+          set +e
+          cargo check --workspace --all-targets --all-features --locked > provider-check.log 2>&1
+          status=$?
+          echo "$status" > provider-check.status
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: provider-check-diagnostics
+          path: |
+            provider-check.log
+            provider-check.status
+          if-no-files-found: error
+          retention-days: 3
