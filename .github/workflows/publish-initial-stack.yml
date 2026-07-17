@@ -29,7 +29,7 @@ jobs:
         run: |
           set -euo pipefail
           cat .bootstrap/initial-stack/part-* > /tmp/liaison-pr-publish.tar.gz.b64
-          echo "f0e011adccff99b226eca9dc20567e0c2404b145c9440ccd9742ccc2f4bd9c41  /tmp/liaison-pr-publish.tar.gz.b64" | sha256sum -c -
+          echo "068f84992272b7850f536961d3d615f7487327e78578b448ea6918b5ea254d9c  /tmp/liaison-pr-publish.tar.gz.b64" | sha256sum -c -
           base64 --decode /tmp/liaison-pr-publish.tar.gz.b64 > /tmp/liaison-pr-publish.tar.gz
           tar -xzf /tmp/liaison-pr-publish.tar.gz -C /tmp
 
