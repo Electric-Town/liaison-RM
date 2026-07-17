@@ -30,13 +30,27 @@ jobs:
           ref: agent/publish-initial-stack-20260717
           fetch-depth: 0
 
-      - name: Reconstruct reviewed source payload
+      - name: Concatenate payload chunks
         shell: bash
         run: |
           set -euo pipefail
+          ls -l .bootstrap/initial-stack/part-*
           cat .bootstrap/initial-stack/part-* > /tmp/liaison-pr-publish.tar.gz.b64
+          wc -c /tmp/liaison-pr-publish.tar.gz.b64
           sha256sum /tmp/liaison-pr-publish.tar.gz.b64
+
+      - name: Decode payload
+        shell: bash
+        run: |
+          set -euo pipefail
           base64 --decode /tmp/liaison-pr-publish.tar.gz.b64 > /tmp/liaison-pr-publish.tar.gz
+          wc -c /tmp/liaison-pr-publish.tar.gz
+          gzip -t /tmp/liaison-pr-publish.tar.gz
+
+      - name: Extract payload
+        shell: bash
+        run: |
+          set -euo pipefail
           tar -tzf /tmp/liaison-pr-publish.tar.gz > /tmp/liaison-payload-files.txt
           head -100 /tmp/liaison-payload-files.txt
           tar -xzf /tmp/liaison-pr-publish.tar.gz -C /tmp
