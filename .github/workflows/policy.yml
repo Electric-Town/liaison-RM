@@ -1,0 +1,53 @@
+name: Repository policy
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  repository-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check repository policy
+        run: python scripts/check_repository.py
+
+  pull-request-body:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check required pull-request sections
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          python - <<'PY'
+          import os
+          import sys
+
+          body = os.environ.get("PR_BODY", "")
+          required = [
+              "## Problem",
+              "## Change",
+              "## Domain and architecture",
+              "## Knowledge",
+              "## User evidence",
+              "## Privacy and security",
+              "## Tests and validation",
+              "## Risk and rollback",
+              "## Release and changelog",
+          ]
+          missing = [heading for heading in required if heading not in body]
+          if missing:
+              print("Pull-request description is missing required sections:")
+              for heading in missing:
+                  print(f"- {heading}")
+              sys.exit(1)
+          print("Pull-request description contains all required sections")
+          PY
