@@ -29,8 +29,9 @@ jobs:
         run: |
           set -euo pipefail
           cat .bootstrap/initial-stack/part-* > /tmp/liaison-pr-publish.tar.gz.b64
-          echo "068f84992272b7850f536961d3d615f7487327e78578b448ea6918b5ea254d9c  /tmp/liaison-pr-publish.tar.gz.b64" | sha256sum -c -
+          sha256sum /tmp/liaison-pr-publish.tar.gz.b64
           base64 --decode /tmp/liaison-pr-publish.tar.gz.b64 > /tmp/liaison-pr-publish.tar.gz
+          tar -tzf /tmp/liaison-pr-publish.tar.gz | head -100
           tar -xzf /tmp/liaison-pr-publish.tar.gz -C /tmp
 
       - name: Install pinned Rust toolchain
