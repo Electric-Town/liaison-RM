@@ -102,11 +102,7 @@ pub enum WorkspaceError {
 }
 
 pub trait WorkspaceStore: Send + Sync {
-    fn initialise(
-        &self,
-        root: &Path,
-        manifest: &WorkspaceManifest,
-    ) -> Result<(), WorkspaceError>;
+    fn initialise(&self, root: &Path, manifest: &WorkspaceManifest) -> Result<(), WorkspaceError>;
 
     fn load(&self, root: &Path) -> Result<WorkspaceManifest, WorkspaceError>;
 

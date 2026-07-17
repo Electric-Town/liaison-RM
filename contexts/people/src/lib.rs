@@ -43,7 +43,11 @@ impl PersonProfile {
         self.bump_revision()
     }
 
-    pub fn add_email(&mut self, value: impl Into<String>, label: impl Into<String>) -> Result<(), PeopleError> {
+    pub fn add_email(
+        &mut self,
+        value: impl Into<String>,
+        label: impl Into<String>,
+    ) -> Result<(), PeopleError> {
         let email = EmailAddress::new(value, label)?;
         if !self.emails.contains(&email) {
             self.emails.push(email);
@@ -52,7 +56,11 @@ impl PersonProfile {
         Ok(())
     }
 
-    pub fn add_phone(&mut self, value: impl Into<String>, label: impl Into<String>) -> Result<(), PeopleError> {
+    pub fn add_phone(
+        &mut self,
+        value: impl Into<String>,
+        label: impl Into<String>,
+    ) -> Result<(), PeopleError> {
         let phone = PhoneNumber::new(value, label)?;
         if !self.phones.contains(&phone) {
             self.phones.push(phone);
@@ -86,7 +94,10 @@ impl PersonProfile {
     }
 
     fn bump_revision(&mut self) -> Result<(), PeopleError> {
-        self.revision = self.revision.next().map_err(|_| PeopleError::RevisionOverflow)?;
+        self.revision = self
+            .revision
+            .next()
+            .map_err(|_| PeopleError::RevisionOverflow)?;
         Ok(())
     }
 }
@@ -113,7 +124,8 @@ impl EmailAddress {
         let mut parts = value.split('@');
         let local = parts.next().unwrap_or_default();
         let domain = parts.next().unwrap_or_default();
-        if local.is_empty() || domain.is_empty() || parts.next().is_some() || !domain.contains('.') {
+        if local.is_empty() || domain.is_empty() || parts.next().is_some() || !domain.contains('.')
+        {
             return Err(PeopleError::InvalidEmail(value));
         }
         Ok(Self { value, label })
@@ -178,7 +190,11 @@ pub enum PeopleError {
 
 pub trait PersonRepository: Send + Sync {
     fn create(&self, workspace: &Path, person: &PersonProfile) -> Result<(), PeopleError>;
-    fn list(&self, workspace: &Path, include_archived: bool) -> Result<Vec<PersonProfile>, PeopleError>;
+    fn list(
+        &self,
+        workspace: &Path,
+        include_archived: bool,
+    ) -> Result<Vec<PersonProfile>, PeopleError>;
     fn find(&self, workspace: &Path, id: PersonId) -> Result<PersonProfile, PeopleError>;
     fn save(
         &self,
@@ -231,7 +247,11 @@ where
         Self { repository }
     }
 
-    pub fn execute(&self, workspace: &Path, include_archived: bool) -> Result<Vec<PersonProfile>, PeopleError> {
+    pub fn execute(
+        &self,
+        workspace: &Path,
+        include_archived: bool,
+    ) -> Result<Vec<PersonProfile>, PeopleError> {
         self.repository.list(workspace, include_archived)
     }
 }
@@ -249,7 +269,10 @@ mod tests {
     #[test]
     fn unknown_birth_year_does_not_require_an_age() {
         let date = PartialDate::month_day(2, 29);
-        assert!(matches!(date, Ok(PartialDate::MonthDay { month: 2, day: 29 })));
+        assert!(matches!(
+            date,
+            Ok(PartialDate::MonthDay { month: 2, day: 29 })
+        ));
     }
 
     #[test]

@@ -249,7 +249,11 @@ fn execute(cli: Cli) -> Result<(), CliError> {
                     people
                         .iter()
                         .map(|person| {
-                            let state = if person.archived { "archived" } else { "active" };
+                            let state = if person.archived {
+                                "archived"
+                            } else {
+                                "active"
+                            };
                             format!("{}\t{}\t{}", person.id, person.display_name, state)
                         })
                         .collect::<Vec<_>>()

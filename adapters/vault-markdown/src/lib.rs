@@ -58,7 +58,9 @@ impl MarkdownVault {
         }
         for entry in WalkDir::new(&people).min_depth(1).max_depth(1) {
             let entry = entry.map_err(storage_people)?;
-            if !entry.file_type().is_file() || entry.path().extension().and_then(|value| value.to_str()) != Some("md") {
+            if !entry.file_type().is_file()
+                || entry.path().extension().and_then(|value| value.to_str()) != Some("md")
+            {
                 continue;
             }
             let parsed = read_person_document(entry.path())?;
@@ -122,14 +124,22 @@ impl WorkspaceStore for MarkdownVault {
     fn validate_layout(&self, root: &Path) -> Result<Vec<ValidationFinding>, WorkspaceError> {
         Self::ensure_workspace(root)?;
         let mut findings = Vec::new();
-        for required in ["people", "organisations", "relationships", "interactions", "events"] {
+        for required in [
+            "people",
+            "organisations",
+            "relationships",
+            "interactions",
+            "events",
+        ] {
             if !root.join(required).is_dir() {
                 findings.push(ValidationFinding {
                     code: "workspace.missing-directory".to_owned(),
                     severity: FindingSeverity::Error,
                     path: required.to_owned(),
                     message: format!("required workspace directory is missing: {required}"),
-                    recovery: format!("create the directory after taking a workspace backup: {required}"),
+                    recovery: format!(
+                        "create the directory after taking a workspace backup: {required}"
+                    ),
                 });
             }
         }
@@ -137,7 +147,9 @@ impl WorkspaceStore for MarkdownVault {
         if people.is_dir() {
             for entry in WalkDir::new(&people).min_depth(1).max_depth(1) {
                 let entry = entry.map_err(storage_workspace)?;
-                if !entry.file_type().is_file() || entry.path().extension().and_then(|value| value.to_str()) != Some("md") {
+                if !entry.file_type().is_file()
+                    || entry.path().extension().and_then(|value| value.to_str()) != Some("md")
+                {
                     continue;
                 }
                 if let Err(error) = read_person_document(entry.path()) {
@@ -163,7 +175,8 @@ impl WorkspaceStore for MarkdownVault {
 
 impl PersonRepository for MarkdownVault {
     fn create(&self, workspace: &Path, person: &PersonProfile) -> Result<(), PeopleError> {
-        MarkdownVault::ensure_workspace(workspace).map_err(|error| PeopleError::Storage(error.to_string()))?;
+        MarkdownVault::ensure_workspace(workspace)
+            .map_err(|error| PeopleError::Storage(error.to_string()))?;
         if MarkdownVault::find_person_path(workspace, person.id).is_ok() {
             return Err(PeopleError::AlreadyExists);
         }
@@ -174,13 +187,20 @@ impl PersonRepository for MarkdownVault {
         atomic_create(&path, rendered.as_bytes()).map_err(storage_people)
     }
 
-    fn list(&self, workspace: &Path, include_archived: bool) -> Result<Vec<PersonProfile>, PeopleError> {
-        MarkdownVault::ensure_workspace(workspace).map_err(|error| PeopleError::Storage(error.to_string()))?;
+    fn list(
+        &self,
+        workspace: &Path,
+        include_archived: bool,
+    ) -> Result<Vec<PersonProfile>, PeopleError> {
+        MarkdownVault::ensure_workspace(workspace)
+            .map_err(|error| PeopleError::Storage(error.to_string()))?;
         let people = Self::people_path(workspace);
         let mut result = Vec::new();
         for entry in WalkDir::new(&people).min_depth(1).max_depth(1) {
             let entry = entry.map_err(storage_people)?;
-            if !entry.file_type().is_file() || entry.path().extension().and_then(|value| value.to_str()) != Some("md") {
+            if !entry.file_type().is_file()
+                || entry.path().extension().and_then(|value| value.to_str()) != Some("md")
+            {
                 continue;
             }
             let parsed = read_person_document(entry.path())?;
@@ -311,7 +331,9 @@ fn read_person_document(path: &Path) -> Result<ParsedPerson, PeopleError> {
     let (front_matter, body) = split_front_matter(&text)?;
     let document: PersonDocument = serde_yaml::from_str(front_matter).map_err(storage_people)?;
     if document.revision.get() == 0 {
-        return Err(PeopleError::Storage("person revision must be positive".to_owned()));
+        return Err(PeopleError::Storage(
+            "person revision must be positive".to_owned(),
+        ));
     }
     Ok(ParsedPerson {
         document,
@@ -322,7 +344,9 @@ fn read_person_document(path: &Path) -> Result<ParsedPerson, PeopleError> {
 fn split_front_matter(text: &str) -> Result<(&str, &str), PeopleError> {
     let mut lines = text.split_inclusive('\n');
     if lines.next().map(str::trim_end) != Some("---") {
-        return Err(PeopleError::Storage("Markdown record is missing opening front matter delimiter".to_owned()));
+        return Err(PeopleError::Storage(
+            "Markdown record is missing opening front matter delimiter".to_owned(),
+        ));
     }
     let mut offset = 4;
     for line in lines {
@@ -333,7 +357,9 @@ fn split_front_matter(text: &str) -> Result<(&str, &str), PeopleError> {
         }
         offset += line.len();
     }
-    Err(PeopleError::Storage("Markdown record is missing closing front matter delimiter".to_owned()))
+    Err(PeopleError::Storage(
+        "Markdown record is missing closing front matter delimiter".to_owned(),
+    ))
 }
 
 fn render_person(document: &PersonDocument, body: &str) -> String {
@@ -375,26 +401,39 @@ fn slug(value: &str) -> String {
 
 fn atomic_create(path: &Path, bytes: &[u8]) -> io::Result<()> {
     if path.exists() {
-        return Err(io::Error::new(io::ErrorKind::AlreadyExists, "target already exists"));
+        return Err(io::Error::new(
+            io::ErrorKind::AlreadyExists,
+            "target already exists",
+        ));
     }
     write_temp_and_persist(path, bytes)
 }
 
 fn atomic_replace(path: &Path, bytes: &[u8]) -> io::Result<()> {
-    let parent = path.parent().ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "target has no parent"))?;
+    let parent = path
+        .parent()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "target has no parent"))?;
     let mut temporary = NamedTempFile::new_in(parent)?;
     temporary.write_all(bytes)?;
     temporary.as_file().sync_all()?;
-    temporary.persist(path).map(|_| ()).map_err(|error| error.error)
+    temporary
+        .persist(path)
+        .map(|_| ())
+        .map_err(|error| error.error)
 }
 
 fn write_temp_and_persist(path: &Path, bytes: &[u8]) -> io::Result<()> {
-    let parent = path.parent().ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "target has no parent"))?;
+    let parent = path
+        .parent()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "target has no parent"))?;
     fs::create_dir_all(parent)?;
     let mut temporary = NamedTempFile::new_in(parent)?;
     temporary.write_all(bytes)?;
     temporary.as_file().sync_all()?;
-    temporary.persist_noclobber(path).map(|_| ()).map_err(|error| error.error)
+    temporary
+        .persist_noclobber(path)
+        .map(|_| ())
+        .map_err(|error| error.error)
 }
 
 fn storage_workspace(error: impl std::fmt::Display) -> WorkspaceError {
@@ -431,7 +470,8 @@ mod tests {
             assert!(created.is_ok());
 
             let create_person = CreatePerson::new(vault.clone());
-            let person = create_person.execute(root, "Alex Murphy", Some("alex@example.test".to_owned()));
+            let person =
+                create_person.execute(root, "Alex Murphy", Some("alex@example.test".to_owned()));
             assert!(person.is_ok());
 
             let files = fs::read_dir(root.join("people"));
@@ -455,13 +495,17 @@ mod tests {
             let root = directory.path();
             let vault = MarkdownVault::new();
             let initialise = InitialiseWorkspace::new(vault.clone());
-            assert!(initialise.execute(
-                root,
-                "People",
-                WorkspaceProfile::Personal,
-                BuildProfile::Airgap,
-                "en-IE",
-            ).is_ok());
+            assert!(
+                initialise
+                    .execute(
+                        root,
+                        "People",
+                        WorkspaceProfile::Personal,
+                        BuildProfile::Airgap,
+                        "en-IE",
+                    )
+                    .is_ok()
+            );
             let create = CreatePerson::new(vault.clone());
             let person = create.execute(root, "Alex Murphy", None);
             assert!(person.is_ok());
@@ -499,20 +543,27 @@ mod tests {
         if let Ok(directory) = directory {
             let root = directory.path();
             let vault = MarkdownVault::new();
-            assert!(InitialiseWorkspace::new(vault.clone()).execute(
-                root,
-                "People",
-                WorkspaceProfile::Personal,
-                BuildProfile::Airgap,
-                "en-IE",
-            ).is_ok());
+            assert!(
+                InitialiseWorkspace::new(vault.clone())
+                    .execute(
+                        root,
+                        "People",
+                        WorkspaceProfile::Personal,
+                        BuildProfile::Airgap,
+                        "en-IE",
+                    )
+                    .is_ok()
+            );
             let create = CreatePerson::new(vault.clone());
             assert!(create.execute(root, "Zara Example", None).is_ok());
             assert!(create.execute(root, "Alex Example", None).is_ok());
             let people = ListPeople::new(vault).execute(root, false);
             assert!(people.is_ok());
             if let Ok(people) = people {
-                let names: Vec<&str> = people.iter().map(|person| person.display_name.as_str()).collect();
+                let names: Vec<&str> = people
+                    .iter()
+                    .map(|person| person.display_name.as_str())
+                    .collect();
                 assert_eq!(names, vec!["Alex Example", "Zara Example"]);
             }
         }
