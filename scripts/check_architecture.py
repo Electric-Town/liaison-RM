@@ -47,6 +47,10 @@ PROVIDER_NAMES = {
     "dropbox",
 }
 
+UNSAFE_RUST_SYNTAX = re.compile(
+    r"(?:\bunsafe\s*(?:\{|fn\b|impl\b|trait\b|extern\b)|#\s*\[\s*unsafe\s*\()"
+)
+
 
 def relative(path: Path) -> str:
     return path.relative_to(ROOT).as_posix()
@@ -72,7 +76,10 @@ def check_context_dependencies(errors: list[str]) -> None:
         cargo = context / "Cargo.toml"
         if not cargo.is_file():
             continue
-        dependencies = {name.lower() for name in dependency_pattern.findall(cargo.read_text(encoding="utf-8"))}
+        dependencies = {
+            name.lower()
+            for name in dependency_pattern.findall(cargo.read_text(encoding="utf-8"))
+        }
         for forbidden in sorted(FORBIDDEN_CONTEXT_DEPENDENCIES & dependencies):
             errors.append(
                 f"{relative(cargo)}: bounded context depends on external mechanism '{forbidden}'"
@@ -94,8 +101,8 @@ def check_context_source(errors: list[str]) -> None:
                     errors.append(
                         f"{relative(source)}: provider name '{provider}' leaked into bounded-context source"
                     )
-            if re.search(r"\bunsafe\b", text):
-                errors.append(f"{relative(source)}: unsafe code is not permitted in a context")
+            if UNSAFE_RUST_SYNTAX.search(text):
+                errors.append(f"{relative(source)}: unsafe Rust is not permitted in a context")
 
 
 def check_application_storage_bypass(errors: list[str]) -> None:
