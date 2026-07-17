@@ -1,0 +1,51 @@
+name: Publish initial Liaison RM PR stack
+
+on:
+  push:
+    branches:
+      - agent/publish-initial-stack-20260717
+    paths:
+      - .bootstrap/initial-stack/READY
+
+permissions:
+  contents: write
+
+concurrency:
+  group: liaison-initial-pr-stack
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out bootstrap branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct reviewed source payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .bootstrap/initial-stack/part-* > /tmp/liaison-pr-publish.tar.gz.b64
+          echo "f0e011adccff99b226eca9dc20567e0c2404b145c9440ccd9742ccc2f4bd9c41  /tmp/liaison-pr-publish.tar.gz.b64" | sha256sum -c -
+          base64 --decode /tmp/liaison-pr-publish.tar.gz.b64 > /tmp/liaison-pr-publish.tar.gz
+          tar -xzf /tmp/liaison-pr-publish.tar.gz -C /tmp
+
+      - name: Install pinned Rust toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
+          rustup default 1.97.1
+          rustc --version
+          cargo --version
+
+      - name: Validate every stacked snapshot
+        shell: bash
+        run: bash /tmp/liaison-pr-publish/scripts/validate.sh
+
+      - name: Publish review branches
+        shell: bash
+        run: bash /tmp/liaison-pr-publish/scripts/publish.sh "$GITHUB_WORKSPACE"
