@@ -1,8 +1,6 @@
 //! In-memory provider registry used by the CLI and conformance tests.
 
-use liaison_connections::{
-    ProviderDescriptor, ProviderDomainError, ProviderId, ProviderRegistry,
-};
+use liaison_connections::{ProviderDescriptor, ProviderDomainError, ProviderId, ProviderRegistry};
 use std::collections::BTreeMap;
 
 #[derive(Clone, Debug, Default)]

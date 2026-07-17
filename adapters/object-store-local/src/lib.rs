@@ -124,7 +124,9 @@ impl ObjectStore for LocalObjectStore {
         }
         if prefix.contains('\\')
             || prefix.starts_with('/')
-            || prefix.split('/').any(|segment| segment == "." || segment == "..")
+            || prefix
+                .split('/')
+                .any(|segment| segment == "." || segment == "..")
         {
             return Err(ObjectStoreError::new(
                 ObjectStoreErrorKind::InvalidKey,
@@ -237,10 +239,7 @@ impl ObjectStore for LocalObjectStore {
     }
 }
 
-fn verify_digest(
-    content: &[u8],
-    expected_digest: &ContentDigest,
-) -> Result<(), ObjectStoreError> {
+fn verify_digest(content: &[u8], expected_digest: &ContentDigest) -> Result<(), ObjectStoreError> {
     let actual = ContentDigest::sha256(content);
     if &actual == expected_digest {
         Ok(())
@@ -273,10 +272,7 @@ fn read_bytes(path: &Path) -> Result<Vec<u8>, ObjectStoreError> {
     Ok(content)
 }
 
-fn metadata_for_path(
-    key: ObjectKey,
-    path: &Path,
-) -> Result<ObjectMetadata, ObjectStoreError> {
+fn metadata_for_path(key: ObjectKey, path: &Path) -> Result<ObjectMetadata, ObjectStoreError> {
     let content = read_bytes(path)?;
     Ok(ObjectMetadata {
         key,
@@ -299,7 +295,10 @@ fn collect_keys(
         if file_type.is_symlink() {
             return Err(ObjectStoreError::new(
                 ObjectStoreErrorKind::Io,
-                format!("symbolic link is not allowed in object store: {}", path.display()),
+                format!(
+                    "symbolic link is not allowed in object store: {}",
+                    path.display()
+                ),
             ));
         }
         if file_type.is_dir() {
@@ -399,17 +398,11 @@ fn recover_manifest(path: &Path) -> Result<(), ObjectStoreError> {
 
 fn temporary_path(path: &Path, label: &str) -> PathBuf {
     let parent = path.parent().unwrap_or_else(|| Path::new("."));
-    let name = path
-        .file_name()
-        .and_then(OsStr::to_str)
-        .unwrap_or("object");
+    let name = path.file_name().and_then(OsStr::to_str).unwrap_or("object");
     let nonce = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_or(0, |duration| duration.as_nanos());
-    parent.join(format!(
-        ".{name}.{label}-{}-{nonce:x}",
-        std::process::id()
-    ))
+    parent.join(format!(".{name}.{label}-{}-{nonce:x}", std::process::id()))
 }
 
 fn backup_path(path: &Path) -> PathBuf {
@@ -469,9 +462,7 @@ fn map_io(action: &str, error: std::io::Error) -> ObjectStoreError {
 #[cfg(test)]
 mod tests {
     use super::LocalObjectStore;
-    use liaison_connections::{
-        ContentDigest, ObjectKey, ObjectStore, ObjectStoreErrorKind,
-    };
+    use liaison_connections::{ContentDigest, ObjectKey, ObjectStore, ObjectStoreErrorKind};
     use liaison_provider_sdk::run_object_store_conformance;
     use std::fs;
     use std::path::PathBuf;

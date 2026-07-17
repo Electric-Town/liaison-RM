@@ -2,8 +2,8 @@ use std::{fs, path::PathBuf};
 
 #[test]
 fn provider_wit_contract_contains_the_versioned_object_store_surface() {
-    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../interfaces/wit/liaison-provider.wit");
+    let path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../interfaces/wit/liaison-provider.wit");
     let content = fs::read_to_string(path);
     assert!(content.is_ok(), "provider WIT must be readable");
     let Ok(content) = content else {

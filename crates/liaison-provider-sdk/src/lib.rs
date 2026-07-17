@@ -172,10 +172,7 @@ where
                 passed: new_revision == second_digest,
                 detail: format!("new manifest revision {new_revision}"),
             },
-            Err(error) => failed(
-                "replace manifest with current revision",
-                error.to_string(),
-            ),
+            Err(error) => failed("replace manifest with current revision", error.to_string()),
         },
         Err(error) => failed(
             "replace manifest with current revision",

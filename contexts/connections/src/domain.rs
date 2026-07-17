@@ -37,7 +37,9 @@ impl ProviderVersion {
         let value = value.into();
         let (without_build, build) = value
             .split_once('+')
-            .map_or((value.as_str(), None), |(core, suffix)| (core, Some(suffix)));
+            .map_or((value.as_str(), None), |(core, suffix)| {
+                (core, Some(suffix))
+            });
         if value.matches('+').count() > 1
             || build.is_some_and(|suffix| !valid_version_suffix(suffix))
         {
@@ -115,7 +117,9 @@ impl ContractDescriptor {
     ) -> Result<Self, ProviderDomainError> {
         let name = name.into();
         if !valid_kebab_name(&name) {
-            return Err(ProviderDomainError::new("contract name must use kebab case"));
+            return Err(ProviderDomainError::new(
+                "contract name must use kebab case",
+            ));
         }
         if version == 0 {
             return Err(ProviderDomainError::new(
@@ -411,16 +415,13 @@ fn valid_version_suffix(value: &str) -> bool {
     !value.is_empty()
         && value.split('.').all(|segment| {
             !segment.is_empty()
-                && segment.bytes().all(|byte| {
-                    byte.is_ascii_alphanumeric() || byte == b'-'
-                })
+                && segment
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
         })
 }
 
-fn normalize_names(
-    values: Vec<String>,
-    label: &str,
-) -> Result<Vec<String>, ProviderDomainError> {
+fn normalize_names(values: Vec<String>, label: &str) -> Result<Vec<String>, ProviderDomainError> {
     let normalized = values
         .into_iter()
         .map(|value| value.trim().to_owned())
