@@ -72,6 +72,12 @@ impl Revision {
         self.0
     }
 
+    /// Returns the next monotonically increasing record revision.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`RevisionError::Overflow`] when the current revision is
+    /// `u64::MAX` and cannot be incremented without wrapping.
     pub fn next(self) -> Result<Self, RevisionError> {
         self.0
             .checked_add(1)
