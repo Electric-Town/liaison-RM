@@ -1,0 +1,62 @@
+    Checking liaison-provider-sdk v0.1.0 (/home/runner/work/liaison-RM/liaison-RM/crates/liaison-provider-sdk)
+    Checking liaison-object-store-local v0.1.0 (/home/runner/work/liaison-RM/liaison-RM/adapters/object-store-local)
+error: docs for function returning `Result` missing `# Errors` section
+  --> adapters/object-store-local/src/lib.rs:26:5
+   |
+26 |     pub fn descriptor() -> Result<ProviderDescriptor, ProviderDomainError> {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#missing_errors_doc
+   = note: `-D clippy::missing-errors-doc` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::missing_errors_doc)]`
+
+error: this function has too many lines (141/100)
+  --> crates/liaison-provider-sdk/src/lib.rs:35:1
+   |
+35 | / pub fn run_object_store_conformance<Store>(
+36 | |     store: &Store,
+37 | | ) -> Result<ConformanceReport, ObjectStoreError>
+38 | | where
+39 | |     Store: ObjectStore,
+   | |_______________________^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#too_many_lines
+   = note: `-D clippy::too-many-lines` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::too_many_lines)]`
+
+error: these match arms have identical bodies
+   --> adapters/object-store-local/src/lib.rs:459:13
+    |
+459 |             Ok(()) => {}
+    |             ^^^^^^^^^^^^
+460 |             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+461 |             Err(_) => {}
+    |             ^^^^^^^^^^^^
+    |
+    = help: if this is unintentional make the arms return different values
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#match_same_arms
+    = note: `-D clippy::match-same-arms` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::match_same_arms)]`
+help: otherwise merge the patterns into a single arm
+    |
+459 ~             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+460 ~             Ok(()) | Err(_) => {}
+    |
+
+error: this argument is passed by value, but not consumed in the function body
+   --> adapters/object-store-local/src/lib.rs:474:32
+    |
+474 | fn map_io(action: &str, error: std::io::Error) -> ObjectStoreError {
+    |                                ^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#needless_pass_by_value
+    = note: `-D clippy::needless-pass-by-value` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::needless_pass_by_value)]`
+help: consider taking a reference instead
+    |
+474 | fn map_io(action: &str, error: &std::io::Error) -> ObjectStoreError {
+    |                                +
+
+error: could not compile `liaison-provider-sdk` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `liaison-object-store-local` (lib) due to 3 previous errors
