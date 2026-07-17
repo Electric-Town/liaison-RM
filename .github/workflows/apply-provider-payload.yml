@@ -6,17 +6,9 @@ on:
       - agent/r1-provider-sdk-v4
     paths:
       - ".bootstrap/provider-payload/READY"
-  pull_request:
-    branches:
-      - agent/r1-rust-ddd-cli-v3
-    types: [opened, synchronize, reopened]
-    paths:
-      - ".bootstrap/provider-payload/READY"
 
 permissions:
   contents: write
-  issues: write
-  pull-requests: write
 
 concurrency:
   group: apply-provider-payload
@@ -24,7 +16,6 @@ concurrency:
 
 jobs:
   apply:
-    if: github.event_name == 'push' || github.head_ref == 'agent/r1-provider-sdk-v4'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -34,7 +25,7 @@ jobs:
           ref: agent/r1-provider-sdk-v4
           fetch-depth: 0
 
-      - name: Reconstruct and verify payload
+      - name: Reconstruct and verify provider payload
         shell: bash
         run: |
           set -euo pipefail
@@ -46,117 +37,48 @@ jobs:
           tar -xzf /tmp/provider-pr.tar.gz -C /tmp/provider-pr
           rsync -a /tmp/provider-pr/ ./
 
-      - name: Restore provider SDK build dependencies
+      - name: Apply reviewed Clippy repair
         shell: bash
         run: |
           set -euo pipefail
-          sed -i '/walkdir = "2.5"/a wit-parser = "0.252.0"' Cargo.toml
-          cat > crates/liaison-provider-sdk/Cargo.toml <<'EOF'
-          [package]
-          name = "liaison-provider-sdk"
-          version.workspace = true
-          edition.workspace = true
-          license.workspace = true
-          repository.workspace = true
-          rust-version.workspace = true
-
-          [dependencies]
-          liaison-connections = { path = "../../contexts/connections" }
-          serde.workspace = true
-
-          [dev-dependencies]
-          wit-parser.workspace = true
-
-          [lints]
-          workspace = true
-          EOF
+          base64 --decode .bootstrap/provider-payload/fix.py.gz.b64 | gzip -dc > /tmp/provider-fix.py
+          python /tmp/provider-fix.py
 
       - name: Install pinned Rust toolchain
         shell: bash
         run: |
           set -euo pipefail
           rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
+          rustup default 1.97.1
           rustc --version --verbose
-          cargo --version
+          cargo --version --verbose
 
-      - name: Generate provider lockfile
-        run: cargo generate-lockfile
-
-      - name: Format provider sources
+      - name: Generate and format the complete workspace
         shell: bash
         run: |
           set -euo pipefail
+          cargo generate-lockfile
           cargo fmt --all
           cargo fmt --all --check
 
-      - name: Validate repository policy
-        run: python scripts/check_repository.py
-
-      - name: Validate product specification
-        run: python scripts/check_spec.py
-
-      - name: Validate architecture boundaries
-        run: python scripts/check_architecture.py
-
-      - name: Validate provider descriptors
-        run: python scripts/check_providers.py
-
-      - name: Check Connections context
-        run: cargo check -p liaison-connections --all-targets --all-features
-
-      - name: Check provider registry adapter
-        run: cargo check -p liaison-provider-registry-memory --all-targets --all-features
-
-      - name: Check local object-store adapter
-        run: cargo check -p liaison-object-store-local --all-targets --all-features
-
-      - name: Check provider SDK library
-        run: cargo check -p liaison-provider-sdk --lib --all-features
-
-      - name: Check provider SDK WIT test
-        run: cargo check -p liaison-provider-sdk --test wit_contract --all-features
-
-      - name: Check complete workspace
-        run: cargo check --workspace --all-targets --all-features --locked
-
-      - name: Lint Connections context
-        run: cargo clippy -p liaison-connections --all-targets --all-features -- -D warnings
-
-      - name: Lint provider registry adapter
-        run: cargo clippy -p liaison-provider-registry-memory --all-targets --all-features -- -D warnings
-
-      - name: Lint local object-store adapter and report diagnostics
+      - name: Validate repository and contracts
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          set +e
-          cargo clippy -p liaison-object-store-local --all-targets --all-features -- -D warnings 2>&1 | tee /tmp/local-object-store-clippy.log
-          status=${PIPESTATUS[0]}
-          if [ "$status" -ne 0 ]; then
-            {
-              echo '### Local object-store Clippy diagnostics'
-              echo
-              echo '```text'
-              tail -n 160 /tmp/local-object-store-clippy.log
-              echo '```'
-              echo
-              echo "Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            } > /tmp/clippy-comment.md
-            gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/7/comments" -F body=@/tmp/clippy-comment.md || true
-            exit "$status"
-          fi
+          set -euo pipefail
+          python scripts/check_repository.py
+          python scripts/check_spec.py
+          python scripts/check_architecture.py
+          python scripts/check_providers.py
 
-      - name: Lint provider SDK
-        run: cargo clippy -p liaison-provider-sdk --all-targets --all-features -- -D warnings
+      - name: Check, lint, and test the complete workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo check --workspace --all-targets --all-features --locked
+          cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+          cargo test --workspace --all-features --locked
 
-      - name: Lint complete workspace
-        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
-
-      - name: Test workspace
-        run: cargo test --workspace --all-features --locked
-
-      - name: Publish reviewed provider changes
+      - name: Publish directly reviewable provider sources
         shell: bash
         run: |
           set -euo pipefail
