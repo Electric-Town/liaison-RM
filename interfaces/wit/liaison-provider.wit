@@ -1,0 +1,63 @@
+package electric-town:liaison-provider@0.1.0;
+
+interface object-store-v1 {
+    record object-metadata {
+        key: string,
+        size: u64,
+        sha256: string,
+        revision: string,
+    }
+
+    enum put-outcome {
+        created,
+        already-present,
+    }
+
+    record list-page {
+        objects: list<object-metadata>,
+        next-cursor: option<string>,
+    }
+
+    variant object-store-error {
+        invalid-key(string),
+        invalid-digest(string),
+        not-found(string),
+        immutable-conflict(string),
+        digest-mismatch(string),
+        revision-conflict(string),
+        limit-exceeded,
+        denied(string),
+        provider(string),
+    }
+
+    put-immutable: func(
+        key: string,
+        bytes: list<u8>,
+        expected-sha256: string,
+    ) -> result<put-outcome, object-store-error>;
+
+    get: func(key: string) -> result<list<u8>, object-store-error>;
+
+    head: func(key: string) -> result<object-metadata, object-store-error>;
+
+    list: func(
+        prefix: option<string>,
+        cursor: option<string>,
+        limit: u32,
+    ) -> result<list-page, object-store-error>;
+
+    delete-if-digest: func(
+        key: string,
+        expected-sha256: string,
+    ) -> result<_, object-store-error>;
+
+    replace-manifest-if-revision: func(
+        key: string,
+        expected-revision: option<string>,
+        bytes: list<u8>,
+    ) -> result<object-metadata, object-store-error>;
+}
+
+world object-store-provider {
+    export object-store-v1;
+}
