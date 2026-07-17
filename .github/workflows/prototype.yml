@@ -5,7 +5,6 @@ on:
     paths:
       - "docs/prototypes/**"
       - "docs/evidence/ux/**"
-      - "scripts/generate_prototype_screens.py"
       - "scripts/test_prototype.py"
       - ".github/workflows/prototype.yml"
   push:
@@ -13,7 +12,6 @@ on:
     paths:
       - "docs/prototypes/**"
       - "docs/evidence/ux/**"
-      - "scripts/generate_prototype_screens.py"
       - "scripts/test_prototype.py"
       - ".github/workflows/prototype.yml"
 
@@ -33,5 +31,5 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check playwright==1.57.0
           python -m playwright install --with-deps chromium
-      - name: Run deterministic screen and browser tests
+      - name: Run screen integrity and browser interaction tests
         run: python scripts/test_prototype.py
