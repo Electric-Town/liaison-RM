@@ -119,7 +119,10 @@ mod tests {
 
     #[test]
     fn revision_does_not_wrap_at_the_numeric_limit() {
-        let maximum = Revision::new(u64::MAX).expect("maximum non-zero revision is valid");
-        assert_eq!(maximum.next(), Err(RevisionError::Overflow));
+        let maximum = Revision::new(u64::MAX);
+        assert!(maximum.is_some());
+        if let Some(maximum) = maximum {
+            assert_eq!(maximum.next(), Err(RevisionError::Overflow));
+        }
     }
 }
