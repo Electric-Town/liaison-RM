@@ -72,7 +72,19 @@ jobs:
       - name: Validate provider descriptors
         run: python scripts/check_providers.py
 
-      - name: Compile all targets
+      - name: Check Connections context
+        run: cargo check -p liaison-connections --all-targets --all-features
+
+      - name: Check provider registry adapter
+        run: cargo check -p liaison-provider-registry-memory --all-targets --all-features
+
+      - name: Check local object-store adapter
+        run: cargo check -p liaison-object-store-local --all-targets --all-features
+
+      - name: Check provider SDK
+        run: cargo check -p liaison-provider-sdk --all-targets --all-features
+
+      - name: Check complete workspace
         run: cargo check --workspace --all-targets --all-features --locked
 
       - name: Lint all targets
