@@ -1,0 +1,37 @@
+name: Interaction prototype
+
+on:
+  pull_request:
+    paths:
+      - "docs/prototypes/**"
+      - "docs/evidence/ux/**"
+      - "scripts/generate_prototype_screens.py"
+      - "scripts/test_prototype.py"
+      - ".github/workflows/prototype.yml"
+  push:
+    branches: [main]
+    paths:
+      - "docs/prototypes/**"
+      - "docs/evidence/ux/**"
+      - "scripts/generate_prototype_screens.py"
+      - "scripts/test_prototype.py"
+      - ".github/workflows/prototype.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  browser-prototype:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install browser test dependencies
+        run: |
+          python -m pip install --disable-pip-version-check playwright==1.57.0
+          python -m playwright install --with-deps chromium
+      - name: Run deterministic screen and browser tests
+        run: python scripts/test_prototype.py
