@@ -1,0 +1,33 @@
+{
+  "provider_id": "local-folder",
+  "provider_version": "0.1.0",
+  "display_name": "Local folder object store",
+  "contracts": [
+    {
+      "contract": "object-store@1",
+      "operations": [
+        "delete-if-digest",
+        "get",
+        "head",
+        "list",
+        "put-immutable",
+        "replace-manifest-if-revision"
+      ]
+    }
+  ],
+  "safe_modes": [
+    "backup",
+    "restore",
+    "single-writer-publication"
+  ],
+  "configuration_schema": "providers/local-folder/config.schema.json",
+  "secret_slots": [],
+  "destinations": [],
+  "consistency": "local-filesystem",
+  "limits": {
+    "maximum_object_bytes": 536870912,
+    "maximum_page_size": 10000,
+    "requests_per_minute": null
+  },
+  "conformance": null
+}
