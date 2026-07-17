@@ -48,6 +48,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          sed -i 's/wit-parser = "0.253.0"/wit-parser = "0.252.0"/' Cargo.toml
           cat > crates/liaison-provider-sdk/Cargo.toml <<'EOF'
           [package]
           name = "liaison-provider-sdk"
@@ -67,6 +68,7 @@ jobs:
           [lints]
           workspace = true
           EOF
+          grep 'wit-parser' Cargo.toml
           cat crates/liaison-provider-sdk/Cargo.toml
 
       - name: Install pinned Rust toolchain
