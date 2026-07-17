@@ -100,7 +100,7 @@ pub enum RevisionError {
 
 #[cfg(test)]
 mod tests {
-    use super::{PersonId, Revision};
+    use super::{PersonId, Revision, RevisionError};
     use std::str::FromStr;
 
     #[test]
@@ -115,5 +115,11 @@ mod tests {
         let next = Revision::INITIAL.next();
         assert_eq!(next.map(Revision::get), Ok(2));
         assert_eq!(Revision::new(0), None);
+    }
+
+    #[test]
+    fn revision_does_not_wrap_at_the_numeric_limit() {
+        let maximum = Revision::new(u64::MAX).expect("maximum non-zero revision is valid");
+        assert_eq!(maximum.next(), Err(RevisionError::Overflow));
     }
 }
