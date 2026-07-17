@@ -60,22 +60,26 @@ jobs:
           cargo fmt --all
           cargo fmt --all --check
 
-      - name: Validate repository and providers
-        shell: bash
-        run: |
-          set -euo pipefail
-          python scripts/check_repository.py
-          python scripts/check_spec.py
-          python scripts/check_architecture.py
-          python scripts/check_providers.py
+      - name: Validate repository policy
+        run: python scripts/check_repository.py
 
-      - name: Compile, lint, and test
-        shell: bash
-        run: |
-          set -euo pipefail
-          cargo check --workspace --all-targets --all-features --locked
-          cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
-          cargo test --workspace --all-features --locked
+      - name: Validate product specification
+        run: python scripts/check_spec.py
+
+      - name: Validate architecture boundaries
+        run: python scripts/check_architecture.py
+
+      - name: Validate provider descriptors
+        run: python scripts/check_providers.py
+
+      - name: Compile all targets
+        run: cargo check --workspace --all-targets --all-features --locked
+
+      - name: Lint all targets
+        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+
+      - name: Test workspace
+        run: cargo test --workspace --all-features --locked
 
       - name: Publish reviewed provider changes
         shell: bash
