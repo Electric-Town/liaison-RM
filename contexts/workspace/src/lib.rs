@@ -47,8 +47,10 @@ impl WorkspaceManifest {
         build_profile: BuildProfile,
         default_locale: impl Into<String>,
     ) -> Result<Self, WorkspaceError> {
-        let name = normalise_required(name.into(), "workspace name")?;
-        let default_locale = normalise_required(default_locale.into(), "default locale")?;
+        let name = name.into();
+        let name = normalise_required(&name, "workspace name")?;
+        let default_locale = default_locale.into();
+        let default_locale = normalise_required(&default_locale, "default locale")?;
         Ok(Self {
             format: WORKSPACE_FORMAT.to_owned(),
             schema_version: CURRENT_SCHEMA_VERSION,
@@ -70,13 +72,13 @@ impl WorkspaceManifest {
                 supported: CURRENT_SCHEMA_VERSION,
             });
         }
-        normalise_required(self.name.clone(), "workspace name")?;
-        normalise_required(self.default_locale.clone(), "default locale")?;
+        normalise_required(&self.name, "workspace name")?;
+        normalise_required(&self.default_locale, "default locale")?;
         Ok(())
     }
 }
 
-fn normalise_required(value: String, field: &'static str) -> Result<String, WorkspaceError> {
+fn normalise_required(value: &str, field: &'static str) -> Result<String, WorkspaceError> {
     let value = value.trim().to_owned();
     if value.is_empty() {
         Err(WorkspaceError::RequiredField(field))
