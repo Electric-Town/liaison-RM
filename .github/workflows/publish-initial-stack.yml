@@ -37,7 +37,8 @@ jobs:
           cat .bootstrap/initial-stack/part-* > /tmp/liaison-pr-publish.tar.gz.b64
           sha256sum /tmp/liaison-pr-publish.tar.gz.b64
           base64 --decode /tmp/liaison-pr-publish.tar.gz.b64 > /tmp/liaison-pr-publish.tar.gz
-          tar -tzf /tmp/liaison-pr-publish.tar.gz | head -100
+          tar -tzf /tmp/liaison-pr-publish.tar.gz > /tmp/liaison-payload-files.txt
+          head -100 /tmp/liaison-payload-files.txt
           tar -xzf /tmp/liaison-pr-publish.tar.gz -C /tmp
 
       - name: Install pinned Rust toolchain
