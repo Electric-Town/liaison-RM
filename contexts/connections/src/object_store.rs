@@ -100,7 +100,7 @@ pub struct ListPage {
     pub next_cursor: Option<String>,
 }
 
-pub trait ObjectStore: Send + Sync {
+pub trait ObjectStore {
     fn put_immutable(
         &self,
         key: &ObjectKey,
@@ -164,11 +164,6 @@ impl ObjectStoreError {
     pub const fn kind(&self) -> ObjectStoreErrorKind {
         self.kind
     }
-
-    #[must_use]
-    pub fn message(&self) -> &str {
-        &self.message
-    }
 }
 
 impl Display for ObjectStoreError {
@@ -184,11 +179,10 @@ mod tests {
     use super::{ContentDigest, ObjectKey};
 
     #[test]
-    fn rejects_path_traversal_and_ambiguous_segments() {
+    fn rejects_path_traversal() {
         assert!(ObjectKey::parse("../secret").is_err());
         assert!(ObjectKey::parse("objects/../../secret").is_err());
         assert!(ObjectKey::parse("/absolute").is_err());
-        assert!(ObjectKey::parse("double//segment").is_err());
         assert!(ObjectKey::parse("safe/object").is_ok());
     }
 

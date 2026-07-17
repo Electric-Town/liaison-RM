@@ -1,0 +1,43 @@
+{
+  "schema": "liaison/provider-descriptor@1",
+  "provider_id": "org.electric-town.local-folder",
+  "provider_version": "0.1.0",
+  "display_name": "Local folder",
+  "contracts": [
+    {
+      "name": "object-store",
+      "version": 1,
+      "operations": [
+        "put-immutable",
+        "get",
+        "head",
+        "list",
+        "delete-if-permitted",
+        "replace-manifest-if-revision"
+      ],
+      "safe_modes": [
+        "backup",
+        "single-writer"
+      ],
+      "limits": {
+        "list_page_max": 10000
+      },
+      "consistency": "Uses same-filesystem publication and a cooperative manifest lock. Multi-writer mode is not claimed."
+    }
+  ],
+  "configuration_fields": [
+    {
+      "key": "root_path",
+      "value_type": "string",
+      "secret": false,
+      "required": true,
+      "description": "User-selected directory for encrypted Liaison objects."
+    }
+  ],
+  "network_destinations": [],
+  "conformance": {
+    "suite_version": 1,
+    "status": "not-tested",
+    "evidence_ref": "providers/local-folder/evidence/README.md"
+  }
+}

@@ -145,6 +145,7 @@ impl ContractDescriptor {
                 "contract consistency statement is required",
             ));
         }
+
         Ok(Self {
             name,
             version,
@@ -206,6 +207,7 @@ impl ConfigurationValueType {
 pub struct ConfigurationField {
     key: String,
     value_type: ConfigurationValueType,
+    secret: bool,
     required: bool,
     description: String,
 }
@@ -214,6 +216,7 @@ impl ConfigurationField {
     pub fn new(
         key: impl Into<String>,
         value_type: ConfigurationValueType,
+        secret: bool,
         required: bool,
         description: impl Into<String>,
     ) -> Result<Self, ProviderDomainError> {
@@ -221,6 +224,11 @@ impl ConfigurationField {
         if !valid_snake_name(&key) {
             return Err(ProviderDomainError::new(
                 "configuration key must use snake case",
+            ));
+        }
+        if secret != (value_type == ConfigurationValueType::SecretReference) {
+            return Err(ProviderDomainError::new(
+                "secret fields must use secret-ref and non-secret fields must not",
             ));
         }
         let description = description.into().trim().to_owned();
@@ -232,6 +240,7 @@ impl ConfigurationField {
         Ok(Self {
             key,
             value_type,
+            secret,
             required,
             description,
         })
@@ -249,7 +258,7 @@ impl ConfigurationField {
 
     #[must_use]
     pub const fn is_secret(&self) -> bool {
-        matches!(self.value_type, ConfigurationValueType::SecretReference)
+        self.secret
     }
 
     #[must_use]
@@ -315,6 +324,7 @@ impl ProviderDescriptor {
                 "provider must implement at least one contract",
             ));
         }
+
         let contract_keys = contracts
             .iter()
             .map(|contract| (contract.name().to_owned(), contract.version()))
@@ -324,6 +334,7 @@ impl ProviderDescriptor {
                 "provider cannot repeat a contract name and version",
             ));
         }
+
         let field_keys = configuration_fields
             .iter()
             .map(|field| field.key().to_owned())
@@ -333,29 +344,29 @@ impl ProviderDescriptor {
                 "provider cannot repeat a configuration field",
             ));
         }
-        let network_destinations = network_destinations
+
+        let destinations = network_destinations
             .into_iter()
             .map(|destination| destination.trim().to_owned())
             .collect::<Vec<_>>();
-        if network_destinations.iter().any(String::is_empty) {
+        if destinations.iter().any(String::is_empty) {
             return Err(ProviderDomainError::new(
                 "network destination cannot be empty",
             ));
         }
-        if network_destinations.iter().collect::<BTreeSet<_>>().len()
-            != network_destinations.len()
-        {
+        if destinations.iter().collect::<BTreeSet<_>>().len() != destinations.len() {
             return Err(ProviderDomainError::new(
                 "network destinations cannot contain duplicates",
             ));
         }
+
         Ok(Self {
             id,
             version,
             display_name,
             contracts,
             configuration_fields,
-            network_destinations,
+            network_destinations: destinations,
             conformance_status,
         })
     }
@@ -396,59 +407,13 @@ impl ProviderDescriptor {
     }
 }
 
-pub trait ProviderRegistry {
-    fn register(&mut self, descriptor: ProviderDescriptor) -> Result<(), ProviderDomainError>;
-    fn list(&self) -> Result<Vec<ProviderDescriptor>, ProviderDomainError>;
-}
-
-#[derive(Debug)]
-pub struct RegisterProvider<'a, Registry> {
-    registry: &'a mut Registry,
-}
-
-impl<'a, Registry> RegisterProvider<'a, Registry>
-where
-    Registry: ProviderRegistry,
-{
-    #[must_use]
-    pub const fn new(registry: &'a mut Registry) -> Self {
-        Self { registry }
-    }
-
-    pub fn execute(
-        &mut self,
-        descriptor: ProviderDescriptor,
-    ) -> Result<(), ProviderDomainError> {
-        self.registry.register(descriptor)
-    }
-}
-
-#[derive(Debug)]
-pub struct ListProviders<'a, Registry> {
-    registry: &'a Registry,
-}
-
-impl<'a, Registry> ListProviders<'a, Registry>
-where
-    Registry: ProviderRegistry,
-{
-    #[must_use]
-    pub const fn new(registry: &'a Registry) -> Self {
-        Self { registry }
-    }
-
-    pub fn execute(&self) -> Result<Vec<ProviderDescriptor>, ProviderDomainError> {
-        self.registry.list()
-    }
-}
-
 fn valid_version_suffix(value: &str) -> bool {
     !value.is_empty()
         && value.split('.').all(|segment| {
             !segment.is_empty()
-                && segment
-                    .bytes()
-                    .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+                && segment.bytes().all(|byte| {
+                    byte.is_ascii_alphanumeric() || byte == b'-'
+                })
         })
 }
 
@@ -539,14 +504,17 @@ mod tests {
     }
 
     #[test]
-    fn secret_fields_are_identified_by_value_type() {
-        let field = ConfigurationField::new(
-            "token",
-            ConfigurationValueType::SecretReference,
-            true,
-            "Credential reference",
+    fn secret_field_requires_secret_reference_type() {
+        assert!(
+            ConfigurationField::new(
+                "token",
+                ConfigurationValueType::String,
+                true,
+                true,
+                "Credential"
+            )
+            .is_err()
         );
-        assert!(field.as_ref().is_ok_and(ConfigurationField::is_secret));
     }
 
     #[test]
@@ -559,19 +527,25 @@ mod tests {
             "Read-only fixture",
         );
         assert!(contract.is_ok());
-        if let Ok(contract) = contract {
-            let result = ProviderDescriptor::new(
-                ProviderId::parse("org.example.provider")
-                    .unwrap_or_else(|error| unreachable!("static ID failed: {error}")),
-                ProviderVersion::parse("1.0.0")
-                    .unwrap_or_else(|error| unreachable!("static version failed: {error}")),
-                "Example",
-                vec![contract.clone(), contract],
-                vec![],
-                vec![],
-                ConformanceStatus::NotTested,
-            );
-            assert!(result.is_err());
-        }
+        let Ok(contract) = contract else {
+            return;
+        };
+        let provider_id = ProviderId::parse("org.example.provider");
+        let version = ProviderVersion::parse("1.0.0");
+        assert!(provider_id.is_ok());
+        assert!(version.is_ok());
+        let (Ok(provider_id), Ok(version)) = (provider_id, version) else {
+            return;
+        };
+        let result = ProviderDescriptor::new(
+            provider_id,
+            version,
+            "Example",
+            vec![contract.clone(), contract],
+            vec![],
+            vec![],
+            ConformanceStatus::NotTested,
+        );
+        assert!(result.is_err());
     }
 }

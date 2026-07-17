@@ -2,44 +2,48 @@
 
 ## Purpose
 
-Own configured external capabilities without allowing provider vocabulary to enter relationship, event, sharing, review, or AI policy.
+Own configured external capabilities without letting provider vocabulary enter relationship, event, sharing, or AI policy.
 
-## Ubiquitous language
+## Language
 
-- **Provider:** an installed implementation of one or more capability contracts.
-- **Capability contract:** a versioned provider-neutral interface such as `object-store@1`.
-- **Descriptor:** inspectable provider metadata: identity, version, operations, safe modes, configuration fields, network destinations, and conformance status.
-- **Safe mode:** the strongest operation mode proven for a provider and configuration.
-- **Connection:** a configured provider instance. A descriptor alone grants no access.
-- **Secret reference:** an opaque pointer to secret storage; never the secret value.
-- **Grant:** a purpose-, field-, operation-, endpoint-, and time-bounded authorization.
-- **Conformance:** evidence that a provider implementation meets a contract under a recorded configuration.
+- provider
+- connection
+- capability contract
+- descriptor
+- safe mode
+- configuration field
+- secret reference
+- grant
+- conformance
+- health
 
-## Aggregate and service boundary
+## Aggregates and policies
 
 The initial `ProviderDescriptor` protects:
 
-- stable reverse-domain provider identity;
+- stable reverse-domain provider ID;
 - semantic provider version;
-- unique contract name/version pairs;
+- unique contract versions;
 - explicit operations and safe modes;
-- typed configuration fields and secret references;
-- non-empty consistency statements;
+- secret-reference field typing;
+- non-empty consistency statement;
 - declared network destinations;
-- explicit conformance status.
+- conformance status.
 
-The initial application services register and list descriptors. Connection, grant, health, retry, and revocation aggregates arrive in later slices.
+Connection and grant aggregates arrive in later slices.
+
+## Application use cases
+
+- register provider;
+- list providers;
+- later: create connection, grant purpose, test health, export settings, import settings, pause, and revoke.
 
 ## Ports
 
 - `ProviderRegistry`
 - `ObjectStore`
 
-Provider adapters implement these ports. Other bounded contexts consume application services or ports through explicit contracts; they must not import Google, AWS, WebDAV, filesystem, HTTP, or plugin-runtime types.
-
-## Safety rule
-
-A successful upload does not prove synchronization safety. The local reference provider claims only `backup` and `single-writer`. `multi-writer` requires conditional-manifest and concurrency evidence against the actual configured service.
+Provider adapters implement ports. Other contexts consume the ports through application services and do not import provider SDKs.
 
 ## Requirements and UAT
 

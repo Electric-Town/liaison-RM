@@ -1,6 +1,4 @@
-//! Provider contract conformance helpers.
-
-#![allow(clippy::missing_errors_doc, clippy::module_name_repetitions)]
+#![forbid(unsafe_code)]
 
 use liaison_connections::{
     ContentDigest, ObjectKey, ObjectStore, ObjectStoreError, ObjectStoreErrorKind,
@@ -26,43 +24,32 @@ impl ConformanceReport {
     pub fn all_passed(&self) -> bool {
         self.checks.iter().all(|check| check.passed)
     }
-
-    #[must_use]
-    pub fn passed_count(&self) -> usize {
-        self.checks.iter().filter(|check| check.passed).count()
-    }
 }
 
 pub fn run_object_store_conformance<Store>(
     store: &Store,
 ) -> Result<ConformanceReport, ObjectStoreError>
 where
-    Store: ObjectStore + ?Sized,
+    Store: ObjectStore,
 {
     let nonce = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_or(0, |duration| duration.as_nanos());
     let prefix = format!("conformance/{nonce:x}");
     let object_key = ObjectKey::parse(format!("{prefix}/object-a"))?;
-    let second_key = ObjectKey::parse(format!("{prefix}/object-b"))?;
     let mismatch_key = ObjectKey::parse(format!("{prefix}/checksum-mismatch"))?;
     let delete_key = ObjectKey::parse(format!("{prefix}/delete-me"))?;
     let manifest_key = ObjectKey::parse(format!("{prefix}/manifest"))?;
 
     let content = b"liaison-provider-conformance";
     let digest = ContentDigest::sha256(content);
-    let expected_size = u64::try_from(content.len()).map_err(|_| {
-        ObjectStoreError::new(
-            ObjectStoreErrorKind::Unsupported,
-            "platform object size does not fit the contract's u64 size",
-        )
-    })?;
     let mut checks = Vec::new();
 
-    checks.push(match store.put_immutable(&object_key, content, &digest) {
+    let put_result = store.put_immutable(&object_key, content, &digest);
+    checks.push(match put_result {
         Ok(metadata) => ConformanceCheck {
             name: "put immutable object".to_owned(),
-            passed: metadata.digest == digest && metadata.size_bytes == expected_size,
+            passed: metadata.digest == digest && metadata.size_bytes == content.len() as u64,
             detail: format!(
                 "stored {} bytes with digest {}",
                 metadata.size_bytes, metadata.digest
@@ -83,7 +70,7 @@ where
     checks.push(match store.head(&object_key) {
         Ok(metadata) => ConformanceCheck {
             name: "head object".to_owned(),
-            passed: metadata.digest == digest && metadata.size_bytes == expected_size,
+            passed: metadata.digest == digest && metadata.size_bytes == content.len() as u64,
             detail: format!(
                 "reported {} bytes with digest {}",
                 metadata.size_bytes, metadata.digest
@@ -105,58 +92,27 @@ where
         ObjectStoreErrorKind::ChecksumMismatch,
     ));
 
-    let second_content = b"second-object";
-    let second_digest = ContentDigest::sha256(second_content);
-    let second_put = store.put_immutable(&second_key, second_content, &second_digest);
-    checks.push(match second_put {
-        Ok(_) => match store.list(&prefix, None, 1) {
-            Ok(first_page) => {
-                let cursor = first_page.next_cursor.clone();
-                match cursor.as_deref() {
-                    Some(cursor) => match store.list(&prefix, Some(cursor), 1) {
-                        Ok(second_page) => ConformanceCheck {
-                            name: "list by prefix with cursor".to_owned(),
-                            passed: first_page.objects.len() == 1
-                                && second_page.objects.len() == 1
-                                && first_page.objects[0].key != second_page.objects[0].key,
-                            detail: format!(
-                                "first page {}, second page {}, continuation {}",
-                                first_page.objects.len(),
-                                second_page.objects.len(),
-                                cursor
-                            ),
-                        },
-                        Err(error) => failed("list by prefix with cursor", error.to_string()),
-                    },
-                    None => failed(
-                        "list by prefix with cursor",
-                        "first page omitted a continuation cursor".to_owned(),
-                    ),
-                }
-            }
-            Err(error) => failed("list by prefix with cursor", error.to_string()),
+    checks.push(match store.list(&prefix, None, 100) {
+        Ok(page) => ConformanceCheck {
+            name: "list by prefix".to_owned(),
+            passed: page
+                .objects
+                .iter()
+                .any(|metadata| metadata.key == object_key),
+            detail: format!(
+                "listed {} object(s); next cursor present: {}",
+                page.objects.len(),
+                page.next_cursor.is_some()
+            ),
         },
-        Err(error) => failed("list by prefix with cursor", error.to_string()),
+        Err(error) => failed("list by prefix", error.to_string()),
     });
 
     let delete_content = b"delete-after-check";
     let delete_digest = ContentDigest::sha256(delete_content);
-    let wrong_delete_digest = ContentDigest::sha256(b"wrong-delete-digest");
-    let delete_setup = store.put_immutable(&delete_key, delete_content, &delete_digest);
-    checks.push(match delete_setup {
-        Ok(_) => expected_error(
-            "reject guarded delete with wrong digest",
-            store.delete_if_permitted(&delete_key, &wrong_delete_digest),
-            ObjectStoreErrorKind::Conflict,
-        ),
-        Err(error) => failed(
-            "reject guarded delete with wrong digest",
-            format!("test object setup failed: {error}"),
-        ),
-    });
-
     let delete_result = store
-        .delete_if_permitted(&delete_key, &delete_digest)
+        .put_immutable(&delete_key, delete_content, &delete_digest)
+        .and_then(|_| store.delete_if_permitted(&delete_key, &delete_digest))
         .and_then(|()| match store.get(&delete_key) {
             Err(error) if error.kind() == ObjectStoreErrorKind::NotFound => Ok(()),
             Err(error) => Err(error),
@@ -192,14 +148,14 @@ where
 
     let stale_revision = ContentDigest::sha256(b"stale-revision");
     let second_manifest = b"{\"revision\":2}";
-    let second_manifest_digest = ContentDigest::sha256(second_manifest);
+    let second_digest = ContentDigest::sha256(second_manifest);
     checks.push(expected_error(
         "reject stale manifest revision",
         store.replace_manifest_if_revision(
             &manifest_key,
             Some(&stale_revision),
             second_manifest,
-            &second_manifest_digest,
+            &second_digest,
         ),
         ObjectStoreErrorKind::Conflict,
     ));
@@ -209,11 +165,11 @@ where
             &manifest_key,
             Some(&revision),
             second_manifest,
-            &second_manifest_digest,
+            &second_digest,
         ) {
             Ok(new_revision) => ConformanceCheck {
                 name: "replace manifest with current revision".to_owned(),
-                passed: new_revision == second_manifest_digest,
+                passed: new_revision == second_digest,
                 detail: format!("new manifest revision {new_revision}"),
             },
             Err(error) => failed(

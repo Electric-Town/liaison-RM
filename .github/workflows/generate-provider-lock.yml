@@ -1,0 +1,31 @@
+name: Generate provider lockfile
+
+on:
+  push:
+    branches: [agent/r1-provider-sdk-v4]
+    paths:
+      - "Cargo.toml"
+      - "contexts/connections/**"
+      - "adapters/object-store-local/**"
+      - "adapters/provider-registry-memory/**"
+      - "crates/liaison-provider-sdk/**"
+      - ".github/workflows/generate-provider-lock.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate exact lockfile
+        run: cargo generate-lockfile
+      - name: Verify provider packages resolve
+        run: cargo check -p liaison-connections -p liaison-provider-registry-memory -p liaison-object-store-local -p liaison-provider-sdk --all-targets --all-features
+      - uses: actions/upload-artifact@v4
+        with:
+          name: provider-cargo-lock
+          path: Cargo.lock
+          if-no-files-found: error
+          retention-days: 3

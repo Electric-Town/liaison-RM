@@ -55,28 +55,31 @@ mod tests {
 
     #[test]
     fn lists_descriptors_in_stable_provider_id_order() {
+        let result = fixture();
+        assert!(result.is_ok());
+        let Ok(first) = result else {
+            return;
+        };
         let mut registry = MemoryProviderRegistry::default();
-        let first = fixture();
-        assert!(first.is_ok());
-        if let Ok(first) = first {
-            assert!(registry.register(first).is_ok());
-            let providers = registry.list();
-            assert!(providers.is_ok());
-            if let Ok(providers) = providers {
-                assert_eq!(providers.len(), 1);
-                assert_eq!(providers[0].id().as_str(), "org.example.fixture");
-            }
-        }
+        assert!(registry.register(first).is_ok());
+        let providers = registry.list();
+        assert!(providers.is_ok());
+        let Ok(providers) = providers else {
+            return;
+        };
+        assert_eq!(providers.len(), 1);
+        assert_eq!(providers[0].id().as_str(), "org.example.fixture");
     }
 
     #[test]
     fn rejects_duplicate_provider_identity() {
+        let result = fixture();
+        assert!(result.is_ok());
+        let Ok(descriptor) = result else {
+            return;
+        };
         let mut registry = MemoryProviderRegistry::default();
-        let descriptor = fixture();
-        assert!(descriptor.is_ok());
-        if let Ok(descriptor) = descriptor {
-            assert!(registry.register(descriptor.clone()).is_ok());
-            assert!(registry.register(descriptor).is_err());
-        }
+        assert!(registry.register(descriptor.clone()).is_ok());
+        assert!(registry.register(descriptor).is_err());
     }
 }
