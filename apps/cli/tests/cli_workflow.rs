@@ -87,3 +87,44 @@ fn reports_missing_workspace_as_structured_error() -> Result<(), Box<dyn Error>>
 
     Ok(())
 }
+
+#[test]
+fn rejects_invalid_email_without_creating_a_partial_person_record() -> Result<(), Box<dyn Error>> {
+    let directory = tempdir()?;
+    let workspace = directory.path().join("People");
+
+    let mut initialise = Command::cargo_bin("liaison")?;
+    initialise
+        .arg("--workspace")
+        .arg(&workspace)
+        .args(["workspace", "init", "--name", "People"])
+        .assert()
+        .success();
+
+    let mut create = Command::cargo_bin("liaison")?;
+    create
+        .arg("--workspace")
+        .arg(&workspace)
+        .args([
+            "--output",
+            "json",
+            "person",
+            "create",
+            "--name",
+            "Invalid Contact",
+            "--email",
+            "not-an-email",
+        ])
+        .assert()
+        .code(1)
+        .stderr(predicate::str::contains("people.error"))
+        .stderr(predicate::str::contains("invalid email address"));
+
+    let markdown_count = fs::read_dir(workspace.join("people"))?
+        .filter_map(Result::ok)
+        .filter(|entry| entry.path().extension().and_then(|value| value.to_str()) == Some("md"))
+        .count();
+    assert_eq!(markdown_count, 0);
+
+    Ok(())
+}
