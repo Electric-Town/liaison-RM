@@ -1,0 +1,426 @@
+schema_version: 1
+status: draft
+
+tasks:
+  - id: T-R0-001
+    release: R0
+    title: Establish repository governance and policy checks
+    contexts: [governance]
+    depends_on: []
+    requirements: []
+    uat: []
+    outputs: [AGENTS.md, CONTRIBUTING.md, GOVERNANCE.md, repository-policy-workflow]
+
+  - id: T-R0-002
+    release: R0
+    title: Publish product language, context map, and architecture decisions
+    contexts: [all]
+    depends_on: [T-R0-001]
+    requirements: []
+    uat: []
+    outputs: [SPEC.md, context-map, ubiquitous-language, ADR-0001, ADR-0002, ADR-0003, ADR-0004]
+
+  - id: T-R0-003
+    release: R0
+    title: Validate machine-readable specifications
+    contexts: [governance]
+    depends_on: [T-R0-002]
+    requirements: []
+    uat: []
+    outputs: [requirements-validator, uat-validator, feature-gate-validator, traceability-report]
+
+  - id: T-R1-001
+    release: R1
+    title: Create Rust workspace and shared kernel
+    contexts: [workspace]
+    depends_on: [T-R0-003]
+    requirements: [LRM-PK-001]
+    uat: []
+    outputs: [Cargo-workspace, identifiers, revision-token, clock-port, error-envelope]
+
+  - id: T-R1-002
+    release: R1
+    title: Implement workspace manifest and lifecycle domain
+    contexts: [workspace]
+    depends_on: [T-R1-001]
+    requirements: [LRM-WS-001, LRM-WS-002]
+    uat: [UAT-001]
+    outputs: [workspace-domain, create-open-close-commands, manifest-schema]
+
+  - id: T-R1-003
+    release: R1
+    title: Implement safe path and canonical write service
+    contexts: [workspace]
+    depends_on: [T-R1-002]
+    requirements: [LRM-WS-004, LRM-WS-006]
+    uat: [UAT-040]
+    outputs: [path-value-object, revision-preconditions, write-journal, fault-tests]
+
+  - id: T-R1-004
+    release: R1
+    title: Implement person profile aggregate
+    contexts: [people]
+    depends_on: [T-R1-001]
+    requirements: [LRM-PE-001, LRM-PE-002, LRM-PE-003, LRM-PE-004, LRM-PE-005, LRM-PE-006]
+    uat: [UAT-002]
+    outputs: [people-domain, commands, queries, domain-tests]
+
+  - id: T-R1-005
+    release: R1
+    title: Implement Markdown person repository
+    contexts: [people, workspace]
+    depends_on: [T-R1-003, T-R1-004]
+    requirements: [LRM-WS-003, LRM-WS-005]
+    uat: [UAT-001, UAT-002]
+    outputs: [format-schema, parser-renderer, unknown-extension-preservation, repository-tests]
+
+  - id: T-R1-006
+    release: R1
+    title: Implement validation, repair, and projection rebuild
+    contexts: [workspace]
+    depends_on: [T-R1-005]
+    requirements: [LRM-WS-003, LRM-WS-006]
+    uat: [UAT-001, UAT-040]
+    outputs: [validator, repair-plan, projection-port, SQLite-projection, reconciliation-report]
+
+  - id: T-R1-007
+    release: R1
+    title: Implement content-addressed attachments
+    contexts: [workspace]
+    depends_on: [T-R1-003]
+    requirements: []
+    uat: [UAT-025]
+    outputs: [attachment-port, local-adapter, hash-verification, garbage-collection-preview]
+
+  - id: T-R1-008
+    release: R1
+    title: Implement CLI framework and workspace commands
+    contexts: [workspace]
+    depends_on: [T-R1-002, T-R1-006]
+    requirements: [LRM-WS-001, LRM-WS-006]
+    uat: [UAT-001, UAT-040]
+    outputs: [liaison-binary, human-output, JSON-output, dry-run, exit-codes]
+
+  - id: T-R1-009
+    release: R1
+    title: Expose person commands through CLI
+    contexts: [people]
+    depends_on: [T-R1-005, T-R1-008]
+    requirements: [LRM-PE-001, LRM-PE-002, LRM-PE-003, LRM-PE-006]
+    uat: [UAT-001, UAT-002]
+    outputs: [person-create-show-edit-list-search-archive-restore]
+
+  - id: T-R1-010
+    release: R1
+    title: Implement CSV and vCard import/export foundations
+    contexts: [people, connections]
+    depends_on: [T-R1-005, T-R1-009]
+    requirements: [LRM-CO-010]
+    uat: [UAT-037]
+    outputs: [streaming-import, mapping-preview, duplicate-report, vCard-roundtrip]
+
+  - id: T-R1-011
+    release: R1
+    title: Implement encrypted local backup and isolated restore
+    contexts: [workspace, connections]
+    depends_on: [T-R1-006, T-R1-007, T-R1-008]
+    requirements: [LRM-CO-008, LRM-CO-009]
+    uat: [UAT-025, UAT-028]
+    outputs: [snapshot-manifest, encryption-envelope, verification, isolated-restore]
+
+  - id: T-R1-012
+    release: R1
+    title: Prove Airgap core
+    contexts: [packaging]
+    depends_on: [T-R1-011]
+    requirements: [LRM-PK-002, LRM-PK-003]
+    uat: [UAT-024, UAT-025]
+    outputs: [airgap-feature-graph, dependency-audit, socket-denial-test]
+
+  - id: T-R2-001
+    release: R2
+    title: Create Tauri desktop shell and typed command bridge
+    contexts: [experience]
+    depends_on: [T-R1-012]
+    requirements: [LRM-PK-001, LRM-WS-008]
+    uat: [UAT-022]
+    outputs: [Tauri-app, capability-files, typed-command-contract]
+
+  - id: T-R2-002
+    release: R2
+    title: Build accessible application navigation and workspace status
+    contexts: [experience, workspace]
+    depends_on: [T-R2-001]
+    requirements: [LRM-UX-001, LRM-UX-002, LRM-UX-003, LRM-UX-004, LRM-UX-006]
+    uat: [UAT-022]
+    outputs: [navigation, status-announcements, error-boundary, accessibility-tests]
+
+  - id: T-R2-003
+    release: R2
+    title: Build person list, search, profile, and interruption-safe editor
+    contexts: [people, experience]
+    depends_on: [T-R2-002, T-R1-009]
+    requirements: [LRM-PE-007, LRM-UX-005]
+    uat: [UAT-003, UAT-022]
+    outputs: [person-list, search, configurable-tabs, draft-recovery]
+
+  - id: T-R2-004
+    release: R2
+    title: Implement relationships and reminders domains
+    contexts: [relationships, reminders]
+    depends_on: [T-R1-004]
+    requirements: [LRM-RE-001, LRM-RE-002, LRM-RE-003, LRM-RM-001, LRM-RM-002, LRM-RM-003]
+    uat: [UAT-004]
+    outputs: [relationship-aggregate, reminder-aggregate, application-services, CLI]
+
+  - id: T-R2-005
+    release: R2
+    title: Build relationship table, tree, and graph
+    contexts: [relationships, experience]
+    depends_on: [T-R2-003, T-R2-004]
+    requirements: [LRM-RE-004, LRM-RE-005]
+    uat: [UAT-023]
+    outputs: [semantic-table, semantic-tree, bounded-graph, parity-tests]
+
+  - id: T-R2-006
+    release: R2
+    title: Build configurable dashboard framework
+    contexts: [experience]
+    depends_on: [T-R2-002, T-R2-004]
+    requirements: [LRM-UX-007]
+    uat: [UAT-020, UAT-021]
+    outputs: [panel-registry, keyboard-layout-editor, restore-defaults]
+
+  - id: T-R2-007
+    release: R2
+    title: Establish desktop packaging matrix
+    contexts: [packaging]
+    depends_on: [T-R2-006]
+    requirements: [LRM-PK-001, LRM-PK-002, LRM-PK-003, LRM-PK-004, LRM-PK-005]
+    uat: [UAT-024]
+    outputs: [Flatpak, macOS, Windows, provenance, installer-smoke-tests]
+
+  - id: T-R3-001
+    release: R3
+    title: Implement organisations and effective memberships
+    contexts: [organisations]
+    depends_on: [T-R1-004]
+    requirements: [LRM-OR-001, LRM-OR-002]
+    uat: [UAT-008]
+    outputs: [organisation-domain, membership-domain, CLI, Markdown-adapter]
+
+  - id: T-R3-002
+    release: R3
+    title: Implement structured dietary requirements
+    contexts: [people]
+    depends_on: [T-R1-004]
+    requirements: [LRM-PE-008, LRM-PE-009, LRM-PE-010]
+    uat: [UAT-009, UAT-010]
+    outputs: [dietary-value-objects, disclosure-policy, migrations, tests]
+
+  - id: T-R3-003
+    release: R3
+    title: Implement saved cohort query language
+    contexts: [organisations, people]
+    depends_on: [T-R3-001, T-R3-002]
+    requirements: [LRM-OR-003]
+    uat: [UAT-012]
+    outputs: [typed-predicates, saved-view-schema, explain-plan, keyboard-filter-UI]
+
+  - id: T-R3-004
+    release: R3
+    title: Implement bulk employee import
+    contexts: [organisations, people]
+    depends_on: [T-R3-001, T-R1-010]
+    requirements: [LRM-OR-004]
+    uat: [UAT-008]
+    outputs: [mapping, preview, duplicate-resolution, idempotent-job, rollback-report]
+
+  - id: T-R3-005
+    release: R3
+    title: Implement events, attendance, and cohort snapshots
+    contexts: [events]
+    depends_on: [T-R3-003]
+    requirements: [LRM-EV-001, LRM-EV-002]
+    uat: [UAT-012]
+    outputs: [event-domain, attendance-domain, CLI, Markdown-adapter]
+
+  - id: T-R3-006
+    release: R3
+    title: Implement dietary readiness and catering brief
+    contexts: [events, people]
+    depends_on: [T-R3-002, T-R3-005]
+    requirements: [LRM-EV-003, LRM-EV-004, LRM-EV-005]
+    uat: [UAT-009, UAT-010, UAT-011]
+    outputs: [readiness-policy, reconciliation, brief-export, stale-detection]
+
+  - id: T-R3-007
+    release: R3
+    title: Observe workplace event workflow
+    contexts: [product]
+    depends_on: [T-R3-006]
+    requirements: []
+    uat: [UAT-008, UAT-009, UAT-010, UAT-011, UAT-012]
+    outputs: [observation-evidence, revised-requirements, revised-knowledge]
+
+  - id: T-R4-001
+    release: R4
+    title: Implement Connections domain and provider registry
+    contexts: [connections]
+    depends_on: [T-R1-001]
+    requirements: [LRM-CO-001, LRM-CO-002, LRM-CO-003, LRM-CO-005, LRM-CO-006]
+    uat: [UAT-026, UAT-027, UAT-034]
+    outputs: [descriptor, connection, grant, job, registry, schemas]
+
+  - id: T-R4-002
+    release: R4
+    title: Implement egress controller and secret-store port
+    contexts: [connections]
+    depends_on: [T-R4-001]
+    requirements: [LRM-CO-006, LRM-CO-007]
+    uat: [UAT-026]
+    outputs: [egress-policy, destination-validation, redirect-policy, secret-references]
+
+  - id: T-R4-003
+    release: R4
+    title: Publish provider SDK and object-store contract
+    contexts: [connections]
+    depends_on: [T-R4-001]
+    requirements: [LRM-CO-001, LRM-CO-004, LRM-CO-005, LRM-CO-012]
+    uat: [UAT-027, UAT-034]
+    outputs: [provider-sdk, object-store-contract, conformance-kit, local-reference]
+
+  - id: T-R4-004
+    release: R4
+    title: Implement provider-neutral backup service
+    contexts: [connections, workspace]
+    depends_on: [T-R1-011, T-R4-002, T-R4-003]
+    requirements: [LRM-CO-008, LRM-CO-009]
+    uat: [UAT-026, UAT-028]
+    outputs: [backup-contract, provider-publication, verification, restore]
+
+  - id: T-R4-005
+    release: R4
+    title: Implement Sharing identities and signed operations
+    contexts: [sharing]
+    depends_on: [T-R1-003]
+    requirements: [LRM-SH-001, LRM-SH-002, LRM-SH-007]
+    uat: [UAT-019]
+    outputs: [member-device-keys, operation-envelope, validation, acknowledgements]
+
+  - id: T-R4-006
+    release: R4
+    title: Implement conflict resolution and private overlays
+    contexts: [sharing]
+    depends_on: [T-R4-005]
+    requirements: [LRM-SH-003, LRM-SH-004]
+    uat: [UAT-007, UAT-019]
+    outputs: [conflict-aggregate, merge-policy, overlay-aggregate, non-interference-tests]
+
+  - id: T-R4-007
+    release: R4
+    title: Implement self-service requests and Liaison Cards
+    contexts: [sharing]
+    depends_on: [T-R4-005]
+    requirements: [LRM-SH-005, LRM-SH-006]
+    uat: [UAT-018]
+    outputs: [request-response-formats, offline-responder, card-format, import]
+
+  - id: T-R4-008
+    release: R4
+    title: Implement local, WebDAV, and S3-compatible transports
+    contexts: [sharing, connections]
+    depends_on: [T-R4-002, T-R4-003, T-R4-005]
+    requirements: [LRM-CO-012, LRM-SH-001]
+    uat: [UAT-019, UAT-026, UAT-027]
+    outputs: [local-transport, WebDAV-adapter, S3-adapter, conformance-evidence]
+
+  - id: T-R5-001
+    release: R5
+    title: Implement CardDAV selected-view sync
+    contexts: [connections, people]
+    depends_on: [T-R1-010, T-R4-002]
+    requirements: [LRM-CO-010]
+    uat: [UAT-037]
+    outputs: [contacts-contract, CardDAV-adapter, conflict-policy]
+
+  - id: T-R5-002
+    release: R5
+    title: Implement calendar contract and initial CalDAV/iCalendar adapter
+    contexts: [connections, events, interactions]
+    depends_on: [T-R3-005, T-R4-002]
+    requirements: [LRM-CO-011, LRM-IN-002]
+    uat: []
+    outputs: [calendar-contract, recurrence-fixtures, incremental-import]
+
+  - id: T-R5-003
+    release: R5
+    title: Implement interactions import and email-metadata contract
+    contexts: [interactions, connections]
+    depends_on: [T-R2-004, T-R4-002]
+    requirements: [LRM-IN-001, LRM-IN-002, LRM-IN-003, LRM-IN-004]
+    uat: [UAT-005]
+    outputs: [interaction-domain, metadata-contract, initial-provider, counts]
+
+  - id: T-R5-004
+    release: R5
+    title: Implement facilities access import and retention
+    contexts: [facilities]
+    depends_on: [T-R3-001, T-R1-010]
+    requirements: [LRM-FA-001, LRM-FA-002, LRM-FA-003, LRM-FA-004, LRM-FA-005]
+    uat: [UAT-014, UAT-015, UAT-016]
+    outputs: [access-stream, mapping, identity-resolution, retention, bounded-summaries]
+
+  - id: T-R5-005
+    release: R5
+    title: Implement Meerkat and Monica migration adapters
+    contexts: [people, relationships, interactions, events, reminders]
+    depends_on: [T-R5-003, T-R3-005]
+    requirements: []
+    uat: [UAT-038]
+    outputs: [source-readers, anti-corruption-maps, reconciliation-report]
+
+  - id: T-R6-001
+    release: R6
+    title: Implement local OpenAPI and scoped tokens
+    contexts: [automation]
+    depends_on: [T-R2-004, T-R3-005, T-R4-002]
+    requirements: [LRM-AU-001]
+    uat: [UAT-029]
+    outputs: [loopback-service, OpenAPI, token-domain, audit]
+
+  - id: T-R6-002
+    release: R6
+    title: Implement signed webhooks and n8n examples
+    contexts: [automation]
+    depends_on: [T-R6-001]
+    requirements: [LRM-AU-002]
+    uat: [UAT-030]
+    outputs: [webhook-domain, delivery-worker, retry-evidence, n8n-templates]
+
+  - id: T-R6-003
+    release: R6
+    title: Implement MCP reads and staged writes
+    contexts: [automation]
+    depends_on: [T-R6-001]
+    requirements: [LRM-AU-003, LRM-AU-004, LRM-AU-005]
+    uat: [UAT-032, UAT-033]
+    outputs: [MCP-server, source-links, proposal-domain, approval-flow]
+
+  - id: T-R6-004
+    release: R6
+    title: Implement local and remote model adapters
+    contexts: [automation, connections]
+    depends_on: [T-R6-003, T-R4-002]
+    requirements: [LRM-AU-006, LRM-AU-007]
+    uat: [UAT-031, UAT-039]
+    outputs: [Ollama-adapter, remote-AI-contract, disclosure-preview]
+
+  - id: T-R6-005
+    release: R6
+    title: Implement WASI plugin host and SDK
+    contexts: [automation]
+    depends_on: [T-R6-001, T-R4-003]
+    requirements: [LRM-AU-008, LRM-AU-009]
+    uat: [UAT-035, UAT-036]
+    outputs: [WIT-contracts, component-host, capability-manifest, conformance-kit]
