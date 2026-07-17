@@ -192,26 +192,20 @@ fn execute(cli: Cli) -> Result<(), CliError> {
                     build_profile.into(),
                     locale,
                 )?;
-                write_success(
-                    cli.output,
-                    format!(
-                        "Initialised workspace '{}' at {}",
-                        manifest.name,
-                        cli.workspace.display()
-                    ),
-                    &manifest,
-                )
+                let human = format!(
+                    "Initialised workspace '{}' at {}",
+                    manifest.name,
+                    cli.workspace.display()
+                );
+                write_success(cli.output, &human, &manifest)
             }
             WorkspaceCommand::Inspect => {
                 let manifest = vault.load(&cli.workspace)?;
-                write_success(
-                    cli.output,
-                    format!(
-                        "Workspace '{}' ({}) uses schema {}",
-                        manifest.name, manifest.workspace_id, manifest.schema_version
-                    ),
-                    &manifest,
-                )
+                let human = format!(
+                    "Workspace '{}' ({}) uses schema {}",
+                    manifest.name, manifest.workspace_id, manifest.schema_version
+                );
+                write_success(cli.output, &human, &manifest)
             }
             WorkspaceCommand::Validate => {
                 let report = ValidateWorkspace::new(vault).execute(&cli.workspace)?;
@@ -228,17 +222,14 @@ fn execute(cli: Cli) -> Result<(), CliError> {
                         report.findings.len()
                     )
                 };
-                write_success(cli.output, summary, &report)
+                write_success(cli.output, &summary, &report)
             }
         },
         TopLevelCommand::Person(args) => match args.command {
             PersonCommand::Create { name, email } => {
                 let person = CreatePerson::new(vault).execute(&cli.workspace, name, email)?;
-                write_success(
-                    cli.output,
-                    format!("Created person '{}' ({})", person.display_name, person.id),
-                    &person,
-                )
+                let human = format!("Created person '{}' ({})", person.display_name, person.id);
+                write_success(cli.output, &human, &person)
             }
             PersonCommand::List { include_archived } => {
                 let people = ListPeople::new(vault).execute(&cli.workspace, include_archived)?;
@@ -258,13 +249,13 @@ fn execute(cli: Cli) -> Result<(), CliError> {
                         .collect::<Vec<_>>()
                         .join("\n")
                 };
-                write_success(cli.output, human, &people)
+                write_success(cli.output, &human, &people)
             }
         },
     }
 }
 
-fn write_success<T>(output: OutputFormat, human: String, value: &T) -> Result<(), CliError>
+fn write_success<T>(output: OutputFormat, human: &str, value: &T) -> Result<(), CliError>
 where
     T: Serialize,
 {
