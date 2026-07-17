@@ -44,6 +44,30 @@ jobs:
           tar -xzf /tmp/provider-pr.tar.gz -C /tmp/provider-pr
           rsync -a /tmp/provider-pr/ ./
 
+      - name: Restore provider SDK build dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > crates/liaison-provider-sdk/Cargo.toml <<'EOF'
+          [package]
+          name = "liaison-provider-sdk"
+          version.workspace = true
+          edition.workspace = true
+          license.workspace = true
+          repository.workspace = true
+          rust-version.workspace = true
+
+          [dependencies]
+          liaison-connections = { path = "../../contexts/connections" }
+          serde.workspace = true
+
+          [dev-dependencies]
+          wit-parser.workspace = true
+
+          [lints]
+          workspace = true
+          EOF
+
       - name: Install pinned Rust toolchain
         shell: bash
         run: |
