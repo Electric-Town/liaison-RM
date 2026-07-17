@@ -6,6 +6,10 @@ on:
       - agent/publish-initial-stack-20260717
     paths:
       - .bootstrap/initial-stack/READY
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
@@ -16,12 +20,14 @@ concurrency:
 
 jobs:
   publish:
+    if: github.event_name == 'push' || github.head_ref == 'agent/publish-initial-stack-20260717'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - name: Check out bootstrap branch
         uses: actions/checkout@v4
         with:
+          ref: agent/publish-initial-stack-20260717
           fetch-depth: 0
 
       - name: Reconstruct reviewed source payload
