@@ -15,6 +15,8 @@ on:
 
 permissions:
   contents: write
+  issues: write
+  pull-requests: write
 
 concurrency:
   group: apply-provider-payload
@@ -123,19 +125,25 @@ jobs:
       - name: Lint provider registry adapter
         run: cargo clippy -p liaison-provider-registry-memory --all-targets --all-features -- -D warnings
 
-      - name: Lint local object-store adapter and capture failures
+      - name: Lint local object-store adapter and report diagnostics
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set +e
           cargo clippy -p liaison-object-store-local --all-targets --all-features -- -D warnings 2>&1 | tee /tmp/local-object-store-clippy.log
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then
-            cp /tmp/local-object-store-clippy.log .bootstrap/provider-payload/local-object-store-clippy.log
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add .bootstrap/provider-payload/local-object-store-clippy.log
-            git commit -m "ci: capture local object-store Clippy failure"
-            git push origin HEAD:agent/r1-provider-sdk-v4
+            {
+              echo '### Local object-store Clippy diagnostics'
+              echo
+              echo '```text'
+              tail -n 160 /tmp/local-object-store-clippy.log
+              echo '```'
+              echo
+              echo "Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            } > /tmp/clippy-comment.md
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/7/comments" --input /tmp/clippy-comment.md -H 'Content-Type: text/plain' || true
             exit "$status"
           fi
 
