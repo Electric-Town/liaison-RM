@@ -58,4 +58,4 @@ For a system Chromium installation:
 CHROMIUM_PATH=/usr/bin/chromium python scripts/test_prototype.py
 ```
 
-The SVG screens are deterministic outputs of `scripts/generate_prototype_screens.py`. The browser test checks routes, focus, labels, tabs, event coverage, graph/table equivalence, feature gates, mobile navigation, and horizontal overflow. The images are reviewer evidence, not production conformance evidence.
+The test parses all six committed SVG screens, verifies their dimensions and accessible titles/descriptions, then checks routes, focus, labels, tabs, event coverage, graph/table equivalence, feature gates, mobile navigation, and horizontal overflow in Chromium. The images are reviewer evidence, not production conformance evidence.
