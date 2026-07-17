@@ -25,7 +25,8 @@ pub struct PersonProfile {
 
 impl PersonProfile {
     pub fn create(display_name: impl Into<String>) -> Result<Self, PeopleError> {
-        let display_name = required(display_name.into(), "display name")?;
+        let display_name = display_name.into();
+        let display_name = required(&display_name, "display name")?;
         Ok(Self {
             id: PersonId::new(),
             revision: Revision::INITIAL,
@@ -39,7 +40,8 @@ impl PersonProfile {
     }
 
     pub fn rename(&mut self, display_name: impl Into<String>) -> Result<(), PeopleError> {
-        self.display_name = required(display_name.into(), "display name")?;
+        let display_name = display_name.into();
+        self.display_name = required(&display_name, "display name")?;
         self.bump_revision()
     }
 
@@ -102,7 +104,7 @@ impl PersonProfile {
     }
 }
 
-fn required(value: String, field: &'static str) -> Result<String, PeopleError> {
+fn required(value: &str, field: &'static str) -> Result<String, PeopleError> {
     let value = value.trim().to_owned();
     if value.is_empty() {
         Err(PeopleError::RequiredField(field))
@@ -119,8 +121,10 @@ pub struct EmailAddress {
 
 impl EmailAddress {
     pub fn new(value: impl Into<String>, label: impl Into<String>) -> Result<Self, PeopleError> {
-        let value = required(value.into(), "email")?.to_lowercase();
-        let label = required(label.into(), "email label")?;
+        let value = value.into();
+        let value = required(&value, "email")?.to_lowercase();
+        let label = label.into();
+        let label = required(&label, "email label")?;
         let mut parts = value.split('@');
         let local = parts.next().unwrap_or_default();
         let domain = parts.next().unwrap_or_default();
@@ -140,8 +144,10 @@ pub struct PhoneNumber {
 
 impl PhoneNumber {
     pub fn new(value: impl Into<String>, label: impl Into<String>) -> Result<Self, PeopleError> {
-        let value = required(value.into(), "phone")?;
-        let label = required(label.into(), "phone label")?;
+        let value = value.into();
+        let value = required(&value, "phone")?;
+        let label = label.into();
+        let label = required(&label, "phone label")?;
         if !value.chars().any(|character| character.is_ascii_digit()) {
             return Err(PeopleError::InvalidPhone(value));
         }
