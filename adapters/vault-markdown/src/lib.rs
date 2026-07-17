@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use serde_yaml::Value;
 use std::{
     collections::BTreeMap,
-    fs::{self, File},
+    fs::{self},
     io::{self, Write},
     path::{Path, PathBuf},
 };
@@ -448,7 +448,7 @@ fn storage_people(error: impl std::fmt::Display) -> PeopleError {
 mod tests {
     use super::MarkdownVault;
     use liaison_people::{CreatePerson, ListPeople, PersonRepository};
-    use liaison_workspace::{BuildProfile, InitialiseWorkspace, WorkspaceProfile, WorkspaceStore};
+    use liaison_workspace::{BuildProfile, InitialiseWorkspace, WorkspaceProfile};
     use std::fs;
     use tempfile::tempdir;
 

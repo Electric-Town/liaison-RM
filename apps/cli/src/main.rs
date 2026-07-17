@@ -156,8 +156,7 @@ impl CliError {
         match self {
             Self::Workspace(WorkspaceError::NotFound) | Self::People(PeopleError::NotFound) => 3,
             Self::Workspace(WorkspaceError::AlreadyExists)
-            | Self::People(PeopleError::AlreadyExists)
-            | Self::People(PeopleError::RevisionConflict { .. }) => 4,
+            | Self::People(PeopleError::AlreadyExists | PeopleError::RevisionConflict { .. }) => 4,
             Self::Workspace(WorkspaceError::UnsupportedSchema { .. }) => 5,
             Self::Workspace(_) | Self::People(_) | Self::Serialisation(_) => 1,
         }
@@ -290,8 +289,7 @@ fn write_error(output: OutputFormat, error: &CliError) {
             match serde_json::to_string_pretty(&value) {
                 Ok(rendered) => eprintln!("{rendered}"),
                 Err(serialisation_error) => eprintln!(
-                    "cli.serialisation-error: could not render original error '{}': {}",
-                    error, serialisation_error
+                    "cli.serialisation-error: could not render original error '{error}': {serialisation_error}"
                 ),
             }
         }
