@@ -6,6 +6,12 @@ on:
       - agent/r1-provider-sdk-v4
     paths:
       - ".bootstrap/provider-payload/READY"
+  pull_request:
+    branches:
+      - agent/r1-rust-ddd-cli-v3
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".bootstrap/provider-payload/READY"
 
 permissions:
   contents: write
@@ -16,6 +22,7 @@ concurrency:
 
 jobs:
   apply:
+    if: github.event_name == 'push' || github.head_ref == 'agent/r1-provider-sdk-v4'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
