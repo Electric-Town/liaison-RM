@@ -1,0 +1,55 @@
+name: Provider contracts
+
+on:
+  pull_request:
+    paths:
+      - "contexts/connections/**"
+      - "crates/liaison-provider-sdk/**"
+      - "adapters/object-store-local/**"
+      - "providers/**"
+      - "interfaces/wit/**"
+      - "scripts/check_providers.py"
+      - "docs/evidence/providers/**"
+      - "docs/knowledge/KCS-0004*"
+      - ".github/workflows/providers.yml"
+      - "Cargo.toml"
+      - "Cargo.lock"
+  push:
+    branches: [main]
+    paths:
+      - "contexts/connections/**"
+      - "crates/liaison-provider-sdk/**"
+      - "adapters/object-store-local/**"
+      - "providers/**"
+      - "interfaces/wit/**"
+      - "scripts/check_providers.py"
+      - "Cargo.toml"
+      - "Cargo.lock"
+
+permissions:
+  contents: read
+
+jobs:
+  descriptor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/check_providers.py
+      - run: python scripts/check_architecture.py
+
+  object-store-conformance:
+    name: Local object store (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test provider SDK and local reference
+        run: cargo test -p liaison-provider-sdk -p liaison-object-store-local --locked
+      - name: Lint provider crates
+        run: cargo clippy -p liaison-connections -p liaison-provider-sdk -p liaison-object-store-local --all-targets --locked -- -D warnings
