@@ -32,12 +32,14 @@ jobs:
           ref: agent/r1-provider-sdk-v4
           fetch-depth: 0
 
-      - name: Apply reviewed source repair
+      - name: Install reviewed direct sources
         shell: bash
         run: |
           set -euo pipefail
-          base64 --decode .bootstrap/provider-payload/fix.py.gz.b64 | gzip -dc > /tmp/provider-fix.py
-          python /tmp/provider-fix.py
+          echo "4720e98ccf2bf7ecf415407c62880c35eae46c885002085104e6fd76b7fd5874  .bootstrap/provider-repair/direct-sources.tar.gz.b64" | sha256sum -c -
+          base64 --decode .bootstrap/provider-repair/direct-sources.tar.gz.b64 > /tmp/provider-direct-repair.tar.gz
+          echo "d00de80134f678f27b376ce51e4e86862194de3b7d3aab3efa9bff04be9e23a0  /tmp/provider-direct-repair.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/provider-direct-repair.tar.gz -C "$GITHUB_WORKSPACE"
 
       - name: Install pinned Rust toolchain
         shell: bash
