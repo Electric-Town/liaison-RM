@@ -1,0 +1,16 @@
+/target/
+/node_modules/
+/dist/
+/.idea/
+/.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+.env
+.env.*
+!.env.example
+
+# Local Liaison workspaces and projections created during development
+/.liaison-dev/
+/test-workspaces/

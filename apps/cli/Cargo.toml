@@ -1,0 +1,28 @@
+[package]
+name = "liaison-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "liaison"
+path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+liaison-people = { path = "../../contexts/people" }
+liaison-vault-markdown = { path = "../../adapters/vault-markdown" }
+liaison-workspace = { path = "../../contexts/workspace" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+assert_cmd.workspace = true
+predicates.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true
