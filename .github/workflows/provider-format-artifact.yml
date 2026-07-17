@@ -1,0 +1,39 @@
+name: Provider formatting evidence
+
+on:
+  pull_request:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "contexts/connections/**"
+      - "adapters/object-store-local/**"
+      - "adapters/provider-registry-memory/**"
+      - "crates/liaison-provider-sdk/**"
+      - ".github/workflows/provider-format-artifact.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Format Rust and regenerate lockfile
+        run: |
+          cargo fmt --all
+          cargo generate-lockfile
+      - name: Package deterministic outputs
+        run: |
+          tar -czf provider-formatted.tar.gz \
+            Cargo.toml Cargo.lock \
+            contexts/connections \
+            adapters/object-store-local \
+            adapters/provider-registry-memory \
+            crates/liaison-provider-sdk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: provider-formatted-source
+          path: provider-formatted.tar.gz
+          if-no-files-found: error
+          retention-days: 3
