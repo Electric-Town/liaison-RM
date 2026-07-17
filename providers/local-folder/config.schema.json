@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Electric-Town/liaison-RM/providers/local-folder/config.schema.json",
+  "title": "Local folder object-store configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["root"],
+  "properties": {
+    "root": {
+      "type": "string",
+      "minLength": 1,
+      "description": "User-selected directory used only for provider objects and manifests."
+    },
+    "maximum_object_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 536870912,
+      "default": 536870912
+    }
+  }
+}
