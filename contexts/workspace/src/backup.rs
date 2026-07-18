@@ -50,20 +50,24 @@ pub struct BackupManifest {
     pub format_version: u32,
     pub workspace_id: WorkspaceId,
     pub workspace_schema_version: u32,
+    pub directories: Vec<String>,
     pub files: Vec<BackupFile>,
 }
 
 impl BackupManifest {
     pub fn new(
         workspace: &WorkspaceManifest,
+        mut directories: Vec<String>,
         mut files: Vec<BackupFile>,
     ) -> Result<Self, BackupError> {
+        directories.sort();
         files.sort_by(|left, right| left.path.cmp(&right.path));
         let manifest = Self {
             format: BACKUP_FORMAT.to_owned(),
             format_version: BACKUP_FORMAT_VERSION,
             workspace_id: workspace.workspace_id,
             workspace_schema_version: workspace.schema_version,
+            directories,
             files,
         };
         manifest.validate()?;
@@ -84,17 +88,27 @@ impl BackupManifest {
             return Err(BackupError::EmptySnapshot);
         }
 
+        validate_sorted_unique_paths(&self.directories)?;
+
         let mut previous: Option<&str> = None;
-        let mut paths = BTreeSet::new();
+        let mut file_paths = BTreeSet::new();
         for file in &self.files {
             file.validate()?;
-            if !paths.insert(file.path.as_str()) {
+            if !file_paths.insert(file.path.as_str()) {
                 return Err(BackupError::DuplicatePath(file.path.clone()));
             }
             if previous.is_some_and(|value| value >= file.path.as_str()) {
                 return Err(BackupError::UnsortedManifest);
             }
             previous = Some(file.path.as_str());
+        }
+
+        if let Some(path) = self
+            .directories
+            .iter()
+            .find(|path| file_paths.contains(path.as_str()))
+        {
+            return Err(BackupError::PathKindConflict(path.clone()));
         }
         Ok(())
     }
@@ -104,6 +118,7 @@ impl BackupManifest {
 pub struct BackupVerificationReport {
     pub workspace_id: WorkspaceId,
     pub workspace_schema_version: u32,
+    pub directories_checked: usize,
     pub files_checked: usize,
     pub total_bytes: u64,
 }
@@ -113,6 +128,7 @@ pub struct RestoreReport {
     pub workspace_id: WorkspaceId,
     pub workspace_schema_version: u32,
     pub target: String,
+    pub directories_restored: usize,
     pub files_restored: usize,
     pub total_bytes: u64,
 }
@@ -260,6 +276,22 @@ where
     }
 }
 
+fn validate_sorted_unique_paths(paths: &[String]) -> Result<(), BackupError> {
+    let mut previous: Option<&str> = None;
+    let mut unique = BTreeSet::new();
+    for path in paths {
+        validate_relative_path(path)?;
+        if !unique.insert(path.as_str()) {
+            return Err(BackupError::DuplicatePath(path.clone()));
+        }
+        if previous.is_some_and(|value| value >= path.as_str()) {
+            return Err(BackupError::UnsortedManifest);
+        }
+        previous = Some(path.as_str());
+    }
+    Ok(())
+}
+
 fn validate_relative_path(path: &str) -> Result<(), BackupError> {
     if path.is_empty()
         || path.len() > 2_048
@@ -288,6 +320,8 @@ pub enum BackupError {
     DuplicatePath(String),
     #[error("backup manifest paths are not strictly sorted")]
     UnsortedManifest,
+    #[error("backup path is declared as both file and directory: {0}")]
+    PathKindConflict(String),
     #[error("unsafe backup path: {0}")]
     UnsafePath(String),
     #[error("invalid SHA-256 digest for backup path: {0}")]
@@ -335,7 +369,7 @@ mod tests {
     use crate::{BuildProfile, WorkspaceManifest, WorkspaceProfile};
 
     #[test]
-    fn manifest_sorts_files_and_rejects_traversal() {
+    fn manifest_sorts_layout_and_rejects_traversal() {
         let workspace = WorkspaceManifest::new(
             "Relationships",
             WorkspaceProfile::Personal,
@@ -350,9 +384,11 @@ mod tests {
             BackupFile::new(".liaison/workspace.yaml", 2, &digest)
                 .unwrap_or_else(|error| unreachable!("unexpected backup error: {error}")),
         ];
-        let manifest = BackupManifest::new(&workspace, files)
+        let directories = vec!["people".to_owned(), ".liaison".to_owned()];
+        let manifest = BackupManifest::new(&workspace, directories, files)
             .unwrap_or_else(|error| unreachable!("unexpected backup error: {error}"));
         assert_eq!(manifest.format, BACKUP_FORMAT);
+        assert_eq!(manifest.directories[0], ".liaison");
         assert_eq!(manifest.files[0].path, ".liaison/workspace.yaml");
         assert!(BackupFile::new("../secret", 1, digest).is_err());
     }
