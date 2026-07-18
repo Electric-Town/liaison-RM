@@ -1119,6 +1119,10 @@ p {
     display: none;
   }
 
+  .desk-scene {
+    overflow-x: clip;
+  }
+
   .hero {
     padding-top: 3.5rem;
   }
