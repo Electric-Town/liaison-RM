@@ -1,0 +1,5 @@
+mod persistence;
+
+pub use persistence::{
+    LoadProfile, ProfilePersistenceError, ProfileRecord, ProfileRepository, SaveProfile,
+};
