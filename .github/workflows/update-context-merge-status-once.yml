@@ -1,0 +1,51 @@
+name: Update context merge status once
+
+on:
+  push:
+    branches: [docs/context-post-merge-status]
+    paths:
+      - ".github/workflows/update-context-merge-status-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: docs/context-post-merge-status
+          fetch-depth: 0
+      - name: Replace merged pull-request status
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          readme = Path('README.md')
+          text = readme.read_text(encoding='utf-8')
+          old = '- PR #18 is the repository-context and agent-handoff change containing this README and `PROJECT_CONTEXT.md`.'
+          new = '- PR #18 merged the repository README, complete project context, agent entry points, and metadata contract into `main`.'
+          if old not in text:
+              raise SystemExit('README PR #18 status was not found')
+          readme.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          context = Path('PROJECT_CONTEXT.md')
+          text = context.read_text(encoding='utf-8')
+          old = '| 18 | Repository README, complete project context, agent entry points, and About metadata contract | Current documentation pull request |'
+          new = '| 18 | Repository README, complete project context, agent entry points, and About metadata contract | Merged on 2026-07-18; the default branch now carries this handoff |'
+          if old not in text:
+              raise SystemExit('PROJECT_CONTEXT PR #18 status was not found')
+          context.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          rm .github/workflows/update-context-merge-status-once.yml
+      - name: Commit status correction
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "docs: mark repository context as merged"
+          git push origin HEAD:docs/context-post-merge-status
