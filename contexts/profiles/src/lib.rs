@@ -673,7 +673,7 @@ mod tests {
 
         let purpose = PurposeDefinition::new(
             {
-                let parsed = PurposeId::parse("meeting_brief");
+                let parsed = PurposeId::parse("meeting-brief");
                 assert!(parsed.is_ok());
                 let Ok(value) = parsed else {
                     return;
