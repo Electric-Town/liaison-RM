@@ -298,7 +298,7 @@ As of 2026-07-18:
 - `main` includes governance, product and interaction specifications, the Rust Workspace/People/CLI slice, provider-neutral Connections, Topic Pack contracts, purpose-specific readiness, and reason-only Review and Attention runtime foundations;
 - PR #8 merged the native Tauri/macOS alpha and tested review bundles into `main`; public signing, notarisation, clean-Mac UAT, and supported distribution remain closed;
 - PR #20 contains localisation architecture, pseudolocale testing, and human-review gates; its non-source catalogues are not production translations;
-- PR #18 is the repository-context and agent-handoff change containing this README and `PROJECT_CONTEXT.md`.
+- PR #18 merged the repository README, complete project context, agent entry points, and metadata contract into `main`.
 
 Do not assume an open PR has landed in `main`. Read its base, head, changed files, exact-head checks, and stated limitations.
 
