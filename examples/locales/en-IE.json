@@ -1,0 +1,32 @@
+{
+  "schema": "liaison/locale-catalog@1",
+  "locale": "en-IE",
+  "source_locale": "en-IE",
+  "source_revision": 1,
+  "status": "source",
+  "reviewer": null,
+  "reviewed_on": null,
+  "notes": [
+    "Initial source catalogue for contract validation."
+  ],
+  "messages": {
+    "app.name": "Liaison RM",
+    "app.local_only": "Your relationship data stays in the local workspace you select.",
+    "workspace.create": "Create workspace",
+    "workspace.open": "Open workspace",
+    "workspace.validate": "Validate workspace",
+    "workspace.validation_ok": "No workspace problems were found.",
+    "people.title": "People",
+    "people.add": "Add person",
+    "people.name_label": "Name",
+    "people.email_label": "Email address",
+    "people.count": "{count} people",
+    "review.why_now": "Why now",
+    "review.reason.commitment": "One commitment remains open.",
+    "review.reason.upcoming_date": "An important date is approaching.",
+    "review.reason.cadence": "The configured contact cadence is due.",
+    "review.action.snooze": "Snooze",
+    "review.action.pause": "Pause relationship",
+    "error.recovery": "Review the details and try again."
+  }
+}
