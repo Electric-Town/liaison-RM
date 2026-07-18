@@ -1,0 +1,52 @@
+name: Project context
+
+on:
+  pull_request:
+    paths:
+      - "README.md"
+      - "AGENTS.md"
+      - "PROJECT_CONTEXT.md"
+      - "SPEC.md"
+      - "AI_BUILD_INSTRUCTIONS.md"
+      - "CLAUDE.md"
+      - "GEMINI.md"
+      - ".github/copilot-instructions.md"
+      - "docs/repository-metadata.md"
+      - "docs/knowledge/KCS-0005-how-do-i-get-current-project-context.md"
+      - "spec/**"
+      - "scripts/check_repository.py"
+      - "scripts/check_spec.py"
+      - ".github/workflows/project-context.yml"
+  push:
+    branches: [main]
+    paths:
+      - "README.md"
+      - "AGENTS.md"
+      - "PROJECT_CONTEXT.md"
+      - "SPEC.md"
+      - "AI_BUILD_INSTRUCTIONS.md"
+      - "CLAUDE.md"
+      - "GEMINI.md"
+      - ".github/copilot-instructions.md"
+      - "docs/repository-metadata.md"
+      - "docs/knowledge/KCS-0005-how-do-i-get-current-project-context.md"
+      - "spec/**"
+      - "scripts/check_repository.py"
+      - "scripts/check_spec.py"
+      - ".github/workflows/project-context.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  consistency:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check repository context, links, and content policy
+        run: python scripts/check_repository.py
+      - name: Check machine-readable product specification
+        run: python scripts/check_spec.py

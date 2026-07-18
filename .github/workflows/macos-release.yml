@@ -1,0 +1,80 @@
+name: Publish notarized macOS bundle
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: Version without a leading v
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  notarized-bundle:
+    runs-on: macos-14
+    environment: macos-release
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "10.15"
+      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require release credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            test -n "${!name:-}" || { echo "$name is not configured" >&2; exit 1; }
+          done
+      - name: Import Developer ID certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          KEYCHAIN="$RUNNER_TEMP/liaison-signing.keychain-db"
+          CERTIFICATE="$RUNNER_TEMP/liaison-developer-id.p12"
+          printf '%s' "$APPLE_CERTIFICATE" | base64 --decode > "$CERTIFICATE"
+          security create-keychain -p runner "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p runner "$KEYCHAIN"
+          security import "$CERTIFICATE" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN" login.keychain-db
+          security set-key-partition-list -S apple-tool:,apple: -s -k runner "$KEYCHAIN"
+      - name: Install universal build tools
+        run: |
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+          cargo install tauri-cli --version 2.8.4 --locked
+      - name: Build universal application
+        working-directory: apps/desktop
+        run: cargo tauri build --target universal-apple-darwin --bundles app
+      - name: Sign, notarize, staple, and assess
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find target/universal-apple-darwin/release/bundle/macos -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          codesign --force --deep --options runtime --timestamp --sign "$APPLE_SIGNING_IDENTITY" "$APP_PATH"
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+          mkdir -p artifacts/macos
+          DMG="artifacts/macos/Liaison-RM-${{ inputs.release_version }}-universal.dmg"
+          hdiutil create -volname "Liaison RM" -srcfolder "$APP_PATH" -ov -format UDZO "$DMG"
+          codesign --force --timestamp --sign "$APPLE_SIGNING_IDENTITY" "$DMG"
+          xcrun notarytool submit "$DMG" --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+          xcrun stapler staple "$APP_PATH"
+          xcrun stapler staple "$DMG"
+          xcrun stapler validate "$APP_PATH"
+          xcrun stapler validate "$DMG"
+          spctl --assess --type execute --verbose=2 "$APP_PATH"
+          spctl --assess --type open --context context:primary-signature --verbose=2 "$DMG"
+          shasum -a 256 "$DMG" > artifacts/macos/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: liaison-rm-notarized-macos-${{ inputs.release_version }}
+          path: artifacts/macos/
+          if-no-files-found: error
+          retention-days: 30

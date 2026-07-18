@@ -18,13 +18,23 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Topic Pack, field-state, profile-readiness, and Review Policy examples, schemas, validation, and three review screens.
 - Identity and Profiles domain types for Topic Packs, explicit information states, sealed sensitive values, Purpose Definitions, and purpose-specific readiness.
 - Review and Attention reason-only policies, hard suppressions, explainable queue items, and capacity-bounded queue construction.
-- Versioned locale catalogs, an expansion pseudolocale, Unicode and placeholder validation, and human-review gates for Irish, Japanese, and Brazilian Portuguese.
+- Local Tauri desktop alpha for workspace creation, People capture, validation, accessible reflow, and universal macOS review bundles.
+- `PROJECT_CONTEXT.md` as a complete, repository-hosted product and engineering handoff for human and automated contributors.
+- Agent entry points for GitHub Copilot, Claude, and Gemini that defer to the normative repository contract.
+- KCS-0005 covering current-context discovery, source hierarchy, and agent handoff.
+- A version-controlled public About-description and repository-topic recommendation.
+- A project-context workflow that validates repository links/content policy and machine-readable product specifications together.
 
 ### Changed
 
-- The repository README defines Liaison RM as a local-authoritative, open-file relationship manager.
+- The repository README now serves as a detailed public product overview and routes contributors to canonical product, architecture, security, planning, and status sources.
+- `AGENTS.md` now requires branch, exact-head, source-hierarchy, relationship-domain, provider, AI, accessibility, and handoff checks before completion claims.
 - Reason-only review is the personal-workspace default; weighted Review Priority is explicitly queue ordering rather than relationship strength.
 - Review queues preserve factual reasons and do not expose a relationship-strength score.
+
+### Fixed
+
+- Desktop alpha now compiles and lints cleanly across Linux, macOS, and Windows: Tauri command arguments acknowledge required ownership, the default workspace path uses `map_or_else`, and a deterministic Windows `icon.ico` resource is generated for `tauri-build`.
 
 ### Security
 
@@ -34,3 +44,5 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Provider registration remains inert without a purpose-bound grant, and the local adapter claims backup/single-writer modes only.
 - Private assessments and sensitive Topic Pack values require explicit classification, purpose, and sharing grants.
 - Sensitive and secret profile definitions require sealed values in the new domain contract.
+- Desktop alpha compiles no network client, uses a local-only CSP, and separates ad-hoc review artifacts from notarized release artifacts.
+- Agent handoff guidance prohibits private prompt history, personal data, credentials, and unsupported implementation or compliance claims in repository context.
