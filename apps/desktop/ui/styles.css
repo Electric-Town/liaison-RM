@@ -28,6 +28,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; min-width: 320px; min-height: 100%; background: var(--canvas); }
 body { min-height: 100vh; }
 button, input, select { font: inherit; }

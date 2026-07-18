@@ -256,7 +256,8 @@
   byId("person-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!state.workspace) return;
-    const button = event.submitter;
+    const form = event.currentTarget;
+    const button = event.submitter || byId("create-person");
     await withBusy(button, "Saving…", async () => {
       try {
         const person = await invokeValue("create_person", {
@@ -268,7 +269,7 @@
         });
         state.people.push(person);
         state.people.sort((left, right) => left.display_name.localeCompare(right.display_name));
-        event.currentTarget.reset();
+        form.reset();
         renderPeople();
         renderWorkspace();
         status(`Saved ${person.display_name} as a local Markdown profile.`);

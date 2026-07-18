@@ -8,7 +8,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 - One `liaison-application` composition root shared by the CLI and desktop, with typed command results, structured recoverable errors, deterministic runtime ports, and identity-bound workspace sessions.
 - Shared-fixture CLI and Tauri parity for workspace initialise/open/validate and Person create/list, including versioned envelopes, tolerant malformed-sibling reads, and initial Person revision 1.
-- Semantic Person validation, duplicate-identity Health findings, safe workspace-path rejection, actionable human Health output, retryable desktop create/open actions, and automated base/dark text-contrast gates.
+- Semantic Person validation, duplicate-identity Health findings, safe workspace-path rejection, actionable human Health output, retryable desktop create/open actions, native-safe keyboard form submission, correct hidden-state rendering, and automated base/dark text-contrast gates.
 - KCS-0010 and executable evidence for keeping inbound adapters on the same application workflow.
 
 - Accepted working-state decisions for one application composition root, Workspace Session authority, recoverable multi-target commits, workspace key hierarchy and local policy, disposable Directory projection, structurally least-disclosure event readiness, checkpoint/recovery separation, and B0-before-A0 delivery.

@@ -209,10 +209,11 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     page.get_by_role("button", name="Create local workspace").click()
     page.get_by_role("heading", name="Remember useful context without scoring people").wait_for()
     assert page.get_by_role("heading", name="Remember useful context without scoring people").evaluate("el => el === document.activeElement")
+    assert page.locator("#people-workspace-warning").is_hidden()
 
     page.get_by_label("Display name").fill("Alex Murphy")
     page.get_by_label("Email optional").fill("alex@example.test")
-    page.get_by_role("button", name="Save Markdown profile").click()
+    page.get_by_label("Email optional").press("Enter")
     page.get_by_text("Alex Murphy", exact=True).wait_for()
     assert page.get_by_text("alex@example.test", exact=True).count() == 1
     assert page.get_by_text("Revision 1", exact=True).count() == 1
