@@ -5,12 +5,16 @@ on:
     branches: [agent/r2-macos-desktop-alpha]
     paths:
       - ".github/workflows/apply-desktop-generated-assets-once.yml"
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [agent/r1-provider-sdk-v4]
 
 permissions:
   contents: write
 
 jobs:
   generate:
+    if: github.event_name == 'push' || github.head_ref == 'agent/r2-macos-desktop-alpha'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
