@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://electric-town.org/liaison/schemas/locale-catalog.schema.json",
+  "title": "Liaison locale catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "locale",
+    "source_locale",
+    "catalog_version",
+    "status",
+    "messages"
+  ],
+  "properties": {
+    "schema": {
+      "const": "liaison/locale-catalog@1"
+    },
+    "locale": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-[A-Z]{2}|-[0-9]{3})?$|^en-XA$"
+    },
+    "source_locale": {
+      "const": "en-IE"
+    },
+    "catalog_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "status": {
+      "enum": [
+        "source",
+        "test-only",
+        "draft",
+        "human-review-required",
+        "release-ready"
+      ]
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "reviewer": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reviewed_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "messages": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "schema": "liaison/locale-catalog@1",
+  "locale": "en-XA",
+  "source_locale": "en-IE",
+  "catalog_version": 1,
+  "status": "test-only",
+  "review": {
+    "reviewer": "Automated pseudolocale generator",
+    "reviewed_at": "2026-07-18",
+    "notes": "Layout testing only; never shown as a selectable production language."
+  },
+  "messages": {
+    "app.name": "⟦ Lïáïsön RM ——— ⟧",
+    "nav.today": "⟦ Tödáy ——— ⟧",
+    "nav.people": "⟦ Pëöplë ——— ⟧",
+    "nav.events": "⟦ Ëvënts ——— ⟧",
+    "nav.network": "⟦ Nëtwörk ——— ⟧",
+    "nav.settings": "⟦ Sëttïngs ——— ⟧",
+    "action.save": "⟦ Sávë ——— ⟧",
+    "action.cancel": "⟦ Cáncël ——— ⟧",
+    "action.search": "⟦ Sëárch ——— ⟧",
+    "action.snooze": "⟦ Snöözë ——— ⟧",
+    "status.local_workspace": "⟦ Löcál wörkspácë ——— ⟧",
+    "review.why.open_commitment": "⟦ Öpën cömmïtmënt wïth {person_name} ——— ~~~ ⟧",
+    "review.why.birthday": "⟦ Bïrthdáy ïn {day_count} dáys ——— ⟧",
+    "review.no_strength_score": "⟦ Lïáïsön döës nöt cálcülátë rëlátïönshïp strëngth. ——— ~~~~~~~~~~~~~~~~ ⟧",
+    "profile.readiness.missing": "⟦ Mïssïng för {purpose_name}: {field_list} ——— ⟧",
+    "error.workspace_not_found.title": "⟦ Wörkspácë nöt föünd ——— ⟧",
+    "error.workspace_not_found.recovery": "⟦ Chöösë á Lïáïsön wörkspácë földër ör crëátë á nëw önë. ——— ~~~~~~~~~~~~~~~~~~ ⟧"
+  }
+}

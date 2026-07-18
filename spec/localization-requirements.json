@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "status": "draft",
+  "context": "localization",
+  "requirements": [
+    {
+      "id": "LRM-L10N-001",
+      "release": "R2",
+      "priority": "must",
+      "statement": "Every user-facing natural-language string shall use a stable semantic locale key rather than being assembled from untranslated fragments.",
+      "acceptance": "The localization audit finds no unapproved natural-language strings in production UI source and all named placeholders are preserved across catalogs."
+    },
+    {
+      "id": "LRM-L10N-002",
+      "release": "R2",
+      "priority": "must",
+      "statement": "Locale catalogs shall be UTF-8, NFC-normalized, schema-valid, and complete relative to the en-IE source catalog.",
+      "acceptance": "Malformed Unicode, missing keys, extra keys, blank messages, HTML, and placeholder drift fail the localization workflow."
+    },
+    {
+      "id": "LRM-L10N-003",
+      "release": "R2",
+      "priority": "must",
+      "statement": "The interface shall tolerate pseudolocalized expansion, reflow, and language-specific line breaking without clipping, inaccessible focus, or horizontal overflow.",
+      "acceptance": "The en-XA suite passes at 320 and 390 CSS pixels and at 200% zoom for the supported desktop workflows."
+    },
+    {
+      "id": "LRM-L10N-004",
+      "release": "R2",
+      "priority": "must",
+      "statement": "A non-source locale shall not be marked release-ready without named, dated, locale-appropriate human review and accessibility sampling.",
+      "acceptance": "The validator rejects release-ready catalogs without review evidence and release evidence identifies reviewer, scope, screenshots, limitations, and source commit."
+    },
+    {
+      "id": "LRM-L10N-005",
+      "release": "R2",
+      "priority": "must",
+      "statement": "Localized accessibility names, descriptions, live messages, errors, and recovery actions shall communicate the same action and state as visible text.",
+      "acceptance": "A screen-reader sample finds no source-language accessibility text in a release-ready localized workflow."
+    },
+    {
+      "id": "LRM-L10N-006",
+      "release": "R2",
+      "priority": "should",
+      "statement": "Dates, times, names, numbers, lists, units, and currencies shall use locale-aware formatting rather than string concatenation.",
+      "acceptance": "Formatter tests cover en-IE, ga-IE, ja-JP, and pt-BR with no invented date order or decimal convention."
+    },
+    {
+      "id": "LRM-L10N-007",
+      "release": "R6",
+      "priority": "must",
+      "statement": "Plugin locale catalogs shall be namespaced and shall not replace core locale keys without an explicit compatible extension contract.",
+      "acceptance": "Plugin validation rejects an ungranted core-key override and preserves unknown plugin text when a plugin is disabled."
+    },
+    {
+      "id": "LRM-L10N-008",
+      "release": "R2",
+      "priority": "must",
+      "statement": "Public localized metadata shall agree with the visible page language, while local relationship records shall not receive marketing metadata.",
+      "acceptance": "Public-page tests reconcile hreflang, inLanguage, canonical URL, Open Graph, JSON-LD, and visible locale; vault fixtures contain none of that metadata by default."
+    }
+  ],
+  "uat": [
+    {
+      "id": "UAT-LOC-001",
+      "persona": "P-ELDER",
+      "release": "R2",
+      "title": "Use a pseudolocalized workflow without layout loss",
+      "given": "The desktop interface is running with the en-XA test catalog at 390 CSS pixels and 200% zoom.",
+      "when": "The user creates a workspace, opens People, submits a validation error, and returns to the previous field.",
+      "then": "Text wraps without clipping or horizontal overflow, focus remains visible, and every action and error has an accessible name."
+    },
+    {
+      "id": "UAT-LOC-002",
+      "persona": "P-INDIVIDUAL",
+      "release": "R2",
+      "title": "Reject an unreviewed locale release claim",
+      "given": "A ga-IE catalog contains every key but has no named fluent reviewer or review date.",
+      "when": "A maintainer attempts to mark the catalog release-ready.",
+      "then": "Validation fails and identifies the missing human, layout, and accessibility evidence without publishing the locale."
+    },
+    {
+      "id": "UAT-LOC-003",
+      "persona": "P-DEVELOPER",
+      "release": "R6",
+      "title": "Keep plugin locale keys within their namespace",
+      "given": "A plugin catalog defines its own keys and attempts to replace a core Save label.",
+      "when": "The plugin package is validated.",
+      "then": "The namespaced keys are accepted, the core override is rejected, and no canonical profile value is removed."
+    }
+  ]
+}

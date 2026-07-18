@@ -24,6 +24,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - KCS-0005 covering current-context discovery, source hierarchy, and agent handoff.
 - A version-controlled public About-description and repository-topic recommendation.
 - A project-context workflow that validates repository links/content policy and machine-readable product specifications together.
+- Versioned locale-catalog architecture with an `en-IE` source catalogue, `en-XA` expansion pseudolocale, draft Irish, Japanese, and Brazilian Portuguese fixtures, Unicode and placeholder validation, human-review gates, and release-evidence guidance.
 
 ### Changed
 
@@ -31,6 +32,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - `AGENTS.md` now requires branch, exact-head, source-hierarchy, relationship-domain, provider, AI, accessibility, and handoff checks before completion claims.
 - Reason-only review is the personal-workspace default; weighted Review Priority is explicitly queue ordering rather than relationship strength.
 - Review queues preserve factual reasons and do not expose a relationship-strength score.
+- The R2 roadmap now includes locale-catalog, expansion, Unicode, accessible-name, formatting, and named human-review evidence gates.
 
 ### Fixed
 
@@ -46,3 +48,4 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Sensitive and secret profile definitions require sealed values in the new domain contract.
 - Desktop alpha compiles no network client, uses a local-only CSP, and separates ad-hoc review artifacts from notarized release artifacts.
 - Agent handoff guidance prohibits private prompt history, personal data, credentials, and unsupported implementation or compliance claims in repository context.
+- Localization guidance prohibits private workspace data from entering public semantic metadata and does not treat machine-assisted text as human-approved language.
