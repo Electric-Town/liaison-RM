@@ -61,7 +61,7 @@ As of 2026-07-18:
 | `main` | Governance, product and interaction specification, CLI/Markdown slice, Connections, Topic Pack contract, Profiles, reason-only Review runtime, and native Tauri desktop alpha | Implemented on the default branch; pre-alpha with no supported public release |
 | 8 | Native Tauri/macOS alpha and universal review bundles | Merged on 2026-07-18; Developer ID signing, notarisation, clean-Mac UAT, and supported distribution remain closed |
 | 20 | Localisation catalogues, pseudolocale, validation, and human-review gates | Open and ready for review; non-source catalogues are structural/draft fixtures, not approved translations |
-| 18 | Repository README, complete project context, agent entry points, and About metadata contract | Current documentation pull request |
+| 18 | Repository README, complete project context, agent entry points, and About metadata contract | Merged on 2026-07-18; the default branch now carries this handoff |
 
 An open PR is not part of `main`. Inspect its base, head, changed files, exact-head checks, limitations, and evidence before building on it.
 
