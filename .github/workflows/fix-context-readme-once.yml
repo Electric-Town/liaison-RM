@@ -1,0 +1,67 @@
+name: Fix repository context duplication once
+
+on:
+  push:
+    branches: [docs-repository-context]
+    paths:
+      - ".github/workflows/fix-context-readme-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: docs-repository-context
+          fetch-depth: 0
+      - name: Remove duplicated validation block
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('README.md')
+          text = path.read_text(encoding='utf-8')
+          old = '''## Validation
+
+          Run the checks relevant to the changed scope. The standard baseline is:
+
+          ```bash
+          python scripts/check_repository.py
+          python scripts/check_spec.py
+          python scripts/check_architecture.py
+          python scripts/check_providers.py
+          python scripts/check_wit_contract.py
+
+          cargo fmt --all --check
+          cargo check --workspace --all-targets --all-features --locked
+          cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+          cargo test --workspace --all-features --locked
+          ```
+
+          User-interface changes also require browser interaction tests, committed review screens, keyboard checks, responsive overflow checks, and accessibility evidence. Platform claims require the exact platform matrix and install/launch evidence.
+          '''
+          new = '''## Validation
+
+          Run the checks required by the changed scope. The canonical baseline and completion rules are in [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md#26-baseline-validation-commands) and [`AI_BUILD_INSTRUCTIONS.md`](AI_BUILD_INSTRUCTIONS.md).
+
+          Documentation changes run repository policy, specification, content, and link checks. Runtime, UI, provider, plugin, migration, and platform claims require their exact additional suites and exact-head evidence.
+          '''
+          if old not in text:
+              raise SystemExit('expected validation block was not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          rm -f .github/workflows/context-diagnostics.yml
+          rm .github/workflows/fix-context-readme-once.yml
+      - name: Commit repair
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "docs: remove duplicated validation guidance"
+          git push origin HEAD:docs-repository-context
