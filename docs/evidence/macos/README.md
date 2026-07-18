@@ -25,6 +25,8 @@ Review artifacts are committed under:
 - `docs/evidence/macos/screenshots/mobile-people.png`;
 - `docs/evidence/macos/screenshots/dark-workspace.png`.
 
+The separate [installed baseline QA record](installed-baseline-qa-2026-07-18.md) captures the native argument-contract failure and version/build-profile mismatches observed in the pre-P01 installed bundle.
+
 The browser fixture exercises interface behavior with a deterministic fake Tauri command bridge. It does not replace the native Rust, filesystem, package, signature, or clean-machine tests.
 
 ## Installed review observation
