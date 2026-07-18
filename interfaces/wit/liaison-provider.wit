@@ -1,0 +1,55 @@
+package electric-town:liaison-provider@0.1.0;
+
+interface provider-types {
+  record provider-error {
+    code: string,
+    message: string,
+  }
+
+  record object-metadata {
+    key: string,
+    size-bytes: u64,
+    sha256: string,
+  }
+
+  record list-page {
+    objects: list<object-metadata>,
+    next-cursor: option<string>,
+  }
+}
+
+interface object-store {
+  use provider-types.{list-page, object-metadata, provider-error};
+
+  put-immutable: func(
+    key: string,
+    content: list<u8>,
+    expected-sha256: string,
+  ) -> result<object-metadata, provider-error>;
+
+  get: func(key: string) -> result<list<u8>, provider-error>;
+
+  head: func(key: string) -> result<object-metadata, provider-error>;
+
+  list: func(
+    prefix: string,
+    cursor: option<string>,
+    limit: u32,
+  ) -> result<list-page, provider-error>;
+
+  delete-if-permitted: func(
+    key: string,
+    expected-sha256: string,
+  ) -> result<_, provider-error>;
+
+  replace-manifest-if-revision: func(
+    key: string,
+    expected-revision: option<string>,
+    content: list<u8>,
+    expected-sha256: string,
+  ) -> result<string, provider-error>;
+}
+
+world provider {
+  export object-store;
+}

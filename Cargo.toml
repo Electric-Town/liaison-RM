@@ -1,9 +1,13 @@
 [workspace]
 members = [
     "apps/cli",
+    "adapters/object-store-local",
+    "adapters/provider-registry-memory",
     "adapters/vault-markdown",
+    "contexts/connections",
     "contexts/people",
     "contexts/workspace",
+    "crates/liaison-provider-sdk",
     "crates/liaison-shared-kernel",
 ]
 resolver = "2"

@@ -10,7 +10,11 @@ on:
       - "adapters/**"
       - "contexts/**"
       - "crates/**"
+      - "interfaces/**"
+      - "providers/**"
       - "scripts/check_architecture.py"
+      - "scripts/check_providers.py"
+      - "scripts/check_wit_contract.py"
       - ".github/workflows/rust.yml"
   push:
     branches: [main]
@@ -22,7 +26,11 @@ on:
       - "adapters/**"
       - "contexts/**"
       - "crates/**"
+      - "interfaces/**"
+      - "providers/**"
       - "scripts/check_architecture.py"
+      - "scripts/check_providers.py"
+      - "scripts/check_wit_contract.py"
       - ".github/workflows/rust.yml"
 
 permissions:
@@ -39,6 +47,8 @@ jobs:
       - run: python scripts/check_architecture.py
       - run: python scripts/check_repository.py
       - run: python scripts/check_spec.py
+      - run: python scripts/check_providers.py
+      - run: python scripts/check_wit_contract.py
 
   rust:
     name: Rust (${{ matrix.os }})
