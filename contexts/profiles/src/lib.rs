@@ -628,19 +628,17 @@ mod tests {
         let Ok(definition) = definition else {
             return;
         };
+        assert!(FieldValue::new(&definition, InformationState::Known, None, false).is_err());
         assert!(
-            FieldValue::new(&definition, InformationState::Known, None, false).is_err()
+            FieldValue::new(
+                &definition,
+                InformationState::Unknown,
+                Some("email".to_owned()),
+                false
+            )
+            .is_err()
         );
-        assert!(FieldValue::new(
-            &definition,
-            InformationState::Unknown,
-            Some("email".to_owned()),
-            false
-        )
-        .is_err());
-        assert!(
-            FieldValue::new(&definition, InformationState::Declined, None, false).is_ok()
-        );
+        assert!(FieldValue::new(&definition, InformationState::Declined, None, false).is_ok());
     }
 
     #[test]
@@ -674,9 +672,14 @@ mod tests {
         profile.set(channel_value);
 
         let purpose = PurposeDefinition::new(
-            PurposeId::parse("meeting_brief").unwrap_or_else(|error| {
-                unreachable!("fixture purpose ID should be valid: {error}")
-            }),
+            {
+                let parsed = PurposeId::parse("meeting_brief");
+                assert!(parsed.is_ok());
+                let Ok(value) = parsed else {
+                    return;
+                };
+                value
+            },
             1,
             BTreeSet::from([role_id.clone(), channel_id]),
             BTreeSet::from([InformationState::Verified]),
@@ -700,9 +703,14 @@ mod tests {
             return;
         };
         let pack = TopicPack::new(
-            TopicPackId::parse("pets").unwrap_or_else(|error| {
-                unreachable!("fixture pack ID should be valid: {error}")
-            }),
+            {
+                let parsed = TopicPackId::parse("pets");
+                assert!(parsed.is_ok());
+                let Ok(value) = parsed else {
+                    return;
+                };
+                value
+            },
             1,
             "Pets",
             vec![first.clone(), first],

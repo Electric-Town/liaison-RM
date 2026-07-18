@@ -61,12 +61,9 @@ pub enum Suppression {
 
 impl Suppression {
     #[must_use]
-    pub const fn is_active(&self, as_of: NaiveDate) -> bool {
+    pub fn is_active(&self, as_of: NaiveDate) -> bool {
         match self {
-            Self::Archived
-            | Self::DoNotContact
-            | Self::RelationshipEnded
-            | Self::Excluded => true,
+            Self::Archived | Self::DoNotContact | Self::RelationshipEnded | Self::Excluded => true,
             Self::PausedUntil(date) | Self::SnoozedUntil(date) => *date >= as_of,
         }
     }
@@ -205,11 +202,7 @@ impl BuildReasonOnlyQueue {
             .into_iter()
             .filter_map(|candidate| self.select(candidate, as_of))
             .collect::<Vec<_>>();
-        selected.sort_by(|left, right| {
-            left.0
-                .cmp(&right.0)
-                .then_with(|| left.1.cmp(&right.1))
-        });
+        selected.sort_by(|left, right| left.0.cmp(&right.0).then_with(|| left.1.cmp(&right.1)));
         selected.truncate(self.policy.daily_capacity());
         ReviewQueue {
             policy_id: self.policy.id().clone(),
@@ -334,19 +327,15 @@ mod tests {
         let future_pause = ReviewCandidate::new(
             PersonId::new(),
             BTreeSet::from([ReviewReason::UpcomingImportantDate]),
-            vec![Suppression::PausedUntil(
-                date(2026, 7, 25).unwrap_or(as_of),
-            )],
+            vec![Suppression::PausedUntil(date(2026, 7, 25).unwrap_or(as_of))],
         );
         let policy = policy(5);
         assert!(policy.is_ok());
         let Ok(policy) = policy else {
             return;
         };
-        let queue = BuildReasonOnlyQueue::new(policy).execute(
-            vec![active.clone(), archived, future_pause],
-            as_of,
-        );
+        let queue = BuildReasonOnlyQueue::new(policy)
+            .execute(vec![active.clone(), archived, future_pause], as_of);
         assert_eq!(queue.items.len(), 1);
         assert_eq!(queue.items[0].person_id, active.person_id());
     }

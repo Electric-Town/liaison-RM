@@ -370,6 +370,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "liaison-profiles"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "liaison-review-attention"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "liaison-shared-kernel",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "liaison-shared-kernel"
 version = "0.1.0"
 dependencies = [
