@@ -1,0 +1,448 @@
+zation without producing guilt or overload.
++
++Requirements:
++
++- capture an interaction in about 30 seconds;
++- show why a person is in a queue;
++- remember unfinished form state;
++- return the user to the exact place after interruption;
++- permit small capacity-limited review batches;
++- avoid a permanent red “overdue” debt counter by default;
++- allow cadences to be disabled;
++- use plain action language;
++- provide comfortable and compact density;
++- support reduced motion and low-stimulation mode;
++- let users hide low-priority sections;
++- offer one action at a time in guided review;
++- make skip, snooze, pause, archive, and do-not-contact first-class valid actions;
++- distinguish reminders from obligations;
++- preserve a searchable record so the user does not need to rely on working memory;
++- avoid gamification based on number of people contacted.
++
++The product should help the user act according to their values and capacity. It should not optimize for maximum interaction volume.
++
++---
++
++## 12. Privacy and safety boundaries
++
++- Sensitive Topic Packs are private or sealed by default.
++- A relationship assessment belongs to the authoring scope, not to the person being assessed.
++- Shared workspaces receive only explicitly shared fields and records.
++- AI tools receive only selected fields after policy evaluation.
++- Files and URLs are not fetched or transmitted without permission.
++- “Unknown,” “declined,” and “not applicable” remain distinct.
++- Health-adjacent, dietary, family, access, and travel data support purpose and retention rules.
++- Review scores and formulas are local, inspectable, and exportable.
++- Deleting the disposable index does not delete scores, policy definitions, or canonical evidence.
++- Relationship-review history may be retained privately and excluded from subject-facing exports where lawful and configured.
++
++---
++
++## 13. Bounded contexts
++
++### Identity and Profiles
++
++Owns Person identity, contact channels, Topic Pack assignments, field values, provenance, photos, and profile templates.
++
++### Organizations and Groups
++
++Owns Organizations, Groups, Households, memberships, departments, locations, and organization hierarchy.
++
++### Relationships
++
++Owns relationship edges, type definitions, relationship intent, boundaries, manual assessment snapshots, and graph queries.
++
++### Interactions and Commitments
++
++Owns interactions, communication logs, tasks, commitments, reminders, and next steps.
++
++### Events and Calendar
++
++Owns events, attendance, calendar source links, recurring occurrences, and event-specific readiness.
++
++### Knowledge and Resources
++
++Owns notes, files, URLs, attachments, backlinks, resource metadata, and safe previews.
++
++### Review and Attention
++
++Owns review policies, cadence evaluation, review-priority calculation, profile readiness, queues, review sessions, snoozes, and explanation generation.
++
++### Customization
++
++Owns Topic Pack definitions, field schemas, profile layouts, saved views, formula definitions, and plugin contributions.
++
++No connector or UI surface may calculate relationship status independently from the Review and Attention application services.
++
++---
++
++## 14. Example machine-readable policy
++
++```yaml
++schema: liaison/review-policy@1
++id: personal-balanced
++name: Personal balanced review
++mode: weighted
++scope:
++  entity_types: [person]
++  exclude_states: [archived, do_not_contact]
++capacity:
++  daily_maximum: 5
++  weekly_maximum: 20
++components:
++  - id: cadence
++    weight: 0.30
++    curve: cadence_ratio
++  - id: manual_importance
++    weight: 0.20
++    tier_values:
++      core: 100
++      active: 75
++      warm: 50
++      loose: 25
++  - id: open_commitments
++    weight: 0.20
++  - id: upcoming_dates
++    weight: 0.10
++    window_days: 30
++  - id: stale_required_context
++    weight: 0.10
++    readiness_purpose: general_relationship_review
++  - id: manual_boost
++    weight: 0.10
++explanations: required
++allow_hidden_components: false
++```
++
++---
++
++## 15. Core acceptance cases
++
++### UAT-R01 — Sparse imported contact
++
++Given a phone-imported person containing only name and phone, Liaison shows a sparse-profile review reason without marking the relationship weak. The user may assign a group, mark unknown fields, or dismiss the review.
++
++### UAT-R02 — Close low-frequency friend
++
++Given a core friend with a yearly cadence and a meaningful interaction six months ago, Liaison does not flag the relationship overdue merely because another user’s default monthly cadence exists.
++
++### UAT-R03 — Explainable priority
++
++Given a person with an overdue cadence, birthday in ten days, and one open promise, the review card lists each component, formula version, and contribution. Changing the birthday weight updates the preview before saving.
++
++### UAT-R04 — No universal completeness pressure
++
++Given a friend with no travel pack enabled, the missing seat preference does not reduce general profile readiness or raise review priority.
++
++### UAT-R05 — Group and company filtering
++
++Given people with multiple dated organization memberships, a query for current Dublin employees at Acme returns only active Dublin memberships and preserves historical roles for as-of queries.
++
++### UAT-R06 — Connected calendar and file
++
++Given a calendar invitation and local briefing file linked to a person, both appear in the person timeline and resource tab. Removing the calendar connector preserves the local link and provenance without deleting the briefing.
++
++### UAT-R07 — Neurodivergent low-capacity day
++
++Given a user who selects low social capacity, the daily review shows no more than the configured number, explains the choices, and permits snoozing the whole queue without creating a red overdue backlog.
++
++### UAT-R08 — Private relationship assessment
++
++Given a private trust/closeness snapshot in an EA overlay, another workspace member and subject-facing export cannot retrieve or infer it through search, graph, API, MCP, export, or counts.
++
++### UAT-R09 — Monthly review
++
++Given a month of interactions, Liaison produces a Markdown review showing contacted people, cadence mismatches, sparse profiles, open commitments, upcoming dates, and decisions. The review records the policy version used.
++
++### UAT-R10 — Manual archive
++
++Given an inactive relationship, archiving records reason and date, suppresses maintenance prompts, preserves history, and permits later restoration without changing the stable entity ID.
++
++---
++
++## 16. Recommended release sequence
++
++### Slice 1 — Relationship memory core
++
++- people;
++- organizations;
++- groups;
++- relationships;
++- notes;
++- interactions;
++- reminders;
++- important dates;
++- static fields and Markdown profiles;
++- quick capture;
++- basic search/filter.
++
++### Slice 2 — Review and attention
++
++- relationship intent;
++- cadence;
++- reason-only queue;
++- monthly review;
++- open commitments;
++- sparse/stale profile views;
++- no-guilt capacity controls.
++
++### Slice 3 — Topic Packs and context readiness
++
++- built-in packs;
++- custom fields;
++- field states and provenance;
++- context-specific readiness;
++- profile layout editor;
++- saved views.
++
++### Slice 4 — Resources, organizations, and graph
++
++- local files and URLs;
++- calendar references;
++- company and membership history;
++- dynamic groups;
++- accessible graph/table parity.
++
++### Slice 5 — Weighted policies and plugins
++
++- weighted Review Priority;
++- formula editor and simulation;
++- plugin-supplied Topic Packs;
++- imported policy templates;
++- conformance tests.
++
++The weighted engine should not precede the reason-only review experience. Users must first be able to understand and trust why Liaison surfaces a person.
+diff --git a/docs/product/roadmap.md b/docs/product/roadmap.md
+index e33bcac..20f2200 100644
+--- a/docs/product/roadmap.md
++++ b/docs/product/roadmap.md
+@@ -15,7 +15,8 @@ Exit conditions:
+ Exit conditions:
+ 
+ - workspace creation, validation, rebuild, migration, and recovery;
+-- people and relationship records;
++- people, organizations, groups, memberships, and relationship records;
++- relationship intent and reason-only review queues;
+ - notes, interactions, reminders, and important dates;
+ - provider capability registry and local object-store adapter;
+ - CLI JSON contract and deterministic exit codes;
+@@ -27,7 +28,7 @@ Exit conditions:
+ 
+ - Tauri desktop application on Linux, macOS, and Windows;
+ - accessible list, table, profile, timeline, and graph alternatives;
+-- configurable profile and dashboard;
++- Topic Packs, explicit field states, purpose-specific readiness, and configurable profile/dashboard;
+ - Airgap packages;
+ - signed release evidence.
+ 
+@@ -73,4 +74,5 @@ Exit conditions:
+ - WASI plugin host and SDK;
+ - importers for established personal CRMs;
+ - performance, accessibility, security, recovery, migration, and support gates;
+-- stable release policy.
++- stable release policy;
++- weighted Review Priority only after reason-only queues have completed observed UAT.
+diff --git a/examples/configuration/topic-pack-and-review-policy.yaml b/examples/configuration/topic-pack-and-review-policy.yaml
+new file mode 100644
+index 0000000..d8208b5
+--- /dev/null
++++ b/examples/configuration/topic-pack-and-review-policy.yaml
+@@ -0,0 +1,196 @@
++schema: liaison/profile-configuration@1
++profile_templates:
++- id: personal-contact
++  label: Personal contact
++  default_topic_packs:
++  - identity.communication
++  - important-dates
++  - interests
++  - family-household
++  - pets
++  optional_topic_packs:
++  - food-hospitality
++  - travel
++  - favorites-gifts
++  - professional
++- id: executive-contact
++  label: Executive relationship
++  default_topic_packs:
++  - identity.communication
++  - professional
++  - executive-briefing
++  - important-dates
++  - travel
++  - food-hospitality
++  - resources
++topic_packs:
++- id: pets
++  label: Pets
++  fields:
++  - id: pets.names
++    label: Pet names
++    type: entity_reference_list
++    target_entity_type: household_pet
++    field_state: required
++    stale_after: null
++  - id: pets.notes
++    label: Pet context
++    type: markdown
++    classification: private
++- id: travel
++  label: Travel preferences
++  fields:
++  - id: travel.home_airport
++    label: Home airport
++    type: short_text
++  - id: travel.seat_preference
++    label: Seat preference
++    type: enum
++    options:
++    - window
++    - aisle
++    - middle
++    - no_preference
++  - id: travel.hotel_preferences
++    label: Hotel preferences
++    type: markdown
++  - id: travel.accessibility
++    label: Travel accessibility requirements
++    type: markdown
++    classification: sensitive
++    sealed_by_default: true
++- id: favorites-gifts
++  label: Favorites and gifts
++  fields:
++  - id: favorites.foods
++    label: Favorite foods
++    type: list
++  - id: favorites.books
++    label: Favorite books
++    type: list
++  - id: gifts.ideas
++    label: Gift ideas
++    type: resource_reference_list
++  - id: gifts.avoid
++    label: Avoid buying
++    type: markdown
++- id: identity.communication
++  label: Identity and communication
++  fields:
++  - id: identity.preferred_name
++    label: Preferred name
++    type: short_text
++  - id: communication.preferred_channel
++    label: Preferred channel
++    type: enum
++    options:
++    - email
++    - phone
++    - message
++    - in_person
++    - other
++- id: important-dates
++  label: Important dates
++  fields:
++  - id: dates.birthday
++    label: Birthday
++    type: partial_date
++  - id: dates.review
++    label: Review date
++    type: date
++- id: interests
++  label: Interests and life context
++  fields:
++  - id: interests.topics
++    label: Interests
++    type: list
++  - id: interests.last_meaningful_topic
++    label: Last meaningful topic
++    type: markdown
++- id: family-household
++  label: Family and household
++  fields:
++  - id: family.household
++    label: Household
++    type: entity_reference
++  - id: family.context
++    label: Family context
++    type: markdown
++    classification: private
++- id: food-hospitality
++  label: Food and hospitality
++  fields:
++  - id: food.coverage_state
++    label: Catering coverage state
++    type: status
++  - id: food.operational_instruction
++    label: Operational catering instruction
++    type: markdown
++    classification: sensitive
++    sealed_by_default: true
++- id: professional
++  label: Professional context
++  fields:
++  - id: professional.organization
++    label: Organization
++    type: entity_reference
++  - id: professional.role
++    label: Current role
++    type: short_text
++- id: executive-briefing
++  label: Executive-assistant briefing
++  fields:
++  - id: briefing.summary
++    label: Briefing summary
++    type: markdown
++    classification: private
++  - id: briefing.open_commitments
++    label: Open commitments
++    type: entity_reference_list
++- id: resources
++  label: Resources
++  fields:
++  - id: resources.links
++    label: Linked resources
++    type: resource_reference_list
++field_states:
++  allowed:
++  - known
++  - verified
++  - unverified
++  - unknown
++  - not_applicable
++  - declined
++  - stale
++  - conflicting
++  - needs_clarification
++  - derived
++review_policies:
++- id: personal-reason-only
++  name: Calm daily review
++  mode: reason_only
++  daily_capacity: 5
++  reasons:
++  - overdue_relative_to_own_cadence
++  - open_commitment
++  - upcoming_important_date
++  - selected_profile_readiness_gap
++  - manual_pin
++  suppress_when:
++  - archived
++  - do_not_contact
++  - paused
++  - snoozed
++- id: executive-weighted
++  name: Executive relationship operations
++  mode: weighted
++  components:
++    cadence_status: 0.25
++    manual_importance: 0.2
++    open_commitments: 0.25
++    upcoming_dates: 0.1
++    meeting_or_event_proximity: 0.1
++    briefing_readiness_gap: 0.1
++  explanations_required: true
++  formula_editable: true
++  hidden_components_allowed: false
+diff --git a/schemas/profile-configuration.schema.json b/schemas/profile-configuration.schema.json
+new 

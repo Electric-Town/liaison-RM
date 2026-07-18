@@ -1,0 +1,369 @@
+emain readable
++  owner: Identity and Profiles
++  acceptance_summary: Typed profile packs use stable IDs and preserve unknown definitions
++    and values.
++- id: profiles.field_states
++  name: Explicit field states and provenance
++  domain: Identity and Profiles
++  target_release: R2
++  default_state: enabled
++  policy_gate: profile-admin
++  dependencies:
++  - profiles.topic_packs
++  kill_switch: Makes field metadata read-only
++  owner: Identity and Profiles
++  acceptance_summary: Known, verified, unknown, declined, not-applicable, stale, conflicting,
++    and derived states round-trip.
++- id: profiles.readiness
++  name: Purpose-specific profile readiness
++  domain: Identity and Profiles
++  target_release: R2
++  default_state: enabled
++  policy_gate: none
++  dependencies:
++  - profiles.field_states
++  kill_switch: Hides readiness output; never rewrites profile values
++  owner: Review and Attention
++  acceptance_summary: Readiness is calculated for a named task and never shown as
++    universal completeness.
++- id: organizations.groups
++  name: Organizations, groups, households, and memberships
++  domain: Organizations and Groups
++  target_release: R1
++  default_state: enabled
++  policy_gate: directory-admin
++  dependencies:
++  - core.open_file_store
++  kill_switch: Makes directory imports read-only while local entities remain available
++  owner: Organizations and Groups
++  acceptance_summary: Distinct entity types and dated memberships support personal,
++    family, and workplace models.
++- id: resources.core
++  name: First-class Resources and backlinks
++  domain: Knowledge and Resources
++  target_release: R2
++  default_state: enabled
++  policy_gate: resource-admin
++  dependencies:
++  - core.open_file_store
++  kill_switch: Disables new external metadata operations; local links remain readable
++  owner: Knowledge and Resources
++  acceptance_summary: Files, URLs, calendar and email references have portable identities,
++    backlinks, and permissioned metadata.
++- id: review.sessions
++  name: Capacity-bounded daily and monthly review
++  domain: Review and Attention
++  target_release: R2
++  default_state: enabled
++  policy_gate: none
++  dependencies:
++  - review.reason_only
++  - review.explanations
++  kill_switch: Pauses review sessions without changing relationship facts
++  owner: Review and Attention
++  acceptance_summary: Small review batches recover after interruption and monthly
++    decisions are written to Markdown.
++- id: review.weighted
++  name: Transparent weighted Review Priority
++  domain: Review and Attention
++  target_release: R6
++  default_state: allowlist
++  policy_gate: review-admin
++  dependencies:
++  - review.reason_only
++  - review.explanations
++  - profiles.readiness
++  kill_switch: Falls back to reason-only mode
++  owner: Review and Attention
++  acceptance_summary: Opt-in weighted ordering exposes every component, weight, suppression,
++    explanation, and policy version.
++- id: review.guardrails
++  name: Review and assessment safety guardrails
++  domain: Review and Attention
++  target_release: R1
++  default_state: enabled
++  policy_gate: privacy-admin
++  dependencies:
++  - review.reason_only
++  kill_switch: Disables review calculation if a prohibited scope is configured
++  owner: Privacy and Safety
++  acceptance_summary: The system rejects human-value claims, employee ranking, social-credit
++    uses, and automatic outreach.
++- id: customization.portability
++  name: Profile and review configuration portability
++  domain: Customization
++  target_release: R2
++  default_state: enabled
++  policy_gate: profile-admin
++  dependencies:
++  - profiles.topic_packs
++  - review.reason_only
++  kill_switch: Disables import mutation while validation and export remain available
++  owner: Customization
++  acceptance_summary: Definitions export and dry-run import in documented open formats
++    without secret values.
++- id: accessibility.semantic_alternatives
++  name: Semantic alternatives for graph and assessment visuals
++  domain: Accessibility
++  target_release: R2
++  default_state: enabled
++  policy_gate: none
++  dependencies:
++  - platform.tauri_desktop
++  kill_switch: Disables visual-only mode and leaves table/tree mode active
++  owner: UX and Accessibility
++  acceptance_summary: Every graph, radar, and weighted explanation has equivalent
++    semantic content and keyboard actions.
+diff --git a/spec/implementation-plan.yaml b/spec/implementation-plan.yaml
+index 6f6724f..aef9bd4 100644
+--- a/spec/implementation-plan.yaml
++++ b/spec/implementation-plan.yaml
+@@ -27,6 +27,7 @@ milestones:
+   - TASK-0108
+   - TASK-0109
+   - TASK-0110
++  - TASK-0111
+ - id: M2
+   name: Headless relationship core
+   release: R1
+@@ -37,6 +38,7 @@ milestones:
+   - TASK-0205
+   - TASK-0206
+   - TASK-0207
++  - TASK-0202
+ - id: M3
+   name: Desktop and extended relationship core
+   release: R2
+@@ -96,6 +98,7 @@ milestones:
+   - TASK-0703
+   - TASK-0704
+   - TASK-0705
++  - TASK-0706
+ tasks:
+ - id: TASK-0001
+   title: Create public repository and governance
+@@ -1363,3 +1366,66 @@ tasks:
+   - secret fixture scan
+   - round-trip test
+   status: not_started
++- id: TASK-0111
++  title: Relationship intent and reason-only review domain slice
++  milestone: M1
++  dependencies:
++  - TASK-0101
++  - TASK-0102
++  requirements:
++  - REQ-165
++  - REQ-166
++  - REQ-167
++  - REQ-168
++  - REQ-169
++  - REQ-182
++  feature_gates:
++  - relationships.intent
++  - review.reason_only
++  - review.explanations
++  - review.suppressions
++  - review.guardrails
++  uat:
++  - UAT-093
++  - UAT-094
++  - UAT-099
++  deliverables:
++  - relationship intent aggregate
++  - reason-only policy
++  - source-linked explanation contract
++  - hard suppressions
++  - KCS-0005
++  required_checks:
++  - cargo test
++  - cargo clippy
++  - policy guardrail tests
++  - open-file round trip
++  status: not_started
++- id: TASK-0706
++  title: Transparent weighted Review Priority and policy simulation
++  milestone: M7
++  dependencies:
++  - TASK-0205
++  requirements:
++  - REQ-181
++  - REQ-182
++  - REQ-183
++  feature_gates:
++  - review.weighted
++  - review.guardrails
++  - customization.portability
++  uat:
++  - UAT-099
++  - UAT-103
++  deliverables:
++  - weighted policy parser
++  - normalization functions
++  - simulation diff
++  - component explanations
++  - historical policy version
++  required_checks:
++  - property tests
++  - no-hidden-component test
++  - employment-scope rejection
++  - accessibility review
++  status: not_started
+diff --git a/spec/requirements.json b/spec/requirements.json
+index 3011e60..760f661 100644
+--- a/spec/requirements.json
++++ b/spec/requirements.json
+@@ -2344,7 +2344,7 @@
+   {
+     "id": "REQ-142",
+     "domain": "Sharing & collaboration",
+-    "title": "Self-service contribution of a person’s own information",
++    "title": "Self-service contribution of a person\u2019s own information",
+     "description": "A person can submit or update only the fields requested for their own profile, including contact details, dietary requirements, preferences, important dates, and consent choices, without receiving general workspace access.",
+     "priority": "Must",
+     "target_release": "R4",
+@@ -2594,7 +2594,7 @@
+     "feature_gate": "sharing.workspaces",
+     "acceptance_criteria": "A restore to a clean device reconstructs current records, roles, audit verification state, and pending conflicts; secrets require designated recovery material; restore never silently re-authorizes revoked members.",
+     "data_class": "Highly sensitive",
+-    "rationale": "A shared local system needs a recovery model beyond copying one user’s visible Markdown files."
++    "rationale": "A shared local system needs a recovery model beyond copying one user\u2019s visible Markdown files."
+   },
+   {
+     "id": "REQ-157",
+@@ -2730,5 +2730,332 @@
+     "acceptance_criteria": "A settings export validates against the schema and contains no credential, token, private key, or session cookie; import previews missing secrets and capability mismatches before creating a disabled connection.",
+     "data_class": "Confidential",
+     "rationale": "Portable settings make providers replaceable while preventing backups and support bundles from leaking credentials."
++  },
++  {
++    "id": "REQ-165",
++    "domain": "Review & Attention",
++    "title": "Separate relationship concepts",
++    "description": "Relationship intent, relationship evidence, maintenance status, profile readiness, and Review Priority are separate domain concepts.",
++    "priority": "Must",
++    "target_release": "R1",
++    "personas": [
++      "Personal User",
++      "Executive Assistant",
++      "CRM Administrator"
++    ],
++    "feature_gate": "review.reason_only",
++    "acceptance_criteria": "Given the same person, the system can store manual intent, list factual evidence, calculate maintenance status, report purpose readiness, and order a review queue without writing one value over another.",
++    "data_class": "Private",
++    "rationale": "Prevents message volume or sparse data from being treated as relationship quality."
++  },
++  {
++    "id": "REQ-166",
++    "domain": "Review & Attention",
++    "title": "Reason-only personal default",
++    "description": "Personal workspaces default to a bounded reason-only review queue with no numeric relationship score.",
++    "priority": "Must",
++    "target_release": "R1",
++    "personas": [
++      "Personal User",
++      "Family Organizer"
++    ],
++    "feature_gate": "review.reason_only",
++    "acceptance_criteria": "A new personal workspace shows source-linked reasons, respects the configured capacity, and displays no unexplained numeric score.",
++    "data_class": "Private",
++    "rationale": "Supports attention without guilt or false precision."
++  },
++  {
++    "id": "REQ-167",
++    "domain": "Review & Attention",
++    "title": "Source-linked explanations",
++    "description": "Every surfaced review item identifies its factual reasons, source record IDs, policy version, and available actions.",
++    "priority": "Must",
++    "target_release": "R1",
++    "personas": [
++      "Personal User",
++      "Executive Assistant"
++    ],
++    "feature_gate": "review.explanations",
++    "acceptance_criteria": "Removing or changing a source fact deterministically updates the explanation after rebuild; the UI cannot invent a reason.",
++    "data_class": "Private",
++    "rationale": "Makes review queues auditable and understandable."
++  },
++  {
++    "id": "REQ-168",
++    "domain": "Relationships",
++    "title": "Manual relationship intent",
++    "description": "Users can record relationship type, tier, desired cadence, boundaries, desired future state, pause, do-not-contact, and review date.",
++    "priority": "Must",
++    "target_release": "R1",
++    "personas": [
++      "Personal User",
++      "Networking Professional",
++      "Executive Assistant"
++    ],
++    "feature_gate": "relationships.intent",
++    "acceptance_criteria": "Intent values round-trip through open files and remain separate from interactions and imported communication metadata.",
++    "data_class": "Private",
++    "rationale": "Relationship goals must remain user-authored."
++  },
++  {
++    "id": "REQ-169",
++    "domain": "Relationships",
++    "title": "Hard review suppressions",
++    "description": "Archived, ended, do-not-contact, paused, snoozed, and policy-excluded states override every review score.",
++    "priority": "Must",
++    "target_release": "R1",
++    "personas": [
++      "Personal User",
++      "Privacy Administrator"
++    ],
++    "feature_gate": "review.suppressions",
++    "acceptance_criteria": "A suppressed relationship does not enter the active queue even with maximum weighted inputs; the suppression reason is visible to the owner.",
++    "data_class": "Private",
++    "rationale": "Protects boundaries and prevents automation pressure."
++  },
++  {
++    "id": "REQ-170",
++    "domain": "Identity & Profiles",
++    "title": "Versioned Topic Packs",
++    "description": "Profiles can enable versioned reusable Topic Packs globally, by template, group, organization, person, purpose, or plugin.",
++    "priority": "Must",
++    "target_release": "R2",
++    "personas": [
++      "CRM Administrator",
++      "Executive Assistant",
++      "Plugin Developer"
++    ],
++    "feature_gate": "profiles.topic_packs",
++    "acceptance_criteria": "Definitions use stable IDs, unknown extensions survive round trips, and disabling a pack does not silently delete stored values.",
++    "data_class": "Private",
++    "rationale": "Supports different contexts without one enormous fixed form."
++  },
++  {
++    "id": "REQ-171",
++    "domain": "Identity & Profiles",
++    "title": "Typed field definitions",
++    "description": "Topic Pack fields support documented types, classifications, authority, staleness, readiness purposes, indexing, and role restrictions.",
++    "priority": "Must",
++    "target_release": "R2",
++    "personas": [
++      "CRM Administrator",
++      "Plugin Developer"
++    ],
++    "feature_gate": "profiles.topic_packs",
++    "acceptance_criteria": "The schema validator rejects duplicate IDs, incompatible secret declarations, invalid types, and undefined pack references.",
++    "data_class": "Restricted",
++    "rationale": "Provides a stable extensibility contract."
++  },
++  {
++    "id": "REQ-172",
++    "domain": "Identity & Profiles",
++    "title": "Explicit field states",
++    "description": "Tracked fields preserve verified, unverified, unknown, not applicable, declined, stale, conflicting, needs clarification, known, and derived states.",
++    "priority": "Must",
++    "target_release": "R2",
++    "personas": [
++      "Personal User",
++      "Receptionist",
++      "Executive Assistant"
++    ],
++    "feature_gate": "profiles.field_states",
++    "acceptance_criteria": "Import, edit, export, bulk update, and rebuild preserve each state without converting it to blank or none.",
++    "data_class": "Restricted",
++    "rationale": "Blank data cannot safely express knowledge or con

@@ -1,0 +1,495 @@
+file mode 100644
+index 0000000..89bba57
+--- /dev/null
++++ b/schemas/profile-configuration.schema.json
+@@ -0,0 +1,219 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "https://electric-town.org/liaison/schemas/profile-configuration.schema.json",
++  "title": "Liaison profile configuration",
++  "type": "object",
++  "additionalProperties": false,
++  "required": [
++    "schema",
++    "profile_templates",
++    "topic_packs",
++    "field_states",
++    "review_policies"
++  ],
++  "properties": {
++    "schema": {
++      "const": "liaison/profile-configuration@1"
++    },
++    "profile_templates": {
++      "type": "array",
++      "items": {
++        "$ref": "#/$defs/profileTemplate"
++      }
++    },
++    "topic_packs": {
++      "type": "array",
++      "items": {
++        "$ref": "#/$defs/topicPack"
++      }
++    },
++    "field_states": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": [
++        "allowed"
++      ],
++      "properties": {
++        "allowed": {
++          "type": "array",
++          "minItems": 1,
++          "uniqueItems": true,
++          "items": {
++            "enum": [
++              "known",
++              "verified",
++              "unverified",
++              "unknown",
++              "not_applicable",
++              "declined",
++              "stale",
++              "conflicting",
++              "needs_clarification",
++              "derived"
++            ]
++          }
++        }
++      }
++    },
++    "review_policies": {
++      "type": "array",
++      "items": {
++        "$ref": "review-policy.schema.json"
++      }
++    }
++  },
++  "$defs": {
++    "id": {
++      "type": "string",
++      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$"
++    },
++    "profileTemplate": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": [
++        "id",
++        "label",
++        "default_topic_packs"
++      ],
++      "properties": {
++        "id": {
++          "$ref": "#/$defs/id"
++        },
++        "label": {
++          "type": "string",
++          "minLength": 1
++        },
++        "default_topic_packs": {
++          "type": "array",
++          "uniqueItems": true,
++          "items": {
++            "$ref": "#/$defs/id"
++          }
++        },
++        "optional_topic_packs": {
++          "type": "array",
++          "uniqueItems": true,
++          "items": {
++            "$ref": "#/$defs/id"
++          }
++        }
++      }
++    },
++    "topicPack": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": [
++        "id",
++        "label",
++        "fields"
++      ],
++      "properties": {
++        "id": {
++          "$ref": "#/$defs/id"
++        },
++        "label": {
++          "type": "string",
++          "minLength": 1
++        },
++        "fields": {
++          "type": "array",
++          "minItems": 1,
++          "items": {
++            "$ref": "#/$defs/field"
++          }
++        }
++      }
++    },
++    "field": {
++      "type": "object",
++      "additionalProperties": true,
++      "required": [
++        "id",
++        "label",
++        "type"
++      ],
++      "properties": {
++        "id": {
++          "$ref": "#/$defs/id"
++        },
++        "label": {
++          "type": "string",
++          "minLength": 1
++        },
++        "type": {
++          "enum": [
++            "short_text",
++            "markdown",
++            "integer",
++            "decimal",
++            "date",
++            "partial_date",
++            "date_range",
++            "recurrence",
++            "boolean",
++            "enum",
++            "multi_enum",
++            "url",
++            "email",
++            "phone",
++            "address",
++            "location",
++            "entity_reference",
++            "entity_reference_list",
++            "file_reference",
++            "resource_reference",
++            "resource_reference_list",
++            "measurement",
++            "currency",
++            "sealed",
++            "computed",
++            "status",
++            "list"
++          ]
++        },
++        "classification": {
++          "enum": [
++            "public",
++            "internal",
++            "private",
++            "sensitive",
++            "restricted",
++            "secret"
++          ]
++        },
++        "options": {
++          "type": "array",
++          "minItems": 1,
++          "uniqueItems": true,
++          "items": {
++            "type": "string"
++          }
++        },
++        "required_for": {
++          "type": "array",
++          "uniqueItems": true,
++          "items": {
++            "$ref": "#/$defs/id"
++          }
++        },
++        "roles_allowed": {
++          "type": "array",
++          "uniqueItems": true,
++          "items": {
++            "$ref": "#/$defs/id"
++          }
++        },
++        "stale_after": {
++          "type": [
++            "string",
++            "null"
++          ],
++          "pattern": "^P"
++        },
++        "sealed_by_default": {
++          "type": "boolean"
++        }
++      }
++    }
++  }
++}
+diff --git a/schemas/review-policy.schema.json b/schemas/review-policy.schema.json
+new file mode 100644
+index 0000000..bf8d77a
+--- /dev/null
++++ b/schemas/review-policy.schema.json
+@@ -0,0 +1,102 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "https://electric-town.org/liaison/schemas/review-policy.schema.json",
++  "title": "Liaison review policy",
++  "type": "object",
++  "additionalProperties": true,
++  "required": [
++    "id",
++    "name",
++    "mode"
++  ],
++  "properties": {
++    "id": {
++      "type": "string",
++      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$"
++    },
++    "name": {
++      "type": "string",
++      "minLength": 1
++    },
++    "mode": {
++      "enum": [
++        "reason_only",
++        "tiered",
++        "weighted"
++      ]
++    },
++    "daily_capacity": {
++      "type": "integer",
++      "minimum": 1,
++      "maximum": 100
++    },
++    "reasons": {
++      "type": "array",
++      "uniqueItems": true,
++      "items": {
++        "type": "string",
++        "pattern": "^[a-z][a-z0-9_]*$"
++      }
++    },
++    "suppress_when": {
++      "type": "array",
++      "uniqueItems": true,
++      "items": {
++        "enum": [
++          "archived",
++          "do_not_contact",
++          "relationship_ended",
++          "paused",
++          "snoozed",
++          "excluded"
++        ]
++      }
++    },
++    "components": {
++      "type": "object",
++      "minProperties": 1,
++      "additionalProperties": {
++        "type": "number",
++        "minimum": 0,
++        "maximum": 1
++      }
++    },
++    "explanations_required": {
++      "type": "boolean"
++    },
++    "formula_editable": {
++      "type": "boolean"
++    },
++    "hidden_components_allowed": {
++      "type": "boolean"
++    }
++  },
++  "allOf": [
++    {
++      "if": {
++        "properties": {
++          "mode": {
++            "const": "weighted"
++          }
++        },
++        "required": [
++          "mode"
++        ]
++      },
++      "then": {
++        "required": [
++          "components",
++          "explanations_required"
++        ],
++        "properties": {
++          "explanations_required": {
++            "const": true
++          },
++          "hidden_components_allowed": {
++            "const": false
++          }
++        }
++      }
++    }
++  ]
++}
+diff --git a/scripts/check_relationship_contracts.py b/scripts/check_relationship_contracts.py
+new file mode 100755
+index 0000000..3e4d9a4
+--- /dev/null
++++ b/scripts/check_relationship_contracts.py
+@@ -0,0 +1,92 @@
++#!/usr/bin/env python3
++"""Validate Topic Pack, field-state, and review-policy contracts."""
++from __future__ import annotations
++
++import json
++import sys
++from pathlib import Path
++
++import yaml
++from jsonschema import Draft202012Validator
++
++ROOT = Path(__file__).resolve().parents[1]
++EXAMPLE = ROOT / "examples/configuration/topic-pack-and-review-policy.yaml"
++PROFILE_SCHEMA = ROOT / "schemas/profile-configuration.schema.json"
++REVIEW_SCHEMA = ROOT / "schemas/review-policy.schema.json"
++REQUIRED_FIELD_STATES = {
++    "known", "verified", "unverified", "unknown", "not_applicable",
++    "declined", "stale", "conflicting", "needs_clarification", "derived",
++}
++PROHIBITED_TERMS = {"relationship_strength", "human_value", "employee_rank"}
++
++
++def duplicates(values: list[str]) -> set[str]:
++    return {value for value in values if values.count(value) > 1}
++
++
++def main() -> int:
++    errors: list[str] = []
++    document = yaml.safe_load(EXAMPLE.read_text(encoding="utf-8"))
++    profile_schema = json.loads(PROFILE_SCHEMA.read_text(encoding="utf-8"))
++    review_schema = json.loads(REVIEW_SCHEMA.read_text(encoding="utf-8"))
++    profile_schema["properties"]["review_policies"]["items"] = review_schema
++    for error in Draft202012Validator(profile_schema).iter_errors(document):
++        path = ".".join(str(item) for item in error.absolute_path) or "$"
++        errors.append(f"{path}: {error.message}")
++
++    pack_ids = [item["id"] for item in document.get("topic_packs", [])]
++    template_ids = [item["id"] for item in document.get("profile_templates", [])]
++    policy_ids = [item["id"] for item in document.get("review_policies", [])]
++    for label, values in [("topic pack", pack_ids), ("template", template_ids), ("policy", policy_ids)]:
++        if duplicate := duplicates(values):
++            errors.append(f"duplicate {label} IDs: {sorted(duplicate)}")
++
++    field_ids: list[str] = []
++    for pack in document.get("topic_packs", []):
++        for field in pack.get("fields", []):
++            field_ids.append(field["id"])
++    if duplicate := duplicates(field_ids):
++        errors.append(f"duplicate field IDs: {sorted(duplicate)}")
++
++    known_packs = set(pack_ids)
++    for template in document.get("profile_templates", []):
++        referenced = set(template.get("default_topic_packs", [])) | set(template.get("optional_topic_packs", []))
++        missing = sorted(referenced - known_packs)
++        if missing:
++            errors.append(f"template {template['id']} references undefined packs: {missing}")
++
++    allowed = set(document.get("field_states", {}).get("allowed", []))
++    missing_states = sorted(REQUIRED_FIELD_STATES - allowed)
++    if missing_states:
++        errors.append(f"field-state contract omits required states: {missing_states}")
++
++    for policy in document.get("review_policies", []):
++        if policy.get("mode") == "weighted":
++            components = policy.get("components", {})
++            total = sum(float(value) for value in components.values())
++            if abs(total - 1.0) > 1e-9:
++                errors.append(f"weighted policy {policy['id']} totals {total:.6f}, expected 1.0")
++            if policy.get("explanations_required") is not True:
++                errors.append(f"weighted policy {policy['id']} must require explanations")
++            if policy.get("hidden_components_allowed") is not False:
++                errors.append(f"weighted policy {policy['id']} cannot hide components")
++
++    serialized = json.dumps(document, sort_keys=True).casefold()
++    for term in PROHIBITED_TERMS:
++        if term in serialized:
++            errors.append(f"prohibited scoring term present: {term}")
++
++    if errors:
++        print("Relationship contract validation failed:", file=sys.stderr)
++        for error in errors:
++            print(f"- {error}", file=sys.stderr)
++        return 1
++    print(
++        "Relationship contracts passed: "
++        f"{len(pack_ids)} packs, {len(field_ids)} fields, {len(policy_ids)} policies"
++    )
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/spec/feature-gates.yaml b/spec/feature-gates.yaml
+index bb0dab5..abd86d7 100644
+--- a/spec/feature-gates.yaml
++++ b/spec/feature-gates.yaml
+@@ -866,3 +866,175 @@ gates:
+   owner: Connections
+   acceptance_summary: Settings move between devices without credential values and
+     import disabled until missing secrets and grants are resolved.
++- id: relationships.intent
++  name: Relationship intent and boundaries
++  domain: Relationships
++  target_release: R1
++  default_state: enabled
++  policy_gate: none
++  dependencies:
++  - core.open_file_store
++  kill_switch: Makes intent read-only while preserving files
++  owner: Relationships
++  acceptance_summary: Users record manual intent and boundaries without deriving human
++    value from interactions.
++- id: review.reason_only
++  name: Reason-only review queue
++  domain: Review and Attention
++  target_release: R1
++  default_state: enabled
++  policy_gate: none
++  dependencies:
++  - relationships.intent
++  kill_switch: Hides queue while preserving facts and policies
++  owner: Review and Attention
++  acceptance_summary: Personal review surfaces a bounded list with factual source-linked
++    reasons and no score.
++- id: review.explanations
++  name: Review explanation contract
++  domain: Review and Attention
++  target_release: R1
++  default_state: enabled
++  policy_gate: none
++  dependencies:
++  - review.reason_only
++  kill_switch: Disables computed queue output rather than showing unexplained items
++  owner: Review and Attention
++  acceptance_summary: Every queue item provides source facts, reason IDs, policy version,
++    and available actions.
++- id: review.suppressions
++  name: Review hard suppressions
++  domain: Review and Attention
++  target_release: R1
++  default_state: enabled
++  policy_gate: none
++  dependencies:
++  - relationships.intent
++  kill_switch: Disables automatic surfacing for all suppressed records
++  owner: Review and Attention
++  acceptance_summary: Archive, end, pause, do-not-contact, snooze, and exclusion override
++    every priority.
++- id: profiles.topic_packs
++  name: Versioned Topic Packs
++  domain: Identity and Profiles
++  target_release: R2
++  default_state: enabled
++  policy_gate: profile-admin
++  dependencies:
++  - core.open_file_store
++  kill_switch: Prevents definition changes while stored values r

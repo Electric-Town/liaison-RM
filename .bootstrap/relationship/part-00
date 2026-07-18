@@ -1,0 +1,292 @@
+From 2891021f45689f0ac9e76e444f35017649fa7eda Mon Sep 17 00:00:00 2001
+From: OpenAI <noreply@openai.com>
+Date: Sat, 18 Jul 2026 08:25:59 +0000
+Subject: [PATCH] docs: define relationship, topic-pack, and review contracts
+
+---
+ .github/workflows/relationship-contracts.yml  |   41 +
+ CHANGELOG.md                                  |    2 +
+ docs/architecture/context-map.md              |   15 +
+ docs/architecture/review-and-attention.md     |   79 ++
+ .../topic-packs-and-field-states.md           |   66 +
+ docs/architecture/ubiquitous-language.md      |    9 +
+ ...n-not-use-a-relationship-strength-score.md |   55 +
+ .../relationship-domain-topic-packs-review.md | 1081 +++++++++++++++++
+ docs/product/roadmap.md                       |    8 +-
+ .../topic-pack-and-review-policy.yaml         |  196 +++
+ schemas/profile-configuration.schema.json     |  219 ++++
+ schemas/review-policy.schema.json             |  102 ++
+ scripts/check_relationship_contracts.py       |   92 ++
+ spec/feature-gates.yaml                       |  172 +++
+ spec/implementation-plan.yaml                 |   66 +
+ spec/requirements.json                        |  331 ++++-
+ spec/uat-cases.json                           |  281 +++++
+ 17 files changed, 2810 insertions(+), 5 deletions(-)
+ create mode 100644 .github/workflows/relationship-contracts.yml
+ create mode 100644 docs/architecture/review-and-attention.md
+ create mode 100644 docs/architecture/topic-packs-and-field-states.md
+ create mode 100644 docs/knowledge/KCS-0005-why-does-liaison-not-use-a-relationship-strength-score.md
+ create mode 100644 docs/product/relationship-domain-topic-packs-review.md
+ create mode 100644 examples/configuration/topic-pack-and-review-policy.yaml
+ create mode 100644 schemas/profile-configuration.schema.json
+ create mode 100644 schemas/review-policy.schema.json
+ create mode 100755 scripts/check_relationship_contracts.py
+
+diff --git a/.github/workflows/relationship-contracts.yml b/.github/workflows/relationship-contracts.yml
+new file mode 100644
+index 0000000..b0c1eac
+--- /dev/null
++++ b/.github/workflows/relationship-contracts.yml
+@@ -0,0 +1,41 @@
++name: Relationship contracts
++
++on:
++  pull_request:
++    paths:
++      - "docs/product/relationship-domain-topic-packs-review.md"
++      - "docs/architecture/topic-packs-and-field-states.md"
++      - "docs/architecture/review-and-attention.md"
++      - "examples/configuration/topic-pack-and-review-policy.yaml"
++      - "schemas/profile-configuration.schema.json"
++      - "schemas/review-policy.schema.json"
++      - "scripts/check_relationship_contracts.py"
++      - "spec/**"
++      - ".github/workflows/relationship-contracts.yml"
++  push:
++    branches: [main]
++    paths:
++      - "docs/product/relationship-domain-topic-packs-review.md"
++      - "docs/architecture/topic-packs-and-field-states.md"
++      - "docs/architecture/review-and-attention.md"
++      - "examples/configuration/topic-pack-and-review-policy.yaml"
++      - "schemas/profile-configuration.schema.json"
++      - "schemas/review-policy.schema.json"
++      - "scripts/check_relationship_contracts.py"
++      - "spec/**"
++      - ".github/workflows/relationship-contracts.yml"
++
++permissions:
++  contents: read
++
++jobs:
++  validate:
++    runs-on: ubuntu-latest
++    steps:
++      - uses: actions/checkout@v4
++      - uses: actions/setup-python@v5
++        with:
++          python-version: "3.12"
++      - run: python -m pip install --disable-pip-version-check PyYAML==6.0.2 jsonschema==4.25.1
++      - run: python scripts/check_relationship_contracts.py
++      - run: python scripts/check_repository.py
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 1b4124e..502442f 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -13,3 +13,5 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
+ - Provider-neutral object-store contracts covering local, WebDAV, S3-compatible, and future adapters.
+ - Initial Rust bounded contexts, Markdown vault adapter, and network-independent `liaison` CLI scaffold.
+ - Connections bounded context, provider descriptor registry, object-store contract, local reference adapter, conformance suite, and WIT interface.
++- Relationship-domain contract covering Organizations, Groups, Memberships, Topic Packs, explicit field states, Resources, relationship intent, profile readiness, and explainable Review and Attention policies.
++- Machine-validated profile-configuration and review-policy schemas with a representative open YAML example.
+diff --git a/docs/architecture/context-map.md b/docs/architecture/context-map.md
+index 220e083..3d73f83 100644
+--- a/docs/architecture/context-map.md
++++ b/docs/architecture/context-map.md
+@@ -69,3 +69,18 @@ Arrows show published contracts, not database access.
+ - Connections supplies transport and external-source capabilities.
+ - Sharing does not inherit provider semantics.
+ - AI Assistance reads through permission-aware query ports and writes only through proposals.
++
++## Refined relationship-model context boundaries
++
++The implementation sequence further separates:
++
++- **Identity and Profiles** — Person identity, Topic Pack assignments, field values, provenance, profile templates, and purpose-readiness inputs;
++- **Organizations and Groups** — Organizations, Groups, Households, Memberships, departments, locations, and hierarchy;
++- **Relationships** — relationship edges, intent, boundaries, and optional manual assessment snapshots;
++- **Interactions and Commitments** — timeline facts, communications, tasks, promises, reminders, and next steps;
++- **Events and Calendar** — events, attendance, recurrence, and event-specific readiness;
++- **Knowledge and Resources** — notes, files, URLs, backlinks, and safe metadata;
++- **Review and Attention** — cadence evaluation, reason-only queues, optional Review Priority, readiness, sessions, snoozes, and explanation generation;
++- **Customization** — Topic Pack definitions, field schemas, layouts, saved views, policy definitions, and plugin contributions.
++
++No interface, connector, or plugin may calculate relationship status or Review Priority independently from Review and Attention application services.
+diff --git a/docs/architecture/review-and-attention.md b/docs/architecture/review-and-attention.md
+new file mode 100644
+index 0000000..f1b191e
+--- /dev/null
++++ b/docs/architecture/review-and-attention.md
+@@ -0,0 +1,79 @@
++# Review and Attention bounded context
++
++## Purpose
++
++Review and Attention helps a user decide where attention may be useful without treating people as leads or converting communication frequency into a relationship-value score.
++
++## Separate concepts
++
++- **Relationship intent:** user-authored importance, desired cadence, boundaries, and desired future state.
++- **Relationship evidence:** interactions, dates, commitments, notes, events, and Resources.
++- **Maintenance status:** an explainable state relative to the user’s rules.
++- **Profile readiness:** purpose-specific coverage of required information.
++- **Review Priority:** optional queue ordering. It is not relationship strength or human value.
++
++## Default mode
++
++Personal workspaces default to **reason-only** review. The queue groups people by factual reasons and displays no numeric score. Typical reasons are an open commitment, an approaching important date, a cadence becoming due, a selected readiness gap, or a manual pin.
++
++Tiered and weighted modes are opt-in. A weighted policy exposes every component, weight, normalized input, suppression, policy version, and final explanation.
++
++## Hard suppressions
++
++The following states override every queue score:
++
++- archived;
++- do not contact;
++- relationship ended;
++- paused until a future date;
++- snoozed;
++- excluded from the active policy.
++
++## Guardrails
++
++The context cannot:
++
++- infer affection, trust, reciprocity, or importance from message volume;
++- rank employees or support employment decisions;
++- become a social-credit system;
++- shame a user for overdue contact;
++- send a message automatically;
++- expose private assessments to a subject or shared workspace without an explicit disclosure decision;
++- assume every relationship needs a cadence.
++
++## Explainability contract
++
++Every queue item returns a structured explanation containing the reason ID, human-readable explanation key, source fact IDs, contribution where applicable, active policy version, and available actions. Interfaces localize the explanation but cannot invent or omit reasons.
++
++Example:
++
++```text
++Quarterly cadence is 18 days overdue.
++One commitment remains open.
++Birthday is in 11 days.
++```
++
++Bad output:
++
++```text
++Relationship strength: 42%.
++```
++
++## Capacity and interruption recovery
++
++A review policy defines a bounded batch, time budget, social-capacity setting, quiet periods, and permitted contexts. The application stores unfinished review state locally and returns to the same item after interruption. Skip, snooze, pause, archive, and do-not-contact are valid outcomes.
++
++## Published inputs
++
++The context consumes stable IDs and read-only facts from Identity and Profiles, Organizations and Groups, Relationships, Interactions and Commitments, Events and Calendar, and Knowledge and Resources. It does not access their persistence implementations.
++
++## Outputs
++
++- reason-only queue;
++- tiered or weighted queue when enabled;
++- maintenance-status explanation;
++- purpose-specific readiness report;
++- daily review session;
++- monthly Markdown review record;
++- policy simulation diff;
++- audit-safe policy and explanation metadata.
+diff --git a/docs/architecture/topic-packs-and-field-states.md b/docs/architecture/topic-packs-and-field-states.md
+new file mode 100644
+index 0000000..26720ed
+--- /dev/null
++++ b/docs/architecture/topic-packs-and-field-states.md
+@@ -0,0 +1,66 @@
++# Topic Packs and field-state contract
++
++## Decision
++
++Liaison RM uses versioned Topic Packs rather than a single fixed contact form. A Topic Pack defines typed fields, display metadata, classification, authority, readiness purposes, staleness rules, and permitted roles. Field identifiers are durable compatibility keys; labels and layout positions are localizable presentation.
++
++## Ownership
++
++The **Identity and Profiles** context owns assignments and field values. **Customization** owns reusable definitions, layouts, and plugin contributions. **Review and Attention** consumes published readiness requirements but cannot rewrite profile values. Connectors translate external values through anti-corruption layers and must retain provenance.
++
++## Required information states
++
++A tracked field never relies on blank text to communicate meaning. The canonical states are:
++
++- `known`;
++- `verified`;
++- `unverified`;
++- `unknown`;
++- `not_applicable`;
++- `declined`;
++- `stale`;
++- `conflicting`;
++- `needs_clarification`;
++- `derived`.
++
++`unknown`, `not_applicable`, and `declined` are materially different. Imports, exports, bulk edits, UI forms, plugins, and AI proposals must preserve the distinction.
++
++## Field definition
++
++```yaml
++id: travel.seat_preference
++label: Seat preference
++type: enum
++options: [window, aisle, middle, no_preference]
++classification: private
++authority: subject_or_user
++required_for: [executive_travel_brief]
++stale_after: P2Y
++review_behavior: ask_when_context_requires
++indexed: true
++roles_allowed: [owner, delegated_ea]
++```
++
++### Compatibility rules
++
++1. A field ID is globally unique inside a workspace configuration.
++2. Changing a label, help text, locale string, or layout does not change the ID.
++3. Removing a definition does not silently remove stored values. Unsupported values remain recoverable and are reported during validation.
++4. Changing a field type requires a versioned migration with dry-run, backup, validation, and a rollback or explicit irreversibility statement.
++5. A plugin cannot replace a built-in field definition with an incompatible type.
++6. Sealed values cannot appear in indexes, logs, screenshots, AI prompts, or generic exports.
++7. Calculated values are read-only projections and identify their input facts and policy version.
++
++## Purpose-specific readiness
++
++There is no universal profile-completeness score. A readiness definition identifies required or recommended fields for one purpose, such as event catering, a meeting briefing, CardDAV export, or travel preparation. The resulting report lists known, stale, conflicting, declined, not-applicable, and missing fields.
++
++Readiness calculations must not pressure users to collect unrelated information. A person can be ready for one purpose and intentionally sparse for another.
++
++## Built-in pack baseline
++
++The initial built-in set includes identity and communication, important dates, food and hospitality, travel, favourites and gifts, family and household, pets, professional context, interests and life context, events and hosting, executive-assistant briefing, accessibility and sensory preferences, and Resources.
++
++## Storage
++
++Definitions are stored in versioned open configuration files. Person-specific values remain in readable canonical records or sealed sidecars according to classification. SQLite and graph representations are rebuildable projections.
+diff --git a/docs/architecture/ubiquitous-language.md b/docs/architecture/ubiquitous-language.md
+index 7f97ae7..e80e9d9 100644
+--- a/docs/architecture/ubiquitous-language.md
++++ b/docs/architecture/ubiquitous-language.md
+@@ -7,6 +7,15 @@
+ | Person | Human identity record in the People context |
+ | Contact method | Typed address used to communicate with a person |
+ | Relationship | Contextual link between people or entities with its own state and cadence |
++| Relationship intent | User-authored importance, desired cadence, boundaries, and desired future state |
++| Relationship evidence | Recorded interactions, notes, commitments, dates, events, and Resources |
++| Maintenance status | Explainable state relative to the user’s own cadence and boundaries |
++| Profile readiness | Purpose-specific coverage of required and recommended information |
++| Review Priority | Optional ordering value for a review queue; never a measure of human worth or relationship strength |
++| Topic Pack | Versioned group of typed profile fields that can be assigned by workspace, template, entity, purpose, or plugin |
++| Field state | Explicit information status such as verified, unknown, declined, stale, or conflicting |
++| Organization | Company, nonprofit, school, club, government body, vendor, or other institutional entity |
++| Membership | Dated link between a Person and an Organization or Group, carrying role and organizational context |
++| Resource | First-class local file, URL, calendar reference, email reference, photo, map, or other linked material |
+ | Interaction | Evidence of a meaningful touchpoint involving one or more people |
+ | Commitment | Promise, obligation, or next action linked to entities and evidence |
+ | Event | Planned or past occurrence with attendance and operational readiness |

@@ -1,0 +1,573 @@
+ channel;
++- acceptable contact times;
++- communication style;
++- response expectations;
++- accessibility or sensory communication preferences.
++
++#### Food and hospitality
++
++- favorite foods;
++- disliked foods;
++- allergies;
++- intolerances;
++- dietary patterns;
++- cultural or religious constraints;
++- preferred restaurants;
++- drinks;
++- catering operational instruction;
++- source, verification, and review date.
++
++#### Travel
++
++- passport name reference without storing passport number by default;
++- home airport;
++- airline preferences;
++- seat preference;
++- hotel preferences;
++- room accessibility;
++- rail preferences;
++- loyalty-program reference stored as sealed data if enabled;
++- travel pace;
++- mobility needs;
++- usual arrival buffer;
++- countries or places of interest;
++- travel dislikes.
++
++#### Favorites and gifts
++
++- colors;
++- books;
++- films;
++- music;
++- games;
++- sports teams;
++- hobbies;
++- brands;
++- flowers;
++- clothing sizes, marked sensitive;
++- gift ideas;
++- gifts previously given or received;
++- “do not buy” notes.
++
++#### Family and household
++
++- partner or spouse;
++- children;
++- parents and siblings;
++- household;
++- important family dates;
++- family context notes;
++- childcare or family logistics, permission restricted.
++
++#### Pets
++
++- pet name;
++- species and breed;
++- birthday or adoption date;
++- temperament;
++- favorite treats;
++- care notes;
++- relationship to household members.
++
++Pets should become linkable entities within a Household pack rather than unstructured strings when the user needs more than a name.
++
++#### Work and professional
++
++- organization memberships;
++- role and title;
++- expertise;
++- current projects;
++- professional interests;
++- introductions sought;
++- resources they can offer;
++- resources requested;
++- assistant, manager, or team relationships;
++- professional communication preferences.
++
++#### Personal interests and life context
++
++- interests;
++- causes;
++- communities;
++- current goals;
++- current challenges;
++- major life changes;
++- things they are learning;
++- topics to ask about;
++- topics to avoid;
++- last meaningful topic.
++
++#### Events and hosting
++
++- event interests;
++- invitation preferences;
++- plus-one information;
++- accessibility needs;
++- food coverage state;
++- attendance history;
++- preferred event format;
++- transport and arrival preferences.
++
++#### Executive-assistant briefing
++
++- briefing summary;
++- last meaningful interaction;
++- open commitments;
++- mutual contacts;
++- current organization/role;
++- preferences relevant to meetings, travel, gifts, food, and scheduling;
++- recent files, calendar items, and messages;
++- restricted principal-specific overlay.
++
++### 5.2 Custom field types
++
++- short text;
++- Markdown text;
++- integer or decimal;
++- date, partial date, date range, and recurrence;
++- boolean;
++- enum and multi-enum;
++- URL;
++- email and phone;
++- address/location;
++- entity reference and multi-reference;
++- file/resource reference;
++- measurement;
++- currency;
++- sealed value;
++- computed read-only value;
++- status with explicit unknown/not-applicable states.
++
++### 5.3 Field definition
++
++Every field definition contains:
++
++```yaml
++id: travel.seat_preference
++label: Seat preference
++type: enum
++options: [window, aisle, middle, no_preference]
++classification: private
++authority: subject_or_user
++required_for: [ea_travel_brief]
++stale_after: P2Y
++review_behavior: ask_when_context_requires
++indexed: true
++roles_allowed: [owner, delegated_ea]
++```
++
++Fields use stable IDs. Labels and locations can change without breaking data or queries.
++
++---
++
++## 6. Field-state and profile-completeness model
++
++Blank is not a sufficient state.
++
++Every tracked field can be:
++
++- **known**;
++- **verified**;
++- **unverified**;
++- **unknown**;
++- **not applicable**;
++- **declined to disclose**;
++- **stale**;
++- **conflicting**;
++- **inherited or derived**;
++- **needs clarification**.
++
++Each value can carry:
++
++- source;
++- author or connector;
++- captured date;
++- verified date;
++- review due date;
++- confidence;
++- visibility;
++- purpose limitation;
++- change history.
++
++### 6.1 Context-specific readiness
++
++Liaison must not pressure users to fill every possible field.
++
++Readiness is calculated for a purpose:
++
++- basic contact readiness;
++- upcoming birthday readiness;
++- event catering readiness;
++- meeting briefing readiness;
++- travel briefing readiness;
++- family emergency readiness;
++- CardDAV export readiness;
++- workplace directory readiness.
++
++Example:
++
++```text
++Meeting briefing: 92% ready
++Missing: current priorities
++Stale: organization role last verified 18 months ago
++Not required: dietary profile
++```
++
++A person can be complete for one purpose and intentionally sparse for another.
++
++### 6.2 Missing-information queues
++
++Saved review views include:
++
++- high-priority people with no meaningful interaction;
++- people with no relationship type;
++- profiles with no organization or group;
++- family members with no important dates;
++- event attendees with unknown food coverage;
++- travel briefs missing required preferences;
++- records with stale employer or title;
++- profiles containing only a name;
++- fields with unresolved conflicts;
++- custom fields required by a selected profile template;
++- important contacts whose topic packs have never been reviewed.
++
++Bulk review must preserve `unknown`, `not applicable`, and `declined`; it must never translate them to empty or “none.”
++
++---
++
++## 7. Relationship intent, strength, and health
++
++### 7.1 Relationship intent
++
++Relationship Intent is explicitly authored by the user.
++
++Fields can include:
++
++- relationship type;
++- relationship tier;
++- manual importance from 0–5 or named tiers;
++- desired cadence;
++- desired future state;
++- preferred channel;
++- maintenance state;
++- boundaries;
++- do-not-contact or paused state;
++- next review date;
++- reason this relationship matters.
++
++Default tiers may be:
++
++- core;
++- active;
++- warm;
++- loose;
++- paused;
++- archive.
++
++Users can replace this vocabulary.
++
++### 7.2 Optional relationship assessment dimensions
++
++A user may manually assess dimensions such as:
++
++- closeness;
++- trust;
++- familiarity;
++- reciprocity;
++- shared context;
++- reliability;
++- current relevance;
++- emotional energy required;
++- desire for more or less contact.
++
++These dimensions are:
++
++- optional;
++- private by default;
++- timestamped snapshots rather than permanent truth;
++- never automatically disclosed;
++- never inferred solely from email volume;
++- shown in a semantic table if a visual chart is used.
++
++### 7.3 Maintenance status
++
++Maintenance Status is derived and explainable.
++
++Example states:
++
++- on track;
++- due soon;
++- overdue relative to chosen cadence;
++- open commitment;
++- upcoming important date;
++- stale context;
++- no cadence configured;
++- intentionally paused;
++- do not contact;
++- archived.
++
++The product should say:
++
++> “Quarterly cadence; last meaningful interaction was 112 days ago; one open commitment.”
++
++It should not say:
++
++> “Relationship strength: 42.”
++
++---
++
++## 8. Configurable Review Priority
++
++A numeric score may be used to order a review queue, but it must be named **Review Priority**, not Relationship Value or Human Value.
++
++### 8.1 Modes
++
++Users choose one of three modes:
++
++1. **Reason-only** — no number; cards are grouped by explainable reason.
++2. **Tiered** — low, normal, high, and urgent queue priority.
++3. **Weighted** — a configurable 0–100 ordering value with a complete component breakdown.
++
++Reason-only should be the default for personal use.
++
++### 8.2 Default weighted policy
++
++```text
++Review Priority =
++  30% cadence status
+++ 20% manual importance
+++ 20% open commitments
+++ 10% upcoming important dates
+++ 10% stale required context
+++ 10% manual boost
++```
++
++Each component is normalized to 0–100 before weighting.
++
++Suppressions override the score:
++
++- archived;
++- do not contact;
++- paused until a date;
++- snoozed;
++- excluded from this review policy;
++- relationship ended.
++
++### 8.3 Component examples
++
++#### Cadence status
++
++```text
++0   = comfortably within cadence
++50  = cadence due today
++100 = overdue by one complete cadence interval or more
++```
++
++A user can select a different curve. Long-distance and low-frequency relationships should not be penalized when their desired cadence is yearly or none.
++
++#### Manual importance
++
++Named tiers map transparently:
++
++```yaml
++core: 100
++active: 75
++warm: 50
++loose: 25
++archive: 0
++```
++
++The mapping is editable.
++
++#### Open commitments
++
++Commitments can have urgency and due dates. A promise due tomorrow can surface a person even if contact occurred yesterday.
++
++#### Upcoming dates
++
++Birthdays, anniversaries, events, travel, and user-defined dates can raise review priority within a configurable window.
++
++#### Stale required context
++
++Only fields required by the active review purpose count. A missing airline preference must not raise the general friendship review queue.
++
++### 8.4 Explainability
++
++Every prioritized item shows:
++
++```text
++Why Alex is here
++- Quarterly contact cadence is 18 days overdue        +24
++- Core relationship tier                              +20
++- You promised to send the venue details              +16
++- Birthday is in 11 days                                +7
++- Job title has not been verified for 14 months         +4
++Total review priority: 71
++```
++
++The user can:
++
++- inspect the formula;
++- edit weights;
++- disable a component;
++- preview how a rule affects the queue;
++- create different policies for family, professional contacts, clients, an executive, or a workplace;
++- export and import the policy;
++- see policy version in historical review records.
++
++### 8.5 Guardrails
++
++The engine must not:
++
++- claim objective relationship strength;
++- infer affection, trust, or reciprocity from volume;
++- rank people for employment decisions;
++- produce employee performance or social-credit scores;
++- shame the user for overdue contact;
++- automatically send a message;
++- expose private scoring to a subject or shared workspace without explicit permission.
++
++---
++
++## 9. Review workflows
++
++### 9.1 Daily low-friction review
++
++The default daily view should contain a small capacity-bounded queue.
++
++User settings:
++
++- maximum people shown;
++- available social capacity: low, normal, high;
++- time budget;
++- work, personal, or mixed context;
++- hide overdue totals;
++- no-guilt language mode;
++- snooze entire review stream;
++- exclude weekends or quiet periods.
++
++Example card:
++
++```text
++Alex Murphy
++Reason: open commitment and birthday in 11 days
++Last meaningful topic: moving to a new role
++Suggested actions: open profile · log interaction · snooze · mark complete
++```
++
++No outreach text is sent without the user choosing it.
++
++### 9.2 Monthly relationship review
++
++The monthly review covers:
++
++- who was contacted;
++- who has become important;
++- who is no longer relevant to the current review policy;
++- which cadences are unrealistic;
++- which profiles are sparse or stale;
++- unclosed commitments;
++- upcoming dates;
++- possible introductions or resources to share;
++- people to archive, pause, or reconnect with;
++- policy weights that caused too much noise.
++
++The review is stored as a Markdown record with the policy version and selected decisions.
++
++### 9.3 Profile review
++
++The profile review screen groups fields by Topic Pack and state:
++
++- known and current;
++- missing for current purpose;
++- stale;
++- conflicting;
++- declined;
++- not applicable.
++
++It must support:
++
++- “mark not applicable”;
++- “ask later”;
++- “review after next interaction”;
++- “request from person,” where sharing is enabled;
++- bulk selection by group;
++- change history and source;
++- keyboard-only completion.
++
++### 9.4 Relationship review after an interaction
++
++The 30-second flow:
++
++1. log interaction;
++2. capture one-sentence summary;
++3. capture next step or no next step;
++4. optionally update last meaningful topic;
++5. optionally update one surfaced stale or missing field;
++6. calculate next due date from cadence or set manually;
++7. finish.
++
++The app must not turn every conversation into a data-entry session.
++
++---
++
++## 10. Filtering, grouping, and organization
++
++### 10.1 Universal filters
++
++Users can combine:
++
++- entity type;
++- person, organization, group, or household;
++- relationship type or tier;
++- maintenance status;
++- review priority range;
++- last interaction date/type;
++- next contact due;
++- important-date window;
++- organization, department, role, cost center, or location;
++- static or dynamic group;
++- topic-pack activation;
++- field state, including missing or stale;
++- tag;
++- event attendance;
++- connected resource type;
++- source or connector;
++- archived, paused, or do-not-contact state.
++
++### 10.2 Saved views
++
++Examples:
++
++- close friends not contacted within their own cadence;
++- high-priority professional contacts with no current organization;
++- people met at a conference who have no follow-up note;
++- family birthdays in the next 60 days with no gift ideas;
++- people with a dog but no dog name recorded;
++- executive contacts with an open commitment;
++- people with no meaningful interaction record;
++- organizations with no active member;
++- contacts whose profiles contain only imported phone data;
++- all people connected to a selected company or group within two graph hops.
++
++### 10.3 Graph behavior
++
++The graph includes:
++
++- people;
++- organizations;
++- groups;
++- households;
++- events and activities when enabled;
++- typed and directional relationships;
++- membership edges;
++- introductions;
++- shared events.
++
++The same data and actions must be available in an accessible table/tree. The graph is not the only operational interface.
++
++---
++
++## 11. Neurodivergent and executive-function-support UX
++
++Liaison should assist memory and prioriti

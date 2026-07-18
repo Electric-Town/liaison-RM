@@ -1,0 +1,150 @@
+ectory row.",
++    "related_requirements": [
++      "REQ-175",
++      "REQ-176"
++    ],
++    "feature_gates": [
++      "organizations.groups"
++    ],
++    "target_release": "R1",
++    "priority": "P0"
++  },
++  {
++    "id": "UAT-099",
++    "persona_id": "P17",
++    "persona": "Privacy Administrator",
++    "scenario": "Reject an employee-ranking review policy",
++    "preconditions": "A workplace administrator can propose review policies but cannot bypass privacy controls.",
++    "steps": [
++      "Create a weighted policy scoped to employees.",
++      "Add interaction volume and office-presence frequency as ranking components.",
++      "Attempt to activate the policy."
++    ],
++    "expected_result": "Validation rejects the policy as an employment-ranking use, identifies the prohibited components and scope, and stores no active score.",
++    "related_requirements": [
++      "REQ-181",
++      "REQ-182"
++    ],
++    "feature_gates": [
++      "review.weighted",
++      "review.guardrails"
++    ],
++    "target_release": "R6",
++    "priority": "P0"
++  },
++  {
++    "id": "UAT-100",
++    "persona_id": "P16",
++    "persona": "Personal User",
++    "scenario": "Resume a low-capacity review after interruption",
++    "preconditions": "Daily capacity is three and a five-minute review has started.",
++    "steps": [
++      "Complete one item and begin notes on the second.",
++      "Close the application without submitting the second item.",
++      "Reopen the workspace and review."
++    ],
++    "expected_result": "The same item, unsaved draft, scroll position, and remaining capacity are restored; no additional backlog is injected.",
++    "related_requirements": [
++      "REQ-179"
++    ],
++    "feature_gates": [
++      "review.sessions"
++    ],
++    "target_release": "R2",
++    "priority": "P0"
++  },
++  {
++    "id": "UAT-101",
++    "persona_id": "P16",
++    "persona": "Personal User",
++    "scenario": "Produce an open monthly review record",
++    "preconditions": "A month contains interactions, changed cadence, snoozes, open commitments, and upcoming dates.",
++    "steps": [
++      "Run Monthly review.",
++      "Record pause, archive, and cadence decisions.",
++      "Finish and inspect the generated Markdown file.",
++      "Delete and rebuild projections."
++    ],
++    "expected_result": "The Markdown record contains policy version, facts and decisions; the rebuilt app shows the same review history and links.",
++    "related_requirements": [
++      "REQ-180"
++    ],
++    "feature_gates": [
++      "review.sessions",
++      "core.open_file_store"
++    ],
++    "target_release": "R2",
++    "priority": "P1"
++  },
++  {
++    "id": "UAT-102",
++    "persona_id": "P03",
++    "persona": "Executive Assistant",
++    "scenario": "Link a Resource without granting external metadata access",
++    "preconditions": "A local PDF and an external meeting URL are available; no network grant exists.",
++    "steps": [
++      "Link the PDF to a person and meeting.",
++      "Add the URL without fetching metadata.",
++      "Remove the calendar connector.",
++      "Inspect backlinks and the timeline."
++    ],
++    "expected_result": "The PDF uses a portable local reference and hash; the URL remains user-entered; connector removal does not delete the Resource links.",
++    "related_requirements": [
++      "REQ-177",
++      "REQ-178"
++    ],
++    "feature_gates": [
++      "resources.core"
++    ],
++    "target_release": "R2",
++    "priority": "P1"
++  },
++  {
++    "id": "UAT-103",
++    "persona_id": "P07",
++    "persona": "CRM Administrator",
++    "scenario": "Simulate a weighted policy before activation",
++    "preconditions": "Reason-only review is active and a draft weighted policy exists.",
++    "steps": [
++      "Change cadence and commitment weights.",
++      "Preview the resulting queue movement.",
++      "Inspect every item contribution.",
++      "Cancel without activating."
++    ],
++    "expected_result": "The preview shows deterministic before/after ordering and complete components; the active reason-only policy and historical records remain unchanged.",
++    "related_requirements": [
++      "REQ-181",
++      "REQ-183"
++    ],
++    "feature_gates": [
++      "review.weighted",
++      "customization.portability"
++    ],
++    "target_release": "R6",
++    "priority": "P1"
++  },
++  {
++    "id": "UAT-104",
++    "persona_id": "P09",
++    "persona": "Elder User",
++    "scenario": "Use semantic review and relationship alternatives",
++    "preconditions": "A profile has a radar assessment, relationship graph, and weighted explanation.",
++    "steps": [
++      "Enable screen reader and keyboard-only operation.",
++      "Open the semantic table for each visual.",
++      "Inspect reasons and complete a snooze action at 200% zoom."
++    ],
++    "expected_result": "All data and actions are available without the graph or chart, focus remains visible, and content reflows without horizontal scrolling.",
++    "related_requirements": [
++      "REQ-184"
++    ],
++    "feature_gates": [
++      "accessibility.semantic_alternatives"
++    ],
++    "target_release": "R2",
++    "priority": "P0"
+   }
+ ]
+-- 
+2.47.3
+

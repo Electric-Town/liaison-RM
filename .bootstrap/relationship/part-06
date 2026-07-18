@@ -1,0 +1,343 @@
+sent."
++  },
++  {
++    "id": "REQ-173",
++    "domain": "Identity & Profiles",
++    "title": "Field provenance and review metadata",
++    "description": "Field values can record source, author or connector, capture date, verification date, review date, confidence, visibility, purpose, and change history.",
++    "priority": "Must",
++    "target_release": "R2",
++    "personas": [
++      "CRM Administrator",
++      "Privacy Administrator"
++    ],
++    "feature_gate": "profiles.field_states",
++    "acceptance_criteria": "Authorized users can explain the current value and conflicting sources; restricted plaintext is excluded from generic audit logs.",
++    "data_class": "Restricted",
++    "rationale": "Supports trustworthy updates and privacy review."
++  },
++  {
++    "id": "REQ-174",
++    "domain": "Identity & Profiles",
++    "title": "Purpose-specific readiness",
++    "description": "The system calculates readiness only for a named purpose and lists required, stale, conflicting, declined, not-applicable, and missing fields.",
++    "priority": "Must",
++    "target_release": "R2",
++    "personas": [
++      "Executive Assistant",
++      "Receptionist",
++      "Events Manager"
++    ],
++    "feature_gate": "profiles.readiness",
++    "acceptance_criteria": "The same person can be ready for catering and incomplete for travel; no universal profile-completeness score is displayed.",
++    "data_class": "Restricted",
++    "rationale": "Avoids unnecessary data collection."
++  },
++  {
++    "id": "REQ-175",
++    "domain": "Organizations & Groups",
++    "title": "Separate entity types",
++    "description": "Person, Organization, Group, Household, Location, Event, and Resource are separate entity types; Contact remains a UI view.",
++    "priority": "Must",
++    "target_release": "R1",
++    "personas": [
++      "CRM Administrator",
++      "Family Organizer",
++      "Workplace Directory User"
++    ],
++    "feature_gate": "organizations.groups",
++    "acceptance_criteria": "APIs, files, graph views, filters, and imports retain entity type and reject incompatible aggregate operations.",
++    "data_class": "Internal",
++    "rationale": "Prevents a generic-contact model from erasing domain meaning."
++  },
++  {
++    "id": "REQ-176",
++    "domain": "Organizations & Groups",
++    "title": "Dated memberships",
++    "description": "A Membership records dated Person-to-Organization or Person-to-Group role, department, cost center, location, status, and provenance.",
++    "priority": "Must",
++    "target_release": "R1",
++    "personas": [
++      "Workplace Directory User",
++      "Executive Assistant"
++    ],
++    "feature_gate": "organizations.groups",
++    "acceptance_criteria": "Concurrent roles and historical as-of-date filters return correct memberships without rewriting the Person profile.",
++    "data_class": "Internal",
++    "rationale": "Supports workplace, EA, and historical organization workflows."
++  },
++  {
++    "id": "REQ-177",
++    "domain": "Knowledge & Resources",
++    "title": "First-class Resources",
++    "description": "Files, URLs, calendar items, email references, photos, maps, recordings, and contact cards are first-class Resources with backlinks.",
++    "priority": "Should",
++    "target_release": "R2",
++    "personas": [
++      "Personal User",
++      "Executive Assistant",
++      "Events Manager"
++    ],
++    "feature_gate": "resources.core",
++    "acceptance_criteria": "A Resource can link to multiple entities and timeline records; removing a connector does not delete the local link record.",
++    "data_class": "Private",
++    "rationale": "Keeps useful context searchable and portable."
++  },
++  {
++    "id": "REQ-178",
++    "domain": "Knowledge & Resources",
++    "title": "Permissioned resource metadata",
++    "description": "External metadata is not fetched without egress permission; email bodies, attachments, and sealed resources have separate grants.",
++    "priority": "Must",
++    "target_release": "R2",
++    "personas": [
++      "Privacy Administrator",
++      "Executive Assistant"
++    ],
++    "feature_gate": "resources.core",
++    "acceptance_criteria": "An Airgap build opens local Resources without a network dependency and refuses external metadata fetch.",
++    "data_class": "Restricted",
++    "rationale": "Preserves the local-authority boundary."
++  },
++  {
++    "id": "REQ-179",
++    "domain": "Review & Attention",
++    "title": "Capacity-bounded review sessions",
++    "description": "Daily review supports maximum items, time budget, social capacity, quiet periods, snooze, and exact interruption recovery.",
++    "priority": "Must",
++    "target_release": "R2",
++    "personas": [
++      "Personal User",
++      "Elder User"
++    ],
++    "feature_gate": "review.sessions",
++    "acceptance_criteria": "Closing and reopening an unfinished review returns to the same item and does not expand the configured batch.",
++    "data_class": "Private",
++    "rationale": "Supports ADHD/AuDHD and low-capacity use."
++  },
++  {
++    "id": "REQ-180",
++    "domain": "Review & Attention",
++    "title": "Monthly Markdown review",
++    "description": "Monthly review produces a readable Markdown record containing policy version, selected decisions, open commitments, stale context, and upcoming dates.",
++    "priority": "Should",
++    "target_release": "R2",
++    "personas": [
++      "Personal User",
++      "Executive Assistant"
++    ],
++    "feature_gate": "review.sessions",
++    "acceptance_criteria": "The review record is independently readable and rebuilding projections retains its decisions and links.",
++    "data_class": "Private",
++    "rationale": "Maintains an open history of relationship maintenance decisions."
++  },
++  {
++    "id": "REQ-181",
++    "domain": "Review & Attention",
++    "title": "Optional transparent weighting",
++    "description": "Weighted Review Priority is opt-in, totals normalized components, exposes all weights and reasons, and supports policy simulation before activation.",
++    "priority": "Should",
++    "target_release": "R6",
++    "personas": [
++      "CRM Administrator",
++      "Executive Assistant"
++    ],
++    "feature_gate": "review.weighted",
++    "acceptance_criteria": "Hidden components are rejected; changing a weight previews queue changes and historical reviews retain their policy version.",
++    "data_class": "Private",
++    "rationale": "Provides advanced ordering without false relationship claims."
++  },
++  {
++    "id": "REQ-182",
++    "domain": "Review & Attention",
++    "title": "Employee-ranking prohibition",
++    "description": "Review Priority and relationship assessments cannot be used for employment performance, attendance compliance, or employee-risk ranking.",
++    "priority": "Must",
++    "target_release": "R1",
++    "personas": [
++      "Privacy Administrator",
++      "Facilities Operator"
++    ],
++    "feature_gate": "review.guardrails",
++    "acceptance_criteria": "Policy validation rejects employment-decision scopes and no workplace dashboard exposes a person ranking.",
++    "data_class": "Restricted",
++    "rationale": "Prevents a personal-relationship feature becoming workplace surveillance."
++  },
++  {
++    "id": "REQ-183",
++    "domain": "Customization",
++    "title": "Exportable profile and review configuration",
++    "description": "Topic Pack, field-state, template, readiness, and review-policy definitions export and import in documented open formats.",
++    "priority": "Must",
++    "target_release": "R2",
++    "personas": [
++      "CRM Administrator",
++      "Plugin Developer"
++    ],
++    "feature_gate": "customization.portability",
++    "acceptance_criteria": "A dry-run import reports additions, updates, conflicts, unsupported versions, and missing plugin definitions before mutation.",
++    "data_class": "Internal",
++    "rationale": "Keeps configuration portable and inspectable."
++  },
++  {
++    "id": "REQ-184",
++    "domain": "Accessibility",
++    "title": "Semantic alternatives for assessments and graph",
++    "description": "Any chart, radar, graph, or weighted explanation has an equivalent semantic table and keyboard-operable actions.",
++    "priority": "Must",
++    "target_release": "R2",
++    "personas": [
++      "Elder User",
++      "Personal User"
++    ],
++    "feature_gate": "accessibility.semantic_alternatives",
++    "acceptance_criteria": "Screen-reader and keyboard tests complete every review action without using the visual chart or graph.",
++    "data_class": "Internal",
++    "rationale": "Visual relationship views cannot become the only interface."
+   }
+ ]
+diff --git a/spec/uat-cases.json b/spec/uat-cases.json
+index 259d1cf..15f94d8 100644
+--- a/spec/uat-cases.json
++++ b/spec/uat-cases.json
+@@ -2412,5 +2412,286 @@
+     ],
+     "target_release": "R4",
+     "priority": "P0"
++  },
++  {
++    "id": "UAT-093",
++    "persona_id": "P16",
++    "persona": "Personal User",
++    "scenario": "Review relationships without a strength score",
++    "preconditions": "A personal workspace contains people with a cadence, an open commitment, an approaching birthday, and a manually pinned profile.",
++    "steps": [
++      "Open Today in a new personal workspace.",
++      "Inspect every surfaced person and the reason list.",
++      "Search the interface and exported queue for relationship-strength wording.",
++      "Reduce daily capacity to two and reopen the review."
++    ],
++    "expected_result": "The queue shows no numeric relationship-strength score, every item has source-linked reasons, and only two items enter the active batch.",
++    "related_requirements": [
++      "REQ-165",
++      "REQ-166",
++      "REQ-167"
++    ],
++    "feature_gates": [
++      "review.reason_only",
++      "review.explanations"
++    ],
++    "target_release": "R1",
++    "priority": "P0"
++  },
++  {
++    "id": "UAT-094",
++    "persona_id": "P16",
++    "persona": "Personal User",
++    "scenario": "Respect pause and do-not-contact boundaries",
++    "preconditions": "One person is overdue by two cadences but paused; another has do-not-contact enabled.",
++    "steps": [
++      "Open the active review queue.",
++      "Increase every optional priority component to its maximum.",
++      "Inspect suppressed records and explanations."
++    ],
++    "expected_result": "Neither person enters the active queue; authorized profile views show the suppression state without shame wording.",
++    "related_requirements": [
++      "REQ-168",
++      "REQ-169"
++    ],
++    "feature_gates": [
++      "relationships.intent",
++      "review.suppressions"
++    ],
++    "target_release": "R1",
++    "priority": "P0"
++  },
++  {
++    "id": "UAT-095",
++    "persona_id": "P07",
++    "persona": "CRM Administrator",
++    "scenario": "Create a Topic Pack with stable field IDs",
++    "preconditions": "The administrator can manage profile configuration.",
++    "steps": [
++      "Create a Travel pack with seat preference and accessibility fields.",
++      "Change the visible label and section order.",
++      "Export and re-import the configuration in dry-run mode.",
++      "Open an existing profile containing both fields."
++    ],
++    "expected_result": "Stable IDs and values remain unchanged; the dry-run reports presentation changes only; sensitive accessibility data remains sealed.",
++    "related_requirements": [
++      "REQ-170",
++      "REQ-171",
++      "REQ-183"
++    ],
++    "feature_gates": [
++      "profiles.topic_packs",
++      "customization.portability"
++    ],
++    "target_release": "R2",
++    "priority": "P0"
++  },
++  {
++    "id": "UAT-096",
++    "persona_id": "P01",
++    "persona": "Workplace & Culture Receptionist",
++    "scenario": "Preserve dietary knowledge states during bulk review",
++    "preconditions": "An event cohort contains verified, unknown, declined, not-applicable, and stale dietary states.",
++    "steps": [
++      "Filter attendees with unresolved catering readiness.",
++      "Mark one attendee not applicable and another declined.",
++      "Export the least-disclosure readiness report.",
++      "Reimport the cohort metadata."
++    ],
++    "expected_result": "Each epistemic state remains distinct; the operational report discloses only what catering needs and never treats blank as no restriction.",
++    "related_requirements": [
++      "REQ-172",
++      "REQ-173",
++      "REQ-174"
++    ],
++    "feature_gates": [
++      "profiles.field_states",
++      "profiles.readiness",
++      "events.dietary"
++    ],
++    "target_release": "R3",
++    "priority": "P0"
++  },
++  {
++    "id": "UAT-097",
++    "persona_id": "P03",
++    "persona": "Executive Assistant",
++    "scenario": "Compare meeting and travel readiness",
++    "preconditions": "A contact has current meeting context but missing seat and hotel preferences.",
++    "steps": [
++      "Open Meeting briefing readiness.",
++      "Open Travel briefing readiness.",
++      "Mark hotel preferences declined and seat preference ask-later.",
++      "Reopen both reports."
++    ],
++    "expected_result": "Meeting briefing remains ready; travel briefing lists the declined and unresolved fields without lowering an unrelated universal completeness score.",
++    "related_requirements": [
++      "REQ-172",
++      "REQ-174"
++    ],
++    "feature_gates": [
++      "profiles.field_states",
++      "profiles.readiness"
++    ],
++    "target_release": "R2",
++    "priority": "P0"
++  },
++  {
++    "id": "UAT-098",
++    "persona_id": "P12",
++    "persona": "Workplace Directory User",
++    "scenario": "Preserve concurrent and historical memberships",
++    "preconditions": "Alex holds two roles across Dublin and London with different dates and cost centers.",
++    "steps": [
++      "Import both memberships.",
++      "Filter current memberships as of today.",
++      "Filter memberships as of the earlier role date.",
++      "Open the organization graph and Alex profile."
++    ],
++    "expected_result": "Both roles remain dated edges; as-of filters are correct; the Person profile is not overwritten by the latest dir

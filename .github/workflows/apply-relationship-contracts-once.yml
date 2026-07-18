@@ -1,0 +1,37 @@
+name: Apply relationship contracts once
+
+on:
+  push:
+    branches: [agent/r3-relationship-topic-packs-review-v5]
+    paths:
+      - ".github/workflows/apply-relationship-contracts-once.yml"
+      - ".bootstrap/relationship/**"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r3-relationship-topic-packs-review-v5
+          fetch-depth: 0
+      - name: Reconstruct and verify reviewed patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .bootstrap/relationship/part-* > /tmp/relationship.patch
+          echo "35d2d668f30737133b1d06d6fcb709bc8e9a54f1a7bad93fa933044596f56dff  /tmp/relationship.patch" | sha256sum -c -
+      - name: Apply reviewed commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git am /tmp/relationship.patch
+          git rm -r .bootstrap/relationship .github/workflows/apply-relationship-contracts-once.yml
+          git commit -m "chore: remove relationship contract staging files"
+          git push origin HEAD:agent/r3-relationship-topic-packs-review-v5

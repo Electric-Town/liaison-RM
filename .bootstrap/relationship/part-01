@@ -1,0 +1,373 @@
+configured cadence and boundaries |
++| Review Priority | Optional queue-ordering policy output; never a measure of human value |
++| Profile readiness | Purpose-specific coverage of required profile information |
++| Topic Pack | Versioned reusable set of typed profile fields and sections |
++| Field state | Explicit epistemic state such as verified, unknown, declined, stale, or conflicting |
++| Resource | First-class file, URL, calendar item, email reference, photo, map, or document link |
++| Membership | Dated Person-to-Organization or Person-to-Group association |
+ | Interaction | Meaningful communication, meeting, note, commitment, or source-linked event |
+ | Event | Planned or recorded activity with attendees and operational requirements |
+ | Attendance | A person's recorded participation in an event |
+diff --git a/docs/knowledge/KCS-0005-why-does-liaison-not-use-a-relationship-strength-score.md b/docs/knowledge/KCS-0005-why-does-liaison-not-use-a-relationship-strength-score.md
+new file mode 100644
+index 0000000..d78f657
+--- /dev/null
++++ b/docs/knowledge/KCS-0005-why-does-liaison-not-use-a-relationship-strength-score.md
+@@ -0,0 +1,55 @@
++---
++id: KCS-0005
++title: Why does Liaison not use a relationship-strength score?
++state: Draft
++owner: review-and-attention
++created: 2026-07-18
++reviewed: 2026-07-18
++applies_to:
++  - review queue
++  - relationship intent
++  - profile readiness
++search_terms:
++  - relationship score
++  - relationship strength
++  - priority
++  - cadence
++  - message volume
++related_requirements:
++  - REQ-165
++  - REQ-166
++  - REQ-167
++  - REQ-176
++related_uat:
++  - UAT-093
++  - UAT-094
++  - UAT-099
++---
++
++# Why does Liaison not use a relationship-strength score?
++
++## Context
++
++A contributor wants to surface relationships that may need attention and proposes a single numeric score based on message frequency, recency, profile completeness, or interaction volume.
++
++## Answer
++
++Do not implement a relationship-strength score. Keep relationship intent, recorded evidence, maintenance status, profile readiness, and review priority separate.
++
++The personal default is reason-only review. Show factual explanations such as an open commitment, an approaching birthday, or a cadence selected by the user. Weighted Review Priority is an optional queue-ordering policy and must expose its full component breakdown.
++
++## Why
++
++Communication volume does not establish affection, trust, consent, reciprocity, or importance. Strong relationships can be low-frequency. High-frequency communication can be unwanted or operational. A sparse profile can be an intentional privacy choice.
++
++## Verify
++
++- Search domain and UI code for `relationship strength`, `human value`, and unexplained numeric ranking.
++- Confirm personal workspaces default to reason-only mode.
++- Confirm `archived`, `do_not_contact`, `paused`, and `snoozed` suppress queue entries.
++- Confirm every surfaced person has one or more source-linked reasons.
++- Confirm employee ranking and employment-decision uses are prohibited.
++
++## Limits
++
++Review Priority can order a private queue when a user explicitly enables it. It remains a policy output, not a fact about the person or relationship, and must never be included in subject-facing exports by default.
+diff --git a/docs/product/relationship-domain-topic-packs-review.md b/docs/product/relationship-domain-topic-packs-review.md
+new file mode 100644
+index 0000000..2b9fb65
+--- /dev/null
++++ b/docs/product/relationship-domain-topic-packs-review.md
+@@ -0,0 +1,1081 @@
++# Liaison RM — Relationship Domain, Profile Topics, and Review Engine
++
++**Status:** Proposed normative product and domain contract
++**Version:** 0.4
++**Date:** 17 July 2026
++**Intended repository:** `Electric-Town/liaison-RM`
++
++## 1. Product position
++
++Liaison RM is a personal relationship manager with the operational discipline of a CRM, without treating friends, family, colleagues, or community relationships as sales leads.
++
++The product remembers factual context, preserves a chronological relationship record, helps a user decide where attention is useful, and explains every reminder or review suggestion. It supports individual users, executive assistants, families, community organizers, workplace teams, and people who need executive-function support for relationship maintenance.
++
++The system must never imply that communication frequency equals affection, trust, importance, or relationship quality. Some strong relationships are low-frequency. Some high-frequency relationships are unwanted or purely operational.
++
++Liaison therefore separates four concepts:
++
++1. **Relationship intent** — what the user wants this relationship to be and how much attention they intend to give it.
++2. **Relationship evidence** — interactions, shared activities, commitments, dates, notes, and connected resources.
++3. **Maintenance status** — whether the relationship is current relative to the user’s own cadence and rules.
++4. **Profile readiness** — whether the information needed for a particular purpose is known, current, and verified.
++
++A single universal “relationship score” is not the canonical model.
++
++---
++
++## 2. Coverage inherited from the reference products
++
++Liaison RM must cover the useful functions of both Meerkat CRM and CRM in Markdown.
++
++### Meerkat-equivalent coverage
++
++- create, edit, search, archive, and restore people;
++- circles and contact groups;
++- first-class relationships such as spouse, child, colleague, mentor, and friend;
++- CardDAV contact synchronization;
++- profile notes;
++- general notes and journaling;
++- activities involving one or multiple people;
++- a combined timeline;
++- reminders and recurring follow-ups;
++- birthdays and other important dates;
++- accessible light and dark themes;
++- localization-ready UI.
++
++### CRM-in-Markdown-equivalent coverage
++
++- one readable Markdown profile per person;
++- company records;
++- personal and business fields;
++- relationship type and relationship tier;
++- configurable contact cadence;
++- last contacted and next contact due;
++- contact reason and last meaningful topic;
++- communication log;
++- open tasks and commitments;
++- Today, Overdue, and This Week views;
++- monthly relationship review;
++- quick capture for people and interactions;
++- reusable outreach and follow-up templates;
++- archive state and archive reason;
++- Obsidian-compatible properties and views;
++- operation without Obsidian or any particular editor.
++
++Liaison extends these ideas with typed topic packs, organizations and memberships, connected resources, context-specific readiness, provenance, explainable review rules, and local-first collaboration boundaries.
++
++---
++
++## 3. Ubiquitous language
++
++| Term | Meaning |
++|---|---|
++| **Party** | An addressable entity in the relationship graph. A Party is a Person or Organization. It is not a generic database row shown to users. |
++| **Person** | A human profile with identity, contact channels, topic information, dates, and relationship links. |
++| **Organization** | A company, charity, school, club, government body, community, vendor, or other formal body. |
++| **Group** | A user-defined collection such as family, close friends, book club, event cohort, team, or people met at a conference. Groups can be static or query-based. |
++| **Household** | A specialized group representing people, pets, shared addresses, and household dates. |
++| **Membership** | A dated relationship between a Person and an Organization or Group, including role, title, department, location, and status. |
++| **Relationship** | A first-class edge between two entities. It has type, direction, state, dates, provenance, and optional user-authored assessment. |
++| **Topic Pack** | A reusable, typed set of fields and sections that can be enabled globally, by profile template, or for one entity. |
++| **Field State** | The epistemic state of a value: known, unknown, not applicable, declined, stale, unverified, or verified. |
++| **Interaction** | A meaningful contact event such as a call, message, meeting, introduction, gift, shared activity, or email. |
++| **Commitment** | A promise, requested action, or open loop involving one or more parties. |
++| **Resource** | A connected file, URL, calendar item, email thread, document, photo, location, or other reference. |
++| **Relationship Intent** | User-authored importance, desired cadence, boundaries, and desired future state. |
++| **Maintenance Status** | Explainable state derived from cadence, recency, commitments, important dates, and user rules. |
++| **Review Priority** | A configurable queue-ordering calculation. It is not a measure of human worth or objective relationship strength. |
++| **Profile Readiness** | Context-specific coverage of the fields required for a task, such as preparing a meeting or catering for an event. |
++
++---
++
++## 4. Domain model
++
++### 4.1 Person
++
++A Person contains stable identity and profile information. It does not directly own every note, interaction, file, or organization value; those are linked records to avoid a giant conflict-prone profile file.
++
++Core fields:
++
++- stable ID;
++- display name;
++- structured names, nickname, pronunciation, phonetic form, and pronouns;
++- photos and accessible text alternatives;
++- contact channels;
++- addresses and locations;
++- important dates;
++- tags and circles;
++- active profile templates/topic packs;
++- archive and contact-boundary state;
++- provenance summary;
++- derived, rebuildable review indicators.
++
++### 4.2 Organization
++
++Organization types include:
++
++- company;
++- nonprofit;
++- school or university;
++- government body;
++- community;
++- club;
++- religious organization;
++- vendor;
++- client;
++- household service provider;
++- informal organization.
++
++Organization fields can include domains, locations, industry, size range, departments, aliases, parent/child organizations, contacts, important dates, notes, files, URLs, and events.
++
++### 4.3 Group
++
++Groups are not forced into the Organization model.
++
++Examples:
++
++- family;
++- household;
++- close friends;
++- old school friends;
++- neighborhood;
++- conference contacts;
++- project team;
++- event attendees;
++- people to reconnect with;
++- gift list;
++- Dublin office;
++- VIP network.
++
++Group modes:
++
++- **static** — manually managed membership;
++- **dynamic** — membership produced by a saved query;
++- **snapshot** — a fixed cohort preserved for an event, review, or export;
++- **household** — shared addresses, pets, dates, and household relationships;
++- **team** — roles and collaborative records.
++
++### 4.4 Relationship
++
++Relationships are directional or reciprocal edges between:
++
++- Person and Person;
++- Person and Organization;
++- Person and Group;
++- Organization and Organization;
++- Organization and Group.
++
++Examples:
++
++- spouse / partner;
++- parent / child;
++- sibling;
++- friend;
++- neighbor;
++- mentor / mentee;
++- executive / assistant;
++- colleague;
++- manager / report;
++- client contact;
++- member of;
++- introduced by;
++- referred by;
++- works at;
++- volunteers with;
++- supplier to;
++- parent organization of.
++
++Relationship data:
++
++- type and reciprocal label;
++- direction;
++- start and end dates;
++- active, paused, distant, strained, ended, or archived state;
++- source and confidence;
++- shared contexts;
++- private notes stored separately;
++- manual relationship intent;
++- optional manual assessment dimensions;
++- follow-up policy.
++
++### 4.5 Membership
++
++Membership is a specialized dated edge rather than repeated text fields.
++
++```yaml
++organization_id: org_acme
++person_id: person_alex
++role: Executive Assistant
++department: Leadership
++cost_center: IE-EXEC-01
++location_id: loc_dublin
++started_on: 2024-04-01
++ended_on: null
++primary: true
++source: directory_import
++```
++
++This permits historical filtering, multiple concurrent roles, and accurate organization graphs.
++
++### 4.6 Interaction
++
++An interaction can link multiple people, organizations, groups, resources, commitments, or events.
++
++Types include:
++
++- in-person;
++- call;
++- email;
++- message;
++- video meeting;
++- shared activity;
++- gift or card;
++- introduction;
++- social interaction;
++- comment or post interaction;
++- support provided or received;
++- other.
++
++The user decides which types count as “meaningful” for maintenance rules. A reaction or automated email does not automatically strengthen a relationship.
++
++### 4.7 Resource
++
++A Resource is a first-class reference that can be connected to any entity, relationship, interaction, note, commitment, or event.
++
++Resource types:
++
++- local file;
++- external URL;
++- photo;
++- document;
++- email message or thread reference;
++- calendar event or invitation;
++- contact card;
++- map/location;
++- audio note;
++- meeting recording reference;
++- bookmark;
++- gift idea/product reference;
++- attachment collection.
++
++Resource rules:
++
++- local files use content hashes and portable relative paths;
++- external URLs store canonical URL, title, source, added date, and optional user-approved metadata;
++- no remote URL is fetched without an explicit connection/egress permission;
++- calendar invitations retain source UID and may also store the original `.ics` file;
++- email bodies and attachments remain separate opt-in permissions;
++- every Resource has backlinks;
++- a deleted external resource does not delete the note or interaction that referenced it.
++
++---
++
++## 5. Topic Packs
++
++Topic Packs solve the problem that different people require different information without turning every profile into an enormous form.
++
++A pack can be:
++
++- enabled for the whole workspace;
++- included in a profile template;
++- required for a group or organization;
++- activated for one person;
++- supplied by a plugin;
++- hidden for a role;
++- versioned and exported.
++
++### 5.1 Built-in packs
++
++#### Identity and communication
++
++- pronunciation;
++- preferred name;
++- pronouns;
++- language;
++- time zone;
++- preferred
