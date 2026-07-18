@@ -54,12 +54,14 @@ Deliverables:
 - configurable field visibility and ordering;
 - dashboard framework with user-configurable panels and keyboard controls;
 - relationship list and graph with equivalent semantic table/tree;
-- theme, density, reduced motion, localisation structure, and interruption-safe drafts;
+- theme, density, reduced motion, versioned locale catalogs, pseudolocale expansion testing, and interruption-safe drafts;
 - Linux Flatpak, macOS, and Windows packaging pipelines.
 
 Exit evidence:
 
 - keyboard, screen-reader, 200% zoom, reflow, contrast, target-size, and reduced-motion tests;
+- locale-key, placeholder, Unicode, 45% expansion, and localized accessibility-name tests;
+- named human-review evidence before any non-source locale is marked release-ready;
 - graph/table parity test;
 - installer smoke tests and local-data uninstall/reinstall behaviour;
 - no mandatory account or network request on first run.
@@ -144,7 +146,7 @@ Deliverables:
 - Ollama-compatible local inference;
 - remote AI provider grants;
 - WASI Component Model plugin host and WIT SDK;
-- plugin manifest review, resource limits, UI contributions, and migrations;
+- plugin manifest review, resource limits, UI contributions, migrations, and namespaced locale catalogs;
 - provider and plugin conformance kits.
 
 Exit evidence:
@@ -152,6 +154,7 @@ Exit evidence:
 - automation and MCP cannot mutate outside granted scope;
 - prompt and tool injection tests;
 - plugin filesystem/network denial tests;
+- plugin locale keys cannot replace core keys without an explicit compatibility contract;
 - local-model workflow functions without remote account;
 - remote disclosure preview and revocation;
 - compatibility tests across supported plugin contract versions.
