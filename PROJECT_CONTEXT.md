@@ -39,7 +39,7 @@ Canonical records are readable files. SQLite, search, graph layout, thumbnails, 
 
 Status: **pre-alpha**.
 
-The default branch contains governance, product and interaction specifications, machine-readable planning, the Rust Workspace/People/CLI and Markdown slice, provider-neutral Connections, Topic Pack contracts, purpose-specific profile readiness, reason-only Review and Attention runtime foundations, and a native Tauri desktop alpha with universal macOS review bundles. It does not yet have a supported public release.
+The default branch contains governance, product and interaction specifications, machine-readable planning, the Rust Workspace/People/CLI and Markdown slice, provider-neutral Connections, Topic Pack contracts, purpose-specific profile readiness, reason-only Review and Attention runtime foundations, localisation architecture, a native Tauri desktop alpha with macOS review bundles and Windows NSIS build configuration, and a public project site. It does not yet have a supported public release.
 
 Do not claim any of the following without exact-head evidence:
 
@@ -58,9 +58,10 @@ As of 2026-07-18:
 
 | Ref | Scope | State at last update |
 |---:|---|---|
-| `main` | Governance, product and interaction specification, CLI/Markdown slice, Connections, Topic Pack contract, Profiles, reason-only Review runtime, and native Tauri desktop alpha | Implemented on the default branch; pre-alpha with no supported public release |
+| `main` | Governance, product and interaction specification, CLI/Markdown slice, Connections, Topic Pack contract, Profiles, reason-only Review runtime, localisation architecture, native Tauri desktop alpha, and public project site | Implemented on the default branch; pre-alpha with no supported public release |
 | 8 | Native Tauri/macOS alpha and universal review bundles | Merged on 2026-07-18; Developer ID signing, notarisation, clean-Mac UAT, and supported distribution remain closed |
-| 20 | Localisation catalogues, pseudolocale, validation, and human-review gates | Open and ready for review; non-source catalogues are structural/draft fixtures, not approved translations |
+| 20 | Localisation catalogues, pseudolocale, validation, and human-review gates | Merged on 2026-07-18; non-source catalogues are structural/draft fixtures, not approved translations |
+| 26 | Windows NSIS packaging configuration and CI review bundle | Merged on 2026-07-18; public signing, supported distribution, and clean-machine UAT remain closed |
 | 18 | Repository README, complete project context, agent entry points, and About metadata contract | Merged on 2026-07-18; the default branch now carries this handoff |
 
 An open PR is not part of `main`. Inspect its base, head, changed files, exact-head checks, limitations, and evidence before building on it.
@@ -964,6 +965,7 @@ crates/                      Shared technical crates
 adapters/                    Persistence/import/provider adapters
 interfaces/                  WIT, OpenAPI, MCP and other contracts
 providers/                   Provider packages and conformance evidence
+site/                        Static public project site and discovery metadata
 scripts/                     Repository and quality checks
 ```
 

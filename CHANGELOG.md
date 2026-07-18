@@ -26,6 +26,8 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - A project-context workflow that validates repository links/content policy and machine-readable product specifications together.
 - Versioned locale-catalog architecture with an `en-IE` source catalogue, `en-XA` expansion pseudolocale, draft Irish, Japanese, and Brazilian Portuguese fixtures, Unicode and placeholder validation, human-review gates, and release-evidence guidance.
 - Windows desktop packaging: an NSIS installer target (per-user install, embedded WebView2 bootstrapper) and a `windows-2022` CI workflow that checks, lints, tests, builds, and checksums the desktop bundle.
+- A static public project site with semantic metadata, local assets, a custom 404 page, a social card, responsive layouts, and a GitHub Pages deployment workflow.
+- A public-site validator covering metadata, local asset resolution, accessibility basics, structured data, language consistency, discovery files, and copy standards.
 
 ### Changed
 
@@ -34,6 +36,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Reason-only review is the personal-workspace default; weighted Review Priority is explicitly queue ordering rather than relationship strength.
 - Review queues preserve factual reasons and do not expose a relationship-strength score.
 - The R2 roadmap now includes locale-catalog, expansion, Unicode, accessible-name, formatting, and named human-review evidence gates.
+- The README and GitHub About contract now lead with the product outcome, state the pre-alpha boundary plainly, and route readers to current evidence, contribution guidance, and the public site.
 
 ### Fixed
 

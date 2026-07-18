@@ -4,21 +4,23 @@ Last reviewed: 2026-07-18
 
 Settings owner: Electric Town repository administrators.
 
-This file records the intended public GitHub About metadata so repository settings remain consistent with the product boundary.
-
-The remaining settings action is tracked in [issue #19](https://github.com/Electric-Town/liaison-RM/issues/19). Repository settings are not considered updated until that issue is completed and the live About panel is verified.
+This file records the public GitHub About metadata so repository settings remain consistent with the product boundary. The initial settings update was tracked in [issue #19](https://github.com/Electric-Town/liaison-RM/issues/19).
 
 ## Description
 
 ```text
-Local-authoritative, open-source relationship memory and attention system. Markdown/YAML source of truth, Rust/Tauri desktop, CLI, graphs, events, provider-neutral connections, and privacy-first automation.
+Remember people without turning them into leads. Liaison RM is a local-authoritative relationship memory and attention system built on open Markdown/YAML, Rust, Tauri and a first-class CLI. Pre-alpha.
 ```
 
 The description must not claim that the desktop application, platform installers, synchronisation, integrations, accessibility conformance, or public release are complete.
 
 ## Website
 
-Leave the Website field empty until a maintained public documentation or release site exists. Do not point it at a prototype and present the prototype as the product.
+```text
+https://electric-town.github.io/liaison-RM/
+```
+
+The site publishes from `site/` through [the Pages workflow](../.github/workflows/pages.yml). It labels product direction, default-branch evidence and unopened release gates separately.
 
 ## Suggested topics
 
@@ -26,7 +28,6 @@ GitHub repository topics are lower-case and hyphenated. Recommended topics:
 
 ```text
 personal-crm
-relationship-manager
 relationship-management
 personal-knowledge-management
 local-first
@@ -36,35 +37,36 @@ knowledge-graph
 rust
 tauri
 cli
-self-hosted
 privacy
+self-hosted
+offline-first
 open-source
-obsidian
-logseq
-carddav
-webdav
-mcp
-ollama
+domain-driven-design
+data-ownership
+accessibility
+crm
+knowledge-management
+contact-management
 ```
 
-If GitHub's topic limit requires removal, preserve the product-category, local-authority, storage, implementation, privacy, and extensibility topics before individual provider or integration topics.
+The list uses GitHub's 20-topic allowance. It favours the product category, local authority, open storage, implementation language, privacy and accessibility. Planned integrations are not used as topics until their execution and release gates open.
 
 ## Social preview
 
-A future social-preview image should communicate:
+[`site/assets/social-card.png`](../site/assets/social-card.png) communicates:
 
 - Liaison RM name;
 - local-authoritative relationship memory;
-- people, graph, events, and open files;
+- readable local files;
 - pre-alpha status until a public release exists.
 
-Do not use a screen that exposes real personal information. Use synthetic data only.
+The card and public-site product illustration use synthetic data. The current desktop screenshot comes from committed deterministic browser evidence and contains no personal data.
 
 ## About-setting review checklist
 
 - [ ] Description matches the text above or a reviewed successor.
-- [ ] Website is maintained and does not point to a private or misleading artifact.
-- [ ] Topics reflect the product rather than temporary implementation experiments.
-- [ ] Social preview uses synthetic data.
+- [ ] Website resolves to the maintained Pages site.
+- [ ] Topics match the exact 20-item list above.
+- [ ] Social preview uses synthetic or committed deterministic evidence.
 - [ ] No field claims a supported release before release evidence exists.
-- [ ] Issue #19 is closed only after the live GitHub About panel is checked.
+- [ ] The live About panel and Pages URL are checked after each settings change.

@@ -1,338 +1,285 @@
+<p align="center">
+  <a href="https://electric-town.github.io/liaison-RM/">
+    <img src="site/assets/social-card.svg" alt="Liaison RM: Remember the person, not the pipeline" width="1200">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://electric-town.github.io/liaison-RM/"><strong>Project site</strong></a>
+  · <a href="PROJECT_CONTEXT.md">Current status</a>
+  · <a href="SPEC.md">Product contract</a>
+  · <a href="CONTRIBUTING.md">Contributing</a>
+</p>
+
 # Liaison RM
 
-> A local-authoritative relationship memory and attention system with CRM-grade organisation—without treating people as leads or reducing relationships to message volume.
+**Remember the person. Not the pipeline.**
 
-Liaison RM is an open-source relationship manager for individuals, families, executive assistants, reception and workplace teams, facilities teams, event organisers, professional networkers, and community organisers.
+Liaison RM is a local-authoritative relationship memory and attention system. It is for people who want CRM-grade organisation without sales-pipeline assumptions, a hosted relationship vault or a score that pretends message frequency measures closeness.
 
-The planned product combines:
+The product is being built around readable Markdown and YAML records, a shared Rust core, a first-class `liaison` CLI and a native Tauri desktop. Search indexes, caches and graph layouts are projections that can be rebuilt. The workspace stays under the owner’s control.
 
-- readable Markdown/YAML records that the user owns;
-- a shared Rust application core;
-- a native Tauri desktop application;
-- a first-class `liaison` command-line interface;
-- relationship, organisation, event, resource, and interaction graphs;
-- structured personal context such as food requirements, preferences, important dates, accessibility needs, roles, memberships, and commitments;
-- provider-neutral backup, import, export, and—only where proven safe—synchronisation;
-- local APIs, MCP tools, Ollama-compatible local AI, and capability-controlled plugins.
+> [!WARNING]
+> **Pre-alpha.** The default branch has a tested workspace, People and CLI slice, a desktop alpha, provider contracts, profile-readiness and reason-only review foundations. It is not ready for daily use or public binary distribution. There are no signed downloads.
 
-Liaison RM does **not** require an Electric Town account or hosted relationship database. Canonical records remain on storage selected and controlled by the workspace owner. Search indexes, caches, and graph layouts are rebuildable projections.
+## Why this exists
 
-> **Status: pre-alpha.** The default branch contains reviewed product and interaction specifications, Rust/CLI/Markdown/provider/profile/review foundations, and a native Tauri desktop alpha. It is not yet ready for daily use or public binary distribution. Do not describe planned features as implemented.
+A contact list remembers an address. A sales CRM remembers an opportunity. Neither is built to hold the context that helps someone follow through on a promise, prepare for a meeting, respect a boundary or remember what matters to another person.
 
-## Start here
-
-### Building with a coding agent
-
-Read these files in order before changing code:
-
-1. [`AGENTS.md`](AGENTS.md) — normative contributor and agent rules.
-2. [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md) — product, architecture, status, terminology, active work, and handoff context.
-3. [`SPEC.md`](SPEC.md) — product and build specification.
-4. [`AI_BUILD_INSTRUCTIONS.md`](AI_BUILD_INSTRUCTIONS.md) — task selection and implementation sequence.
-5. The owning bounded-context README under [`contexts/`](contexts/).
-6. Related decisions, knowledge articles, requirements, UAT cases, feature gates, and implementation tasks.
-
-Do not begin with a new screen or provider integration. Start with a bounded vertical slice through domain rules, application services, ports, adapters, CLI/API surface, tests, knowledge, and changelog.
-
-### Reviewing the product direction
-
-- [Product and build specification](SPEC.md)
-- [Complete agent handoff and current context](PROJECT_CONTEXT.md)
-- [Product roadmap](docs/product/roadmap.md)
-- [Context map](docs/architecture/context-map.md)
-- [Ubiquitous language](docs/architecture/ubiquitous-language.md)
-- [Open workspace format](docs/architecture/open-workspace.md)
-- [Provider-neutral connections](docs/architecture/provider-connections.md)
-- [Sharing and synchronisation](docs/architecture/sharing-and-synchronization.md)
-- [Threat model](docs/security/threat-model.md)
-- [Local-integrity requirements](docs/security/local-integrity.md)
-- [Interaction prototype and screens](docs/prototypes/README.md)
-- [Machine-readable requirements](spec/requirements.json)
-- [Persona UAT catalogue](spec/uat-cases.json)
-- [Feature gates](spec/feature-gates.yaml)
-- [Implementation plan](spec/implementation-plan.yaml)
-
-## Product thesis
-
-Most personal CRMs either behave like sales tools, hide data in a hosted database, or infer relationship value from communication frequency. Liaison RM takes a different position:
+Liaison RM takes four positions:
 
 - a person is not a lead;
-- frequent email does not prove closeness, trust, or importance;
-- sparse information does not mean an unimportant relationship;
-- every relationship does not need a recurring cadence;
-- private assessments are not objective facts;
-- workplace access or communication data must not become productivity or risk scoring.
+- frequent contact does not prove trust, affection or importance;
+- missing information is a state to resolve, not permission to guess;
+- relationship attention needs an honest reason, not a guilt score.
 
-The domain separates four concepts:
+The intended result is simple: capture a useful detail once, find it before it matters and keep the record even if Liaison RM disappears.
+
+## What works today
+
+| Surface | On the default branch | Boundary |
+|---|---|---|
+| Open workspace | Create, inspect and validate a versioned local workspace | Complete crash recovery, migrations and projection rebuild remain gated |
+| People | Create and list basic person records in readable Markdown | The daily relationship directory and full profile editing flow are not complete |
+| CLI | Human and JSON output for workspace and person commands | Import, edit, backup, sharing and destructive commands remain gated |
+| Desktop alpha | Create or open a workspace, add a person and run validation | Review builds are not signed public releases |
+| Relationship model | Separate intent, evidence, maintenance status and purpose-specific readiness | Weighted priority and the full relationship workflow are not released |
+| Review and Attention | Reason-only policy, hard suppressions and bounded queue foundations | No claim of a complete personal review experience |
+| Connections | Versioned object-store contract, grant model and local reference adapter | Upload evidence does not prove safe multi-writer synchronisation |
+| Localisation | `en-IE` source catalogue, `en-XA` stress locale and draft locale fixtures | Irish, Japanese and Brazilian Portuguese still require named human review |
+| Packaging | macOS review bundles and Windows NSIS build configuration in CI | Signing, notarisation, clean-machine UAT and supported downloads remain closed |
+
+The exact status, current branches and open gates live in [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md#2-current-status). Do not treat an open pull request, a prototype or a passing unit test as released behaviour.
+
+## Run the current CLI
+
+This path exercises the implemented Rust application services and Markdown adapter. It creates a disposable workspace with synthetic data.
+
+Requirements: Git and the pinned Rust toolchain from [`rust-toolchain.toml`](rust-toolchain.toml).
+
+```bash
+git clone https://github.com/Electric-Town/liaison-RM.git
+cd liaison-RM
+
+liaison_demo="$(mktemp -d)"
+
+cargo run --locked -p liaison-cli -- \
+  --workspace "$liaison_demo" \
+  workspace init --name "Liaison demo" --build-profile airgap
+
+cargo run --locked -p liaison-cli -- \
+  --workspace "$liaison_demo" \
+  person create --name "Alex Example" --email "alex@example.test"
+
+cargo run --locked -p liaison-cli -- \
+  --workspace "$liaison_demo" \
+  workspace validate
+```
+
+Use `--output json` before the command group for structured output. See [`apps/cli/README.md`](apps/cli/README.md) for the full current command set and error contract.
+
+## The relationship model
+
+Liaison RM does not collapse a relationship into one number.
 
 | Concept | Meaning | Source |
 |---|---|---|
-| **Relationship intent** | How the user wants to maintain the relationship, including tier, importance, cadence, boundaries, and future state | Manually configured |
-| **Relationship evidence** | Interactions, notes, activities, commitments, events, resources, and imported history | Recorded or imported facts |
-| **Maintenance status** | Whether the relationship is current relative to its own cadence and boundaries | Explainable calculation |
-| **Profile readiness** | Whether the information required for a specific purpose is known and current | Purpose-specific calculation |
+| **Relationship intent** | How the user wants to maintain the relationship, including cadence, boundaries and future state | Manually configured |
+| **Relationship evidence** | Interactions, notes, commitments, events and imported history | Recorded or imported facts |
+| **Maintenance status** | Whether something needs attention relative to its own configuration | Explainable calculation |
+| **Profile readiness** | Whether the information required for a named purpose is known and current | Purpose-specific calculation |
 
-The product uses **Review Priority** only to order a review queue. It must never be presented as relationship strength or human worth. Reason-only review is the default; any weighted policy must be transparent, configurable, versioned, and overridden by hard suppressions such as do-not-contact, archive, pause, or snooze.
-
-## Core use cases
-
-### Personal and family
-
-- remember preferences, allergies, favourite things, gifts, pets, family context, birthdays, anniversaries, and important dates;
-- keep a searchable interaction and commitment history;
-- run small, low-pressure daily or monthly reviews;
-- maintain a local graph of people, households, groups, organisations, events, and resources;
-- exchange selected information with a family or group without exposing private overlays.
-
-### Executive assistants
-
-- prepare source-linked meeting briefings;
-- maintain principal-private notes separately from shared operational profiles;
-- track commitments, introductions, important dates, travel, scheduling, hospitality, and communication preferences;
-- delegate follow-up without disclosing unauthorised context.
-
-### Reception, workplace, and events
-
-- record structured dietary coverage and operational instructions;
-- select attendees by organisation, location, team, department, cost centre, group, or saved view;
-- identify unknown, stale, declined, conflicting, or unresolved information;
-- produce a least-disclosure catering brief;
-- record attendance and event history;
-- import access logs with explicit mapping, retention, unresolved identities, and role controls.
-
-### Networking and community
-
-- organise contacts by relationship intent, group, organisation, event, and follow-up state;
-- record last interaction, last meaningful note, open commitments, and introductions;
-- prioritise or deprioritise attention without claiming an objective closeness score;
-- preserve readable local records rather than depend on a SaaS CRM.
-
-## Topic Packs and structured context
-
-Profiles are composed from reusable **Topic Packs**, not one fixed contact form. Packs may be enabled for a workspace, template, organisation, group, person, plugin, event, trip, or other purpose.
-
-Planned built-in packs include:
-
-- identity and communication;
-- food and hospitality;
-- travel;
-- favourites and gifts;
-- family and household;
-- pets;
-- professional context;
-- interests and life context;
-- events and hosting;
-- executive-assistant briefing;
-- accessibility and sensory preferences;
-- resources.
-
-Fields have stable IDs independent of labels and layouts. Values can explicitly be known, verified, unverified, unknown, not applicable, declined, stale, conflicting, in need of clarification, or derived. Liaison RM does not use one universal profile-completeness score; readiness is calculated for a named purpose such as event catering, a meeting brief, travel, CardDAV export, or birthday preparation.
-
-## Architecture
-
-### Technology direction
-
-- **Core:** Rust workspace with context-owned domain and application services.
-- **Desktop:** Tauri 2 with React/TypeScript as the intended production interface.
-- **CLI:** first-class `liaison` binary using the same application services.
-- **Canonical records:** Markdown with versioned YAML front matter.
-- **High-volume streams:** documented, partitioned JSONL.
-- **Projections:** disposable SQLite, full-text search, graph layouts, thumbnails, and caches.
-- **Plugins:** WASI Component Model/WIT with explicit capabilities.
-- **Automation:** loopback OpenAPI, webhooks, MCP, and n8n-compatible workflows.
-- **AI:** local Ollama-compatible operation plus optional remote providers behind explicit disclosure grants.
-- **Browser:** optional local client; it never owns canonical data.
-
-### Domain-driven structure
+Good review copy names the reason:
 
 ```text
-apps/                 User-facing interfaces: desktop, CLI, local services
-contexts/             Bounded contexts and their application services
-crates/               Narrow shared technical libraries
-adapters/             Filesystem, projection, import/export, and provider adapters
-interfaces/           Versioned WIT, OpenAPI, MCP, and external contracts
-providers/            Optional provider packages and conformance evidence
-docs/                 Product, architecture, decisions, knowledge, UX, security, evidence
-spec/                 Requirements, UAT, feature gates, implementation plan
-scripts/              Repository, architecture, format, and conformance checks
+Venue shortlist promised for Friday. Last note: keep the room step-free.
 ```
 
-Current and planned bounded contexts:
+Rejected copy invents a truth the evidence cannot support:
 
-| Context | Owns |
-|---|---|
-| Workspace | Workspace identity, profile, members, schema lifecycle, validation, migration, and projection lifecycle |
-| Identity and Profiles | People, contact methods, Topic Packs, field states, provenance, profile templates |
-| Organisations and Groups | Organisations, locations, households, groups, memberships, departments, cost centres |
-| Relationships | Relationship edges, intent, boundaries, tiers, cadence, optional private assessments |
-| Interactions and Commitments | Communication and activity history, notes, commitments, tasks, reminders |
-| Events and Calendar | Events, invitations, attendance, recurrence, cohorts, important dates |
-| Knowledge and Resources | Files, URLs, photos, documents, calendar/email references, backlinks |
-| Review and Attention | Maintenance status, readiness, review reasons, queues, policies, sessions |
-| Facilities | Access-log imports, identity mapping, retention, bounded summaries |
-| Connections | Provider identity, capabilities, grants, jobs, conformance, health |
-| Sharing | Members, devices, encrypted operations, acknowledgements, conflicts, overlays, cards |
-| Customisation | Field schemas, layouts, dashboards, saved views, plugin contributions |
-| Automation | Local API, MCP, AI tools, webhooks, plugin host, approved commands and queries |
+```text
+Relationship strength: 42%.
+```
 
-No UI, connector, provider, plugin, or AI tool may implement domain rules independently of the owning context.
+Reason-only review is the default. Archive, do-not-contact, pause, snooze and no-cadence states override review pressure.
 
-## Local authority and storage
+## Topic Packs and explicit information states
 
-A workspace is an ordinary directory the user can inspect, back up, transform, and recover without Liaison RM:
+Profiles are composed from reusable **Topic Packs** rather than one fixed contact form. A pack can describe identity and communication, food and hospitality, travel, important dates, family context, professional roles, accessibility needs, events or resources.
+
+Fields have stable IDs that do not depend on their visible label. Values can be:
+
+- known or verified;
+- unverified, stale or conflicting;
+- unknown or in need of clarification;
+- not applicable;
+- declined;
+- derived.
+
+An empty allergy, accessibility or dietary field never means “none”. Readiness is calculated for a named purpose such as event catering or a meeting briefing, not as one universal profile-completeness score.
+
+## Open workspace
+
+A Liaison workspace is an ordinary directory the owner can inspect, back up, transform and recover without a hosted service:
 
 ```text
 workspace/
 ├── .liaison/
 │   ├── workspace.yaml
 │   ├── schema-version
-│   ├── devices/
-│   ├── members/
 │   ├── grants/
-│   ├── migrations/
 │   ├── operations/
 │   └── projections/
 ├── people/
 ├── organisations/
-├── locations/
-├── groups/
 ├── relationships/
-├── notes/
 ├── interactions/
 ├── reminders/
 ├── events/
-├── views/
-├── streams/
-│   ├── access/YYYY/MM/*.jsonl
-│   └── email-metadata/YYYY/MM/*.jsonl
 ├── attachments/sha256/
-└── audit/YYYY/MM/*.jsonl
+└── audit/
 ```
 
-Human-scale records remain readable. High-volume machine events do not become millions of tiny Markdown files. Unknown fields and user-authored Markdown sections must survive supported round trips. Secrets never enter canonical files.
+Human-scale records use Markdown with versioned YAML front matter. Documented JSONL partitions hold high-volume machine streams. Unknown fields and user-authored Markdown sections must survive supported round trips. Secrets never enter canonical files.
 
-## Airgap and Connected-local
+Read the full storage contract in [`docs/architecture/open-workspace.md`](docs/architecture/open-workspace.md).
 
-Liaison RM has two separately testable release profiles:
+## Architecture
 
-- **Airgap:** network clients and listeners are compiled out. Local files, removable-media exchange, import/export, validation, backup, and recovery remain available.
-- **Connected-local:** the same local source of truth may use explicitly granted providers, CardDAV, calendars, email metadata, webhooks, local APIs, MCP, or peer exchange.
-
-A runtime toggle is not accepted as proof of an Airgap build.
-
-## Connections, backup, and synchronisation
-
-Google Drive, WebDAV, S3-compatible services, AWS S3, MinIO, Google Cloud Storage, Azure Blob Storage, local folders, removable media, CardDAV, CalDAV, email services, and future providers are adapters behind versioned capability contracts.
-
-Provider registration grants no access. A connection remains inert until an explicit grant defines:
-
-```yaml
-purpose:
-endpoint:
-data_classes:
-fields:
-operations:
-retention:
-schedule:
-expires_at:
-approved_by:
-revocable: true
+```text
+Desktop / CLI / local API / MCP / importer / plugin adapter
+                              ↓
+                    application command or query
+                              ↓
+                      owning domain model
+                              ↓
+                        outbound port
+                              ↓
+                           adapter
 ```
 
-Uploading and downloading objects does not prove safe multi-writer synchronisation. Providers advertise only modes supported by conformance evidence:
+Domain rules live in the owning bounded context. React, Tauri commands, providers, importers, plugins and AI tools call application services; they do not reimplement those rules.
 
-- import;
-- export;
-- backup;
-- single-writer;
-- multi-writer.
+| Area | Direction |
+|---|---|
+| Core | Rust domain and application services |
+| Desktop | Tauri 2; current frontend calls typed Tauri commands |
+| CLI | First-class `liaison` binary using the same services |
+| Canonical records | Markdown/YAML plus documented JSONL streams |
+| Projections | Disposable SQLite, search, graph layout, thumbnails and caches |
+| Providers | Versioned capability contracts with explicit grants |
+| Plugins | WASI Component Model and WIT with denied-by-default capabilities |
+| Automation | Planned loopback OpenAPI, webhooks, MCP and local-model mediation |
 
-Shared plaintext Markdown folders are not treated as safe concurrent databases. Team and family sharing uses encrypted immutable operations, signed manifests, acknowledgements, key envelopes, conflict records, and content-addressed attachments. Each device materialises its own readable local view.
+Start with the [context map](docs/architecture/context-map.md), [ubiquitous language](docs/architecture/ubiquitous-language.md) and [accepted decisions](docs/decisions/README.md).
 
-## Privacy, safety, and accessibility
+## Privacy and safety boundary
+
+Liaison RM may hold sensitive personal, dietary, accessibility, calendar, workplace and private relationship context. The repository requires:
+
+- explicit purpose, scope and expiry before data leaves the workspace;
+- least-disclosure exports and previews;
+- no hidden telemetry, remote logging, account check or licence check;
+- no automatic messages without user action;
+- no employee, productivity, attendance-compliance or risk scoring;
+- no private assessment in shared search, exports, AI context or provider data;
+- no personal data sent to a model without an explicit grant.
+
+Airgap and Connected-local are separate build profiles. A runtime toggle is not proof of an Airgap build.
+
+Read the [threat model](docs/security/threat-model.md), [local-integrity requirements](docs/security/local-integrity.md) and [sharing architecture](docs/architecture/sharing-and-synchronization.md).
+
+## Accessibility and language
 
 The project targets WCAG 2.2 Level AA and applicable EN 301 549 evidence. This is an engineering target, not a certification claim.
 
-Every user-facing workflow must support:
+User-facing work must support keyboard completion, visible focus, screen-reader names, 200% zoom and reflow, reduced motion, interruption recovery, long content and a semantic alternative to graph-only or drag-only interaction.
 
-- keyboard completion and visible focus;
-- screen-reader names and live status;
-- 200% zoom and reflow;
-- reduced motion and low-stimulation modes;
-- interruption recovery and draft preservation;
-- text alternatives to colour, icons, graphs, spatial layout, and drag-only controls;
-- empty, loading, partial, stale, conflict, permission, success, undo, and recovery states.
+`en-IE` is the source locale. Draft `ga-IE`, `ja-JP` and `pt-BR` catalogues are not released translations. A locale needs a named fluent reviewer, product-context review, layout evidence and accessibility sampling before it can appear in a production language selector.
 
-Sensitive dietary, accessibility, email, calendar, access, and private relationship data require purpose, classification, role, audit, retention, expiry, and least-disclosure handling.
+See the [UX review standard](docs/standards/ux-review.md), [language-quality standard](docs/standards/localization-and-language-quality.md) and [current locale evidence](docs/evidence/localization/README.md).
 
-The product explicitly prohibits:
-
-- hidden telemetry, remote logging, account checks, and licence checks;
-- undeclared network requests;
-- secrets in workspace files, logs, fixtures, or screenshots;
-- automatic messages without explicit user action;
-- trust or affection inference from message volume;
-- employee ranking, productivity scoring, risk scoring, or social-credit behaviour;
-- private assessments leaking into shared workspaces, exports, AI context, or provider data.
-
-## Delivery sequence
+## Build order
 
 | Release | Outcome |
 |---|---|
-| **R0** | Repository governance, product contracts, architecture, threat model, requirements, UAT, and agent-ready context |
-| **R1** | Open workspace, crash-safe lifecycle, people, Markdown adapter, CLI, import/export, backup and isolated restore |
-| **R2** | Accessible native desktop, configurable profiles/dashboard, graph plus semantic alternative, Linux/macOS/Windows packaging |
-| **R3** | Workplace event and dietary-readiness workflow |
-| **R4** | Encrypted family/team sharing, WebDAV/S3-compatible transport, connection/grant UI |
-| **R5** | CardDAV, calendars, email metadata, migrations, facilities imports |
-| **R6** | Local OpenAPI, MCP, Ollama, remote AI grants, WASI plugins |
+| **R0** | Governance, product contracts, threat model, requirements, UAT and agent-ready context |
+| **R1** | Open workspace, people, CLI, validation, import/export foundations, backup and recovery |
+| **R2** | Accessible native desktop, search, profiles, dashboard and platform packaging |
+| **R3** | Workplace event cohorts, dietary readiness and least-disclosure catering briefs |
+| **R4** | Encrypted sharing, grants, provider transport and connection management |
+| **R5** | Contacts, calendars, email metadata, migration and bounded facilities imports |
+| **R6** | Local OpenAPI, MCP, webhooks, local AI and capability-controlled plugins |
 
-The first operational wedge is event dietary readiness: select an attendee cohort, identify every unresolved coverage state, and produce a least-disclosure catering brief.
+The first operational wedge is event dietary readiness: select an attendee cohort, identify every unresolved coverage state and produce a least-disclosure catering brief.
 
-## Current work and review stack
+The dependency order and remaining gates are in the [roadmap](docs/product/roadmap.md), [feature gates](spec/feature-gates.yaml) and [implementation plan](spec/implementation-plan.yaml).
 
-Repository status changes quickly. Verify branches, pull requests, and exact-head CI before relying on this list.
+## Build with a coding agent
 
-As of 2026-07-18:
+Read these files before changing code:
 
-- `main` includes governance, product and interaction specifications, the Rust Workspace/People/CLI slice, provider-neutral Connections, Topic Pack contracts, purpose-specific readiness, and reason-only Review and Attention runtime foundations;
-- PR #8 merged the native Tauri/macOS alpha and tested review bundles into `main`; public signing, notarisation, clean-Mac UAT, and supported distribution remain closed;
-- PR #20 contains localisation architecture, pseudolocale testing, and human-review gates; its non-source catalogues are not production translations;
-- PR #18 merged the repository README, complete project context, agent entry points, and metadata contract into `main`.
+1. [`AGENTS.md`](AGENTS.md), the normative contributor and agent contract.
+2. [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md), the current product and engineering handoff.
+3. [`SPEC.md`](SPEC.md), the product and build specification.
+4. [`AI_BUILD_INSTRUCTIONS.md`](AI_BUILD_INSTRUCTIONS.md), the implementation sequence.
+5. The owning README under [`contexts/`](contexts/).
+6. Related decisions, knowledge articles, requirements, UAT cases, gates and open pull requests.
 
-Do not assume an open PR has landed in `main`. Read its base, head, changed files, exact-head checks, and stated limitations.
+Do not begin with a new screen or connector. Start with one dependency-complete slice through domain rules, application services, ports, adapters, CLI or API surface, tests, knowledge and changelog.
 
-## Validation
+## Validate a change
 
-Run the checks required by the changed scope. The canonical baseline and completion rules are in [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md#26-baseline-validation-commands) and [`AI_BUILD_INSTRUCTIONS.md`](AI_BUILD_INSTRUCTIONS.md).
+Run the checks required by the changed scope. The baseline is:
 
-Documentation changes run repository policy, specification, content, and link checks. Runtime, UI, provider, plugin, migration, and platform claims require their exact additional suites and exact-head evidence.
+```bash
+python3 scripts/check_repository.py
+python3 scripts/check_spec.py
+python3 scripts/check_architecture.py
+python3 scripts/check_providers.py
+python3 scripts/check_wit_contract.py
+cargo fmt --all --check
+cargo check --workspace --all-targets --all-features --locked
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+cargo test --workspace --all-features --locked
+```
 
-## Contribution model
+Public-site changes also run:
 
-Read [`CONTRIBUTING.md`](CONTRIBUTING.md) and the [pull-request template](.github/pull_request_template.md). Every behavioural pull request must state:
+```bash
+python3 scripts/check_public_site.py
+```
 
-- the user problem and evidence;
-- owning bounded context and language changes;
-- knowledge action;
-- accessibility and UX effect;
-- privacy and security effect;
-- compatibility and migration effect;
-- tests and exact validation evidence;
-- risks, rollback, changelog, and remaining gates.
+Tests only support claims when they ran against the submitted commit. Platform packaging, browser behaviour, provider conformance and releases need their own exact-head evidence.
 
-The project is KCS-informed. Contributors search, reuse, improve, and link knowledge while solving work. The repository does not claim KCS certification.
+## Project map
+
+```text
+apps/                 Desktop, CLI and local services
+contexts/             Bounded contexts and application services
+crates/               Narrow shared technical libraries
+adapters/             Filesystem, projection and provider adapters
+interfaces/           WIT, OpenAPI, MCP and external contracts
+providers/            Optional provider packages and evidence
+docs/                 Product, architecture, security, knowledge and evidence
+spec/                 Requirements, UAT, feature gates and build order
+site/                 Static source for the public GitHub Pages site
+scripts/              Repository, contract and site checks
+```
+
+The [public-site runbook](docs/public-site.md) explains deployment, metadata, locale and rollback rules.
+
+## Contributing
+
+Read [`CONTRIBUTING.md`](CONTRIBUTING.md) and the [pull-request template](.github/pull_request_template.md). Every behavioural change states the user problem, context owner, evidence, privacy effect, accessibility effect, compatibility path, exact tests and remaining gates.
+
+The project is KCS-informed. Search existing knowledge first, improve it while solving the task and leave enough context for the next contributor. The repository does not claim KCS certification.
 
 ## Inspirations and migration sources
 
-Liaison RM learns from, but is not a fork of:
+Liaison RM learns from [Meerkat CRM](https://github.com/fbuchner/meerkat-crm), [CRM in Markdown](https://github.com/CLSherrod/crm-markdown), [Monica](https://github.com/monicahq/monica/tree/4.x), [Logseq](https://logseq.com/) and [Obsidian](https://obsidian.md/). It is not a fork of those projects.
 
-- [Meerkat CRM](https://github.com/fbuchner/meerkat-crm) — application UX, relationships, activities, reminders, CardDAV, and graph concepts;
-- [CRM in Markdown](https://github.com/CLSherrod/crm-markdown) — open-file profiles, follow-up cadence, Markdown workflows, and Obsidian interoperability;
-- [Monica](https://github.com/monicahq/monica/tree/4.x) — broad personal-relationship domain concepts and migration reference;
-- [Logseq](https://logseq.com/) and [Obsidian](https://obsidian.md/) — local knowledge-graph and open-note workflows.
-
-Any code reuse must be reviewed for licence compatibility and attribution. Product inspiration does not imply endorsement or affiliation.
+Any code reuse requires licence review and attribution. Product inspiration does not imply endorsement or affiliation.
 
 ## Licence
 
