@@ -1,0 +1,57 @@
+name: Relationship runtime
+
+on:
+  pull_request:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "contexts/profiles/**"
+      - "contexts/review-attention/**"
+      - "crates/liaison-shared-kernel/**"
+      - "scripts/check_architecture.py"
+      - ".github/workflows/relationship-runtime.yml"
+  push:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "contexts/profiles/**"
+      - "contexts/review-attention/**"
+      - "crates/liaison-shared-kernel/**"
+      - "scripts/check_architecture.py"
+      - ".github/workflows/relationship-runtime.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  architecture:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/check_architecture.py
+      - run: python scripts/check_repository.py
+      - run: python scripts/check_spec.py
+
+  domain:
+    name: Relationship domain (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show toolchain
+        run: rustc --version --verbose
+      - name: Check formatting
+        run: cargo fmt --all --check
+      - name: Check profile and review contexts
+        run: cargo check -p liaison-profiles -p liaison-review-attention --all-targets --all-features --locked
+      - name: Lint profile and review contexts
+        run: cargo clippy -p liaison-profiles -p liaison-review-attention --all-targets --all-features --locked -- -D warnings
+      - name: Test profile and review contexts
+        run: cargo test -p liaison-profiles -p liaison-review-attention --all-features --locked

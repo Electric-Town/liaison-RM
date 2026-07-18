@@ -434,6 +434,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "liaison-profiles"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "liaison-provider-registry-memory"
 version = "0.1.0"
 dependencies = [
@@ -445,6 +453,16 @@ name = "liaison-provider-sdk"
 version = "0.1.0"
 dependencies = [
  "liaison-connections",
+]
+
+[[package]]
+name = "liaison-review-attention"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "liaison-shared-kernel",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]

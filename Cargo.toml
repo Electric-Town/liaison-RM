@@ -6,6 +6,8 @@ members = [
     "adapters/vault-markdown",
     "contexts/connections",
     "contexts/people",
+    "contexts/profiles",
+    "contexts/review-attention",
     "contexts/workspace",
     "crates/liaison-provider-sdk",
     "crates/liaison-shared-kernel",
