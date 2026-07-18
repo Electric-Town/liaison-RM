@@ -5,8 +5,10 @@ on:
     paths:
       - "docs/standards/localization-and-language-quality.md"
       - "docs/knowledge/KCS-0006-how-do-i-add-or-change-a-localized-string.md"
+      - "docs/evidence/localization/**"
       - "examples/locales/**"
       - "schemas/locale-catalog.schema.json"
+      - "spec/localization-requirements.json"
       - "scripts/check_localization.py"
       - ".github/workflows/localization.yml"
   push:
@@ -14,8 +16,10 @@ on:
     paths:
       - "docs/standards/localization-and-language-quality.md"
       - "docs/knowledge/KCS-0006-how-do-i-add-or-change-a-localized-string.md"
+      - "docs/evidence/localization/**"
       - "examples/locales/**"
       - "schemas/locale-catalog.schema.json"
+      - "spec/localization-requirements.json"
       - "scripts/check_localization.py"
       - ".github/workflows/localization.yml"
 
