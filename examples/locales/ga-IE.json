@@ -1,0 +1,32 @@
+{
+  "schema": "liaison/locale-catalog@1",
+  "locale": "ga-IE",
+  "source_locale": "en-IE",
+  "source_revision": 1,
+  "status": "human-review-required",
+  "reviewer": null,
+  "reviewed_on": null,
+  "notes": [
+    "Structural fixture only. A named fluent Irish reviewer must approve terminology, mutation, case, agreement, register, and context before release."
+  ],
+  "messages": {
+    "app.name": "Liaison RM",
+    "app.local_only": "Fanann do shonraí caidrimh sa spás oibre áitiúil a roghnaíonn tú.",
+    "workspace.create": "Cruthaigh spás oibre",
+    "workspace.open": "Oscail spás oibre",
+    "workspace.validate": "Bailíochtaigh an spás oibre",
+    "workspace.validation_ok": "Níor aimsíodh aon fhadhb sa spás oibre.",
+    "people.title": "Daoine",
+    "people.add": "Cuir duine leis",
+    "people.name_label": "Ainm",
+    "people.email_label": "Seoladh ríomhphoist",
+    "people.count": "{count} duine",
+    "review.why_now": "Cén fáth anois",
+    "review.reason.commitment": "Tá gealltanas amháin fós oscailte.",
+    "review.reason.upcoming_date": "Tá dáta tábhachtach ag druidim.",
+    "review.reason.cadence": "Tá an mhinicíocht teagmhála atá cumraithe dlite.",
+    "review.action.snooze": "Cuir ar suan",
+    "review.action.pause": "Cuir an caidreamh ar sos",
+    "error.recovery": "Seiceáil na sonraí agus bain triail eile as."
+  }
+}
