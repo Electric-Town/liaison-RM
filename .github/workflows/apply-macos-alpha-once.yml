@@ -32,9 +32,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          payload=.bootstrap/macos-alpha/payload.tar.gz.b64
-          tr -d '\r\n' < "$payload" | base64 --decode > /tmp/macos-alpha-payload.tar.gz
-          echo "42322f65f4cc9a4af998b658e80002094ac6f5ba8392edaad3d21af319d20fe1  /tmp/macos-alpha-payload.tar.gz" | sha256sum -c -
+          python - <<'PY'
+          import base64
+          from pathlib import Path
+
+          source = Path('.bootstrap/macos-alpha/payload.tar.gz.b64')
+          encoded = ''.join(source.read_text(encoding='utf-8').split())
+          Path('/tmp/macos-alpha-payload.tar.gz').write_bytes(base64.b64decode(encoded, validate=True))
+          PY
+          gzip -t /tmp/macos-alpha-payload.tar.gz
           if tar -tzf /tmp/macos-alpha-payload.tar.gz | grep -E '(^/|(^|/)\.\.(/|$))'; then
             echo "unsafe archive path" >&2
             exit 1
