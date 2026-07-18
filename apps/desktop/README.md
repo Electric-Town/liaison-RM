@@ -45,3 +45,19 @@ cargo test -p liaison-desktop --all-features --locked
 ## Distribution boundary
 
 Pull-request artifacts are ad-hoc-signed review builds. Public distribution requires Developer ID signing, Apple notarization, stapling, Gatekeeper verification, and clean-machine UAT. The release workflow refuses to run without the required Apple secrets.
+
+## Hand-drawn interface contract
+
+The desktop interface uses `ui/design-system.css` as its only visual token source. The system is deliberately light-only and paper-like because the current desktop alpha is local-authoritative and must not depend on remote fonts or theme assets.
+
+Required characteristics:
+
+- warm paper background and pencil-black foreground;
+- correction-marker red and ballpoint-blue accents;
+- irregular reusable radii rather than standard rounded rectangles;
+- thick borders and hard offset shadows with no blur;
+- handwriting-oriented local font stacks;
+- visible focus, 48-pixel primary targets, reduced-motion support, and 390-pixel reflow;
+- decoration that never carries meaning by itself.
+
+Add a reusable token or component class before adding a one-off visual rule. New interface work must remain readable when the preferred handwritten fonts are unavailable.

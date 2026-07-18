@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light dark">
+  <meta name="color-scheme" content="light">
   <meta name="description" content="Liaison RM local relationship memory and attention system.">
   <title>Liaison RM</title>
+  <link rel="stylesheet" href="design-system.css">
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
 </head>
@@ -14,14 +15,14 @@
   <div class="app-shell">
     <header class="topbar">
       <div class="brand" aria-label="Liaison RM">
-        <span class="brand-mark" aria-hidden="true">LR</span>
+        <span class="brand-mark rough-circle" aria-hidden="true">LR</span>
         <span>
           <strong>Liaison RM</strong>
           <small>Local relationship memory</small>
         </span>
       </div>
       <div class="local-status" aria-label="Storage status">
-        <span class="status-dot" aria-hidden="true"></span>
+        <span class="status-dot rough-circle" aria-hidden="true"></span>
         <span id="authority-label">Checking local authority…</span>
       </div>
     </header>
@@ -29,13 +30,13 @@
     <aside class="sidebar" aria-label="Primary navigation">
       <nav>
         <button class="nav-button is-active" type="button" data-route="setup" aria-current="page">
-          <span aria-hidden="true">1</span> Workspace
+          <span class="rough-circle" aria-hidden="true">1</span> Workspace
         </button>
         <button class="nav-button" type="button" data-route="people">
-          <span aria-hidden="true">2</span> People
+          <span class="rough-circle" aria-hidden="true">2</span> People
         </button>
         <button class="nav-button" type="button" data-route="health">
-          <span aria-hidden="true">3</span> Health
+          <span class="rough-circle" aria-hidden="true">3</span> Health
         </button>
       </nav>
       <div class="sidebar-note">
@@ -49,10 +50,10 @@
         <div class="page-heading">
           <div>
             <p class="eyebrow">Workspace</p>
-            <h1 id="setup-heading" tabindex="-1">Choose where Liaison keeps your files</h1>
+            <h1 id="setup-heading" tabindex="-1">Choose where Liaison keeps your <span class="scribble-underline">files</span></h1>
             <p>Create a new local workspace or open an existing Liaison folder. This alpha does not connect to the internet.</p>
           </div>
-          <span class="alpha-badge">Mac alpha</span>
+          <span class="alpha-badge rough-badge">Desktop alpha</span>
         </div>
 
         <div class="notice" role="note">
@@ -61,7 +62,7 @@
         </div>
 
         <div class="two-column">
-          <form id="workspace-form" class="card form-card">
+          <form id="workspace-form" class="card form-card tape-top">
             <h2>Create a workspace</h2>
             <div class="field">
               <label for="workspace-path">Absolute folder path</label>
@@ -87,7 +88,7 @@
             <button class="primary-button" type="submit">Create local workspace</button>
           </form>
 
-          <section class="card" aria-labelledby="open-heading">
+          <section class="card post-it tack-top" aria-labelledby="open-heading">
             <h2 id="open-heading">Open an existing workspace</h2>
             <p>Enter its absolute folder path above, then open and validate the existing manifest.</p>
             <button id="open-workspace" class="secondary-button full-width" type="button">Open existing workspace</button>
@@ -106,7 +107,7 @@
         <div class="page-heading">
           <div>
             <p class="eyebrow">People</p>
-            <h1 id="people-heading" tabindex="-1">Remember useful context without scoring people</h1>
+            <h1 id="people-heading" tabindex="-1">Remember useful context without <span class="scribble-underline">scoring people</span></h1>
             <p>Add a basic profile now. Topic Packs, relationships and review reasons arrive in later bounded-context changes.</p>
           </div>
           <button id="refresh-people" class="secondary-button" type="button">Refresh list</button>
@@ -117,7 +118,7 @@
         </div>
 
         <div class="two-column people-layout">
-          <form id="person-form" class="card form-card">
+          <form id="person-form" class="card form-card tape-top">
             <h2>Add a person</h2>
             <div class="field">
               <label for="person-name">Display name</label>
@@ -130,7 +131,7 @@
             <button id="create-person" class="primary-button" type="submit" disabled>Save Markdown profile</button>
           </form>
 
-          <section class="card" aria-labelledby="people-list-heading">
+          <section class="card post-it tack-top" aria-labelledby="people-list-heading">
             <div class="card-heading">
               <h2 id="people-list-heading">People in this workspace</h2>
               <span id="people-count" class="count-badge">0</span>
@@ -146,13 +147,13 @@
         <div class="page-heading">
           <div>
             <p class="eyebrow">Workspace health</p>
-            <h1 id="health-heading" tabindex="-1">Validate the open-file workspace</h1>
+            <h1 id="health-heading" tabindex="-1">Validate the <span class="scribble-underline">open-file</span> workspace</h1>
             <p>Validation reports problems without deleting or silently rewriting user-authored files.</p>
           </div>
           <button id="run-validation" class="primary-button" type="button" disabled>Run validation</button>
         </div>
 
-        <section class="card health-card" aria-labelledby="validation-result-heading">
+        <section class="card health-card tape-top" aria-labelledby="validation-result-heading">
           <h2 id="validation-result-heading">Validation result</h2>
           <div id="validation-summary" class="health-summary">
             <span class="health-icon" aria-hidden="true">?</span>

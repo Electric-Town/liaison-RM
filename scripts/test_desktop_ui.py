@@ -72,8 +72,10 @@ BRIDGE = r"""
 
 def load_page(page: Page) -> None:
     html = (UI / "index.html").read_text(encoding="utf-8")
+    design_system = (UI / "design-system.css").read_text(encoding="utf-8")
     css = (UI / "styles.css").read_text(encoding="utf-8")
     javascript = (UI / "app.js").read_text(encoding="utf-8")
+    html = html.replace('<link rel="stylesheet" href="design-system.css">', f"<style>{design_system}</style>")
     html = html.replace('<link rel="stylesheet" href="styles.css">', f"<style>{css}</style>")
     html = html.replace('<script src="app.js" defer></script>', "")
     page.set_content(html, wait_until="load")
@@ -96,6 +98,11 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     assert page.locator("main").count() == 1
     assert page.locator("footer").count() == 1
     assert page.get_by_role("link", name="Skip to main content").count() == 1
+    assert page.locator(".tape-top").count() >= 1
+    assert page.locator(".tack-top").count() >= 1
+    assert page.locator(".scribble-underline").count() >= 1
+    shadow = page.locator("#workspace-form").evaluate("el => getComputedStyle(el).boxShadow")
+    assert "0px" in shadow
     assert page.get_by_label("Absolute folder path").input_value() == "/Users/tester/Documents/Liaison RM"
     assert "Local authority" in page.get_by_label("Storage status").inner_text()
 

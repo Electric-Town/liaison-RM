@@ -6,6 +6,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Added
 
+- A centralized hand-drawn desktop design system with paper texture, wobbly borders, hard offset shadows, handwriting-oriented local font stacks, reduced-motion behavior, and responsive accessibility checks.
 - Repository governance, contribution, knowledge, content-quality, architecture, and user-experience review standards.
 - Pull-request evidence requirements and repository policy checks.
 - Product, domain, security, platform, sharing, provider-neutral connection, and release specifications.
