@@ -1,0 +1,62 @@
+name: Windows desktop alpha
+
+on:
+  pull_request:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "apps/desktop/**"
+      - "adapters/vault-markdown/**"
+      - "contexts/people/**"
+      - "contexts/workspace/**"
+      - ".github/workflows/windows-desktop.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    name: Desktop crate (Windows)
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show toolchain
+        run: rustc --version --verbose
+      - name: Check formatting
+        run: cargo fmt --all --check
+      - name: Check desktop crate
+        run: cargo check -p liaison-desktop --all-targets --all-features --locked
+      - name: Lint desktop crate
+        run: cargo clippy -p liaison-desktop --all-targets --all-features --locked -- -D warnings
+      - name: Test desktop crate
+        run: cargo test -p liaison-desktop --all-features --locked
+
+  bundle:
+    name: Windows review bundle
+    runs-on: windows-2022
+    needs: [rust]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Tauri CLI
+        run: cargo install tauri-cli --version 2.8.4 --locked
+      - name: Build NSIS installer
+        working-directory: apps/desktop
+        run: cargo tauri build --bundles nsis
+      - name: Collect and checksum artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUNDLE_DIR="target/release/bundle/nsis"
+          test -d "$BUNDLE_DIR" || { echo "NSIS bundle directory not found" >&2; exit 1; }
+          INSTALLER="$(find "$BUNDLE_DIR" -maxdepth 1 -name '*-setup.exe' -print -quit)"
+          test -n "$INSTALLER" || { echo "NSIS installer not produced" >&2; exit 1; }
+          mkdir -p artifacts/windows
+          cp "$INSTALLER" artifacts/windows/
+          sha256sum artifacts/windows/* > artifacts/windows/SHA256SUMS
+          cat artifacts/windows/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: liaison-rm-windows-review
+          path: artifacts/windows/
+          if-no-files-found: error
+          retention-days: 14

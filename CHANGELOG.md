@@ -19,6 +19,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Identity and Profiles domain types for Topic Packs, explicit information states, sealed sensitive values, Purpose Definitions, and purpose-specific readiness.
 - Review and Attention reason-only policies, hard suppressions, explainable queue items, and capacity-bounded queue construction.
 - Local Tauri desktop alpha for workspace creation, People capture, validation, accessible reflow, and universal macOS review bundles.
+- Windows desktop packaging: an NSIS installer target (per-user install, embedded WebView2 bootstrapper) and a `windows-2022` CI workflow that checks, lints, tests, builds, and checksums the desktop bundle.
 
 ### Changed
 
