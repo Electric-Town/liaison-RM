@@ -1,0 +1,40 @@
+name: Organizations and Groups
+
+on:
+  pull_request:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "contexts/organizations-groups/**"
+      - "crates/liaison-shared-kernel/**"
+      - ".github/workflows/organizations-groups.yml"
+  push:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "contexts/organizations-groups/**"
+      - "crates/liaison-shared-kernel/**"
+      - ".github/workflows/organizations-groups.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  domain:
+    name: Organizations domain (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check formatting
+        run: cargo fmt --all --check
+      - name: Check context
+        run: cargo check -p liaison-organizations-groups --all-targets --all-features
+      - name: Lint context
+        run: cargo clippy -p liaison-organizations-groups --all-targets --all-features -- -D warnings
+      - name: Test context
+        run: cargo test -p liaison-organizations-groups --all-features
