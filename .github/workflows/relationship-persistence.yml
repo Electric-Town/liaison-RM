@@ -1,0 +1,63 @@
+name: Relationship intent persistence
+
+on:
+  pull_request:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "contexts/relationships/**"
+      - "adapters/relationship-yaml/**"
+      - "apps/cli/**"
+      - "scripts/check_relationship_persistence.py"
+      - ".github/workflows/relationship-persistence.yml"
+  push:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "contexts/relationships/**"
+      - "adapters/relationship-yaml/**"
+      - "apps/cli/**"
+      - "scripts/check_relationship_persistence.py"
+      - ".github/workflows/relationship-persistence.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/check_architecture.py
+      - run: python scripts/check_repository.py
+      - run: python scripts/check_relationship_persistence.py
+
+  lockfile:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo generate-lockfile
+      - uses: actions/upload-artifact@v4
+        with:
+          name: relationship-cargo-lock
+          path: Cargo.lock
+          if-no-files-found: error
+          retention-days: 3
+
+  rust:
+    name: Relationship persistence (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo fmt --all --check
+      - run: cargo check -p liaison-relationships -p liaison-relationship-yaml -p liaison-cli --all-targets --all-features
+      - run: cargo clippy -p liaison-relationships -p liaison-relationship-yaml -p liaison-cli --all-targets --all-features -- -D warnings
+      - run: cargo test -p liaison-relationships -p liaison-relationship-yaml -p liaison-cli --all-features

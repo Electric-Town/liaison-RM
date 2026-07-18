@@ -11,8 +11,12 @@ name = "liaison"
 path = "src/main.rs"
 
 [dependencies]
+chrono.workspace = true
 clap.workspace = true
 liaison-people = { path = "../../contexts/people" }
+liaison-relationship-yaml = { path = "../../adapters/relationship-yaml" }
+liaison-relationships = { path = "../../contexts/relationships" }
+liaison-shared-kernel = { path = "../../crates/liaison-shared-kernel" }
 liaison-vault-markdown = { path = "../../adapters/vault-markdown" }
 liaison-workspace = { path = "../../contexts/workspace" }
 serde.workspace = true

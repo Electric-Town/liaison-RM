@@ -4,6 +4,7 @@ members = [
     "apps/desktop/src-tauri",
     "adapters/object-store-local",
     "adapters/provider-registry-memory",
+    "adapters/relationship-yaml",
     "adapters/vault-markdown",
     "contexts/connections",
     "contexts/people",

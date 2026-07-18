@@ -6,6 +6,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Added
 
+- Explicit relationship-intent records with editable tiers, cadence, circles, contact reasons, hard boundaries, explainable maintenance status, readable YAML persistence, and revisioned CLI workflows.
 - A centralized hand-drawn desktop design system with paper texture, wobbly borders, hard offset shadows, handwriting-oriented local font stacks, reduced-motion behavior, and responsive accessibility checks.
 - Repository governance, contribution, knowledge, content-quality, architecture, and user-experience review standards.
 - Pull-request evidence requirements and repository policy checks.
