@@ -200,7 +200,7 @@ impl BuildReasonOnlyQueue {
     pub fn execute(&self, candidates: Vec<ReviewCandidate>, as_of: NaiveDate) -> ReviewQueue {
         let mut selected = candidates
             .into_iter()
-            .filter_map(|candidate| self.select(candidate, as_of))
+            .filter_map(|candidate| self.select(&candidate, as_of))
             .collect::<Vec<_>>();
         selected.sort_by(|left, right| left.0.cmp(&right.0).then_with(|| left.1.cmp(&right.1)));
         selected.truncate(self.policy.daily_capacity());
@@ -215,7 +215,7 @@ impl BuildReasonOnlyQueue {
 
     fn select(
         &self,
-        candidate: ReviewCandidate,
+        candidate: &ReviewCandidate,
         as_of: NaiveDate,
     ) -> Option<(usize, String, ReviewQueueItem)> {
         if candidate

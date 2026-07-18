@@ -654,7 +654,7 @@ mod tests {
         let channel = field("identity.preferred_channel", Classification::Private, false);
         assert!(role.is_ok());
         assert!(channel.is_ok());
-        let (Ok(role), Ok(channel)) = (role, channel) else {
+        let (Ok(_role), Ok(channel)) = (role, channel) else {
             return;
         };
 
