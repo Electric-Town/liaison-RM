@@ -10,6 +10,7 @@ members = [
     "contexts/profiles",
     "contexts/review-attention",
     "contexts/workspace",
+    "crates/liaison-application",
     "crates/liaison-provider-sdk",
     "crates/liaison-shared-kernel",
 ]
@@ -26,6 +27,7 @@ rust-version = "1.97.1"
 assert_cmd = "2.0"
 chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "4.5", features = ["derive"] }
+getrandom = "0.4.3"
 predicates = "3.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

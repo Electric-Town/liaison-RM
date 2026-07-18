@@ -470,36 +470,12 @@ mod tests {
     use super::LocalObjectStore;
     use liaison_connections::{ContentDigest, ObjectKey, ObjectStore, ObjectStoreErrorKind};
     use liaison_provider_sdk::run_object_store_conformance;
-    use std::fs;
-    use std::path::PathBuf;
-    use std::time::{SystemTime, UNIX_EPOCH};
-
-    struct TestDirectory(PathBuf);
-
-    impl TestDirectory {
-        fn new() -> Result<Self, std::io::Error> {
-            let nonce = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .map_or(0, |duration| duration.as_nanos());
-            let path = std::env::temp_dir().join(format!(
-                "liaison-object-store-test-{}-{nonce:x}",
-                std::process::id()
-            ));
-            fs::create_dir_all(&path)?;
-            Ok(Self(path))
-        }
-    }
-
-    impl Drop for TestDirectory {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.0);
-        }
-    }
+    use tempfile::tempdir;
 
     #[test]
     fn passes_reference_conformance() -> Result<(), Box<dyn std::error::Error>> {
-        let directory = TestDirectory::new()?;
-        let store = LocalObjectStore::new(&directory.0);
+        let directory = tempdir()?;
+        let store = LocalObjectStore::new(directory.path());
         let report = run_object_store_conformance(&store)?;
         assert!(report.all_passed(), "{report:?}");
         Ok(())
@@ -507,8 +483,8 @@ mod tests {
 
     #[test]
     fn rejects_wrong_checksum_before_writing() -> Result<(), Box<dyn std::error::Error>> {
-        let directory = TestDirectory::new()?;
-        let store = LocalObjectStore::new(&directory.0);
+        let directory = tempdir()?;
+        let store = LocalObjectStore::new(directory.path());
         let key = ObjectKey::parse("test/object")?;
         let digest = ContentDigest::sha256(b"different");
         let result = store.put_immutable(&key, b"content", &digest);

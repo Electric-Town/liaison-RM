@@ -22,7 +22,7 @@
       </div>
       <div class="local-status" aria-label="Storage status">
         <span class="status-dot" aria-hidden="true"></span>
-        <span id="authority-label">Checking local authority…</span>
+        <span id="authority-label">Checking local-authoritative review build…</span>
       </div>
     </header>
 
@@ -50,9 +50,9 @@
           <div>
             <p class="eyebrow">Workspace</p>
             <h1 id="setup-heading" tabindex="-1">Choose where Liaison keeps your files</h1>
-            <p>Create a new local workspace or open an existing Liaison folder. This alpha does not connect to the internet.</p>
+            <p>Create a new local workspace or open an existing Liaison folder. No connection is configured in this review build.</p>
           </div>
-          <span class="alpha-badge">Mac alpha</span>
+          <span class="alpha-badge">Mac review build</span>
         </div>
 
         <div class="notice" role="note">
@@ -73,15 +73,15 @@
             </div>
             <div class="field">
               <label for="workspace-name">Workspace name</label>
-              <input id="workspace-name" name="name" type="text" value="My relationships" maxlength="120" required>
+              <input id="workspace-name" name="name" type="text" value="Workplace review" maxlength="120" required>
             </div>
             <div class="field">
               <label for="workspace-profile">Workspace profile</label>
               <select id="workspace-profile" name="profile">
-                <option value="personal">Personal</option>
+                <option value="workplace" selected>Workplace</option>
                 <option value="family">Family</option>
                 <option value="team">Team</option>
-                <option value="workplace">Workplace</option>
+                <option value="personal">Personal</option>
               </select>
             </div>
             <button class="primary-button" type="submit">Create local workspace</button>

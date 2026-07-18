@@ -7,27 +7,31 @@ Status: browser fixture generated and an installed review app has been observed 
 The deterministic browser fixture completed:
 
 - local workspace creation;
+- create/open error recovery and retry;
+- rejection of an incompatible application contract version;
 - person capture;
-- workspace validation;
+- valid and invalid workspace Health rendering with recovery guidance;
 - programmatic focus movement;
 - semantic landmarks and explicit labels;
 - 390-pixel reflow without horizontal overflow;
 - reduced-motion mode;
-- zero external browser requests.
+- resolved dark-mode token rendering;
+- zero external browser requests across desktop, mobile, and dark-mode pages.
 
 Review artifacts are committed under:
 
 - `docs/evidence/macos/browser-test-report.json`;
 - `docs/evidence/macos/screenshots/desktop-workspace-health.png`;
-- `docs/evidence/macos/screenshots/mobile-people.png`.
+- `docs/evidence/macos/screenshots/mobile-people.png`;
+- `docs/evidence/macos/screenshots/dark-workspace.png`.
 
 The browser fixture exercises interface behavior with a deterministic fake Tauri command bridge. It does not replace the native Rust, filesystem, package, signature, or clean-machine tests.
 
 ## Installed review observation
 
-On 2026-07-18 the installed application with bundle identifier `io.github.electric-town.liaison-rm` was observed launching to the local Workspace onboarding screen. The reviewed product version is `0.1.0-alpha.1`.
+On 2026-07-18 the installed application with bundle identifier `io.github.electric-town.liaison-rm` was observed launching to the local Workspace onboarding screen. Its `Info.plist` reports bundle version `0.1.0-alpha.1`, while the visible runtime status reports `0.1.0`. That mismatch remains open and means the status text is not valid provenance evidence.
 
-This observation proves only that an installed application launches and exposes the narrow pre-alpha interface. This evidence file does not yet bind that installed bundle to an exact source commit, checksum, architecture inspection, signature assessment, or CI run. It does not prove workspace persistence, relaunch recovery, Airgap network absence, accessibility conformance, or B0 behavior.
+This observation proves only that an installed application launches and exposes the narrow pre-alpha interface. Bundle inspection confirms a universal Apple Silicon/Intel executable with an ad-hoc linker signature and no Team identifier; it does not bind the bundle to an exact source commit or CI run. It does not prove workspace persistence, relaunch recovery, Airgap network absence, accessibility conformance, or B0 behavior.
 
 ## Native B0 evidence required on the same artifact
 

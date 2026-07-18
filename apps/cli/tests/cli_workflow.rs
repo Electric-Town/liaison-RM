@@ -1,7 +1,14 @@
 use assert_cmd::Command;
 use predicates::prelude::*;
+use serde_json::Value;
 use std::{error::Error, fs};
 use tempfile::tempdir;
+
+fn parity_fixture() -> Result<Value, serde_json::Error> {
+    serde_json::from_str(include_str!(
+        "../../../spec/fixtures/application-parity.json"
+    ))
+}
 
 #[test]
 fn creates_lists_and_validates_a_local_workspace() -> Result<(), Box<dyn Error>> {
@@ -55,6 +62,7 @@ fn creates_lists_and_validates_a_local_workspace() -> Result<(), Box<dyn Error>>
         .args(["--output", "json", "person", "list"])
         .assert()
         .success()
+        .stdout(predicate::str::contains("command_id"))
         .stdout(predicate::str::contains("Alex Example"))
         .stdout(predicate::str::contains("alex@example.test"));
 
@@ -71,25 +79,158 @@ fn creates_lists_and_validates_a_local_workspace() -> Result<(), Box<dyn Error>>
 }
 
 #[test]
-fn reports_missing_workspace_as_structured_error() -> Result<(), Box<dyn Error>> {
+fn every_command_requires_an_explicit_workspace() -> Result<(), Box<dyn Error>> {
+    let mut command = Command::cargo_bin("liaison")?;
+    command
+        .args(["workspace", "inspect"])
+        .assert()
+        .code(2)
+        .stderr(predicate::str::contains("--workspace <PATH>"));
+    Ok(())
+}
+
+#[test]
+fn review_cli_defaults_to_an_honest_connected_local_manifest() -> Result<(), Box<dyn Error>> {
+    let directory = tempdir()?;
+    let workspace = directory.path().join("Review");
+    let mut initialise = Command::cargo_bin("liaison")?;
+    initialise
+        .arg("--workspace")
+        .arg(&workspace)
+        .args(["workspace", "init", "--name", "Review"])
+        .assert()
+        .success();
+
+    let manifest = fs::read_to_string(workspace.join(".liaison/workspace.yaml"))?;
+    assert!(manifest.contains("build_profile: connected-local"));
+    assert!(manifest.contains("profile: workplace"));
+    Ok(())
+}
+
+#[test]
+fn reports_missing_workspace_with_the_application_error_envelope() -> Result<(), Box<dyn Error>> {
     let directory = tempdir()?;
     let workspace = directory.path().join("missing");
 
     let mut command = Command::cargo_bin("liaison")?;
-    command
+    let output = command
         .arg("--workspace")
         .arg(workspace)
         .args(["--output", "json", "workspace", "inspect"])
-        .assert()
-        .code(3)
-        .stderr(predicate::str::contains("workspace.not-found"))
-        .stderr(predicate::str::contains("exit_code"));
+        .output()?;
+    assert_eq!(output.status.code(), Some(3));
+    let error: Value = serde_json::from_slice(&output.stderr)?;
+    assert_eq!(error["error"]["code"], "workspace.not-found");
+    assert!(
+        error["error"]["recovery"]
+            .as_str()
+            .is_some_and(|value| !value.is_empty())
+    );
+    assert!(error["error"]["details"].is_object());
+    assert!(
+        error["error"]["correlation_id"]
+            .as_str()
+            .is_some_and(|value| !value.is_empty())
+    );
+    assert_eq!(error["exit_code"], 3);
 
     Ok(())
 }
 
 #[test]
-fn rejects_invalid_email_without_creating_a_partial_person_record() -> Result<(), Box<dyn Error>> {
+fn invalid_workspace_emits_report_and_returns_validation_exit() -> Result<(), Box<dyn Error>> {
+    let directory = tempdir()?;
+    let workspace = directory.path().join("People");
+
+    let mut initialise = Command::cargo_bin("liaison")?;
+    initialise
+        .arg("--workspace")
+        .arg(&workspace)
+        .args(["workspace", "init", "--name", "People"])
+        .assert()
+        .success();
+    fs::write(
+        workspace.join("people/malformed.md"),
+        "# Missing front matter\n",
+    )?;
+
+    let mut validate = Command::cargo_bin("liaison")?;
+    let output = validate
+        .arg("--workspace")
+        .arg(&workspace)
+        .args(["--output", "json", "workspace", "validate"])
+        .output()?;
+    assert_eq!(output.status.code(), Some(6));
+    assert!(output.stderr.is_empty());
+    let report: Value = serde_json::from_slice(&output.stdout)?;
+    let expected = parity_fixture()?;
+    assert_eq!(report["contract_version"], expected["contract_version"]);
+    assert_eq!(report["value"]["valid"], false);
+    for field in ["code", "severity", "path", "message", "recovery"] {
+        assert_eq!(
+            report["value"]["findings"][0][field],
+            expected["malformed_health"][field]
+        );
+    }
+    assert!(
+        report["command_id"]
+            .as_str()
+            .is_some_and(|value| !value.is_empty())
+    );
+
+    let mut validate_human = Command::cargo_bin("liaison")?;
+    validate_human
+        .arg("--workspace")
+        .arg(&workspace)
+        .args(["workspace", "validate"])
+        .assert()
+        .code(6)
+        .stdout(predicate::str::contains(
+            "ERROR people.invalid-record [people/malformed.md]",
+        ))
+        .stdout(predicate::str::contains(
+            "person record format or schema is invalid",
+        ))
+        .stdout(predicate::str::contains("Recovery: inspect the file"))
+        .stdout(predicate::str::contains("Correlation ID:"));
+
+    Ok(())
+}
+
+#[test]
+fn cli_error_boundary_matches_the_shared_application_fixture_without_leaking_path()
+-> Result<(), Box<dyn Error>> {
+    let expected = parity_fixture()?;
+    let private_path = "relative/PRIVATE-client";
+    let mut command = Command::cargo_bin("liaison")?;
+    let output = command
+        .arg("--workspace")
+        .arg(private_path)
+        .args(["--output", "json", "workspace", "inspect"])
+        .output()?;
+    assert_eq!(output.status.code(), Some(1));
+    let envelope: Value = serde_json::from_slice(&output.stderr)?;
+    let mut normalized = envelope["error"].clone();
+    normalized["correlation_id"] = Value::String("<uuid>".to_owned());
+    assert_eq!(normalized, expected["relative_path_error"]);
+    assert!(!String::from_utf8_lossy(&output.stderr).contains(private_path));
+
+    let mut human = Command::cargo_bin("liaison")?;
+    human
+        .arg("--workspace")
+        .arg(private_path)
+        .args(["workspace", "inspect"])
+        .assert()
+        .code(1)
+        .stderr(predicate::str::contains(private_path).not())
+        .stderr(predicate::str::contains(
+            "application.workspace-path-not-absolute",
+        ));
+    Ok(())
+}
+
+#[test]
+fn invalid_email_error_does_not_repeat_the_input() -> Result<(), Box<dyn Error>> {
     let directory = tempdir()?;
     let workspace = directory.path().join("People");
 
@@ -117,8 +258,9 @@ fn rejects_invalid_email_without_creating_a_partial_person_record() -> Result<()
         ])
         .assert()
         .code(1)
-        .stderr(predicate::str::contains("people.error"))
-        .stderr(predicate::str::contains("invalid email address"));
+        .stderr(predicate::str::contains("people.invalid-email"))
+        .stderr(predicate::str::contains("correlation_id"))
+        .stderr(predicate::str::contains("not-an-email").not());
 
     let markdown_count = fs::read_dir(workspace.join("people"))?
         .filter_map(Result::ok)

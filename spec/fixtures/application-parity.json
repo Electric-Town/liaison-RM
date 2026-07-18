@@ -1,0 +1,19 @@
+{
+  "contract_version": 1,
+  "initial_person_revision": 1,
+  "malformed_health": {
+    "code": "people.invalid-record",
+    "severity": "error",
+    "path": "people/malformed.md",
+    "message": "person record format or schema is invalid",
+    "recovery": "inspect the file, preserve a copy, and repair its front matter; Liaison will not delete it automatically"
+  },
+  "relative_path_error": {
+    "contract_version": 1,
+    "code": "application.workspace-path-not-absolute",
+    "message": "workspace path must be absolute",
+    "recovery": "choose the full local folder path and retry",
+    "details": {},
+    "correlation_id": "<uuid>"
+  }
+}

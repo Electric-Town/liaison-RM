@@ -6,7 +6,7 @@ The broad R1–R6 catalog remains useful as long-term scope, but it is not the w
 
 ## Current boundary
 
-`main` is pre-alpha. It has governance and product contracts, a narrow Rust Workspace/People/Markdown/CLI/Tauri slice, profile/readiness and reason-only Review foundations, provider contracts, and review packaging workflows. It does not yet have Workspace Session authority, recoverable multi-target writes, sealed dietary persistence, local-purpose authorization, scalable Directory reads, encrypted clean-install recovery, or the cohort-to-brief workflow. B0 assumes one trusted local workspace owner and must structurally omit relationship allocation, ranking, and scoring.
+The reviewed P01 stack is pre-alpha. It has governance and product contracts, one Rust application composition root shared by CLI and Tauri, typed identity-bound session identifiers, structured results/errors, a narrow Workspace/People/Markdown slice, profile/readiness and reason-only Review foundations, provider contracts, and review packaging workflows. It does not yet have Workspace Session writer authority, recoverable multi-target writes, sealed dietary persistence, local-purpose authorization, scalable Directory reads, encrypted clean-install recovery, or the cohort-to-brief workflow. B0 assumes one trusted local workspace owner and must structurally omit relationship allocation, ranking, and scoring.
 
 The current installed Mac app is an internal local-authoritative review build. It is not a proven Airgap artifact, notarized public release, or supported daily-use product.
 
@@ -64,12 +64,15 @@ P04 cannot begin directly after P03. Once P03 has stabilised typed commands, sta
 
 Outcome: React/TypeScript/Vite replaces the disposable vanilla shell as a Tauri inbound adapter while Rust remains the only domain, storage, authorization, readiness, and recovery authority.
 
+Entry gate: P03 is stable, gstack design consultation has produced an accepted `DESIGN.md`, and plan design review has passed. The React implementation does not choose its visual language ad hoc.
+
 Exit evidence:
 
 - Workspace, People, and Health parity passes before event screens land;
 - generated DTO/result contracts are current;
 - native folder selection replaces raw-path primary UX;
-- semantic tokens meet light/dark contrast, focus, density, motion, and long-content requirements;
+- one semantic token/component contract provides accessible system, light, dark, and high-contrast built-ins, preserves operating-system reduced-motion preferences, and handles long content;
+- density, text-scale, user palette controls, and theme packages are not smuggled into B0/P04;
 - the web fixture uses a deterministic fake bridge and makes no product-authority claim.
 
 ## P05 — B-domain contracts and atomic OKF authoring seam

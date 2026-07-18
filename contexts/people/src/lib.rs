@@ -24,11 +24,11 @@ pub struct PersonProfile {
 }
 
 impl PersonProfile {
-    pub fn create(display_name: impl Into<String>) -> Result<Self, PeopleError> {
+    pub fn create(id: PersonId, display_name: impl Into<String>) -> Result<Self, PeopleError> {
         let display_name = display_name.into();
         let display_name = required(&display_name, "display name")?;
         Ok(Self {
-            id: PersonId::new(),
+            id,
             revision: Revision::INITIAL,
             display_name,
             aliases: Vec::new(),
@@ -36,6 +36,60 @@ impl PersonProfile {
             phones: Vec::new(),
             birthday: None,
             archived: false,
+        })
+    }
+
+    /// Creates the initial persisted profile, including an optional primary
+    /// email, without representing the supplied creation fields as later
+    /// revisions.
+    pub fn create_with_primary_email(
+        id: PersonId,
+        display_name: impl Into<String>,
+        primary_email: Option<String>,
+    ) -> Result<Self, PeopleError> {
+        let mut person = Self::create(id, display_name)?;
+        if let Some(primary_email) = primary_email {
+            person
+                .emails
+                .push(EmailAddress::new(primary_email, "primary")?);
+        }
+        Ok(person)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn rehydrate(
+        id: PersonId,
+        revision: Revision,
+        display_name: impl Into<String>,
+        aliases: Vec<String>,
+        emails: Vec<EmailAddress>,
+        phones: Vec<PhoneNumber>,
+        birthday: Option<PartialDate>,
+        archived: bool,
+    ) -> Result<Self, PeopleError> {
+        let display_name = display_name.into();
+        let display_name = required(&display_name, "display name")?;
+        let emails = emails
+            .into_iter()
+            .map(|email| EmailAddress::new(email.value, email.label))
+            .collect::<Result<Vec<_>, _>>()?;
+        let phones = phones
+            .into_iter()
+            .map(|phone| PhoneNumber::new(phone.value, phone.label))
+            .collect::<Result<Vec<_>, _>>()?;
+        let birthday = match birthday {
+            Some(PartialDate::MonthDay { month, day }) => Some(PartialDate::month_day(month, day)?),
+            value => value,
+        };
+        Ok(Self {
+            id,
+            revision,
+            display_name,
+            aliases,
+            emails,
+            phones,
+            birthday,
+            archived,
         })
     }
 
@@ -227,13 +281,11 @@ where
     pub fn execute(
         &self,
         workspace: &Path,
+        person_id: PersonId,
         display_name: impl Into<String>,
         email: Option<String>,
     ) -> Result<PersonProfile, PeopleError> {
-        let mut person = PersonProfile::create(display_name)?;
-        if let Some(email) = email {
-            person.add_email(email, "primary")?;
-        }
+        let person = PersonProfile::create_with_primary_email(person_id, display_name, email)?;
         self.repository.create(workspace, &person)?;
         Ok(person)
     }
@@ -264,11 +316,12 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{PartialDate, PeopleError, PersonProfile};
+    use super::{EmailAddress, PartialDate, PeopleError, PersonProfile, PhoneNumber};
+    use liaison_shared_kernel::{PersonId, Revision};
 
     #[test]
     fn profile_requires_a_name() {
-        let result = PersonProfile::create("   ");
+        let result = PersonProfile::create(PersonId::new(), "   ");
         assert_eq!(result, Err(PeopleError::RequiredField("display name")));
     }
 
@@ -283,12 +336,79 @@ mod tests {
 
     #[test]
     fn changing_profile_increments_revision() {
-        let result = PersonProfile::create("Alex Murphy");
+        let result = PersonProfile::create(PersonId::new(), "Alex Murphy");
         assert!(result.is_ok());
         if let Ok(mut person) = result {
             let before = person.revision.get();
             assert!(person.add_email("alex@example.test", "work").is_ok());
             assert_eq!(person.revision.get(), before + 1);
         }
+    }
+
+    #[test]
+    fn creation_fields_share_the_initial_revision() {
+        let result = PersonProfile::create_with_primary_email(
+            PersonId::new(),
+            "Alex Murphy",
+            Some("ALEX@example.test".to_owned()),
+        );
+        assert!(result.is_ok());
+        if let Ok(person) = result {
+            assert_eq!(person.revision.get(), 1);
+            assert_eq!(person.emails.len(), 1);
+            assert_eq!(person.emails[0].value, "alex@example.test");
+            assert_eq!(person.emails[0].label, "primary");
+        }
+    }
+
+    #[test]
+    fn rehydration_rechecks_serialized_contact_invariants() {
+        let result = PersonProfile::rehydrate(
+            PersonId::new(),
+            Revision::INITIAL,
+            "Alex Murphy",
+            Vec::new(),
+            vec![EmailAddress {
+                value: "not-an-email".to_owned(),
+                label: "primary".to_owned(),
+            }],
+            Vec::new(),
+            None,
+            false,
+        );
+        assert!(matches!(result, Err(PeopleError::InvalidEmail(_))));
+    }
+
+    #[test]
+    fn rehydration_rechecks_serialized_phone_and_partial_date_invariants() {
+        let invalid_phone = PersonProfile::rehydrate(
+            PersonId::new(),
+            Revision::INITIAL,
+            "Alex Murphy",
+            Vec::new(),
+            Vec::new(),
+            vec![PhoneNumber {
+                value: "no digits".to_owned(),
+                label: "mobile".to_owned(),
+            }],
+            None,
+            false,
+        );
+        assert!(matches!(invalid_phone, Err(PeopleError::InvalidPhone(_))));
+
+        let invalid_date = PersonProfile::rehydrate(
+            PersonId::new(),
+            Revision::INITIAL,
+            "Alex Murphy",
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Some(PartialDate::MonthDay { month: 2, day: 30 }),
+            false,
+        );
+        assert_eq!(
+            invalid_date,
+            Err(PeopleError::InvalidPartialDate { month: 2, day: 30 })
+        );
     }
 }

@@ -1,247 +1,155 @@
 //! Native desktop interface for Liaison RM.
 //!
-//! Tauri commands are inbound adapters over the Workspace and People
-//! application services. They do not define canonical formats or domain rules.
+//! Tauri commands are inbound adapters over the single application
+//! composition root. They translate desktop request shapes but do not
+//! construct bounded-context services, repositories, or storage adapters.
 
-#![allow(clippy::missing_errors_doc, clippy::module_name_repetitions)]
+#![allow(
+    clippy::missing_errors_doc,
+    clippy::module_name_repetitions,
+    clippy::needless_pass_by_value // Tauri commands own their State extractors.
+)]
 
-use liaison_people::{CreatePerson, ListPeople, PersonProfile};
-use liaison_vault_markdown::MarkdownVault;
-use liaison_workspace::{
-    BuildProfile, InitialiseWorkspace, ValidateWorkspace, WorkspaceManifest, WorkspaceProfile,
-    WorkspaceStore,
+use liaison_application::{
+    AppStatusDto, ApplicationError, BuildProfile, CommandResult, CreatePersonCommand,
+    InitialiseWorkspaceCommand, LiaisonApplication, ListPeopleQuery, OpenWorkspaceCommand,
+    PersonDto, WorkspaceOpenDto, WorkspaceProfile, WorkspaceSessionCommand, WorkspaceSessionId,
+    WorkspaceValidationDto,
 };
-use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+use serde::Deserialize;
+use tauri::State;
 
 const DEFAULT_LOCALE: &str = "en-IE";
 
-#[derive(Clone, Debug, Serialize)]
-struct AppStatus {
-    version: &'static str,
-    local_authority: bool,
-    network_clients_compiled: bool,
-    canonical_storage: &'static str,
-}
-
 #[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct InitialiseWorkspaceRequest {
     path: String,
     name: String,
-    profile: String,
+    profile: WorkspaceProfile,
 }
 
 #[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct CreatePersonRequest {
-    workspace_path: String,
+    session_id: WorkspaceSessionId,
     display_name: String,
     email: Option<String>,
 }
 
-#[derive(Clone, Debug, Serialize)]
-struct WorkspaceView {
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct WorkspaceSessionRequest {
+    session_id: WorkspaceSessionId,
+}
+
+#[tauri::command]
+fn app_status(application: State<'_, LiaisonApplication>) -> CommandResult<AppStatusDto> {
+    application.app_status()
+}
+
+#[tauri::command]
+fn default_workspace_path(
+    application: State<'_, LiaisonApplication>,
+) -> Result<CommandResult<String>, ApplicationError> {
+    application.default_workspace_path()
+}
+
+#[tauri::command]
+fn initialise_workspace(
+    application: State<'_, LiaisonApplication>,
+    request: InitialiseWorkspaceRequest,
+) -> Result<CommandResult<WorkspaceOpenDto>, ApplicationError> {
+    initialise_workspace_impl(&application, request)
+}
+
+#[tauri::command]
+#[allow(clippy::needless_pass_by_value)] // Tauri commands own deserialized arguments.
+fn open_workspace(
+    application: State<'_, LiaisonApplication>,
     path: String,
-    workspace_id: String,
-    name: String,
-    profile: &'static str,
-    build_profile: &'static str,
-    locale: String,
-    people_count: usize,
-}
-
-#[derive(Clone, Debug, Serialize)]
-struct PersonView {
-    id: String,
-    display_name: String,
-    primary_email: Option<String>,
-    revision: u64,
-}
-
-#[derive(Clone, Debug, Serialize)]
-struct ValidationView {
-    valid: bool,
-    schema_version: u32,
-    finding_count: usize,
-    findings: Vec<liaison_workspace::ValidationFinding>,
+) -> Result<CommandResult<WorkspaceOpenDto>, ApplicationError> {
+    open_workspace_impl(&application, path)
 }
 
 #[tauri::command]
-fn app_status() -> AppStatus {
-    AppStatus {
-        version: env!("CARGO_PKG_VERSION"),
-        local_authority: true,
-        network_clients_compiled: false,
-        canonical_storage: "Markdown/YAML and documented JSONL",
-    }
+fn list_people(
+    application: State<'_, LiaisonApplication>,
+    request: WorkspaceSessionRequest,
+) -> Result<CommandResult<Vec<PersonDto>>, ApplicationError> {
+    list_people_impl(&application, request)
 }
 
 #[tauri::command]
-fn default_workspace_path() -> String {
-    default_workspace_path_impl().to_string_lossy().into_owned()
+fn create_person(
+    application: State<'_, LiaisonApplication>,
+    request: CreatePersonRequest,
+) -> Result<CommandResult<PersonDto>, ApplicationError> {
+    create_person_impl(&application, request)
 }
 
 #[tauri::command]
-fn initialise_workspace(request: InitialiseWorkspaceRequest) -> Result<WorkspaceView, String> {
-    initialise_workspace_impl(request)
+fn validate_workspace(
+    application: State<'_, LiaisonApplication>,
+    request: WorkspaceSessionRequest,
+) -> Result<CommandResult<WorkspaceValidationDto>, ApplicationError> {
+    validate_workspace_impl(&application, request)
 }
 
-#[tauri::command]
-#[allow(clippy::needless_pass_by_value)] // Tauri commands must own their deserialized arguments.
-fn open_workspace(path: String) -> Result<WorkspaceView, String> {
-    open_workspace_impl(&path)
-}
-
-#[tauri::command]
-#[allow(clippy::needless_pass_by_value)] // Tauri commands must own their deserialized arguments.
-fn list_people(workspace_path: String) -> Result<Vec<PersonView>, String> {
-    list_people_impl(&workspace_path)
-}
-
-#[tauri::command]
-fn create_person(request: CreatePersonRequest) -> Result<PersonView, String> {
-    create_person_impl(request)
-}
-
-#[tauri::command]
-#[allow(clippy::needless_pass_by_value)] // Tauri commands must own their deserialized arguments.
-fn validate_workspace(path: String) -> Result<ValidationView, String> {
-    validate_workspace_impl(&path)
-}
-
-fn default_workspace_path_impl() -> PathBuf {
-    let home = std::env::var_os("HOME")
-        .or_else(|| std::env::var_os("USERPROFILE"))
-        .map_or_else(|| PathBuf::from("."), PathBuf::from);
-    home.join("Documents").join("Liaison RM")
-}
-
-fn initialise_workspace_impl(request: InitialiseWorkspaceRequest) -> Result<WorkspaceView, String> {
-    let root = absolute_path(&request.path)?;
-    let profile = parse_profile(&request.profile)?;
-    let vault = MarkdownVault::new();
-    let manifest = InitialiseWorkspace::new(vault.clone())
-        .execute(
-            &root,
-            request.name,
-            profile,
-            BuildProfile::Airgap,
-            DEFAULT_LOCALE,
-        )
-        .map_err(|error| error.to_string())?;
-    workspace_view(&root, manifest, &vault)
-}
-
-fn open_workspace_impl(path: &str) -> Result<WorkspaceView, String> {
-    let root = absolute_path(path)?;
-    let vault = MarkdownVault::new();
-    let manifest = vault.load(&root).map_err(|error| error.to_string())?;
-    workspace_view(&root, manifest, &vault)
-}
-
-fn workspace_view(
-    root: &Path,
-    manifest: WorkspaceManifest,
-    vault: &MarkdownVault,
-) -> Result<WorkspaceView, String> {
-    let people_count = ListPeople::new(vault.clone())
-        .execute(root, false)
-        .map_err(|error| error.to_string())?
-        .len();
-    Ok(WorkspaceView {
-        path: root.to_string_lossy().into_owned(),
-        workspace_id: manifest.workspace_id.to_string(),
-        name: manifest.name,
-        profile: profile_name(manifest.profile),
-        build_profile: build_profile_name(manifest.build_profile),
-        locale: manifest.default_locale,
-        people_count,
+fn initialise_workspace_impl(
+    application: &LiaisonApplication,
+    request: InitialiseWorkspaceRequest,
+) -> Result<CommandResult<WorkspaceOpenDto>, ApplicationError> {
+    application.initialise_workspace(InitialiseWorkspaceCommand {
+        path: request.path,
+        name: request.name,
+        profile: request.profile,
+        build_profile: BuildProfile::ConnectedLocal,
+        locale: DEFAULT_LOCALE.to_owned(),
     })
 }
 
-fn list_people_impl(workspace_path: &str) -> Result<Vec<PersonView>, String> {
-    let root = absolute_path(workspace_path)?;
-    ListPeople::new(MarkdownVault::new())
-        .execute(&root, false)
-        .map_err(|error| error.to_string())
-        .map(|people| people.into_iter().map(person_view).collect())
-}
-
-fn create_person_impl(request: CreatePersonRequest) -> Result<PersonView, String> {
-    let root = absolute_path(&request.workspace_path)?;
-    let email = request.email.and_then(|value| {
-        let value = value.trim().to_owned();
-        (!value.is_empty()).then_some(value)
-    });
-    CreatePerson::new(MarkdownVault::new())
-        .execute(&root, request.display_name, email)
-        .map(person_view)
-        .map_err(|error| error.to_string())
-}
-
-fn validate_workspace_impl(path: &str) -> Result<ValidationView, String> {
-    let root = absolute_path(path)?;
-    let report = ValidateWorkspace::new(MarkdownVault::new())
-        .execute(&root)
-        .map_err(|error| error.to_string())?;
-    Ok(ValidationView {
-        valid: report.is_valid(),
-        schema_version: report.schema_version,
-        finding_count: report.findings.len(),
-        findings: report.findings,
+fn create_person_impl(
+    application: &LiaisonApplication,
+    request: CreatePersonRequest,
+) -> Result<CommandResult<PersonDto>, ApplicationError> {
+    application.create_person(CreatePersonCommand {
+        session_id: request.session_id,
+        display_name: request.display_name,
+        email: request.email,
     })
 }
 
-fn person_view(person: PersonProfile) -> PersonView {
-    let primary_email = person.emails.first().map(|email| email.value.clone());
-    PersonView {
-        id: person.id.to_string(),
-        display_name: person.display_name,
-        primary_email,
-        revision: person.revision.get(),
-    }
+fn open_workspace_impl(
+    application: &LiaisonApplication,
+    path: String,
+) -> Result<CommandResult<WorkspaceOpenDto>, ApplicationError> {
+    application.open_workspace(OpenWorkspaceCommand { path })
 }
 
-fn absolute_path(value: &str) -> Result<PathBuf, String> {
-    let value = value.trim();
-    if value.is_empty() {
-        return Err("workspace path is required".to_owned());
-    }
-    let path = PathBuf::from(value);
-    if !path.is_absolute() {
-        return Err("workspace path must be absolute".to_owned());
-    }
-    Ok(path)
+fn list_people_impl(
+    application: &LiaisonApplication,
+    request: WorkspaceSessionRequest,
+) -> Result<CommandResult<Vec<PersonDto>>, ApplicationError> {
+    application.list_people(ListPeopleQuery {
+        session_id: request.session_id,
+        include_archived: false,
+    })
 }
 
-fn parse_profile(value: &str) -> Result<WorkspaceProfile, String> {
-    match value {
-        "personal" => Ok(WorkspaceProfile::Personal),
-        "family" => Ok(WorkspaceProfile::Family),
-        "team" => Ok(WorkspaceProfile::Team),
-        "workplace" => Ok(WorkspaceProfile::Workplace),
-        _ => Err(format!("unsupported workspace profile: {value}")),
-    }
-}
-
-const fn profile_name(profile: WorkspaceProfile) -> &'static str {
-    match profile {
-        WorkspaceProfile::Personal => "personal",
-        WorkspaceProfile::Family => "family",
-        WorkspaceProfile::Team => "team",
-        WorkspaceProfile::Workplace => "workplace",
-    }
-}
-
-const fn build_profile_name(profile: BuildProfile) -> &'static str {
-    match profile {
-        BuildProfile::Airgap => "airgap",
-        BuildProfile::ConnectedLocal => "connected-local",
-    }
+fn validate_workspace_impl(
+    application: &LiaisonApplication,
+    request: WorkspaceSessionRequest,
+) -> Result<CommandResult<WorkspaceValidationDto>, ApplicationError> {
+    application.validate_workspace(WorkspaceSessionCommand {
+        session_id: request.session_id,
+    })
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let result = tauri::Builder::default()
+        .manage(LiaisonApplication::new())
         .invoke_handler(tauri::generate_handler![
             app_status,
             default_workspace_path,
@@ -262,64 +170,134 @@ pub fn run() {
 mod tests {
     use super::{
         CreatePersonRequest, InitialiseWorkspaceRequest, create_person_impl,
-        initialise_workspace_impl, list_people_impl, validate_workspace_impl,
+        initialise_workspace_impl, open_workspace_impl,
     };
+    use liaison_application::{
+        APPLICATION_CONTRACT_VERSION, BuildProfile, LiaisonApplication, Revision, WorkspaceProfile,
+    };
+    use serde_json::{Value, json};
+    use std::fs;
     use tempfile::tempdir;
 
-    #[test]
-    fn local_vertical_slice_creates_readable_people() {
-        let directory = tempdir();
-        assert!(directory.is_ok());
-        let Ok(directory) = directory else {
-            return;
-        };
-        let path = directory.path().join("workspace");
-        let path_text = path.to_string_lossy().into_owned();
-        let workspace = initialise_workspace_impl(InitialiseWorkspaceRequest {
-            path: path_text.clone(),
-            name: "Personal relationships".to_owned(),
-            profile: "personal".to_owned(),
-        });
-        assert!(workspace.is_ok());
-
-        let person = create_person_impl(CreatePersonRequest {
-            workspace_path: path_text.clone(),
-            display_name: "Alex Murphy".to_owned(),
-            email: Some("alex@example.test".to_owned()),
-        });
-        assert!(person.is_ok());
-
-        let people = list_people_impl(&path_text);
-        assert!(people.is_ok());
-        let Ok(people) = people else {
-            return;
-        };
-        assert_eq!(people.len(), 1);
-        assert_eq!(people[0].display_name, "Alex Murphy");
-        assert_eq!(
-            people[0].primary_email.as_deref(),
-            Some("alex@example.test")
-        );
-
-        let validation = validate_workspace_impl(&path_text);
-        assert!(validation.is_ok());
-        let Ok(validation) = validation else {
-            return;
-        };
-        assert!(validation.valid);
-        assert_eq!(validation.finding_count, 0);
+    fn parity_fixture() -> Result<Value, serde_json::Error> {
+        serde_json::from_str(include_str!(
+            "../../../../spec/fixtures/application-parity.json"
+        ))
     }
 
     #[test]
-    fn relative_workspace_path_is_rejected() {
-        let result = initialise_workspace_impl(InitialiseWorkspaceRequest {
-            path: "relative/workspace".to_owned(),
-            name: "People".to_owned(),
-            profile: "personal".to_owned(),
-        });
+    fn desktop_requests_use_the_application_session() -> Result<(), Box<dyn std::error::Error>> {
+        let temporary = tempdir()?;
+        let root = temporary.path().join("workspace");
+        let application = LiaisonApplication::new();
+        let opened = initialise_workspace_impl(
+            &application,
+            InitialiseWorkspaceRequest {
+                path: root.to_string_lossy().into_owned(),
+                name: "Review workspace".to_owned(),
+                profile: WorkspaceProfile::Workplace,
+            },
+        )?;
+
+        let person = create_person_impl(
+            &application,
+            CreatePersonRequest {
+                session_id: opened.value.workspace.session_id,
+                display_name: "Alex Murphy".to_owned(),
+                email: Some("alex@example.test".to_owned()),
+            },
+        )?;
+
+        assert_eq!(person.value.display_name, "Alex Murphy");
+        assert_eq!(person.value.revision, Revision::INITIAL);
+        assert_eq!(person.value.emails.len(), 1);
         assert_eq!(
-            result.map(|workspace| workspace.path),
-            Err("workspace path must be absolute".to_owned())
+            opened.value.workspace.build_profile,
+            BuildProfile::ConnectedLocal
         );
+        Ok(())
+    }
+
+    #[test]
+    fn desktop_boundary_matches_the_shared_application_fixture()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let expected = parity_fixture()?;
+        let temporary = tempdir()?;
+        let root = temporary.path().join("workspace");
+        let application = LiaisonApplication::new();
+        let opened = initialise_workspace_impl(
+            &application,
+            InitialiseWorkspaceRequest {
+                path: root.to_string_lossy().into_owned(),
+                name: "Parity workspace".to_owned(),
+                profile: WorkspaceProfile::Workplace,
+            },
+        )?;
+        let person = create_person_impl(
+            &application,
+            CreatePersonRequest {
+                session_id: opened.value.workspace.session_id,
+                display_name: "Healthy Person".to_owned(),
+                email: None,
+            },
+        )?;
+        assert_eq!(
+            person.value.revision.get(),
+            expected["initial_person_revision"]
+        );
+        fs::write(root.join("people/malformed.md"), "not front matter\n")?;
+
+        let reopened = open_workspace_impl(&application, root.to_string_lossy().into_owned())?;
+        assert_eq!(
+            u64::from(reopened.contract_version),
+            expected["contract_version"]
+        );
+        assert_eq!(reopened.value.people.len(), 1);
+        assert!(!reopened.value.validation.valid);
+        let finding = serde_json::to_value(&reopened.value.validation.findings[0])?;
+        assert_eq!(finding["code"], expected["malformed_health"]["code"]);
+        assert_eq!(
+            finding["severity"],
+            expected["malformed_health"]["severity"]
+        );
+        assert_eq!(finding["path"], expected["malformed_health"]["path"]);
+        assert_eq!(finding["message"], expected["malformed_health"]["message"]);
+        assert_eq!(
+            finding["recovery"],
+            expected["malformed_health"]["recovery"]
+        );
+
+        let result = open_workspace_impl(&application, "relative/private-path".to_owned());
+        assert!(result.is_err());
+        let Err(error) = result else {
+            return Ok(());
+        };
+        let mut normalized = serde_json::to_value(error)?;
+        normalized["correlation_id"] = json!("<uuid>");
+        assert_eq!(normalized, expected["relative_path_error"]);
+        Ok(())
+    }
+
+    #[test]
+    fn application_errors_remain_structured_at_the_desktop_boundary()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let application = LiaisonApplication::new();
+        let result = initialise_workspace_impl(
+            &application,
+            InitialiseWorkspaceRequest {
+                path: "relative/path".to_owned(),
+                name: "Review workspace".to_owned(),
+                profile: WorkspaceProfile::Personal,
+            },
+        );
+        let Err(error) = result else {
+            return Err("a relative path must be rejected".into());
+        };
+
+        assert_eq!(error.code, "application.workspace-path-not-absolute");
+        assert_eq!(error.contract_version, APPLICATION_CONTRACT_VERSION);
+        assert!(!error.recovery.is_empty());
+        assert!(error.details.is_empty());
+        Ok(())
     }
 }

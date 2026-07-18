@@ -1745,14 +1745,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "liaison-application"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "chrono",
+ "getrandom 0.4.3",
+ "liaison-people",
+ "liaison-shared-kernel",
+ "liaison-vault-markdown",
+ "liaison-workspace",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "uuid",
+]
+
+[[package]]
 name = "liaison-cli"
 version = "0.1.0-alpha.1"
 dependencies = [
  "assert_cmd",
  "clap",
- "liaison-people",
- "liaison-vault-markdown",
- "liaison-workspace",
+ "liaison-application",
  "predicates",
  "serde",
  "serde_json",
@@ -1771,10 +1786,9 @@ dependencies = [
 name = "liaison-desktop"
 version = "0.1.0-alpha.1"
 dependencies = [
- "liaison-people",
- "liaison-vault-markdown",
- "liaison-workspace",
+ "liaison-application",
  "serde",
+ "serde_json",
  "tauri",
  "tauri-build",
  "tempfile",
