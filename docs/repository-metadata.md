@@ -4,7 +4,7 @@ Last reviewed: 2026-07-18
 
 Settings owner: Electric Town repository administrators.
 
-This file records the public GitHub About metadata so repository settings remain consistent with the product boundary. The initial settings update was tracked in [issue #19](https://github.com/Electric-Town/liaison-RM/issues/19).
+This file records the public GitHub About metadata so repository settings remain consistent with the product boundary. The settings were applied and checked against the live repository on 2026-07-18 after [PR #34](https://github.com/Electric-Town/liaison-RM/pull/34). The initial administration task is closed in [issue #19](https://github.com/Electric-Town/liaison-RM/issues/19).
 
 ## Description
 
@@ -64,9 +64,9 @@ The card and public-site product illustration use synthetic data. The current de
 
 ## About-setting review checklist
 
-- [ ] Description matches the text above or a reviewed successor.
-- [ ] Website resolves to the maintained Pages site.
-- [ ] Topics match the exact 20-item list above.
-- [ ] Social preview uses synthetic or committed deterministic evidence.
-- [ ] No field claims a supported release before release evidence exists.
-- [ ] The live About panel and Pages URL are checked after each settings change.
+- [x] Description matches the text above or a reviewed successor.
+- [x] Website resolves to the maintained Pages site.
+- [x] Topics match the exact 20-item list above.
+- [x] Social preview uses synthetic or committed deterministic evidence.
+- [x] No field claims a supported release before release evidence exists.
+- [x] The live About panel and Pages URL were checked after the settings change.
