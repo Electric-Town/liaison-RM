@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate locale catalogs, placeholders, Unicode, review state, and expansion."""
+"""Validate locale catalogs, placeholders, Unicode, review state, and traceability."""
 from __future__ import annotations
 
 import json
@@ -13,9 +13,64 @@ from jsonschema import Draft202012Validator, FormatChecker
 ROOT = Path(__file__).resolve().parents[1]
 LOCALES = ROOT / "examples/locales"
 SCHEMA = json.loads((ROOT / "schemas/locale-catalog.schema.json").read_text(encoding="utf-8"))
+TRACEABILITY = ROOT / "spec/localization-requirements.json"
 PLACEHOLDER = re.compile(r"\{([a-z][a-z0-9_]*)\}")
 HTML = re.compile(r"</?[a-z][^>]*>", re.IGNORECASE)
+REQUIREMENT_ID = re.compile(r"^LRM-L10N-[0-9]{3}$")
+UAT_ID = re.compile(r"^UAT-LOC-[0-9]{3}$")
 RELEASE_LOCALES = {"ga-IE", "ja-JP", "pt-BR"}
+
+
+def validate_traceability(errors: list[str]) -> tuple[int, int]:
+    try:
+        document = json.loads(TRACEABILITY.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        errors.append(f"localization traceability cannot be read: {error}")
+        return 0, 0
+
+    if document.get("schema_version") != 1:
+        errors.append("localization traceability uses an unsupported schema_version")
+    if document.get("context") != "localization":
+        errors.append("localization traceability context must be localization")
+
+    requirements = document.get("requirements", [])
+    uat_cases = document.get("uat", [])
+    if not isinstance(requirements, list) or not requirements:
+        errors.append("localization traceability requires at least one requirement")
+        requirements = []
+    if not isinstance(uat_cases, list) or not uat_cases:
+        errors.append("localization traceability requires at least one UAT case")
+        uat_cases = []
+
+    requirement_ids = [item.get("id", "") for item in requirements if isinstance(item, dict)]
+    uat_ids = [item.get("id", "") for item in uat_cases if isinstance(item, dict)]
+    if len(requirement_ids) != len(set(requirement_ids)):
+        errors.append("localization requirement IDs are not unique")
+    if len(uat_ids) != len(set(uat_ids)):
+        errors.append("localization UAT IDs are not unique")
+    for identifier in requirement_ids:
+        if not REQUIREMENT_ID.fullmatch(identifier):
+            errors.append(f"invalid localization requirement ID: {identifier}")
+    for identifier in uat_ids:
+        if not UAT_ID.fullmatch(identifier):
+            errors.append(f"invalid localization UAT ID: {identifier}")
+
+    for item in requirements:
+        if not isinstance(item, dict):
+            errors.append("localization requirement must be an object")
+            continue
+        for key in ("id", "release", "priority", "statement", "acceptance"):
+            if not str(item.get(key, "")).strip():
+                errors.append(f"{item.get('id', '<unknown>')}: missing {key}")
+    for item in uat_cases:
+        if not isinstance(item, dict):
+            errors.append("localization UAT case must be an object")
+            continue
+        for key in ("id", "persona", "release", "title", "given", "when", "then"):
+            if not str(item.get(key, "")).strip():
+                errors.append(f"{item.get('id', '<unknown>')}: missing {key}")
+
+    return len(requirements), len(uat_cases)
 
 
 def main() -> int:
@@ -99,6 +154,8 @@ def main() -> int:
     if absent:
         errors.append(f"required architecture catalogs are missing: {absent}")
 
+    requirement_count, uat_count = validate_traceability(errors)
+
     if errors:
         print("Localization validation failed:", file=sys.stderr)
         for error in errors:
@@ -106,7 +163,11 @@ def main() -> int:
         return 1
 
     source_count = len(source["messages"]) if source else 0
-    print(f"Localization validation passed: {len(catalogs)} catalogs, {source_count} keys")
+    print(
+        "Localization validation passed: "
+        f"{len(catalogs)} catalogs, {source_count} keys, "
+        f"{requirement_count} requirements, {uat_count} UAT cases"
+    )
     return 0
 
 
