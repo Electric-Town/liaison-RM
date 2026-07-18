@@ -1,9 +1,11 @@
 use clap::{Args, Parser, Subcommand, ValueEnum};
+use liaison_backup_local::LocalWorkspaceBackup;
 use liaison_people::{CreatePerson, ListPeople, PeopleError};
 use liaison_vault_markdown::MarkdownVault;
 use liaison_workspace::{
-    BuildProfile, InitialiseWorkspace, ValidateWorkspace, WorkspaceError, WorkspaceProfile,
-    WorkspaceStore,
+    BackupError, BuildProfile, CreateWorkspaceBackup, InitialiseWorkspace,
+    RestoreWorkspaceBackup, ValidateWorkspace, VerifyWorkspaceBackup, WorkspaceError,
+    WorkspaceProfile, WorkspaceStore,
 };
 use serde::Serialize;
 use serde_json::json;
@@ -15,7 +17,7 @@ use thiserror::Error;
     name = "liaison",
     version,
     about = "Local-authoritative relationship manager",
-    long_about = "Create, inspect, and validate an open Liaison RM workspace without requiring an account or hosted service."
+    long_about = "Create, inspect, validate, back up, and restore an open Liaison RM workspace without requiring an account or hosted service."
 )]
 struct Cli {
     /// Canonical workspace directory.
@@ -40,6 +42,8 @@ enum OutputFormat {
 enum TopLevelCommand {
     /// Create, inspect, or validate a workspace.
     Workspace(WorkspaceArgs),
+    /// Create, verify, or restore a local workspace backup.
+    Backup(BackupArgs),
     /// Create or list person profiles.
     Person(PersonArgs),
 }
@@ -67,6 +71,37 @@ enum WorkspaceCommand {
     Inspect,
     /// Validate the manifest, required layout, and supported records.
     Validate,
+}
+
+#[derive(Debug, Args)]
+struct BackupArgs {
+    #[command(subcommand)]
+    command: BackupCommand,
+}
+
+#[derive(Debug, Subcommand)]
+enum BackupCommand {
+    /// Create a new immutable local backup directory.
+    Create {
+        /// New backup directory. Existing paths are never overwritten.
+        #[arg(long)]
+        destination: PathBuf,
+    },
+    /// Verify every declared payload file and SHA-256 digest.
+    Verify {
+        /// Backup directory containing manifest.json and payload/.
+        #[arg(long)]
+        backup: PathBuf,
+    },
+    /// Restore into a new isolated directory and validate before activation.
+    Restore {
+        /// Verified backup directory.
+        #[arg(long)]
+        backup: PathBuf,
+        /// New restore target. The path must not already exist.
+        #[arg(long)]
+        target: PathBuf,
+    },
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -130,6 +165,8 @@ enum CliError {
     #[error(transparent)]
     Workspace(#[from] WorkspaceError),
     #[error(transparent)]
+    Backup(#[from] BackupError),
+    #[error(transparent)]
     People(#[from] PeopleError),
     #[error("failed to serialise command output: {0}")]
     Serialisation(#[from] serde_json::Error),
@@ -144,6 +181,37 @@ impl CliError {
                 "workspace.unsupported-schema"
             }
             Self::Workspace(_) => "workspace.error",
+            Self::Backup(BackupError::DestinationExists(_)) => "backup.destination-exists",
+            Self::Backup(BackupError::DestinationInsideWorkspace(_)) => {
+                "backup.destination-inside-workspace"
+            }
+            Self::Backup(BackupError::RestoreTargetExists(_)) => "backup.restore-target-exists",
+            Self::Backup(BackupError::RestoreTargetInsideSnapshot(_)) => {
+                "backup.restore-target-inside-snapshot"
+            }
+            Self::Backup(
+                BackupError::UnexpectedFormat(_)
+                | BackupError::UnsupportedFormatVersion { .. }
+                | BackupError::EmptySnapshot
+                | BackupError::DuplicatePath(_)
+                | BackupError::UnsortedManifest
+                | BackupError::UnsafePath(_)
+                | BackupError::InvalidDigest(_)
+                | BackupError::ManifestMissing(_)
+                | BackupError::PayloadMismatch(_)
+                | BackupError::ChecksumMismatch { .. }
+                | BackupError::WorkspaceIdentityMismatch { .. }
+                | BackupError::WorkspaceSchemaMismatch { .. }
+                | BackupError::WorkspaceInvalid(_),
+            ) => "backup.verification-failed",
+            Self::Backup(BackupError::SymbolicLink(_)) => "backup.symbolic-link",
+            Self::Backup(BackupError::CleanupFailed { .. } | BackupError::Storage(_)) => {
+                "backup.storage-error"
+            }
+            Self::Backup(BackupError::Workspace(WorkspaceError::NotFound)) => {
+                "workspace.not-found"
+            }
+            Self::Backup(BackupError::Workspace(_)) => "backup.workspace-error",
             Self::People(PeopleError::AlreadyExists) => "people.already-exists",
             Self::People(PeopleError::NotFound) => "people.not-found",
             Self::People(PeopleError::RevisionConflict { .. }) => "people.revision-conflict",
@@ -154,11 +222,38 @@ impl CliError {
 
     const fn exit_code(&self) -> u8 {
         match self {
-            Self::Workspace(WorkspaceError::NotFound) | Self::People(PeopleError::NotFound) => 3,
+            Self::Workspace(WorkspaceError::NotFound)
+            | Self::Backup(BackupError::Workspace(WorkspaceError::NotFound))
+            | Self::People(PeopleError::NotFound) => 3,
             Self::Workspace(WorkspaceError::AlreadyExists)
+            | Self::Backup(
+                BackupError::DestinationExists(_)
+                | BackupError::DestinationInsideWorkspace(_)
+                | BackupError::RestoreTargetExists(_)
+                | BackupError::RestoreTargetInsideSnapshot(_),
+            )
             | Self::People(PeopleError::AlreadyExists | PeopleError::RevisionConflict { .. }) => 4,
-            Self::Workspace(WorkspaceError::UnsupportedSchema { .. }) => 5,
-            Self::Workspace(_) | Self::People(_) | Self::Serialisation(_) => 1,
+            Self::Workspace(WorkspaceError::UnsupportedSchema { .. })
+            | Self::Backup(
+                BackupError::UnexpectedFormat(_)
+                | BackupError::UnsupportedFormatVersion { .. }
+                | BackupError::EmptySnapshot
+                | BackupError::DuplicatePath(_)
+                | BackupError::UnsortedManifest
+                | BackupError::UnsafePath(_)
+                | BackupError::InvalidDigest(_)
+                | BackupError::SymbolicLink(_)
+                | BackupError::ManifestMissing(_)
+                | BackupError::PayloadMismatch(_)
+                | BackupError::ChecksumMismatch { .. }
+                | BackupError::WorkspaceIdentityMismatch { .. }
+                | BackupError::WorkspaceSchemaMismatch { .. }
+                | BackupError::WorkspaceInvalid(_),
+            ) => 5,
+            Self::Workspace(_)
+            | Self::Backup(_)
+            | Self::People(_)
+            | Self::Serialisation(_) => 1,
         }
     }
 }
@@ -177,6 +272,7 @@ fn main() -> ExitCode {
 
 fn execute(cli: Cli) -> Result<(), CliError> {
     let vault = MarkdownVault::new();
+    let backup_store = LocalWorkspaceBackup::new();
     match cli.command {
         TopLevelCommand::Workspace(args) => match args.command {
             WorkspaceCommand::Init {
@@ -223,6 +319,39 @@ fn execute(cli: Cli) -> Result<(), CliError> {
                     )
                 };
                 write_success(cli.output, &summary, &report)
+            }
+        },
+        TopLevelCommand::Backup(args) => match args.command {
+            BackupCommand::Create { destination } => {
+                let manifest =
+                    CreateWorkspaceBackup::new(vault, backup_store).execute(
+                        &cli.workspace,
+                        &destination,
+                    )?;
+                let human = format!(
+                    "Created backup for workspace {} at {} with {} file(s)",
+                    manifest.workspace_id,
+                    destination.display(),
+                    manifest.files.len()
+                );
+                write_success(cli.output, &human, &manifest)
+            }
+            BackupCommand::Verify { backup } => {
+                let report = VerifyWorkspaceBackup::new(backup_store).execute(&backup)?;
+                let human = format!(
+                    "Verified backup for workspace {}: {} file(s), {} byte(s)",
+                    report.workspace_id, report.files_checked, report.total_bytes
+                );
+                write_success(cli.output, &human, &report)
+            }
+            BackupCommand::Restore { backup, target } => {
+                let report = RestoreWorkspaceBackup::new(vault, backup_store)
+                    .execute(&backup, &target)?;
+                let human = format!(
+                    "Restored workspace {} to {} with {} file(s)",
+                    report.workspace_id, report.target, report.files_restored
+                );
+                write_success(cli.output, &human, &report)
             }
         },
         TopLevelCommand::Person(args) => match args.command {
