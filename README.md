@@ -305,22 +305,9 @@ Do not assume an open PR has landed in `main`. Read its base, head, changed file
 
 ## Validation
 
-Run the checks relevant to the changed scope. The standard baseline is:
+Run the checks required by the changed scope. The canonical baseline and completion rules are in [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md#26-baseline-validation-commands) and [`AI_BUILD_INSTRUCTIONS.md`](AI_BUILD_INSTRUCTIONS.md).
 
-```bash
-python scripts/check_repository.py
-python scripts/check_spec.py
-python scripts/check_architecture.py
-python scripts/check_providers.py
-python scripts/check_wit_contract.py
-
-cargo fmt --all --check
-cargo check --workspace --all-targets --all-features --locked
-cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
-cargo test --workspace --all-features --locked
-```
-
-User-interface changes also require browser interaction tests, committed review screens, keyboard checks, responsive overflow checks, and accessibility evidence. Platform claims require the exact platform matrix and install/launch evidence.
+Documentation changes run repository policy, specification, content, and link checks. Runtime, UI, provider, plugin, migration, and platform claims require their exact additional suites and exact-head evidence.
 
 ## Contribution model
 
