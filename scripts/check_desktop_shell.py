@@ -147,7 +147,7 @@ def main() -> int:
         "x86_64-apple-darwin",
         "codesign --verify",
         "hdiutil verify",
-        "actions/upload-artifact@v4",
+        "actions/upload-artifact@v7",
     ]:
         if required not in mac_workflow:
             errors.append(f"macOS workflow is missing {required!r}")
