@@ -1,9 +1,17 @@
 //! Workspace bounded context.
 //!
-//! Owns workspace identity, manifest invariants, lifecycle use cases, and the
-//! repository port required by storage adapters.
+//! Owns workspace identity, manifest invariants, lifecycle use cases, backup and
+//! restore activation, and the repository ports required by storage adapters.
 
 #![allow(clippy::module_name_repetitions, clippy::missing_errors_doc)]
+
+mod backup;
+
+pub use backup::{
+    BACKUP_FORMAT, BACKUP_FORMAT_VERSION, BackupError, BackupFile, BackupManifest,
+    BackupVerificationReport, CreateWorkspaceBackup, RestoreReport, RestoreWorkspaceBackup,
+    VerifyWorkspaceBackup, WorkspaceBackupStore,
+};
 
 use liaison_shared_kernel::WorkspaceId;
 use serde::{Deserialize, Serialize};
