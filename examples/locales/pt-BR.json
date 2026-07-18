@@ -1,0 +1,32 @@
+{
+  "schema": "liaison/locale-catalog@1",
+  "locale": "pt-BR",
+  "source_locale": "en-IE",
+  "source_revision": 1,
+  "status": "human-review-required",
+  "reviewer": null,
+  "reviewed_on": null,
+  "notes": [
+    "Structural fixture only. A named Brazilian Portuguese reviewer must approve register, agreement, terminology, formatting, and expansion before release."
+  ],
+  "messages": {
+    "app.name": "Liaison RM",
+    "app.local_only": "Seus dados de relacionamento permanecem no espaço de trabalho local que você selecionar.",
+    "workspace.create": "Criar espaço de trabalho",
+    "workspace.open": "Abrir espaço de trabalho",
+    "workspace.validate": "Validar espaço de trabalho",
+    "workspace.validation_ok": "Nenhum problema foi encontrado no espaço de trabalho.",
+    "people.title": "Pessoas",
+    "people.add": "Adicionar pessoa",
+    "people.name_label": "Nome",
+    "people.email_label": "Endereço de e-mail",
+    "people.count": "{count} pessoas",
+    "review.why_now": "Por que agora",
+    "review.reason.commitment": "Há um compromisso em aberto.",
+    "review.reason.upcoming_date": "Uma data importante está se aproximando.",
+    "review.reason.cadence": "A frequência de contato configurada está vencendo.",
+    "review.action.snooze": "Adiar",
+    "review.action.pause": "Pausar relacionamento",
+    "error.recovery": "Revise os detalhes e tente novamente."
+  }
+}
