@@ -4,7 +4,7 @@ Status: living handoff document
 Last substantial review: 2026-07-18  
 Repository: `Electric-Town/liaison-RM`
 
-This document gives a new maintainer, contributor, or coding agent enough context to continue the project without private conversation history. It describes the product boundary, architecture, current state, accepted constraints, release gates, and expected working method. It does not replace normative requirements, schemas, decisions, or tests.
+This document gives a new maintainer, contributor, or coding agent enough context to continue the project without private conversation history. It describes the product boundary, architecture, current implementation, accepted constraints, release gates, and expected working method. It does not replace normative requirements, schemas, decisions, or tests.
 
 ## 1. Authority and document precedence
 
@@ -32,7 +32,7 @@ The first narrow workplace outcome is:
 
 > A receptionist selects the correct attendee cohort, identifies every unresolved dietary-information state, records or requests missing information, and produces a safe least-disclosure catering brief before an event.
 
-The personal outcome is broader:
+The personal outcome is:
 
 > A user can remember and act on relationship context without relying on working memory, being shamed by an overdue backlog, or reducing relationships to communication volume.
 
@@ -82,15 +82,11 @@ Provider identity may be domain data in the Connections context. Provider SDK ty
 
 ### 4.5 Explainable attention
 
-The product separates:
-
-- relationship intent;
-- relationship evidence;
-- maintenance status;
-- profile readiness;
-- Review Priority.
+The product separates relationship intent, relationship evidence, maintenance status, profile readiness, and Review Priority.
 
 Reason-only review is the default. A weighted policy is optional, transparent, versioned, configurable, and subordinate to hard suppressions such as do-not-contact, paused, archived, ended, or snoozed.
+
+The merged Review and Attention runtime currently implements reason-only policies, factual reasons, hard suppressions, deterministic ordering, and capacity-bounded queues. It does not yet implement cadence adapters, persistence, review sessions, interruption recovery, or weighted policy simulation.
 
 ### 4.6 Least disclosure
 
@@ -152,47 +148,19 @@ This is a delivery target, not a legal certification claim.
 
 ### 6.1 Entity types
 
-Do not model everything as a generic Contact. The intended entities include:
-
-- Person;
-- Organisation;
-- Group;
-- Household;
-- Location;
-- Event;
-- Resource;
-- Membership;
-- Relationship;
-- Interaction;
-- Commitment;
-- Reminder;
-- Review Session;
-- Connection;
-- Grant;
-- Provider Descriptor.
+Do not model everything as a generic Contact. The intended entities include Person, Organisation, Group, Household, Location, Event, Resource, Membership, Relationship, Interaction, Commitment, Reminder, Review Session, Connection, Grant, and Provider Descriptor.
 
 A UI contact view may combine people and organisations, but that view does not redefine the aggregates.
 
 ### 6.2 Topic Packs and fields
 
-Profiles use Topic Packs that can be enabled by workspace, template, organisation, group, person, plugin, or temporary purpose. Built-in candidates include:
+Profiles use Topic Packs enabled by workspace, template, organisation, group, person, plugin, or temporary purpose. Built-in candidates include identity and communication, food and hospitality, travel, favourites and gifts, family and household, pets, professional context, interests and life context, events and hosting, executive-assistant briefing, accessibility and sensory preferences, and resources.
 
-- identity and communication;
-- food and hospitality;
-- travel;
-- favourites and gifts;
-- family and household;
-- pets;
-- professional context;
-- interests and life context;
-- events and hosting;
-- executive-assistant briefing;
-- accessibility and sensory preferences;
-- resources.
+Each field has a stable ID independent of its label and layout. Supported definitions cover text, Markdown, dates, partial and recurring dates, enum and multi-select, boolean, number, measurement, address, location, entity and resource references, sealed values, calculated values, and lists.
 
-Each field has a stable ID independent of its label and layout. Supported field types include short and long text, Markdown, date, partial date, recurring date, enum, multi-select, boolean, number, measurement, address, location, entity reference, file or URL reference, sealed value, calculated read-only value, and plugin-defined value.
+Information state is explicit. Initial states include known, verified, unverified, unknown, not applicable, declined, stale, conflicting, needs clarification, and derived. A value may carry source, author or connector, capture date, verification date, review date, visibility, confidence, purpose, and history.
 
-Field information state is explicit. Initial states include known, verified, unverified, unknown, not applicable, declined, stale, conflicting, needs clarification, and derived. A value may carry source, author or connector, capture date, verification date, review date, visibility, confidence, purpose, and history.
+The merged Identity and Profiles runtime provides stable IDs, classifications, information-state/value compatibility, sealed sensitive definitions and values, Topic Pack invariants, versioned Purpose Definitions, and purpose-specific readiness gaps. It does not yet provide Markdown persistence, Topic Pack activation inheritance, encryption implementation, profile layouts, imports, or UI.
 
 ### 6.3 Relationship intent and review
 
@@ -220,9 +188,13 @@ External metadata is not fetched without permission. Removing a connector does n
 
 Owns workspace identity, schema version, build profile, settings, members, devices, enabled modules, and lifecycle.
 
-### Identity and Profiles / People
+### People
 
-Owns person identity, contact points, Topic Packs, field values and states, provenance, important dates, visibility, archive, and profile revision.
+Owns basic person identity, contact points, important dates, archive, and the current simple person repository port.
+
+### Identity and Profiles
+
+Owns Topic Packs, stable Field Definitions, explicit information states, profile values, Purpose Definitions, classification, sealed-value invariants, and purpose-specific readiness.
 
 ### Organisations and Groups
 
@@ -246,7 +218,7 @@ Owns notes, files, URLs, content-addressed attachments, calendar and email refer
 
 ### Review and Attention
 
-Owns cadence evaluation, maintenance status, purpose-specific profile readiness, review reasons, policies, queues, suppressions, sessions, and Markdown review output.
+Owns cadence evaluation, maintenance status, purpose-specific readiness inputs, review reasons, policies, queues, suppressions, sessions, and Markdown review output.
 
 ### Facilities
 
@@ -282,15 +254,13 @@ context-owned ports
 adapters and providers
 ```
 
-Rules:
-
-- inbound applications depend on context APIs;
-- domain crates depend only on deliberate shared-kernel types and ordinary libraries required for domain meaning;
-- adapters implement context-owned ports;
-- provider code depends on Connections contracts, not vice versa;
-- read models may combine published data but cannot write another context's aggregates;
-- cross-context workflows use explicit orchestration and compensation or recovery;
-- persistence, UI, provider, and transport DTOs remain private to their boundary.
+- Inbound applications depend on context APIs.
+- Domain crates depend only on deliberate shared-kernel types and libraries required for domain meaning.
+- Adapters implement context-owned ports.
+- Provider code depends on Connections contracts, not vice versa.
+- Read models may combine published data but cannot write another context's aggregates.
+- Cross-context workflows use explicit orchestration and compensation or recovery.
+- Persistence, UI, provider, and transport DTOs remain private to their boundary.
 
 ## 9. Canonical storage
 
@@ -328,33 +298,13 @@ Multi-user sharing does not write concurrently to shared readable Markdown. Devi
 
 ## 11. AI, MCP, and plugin architecture
 
-The planned local automation surface includes:
-
-- loopback OpenAPI with scoped tokens;
-- webhooks and n8n examples;
-- MCP tools with source-linked reads and staged writes;
-- Ollama-compatible local inference;
-- remote model adapters behind disclosure grants;
-- WASI Component Model plugins with WIT contracts and resource limits.
+The planned local automation surface includes loopback OpenAPI with scoped tokens, webhooks and n8n examples, MCP tools with source-linked reads and staged writes, Ollama-compatible local inference, remote model adapters behind disclosure grants, and WASI Component Model plugins with WIT contracts and resource limits.
 
 AI and plugin output is untrusted input. It cannot expand its own authority. A model, client, or plugin does not receive a raw database handle or unrestricted workspace path.
 
 ## 12. User experience standard
 
-Every workflow should support:
-
-- stable navigation and explicit headings;
-- visible focus and keyboard completion;
-- screen-reader labels and polite live status;
-- interruption-safe drafts and return to the prior task state;
-- loading, empty, partial, stale, conflict, permission, success, undo, and recovery states;
-- 200% zoom and responsive reflow;
-- long labels and 30–45% localization expansion;
-- reduced motion and low-stimulation modes;
-- text alternatives for colour, icons, hover, animation, graph position, and drag;
-- small capacity-bounded review sessions;
-- skip, snooze, pause, archive, decline, and ask-later as valid outcomes;
-- no gamification of relationship volume or contact frequency.
+Every workflow should support stable navigation, explicit headings, visible focus, keyboard completion, screen-reader status, interruption-safe drafts, loading/empty/stale/conflict/permission/success/undo/recovery states, 200% zoom, responsive reflow, localization expansion, reduced motion, semantic graph alternatives, small capacity-bounded reviews, and non-shaming actions.
 
 The project uses behavioural observation and task evidence. Feature enthusiasm is not treated as proof of need.
 
@@ -364,7 +314,7 @@ The project uses behavioural observation and task evidence. Feature enthusiasm i
 - no hidden telemetry, crash upload, remote log, licence check, or undeclared update request;
 - secrets remain in an OS or approved secret store and are referenced, not exported;
 - purpose-bound grants control providers, APIs, AI, plugins, sharing, and exports;
-- sensitive dietary, accessibility, communication, and facilities fields use stricter classification and disclosure;
+- sensitive dietary, accessibility, communication, profile, and facilities fields use stricter classification and disclosure;
 - destructive changes require preview and recovery;
 - imports are parsed as untrusted input;
 - path traversal, symlink, checksum, stale revision, replay, and malicious-file threats require focused tests;
@@ -375,29 +325,32 @@ See `docs/security/threat-model.md` and `docs/security/local-integrity.md`.
 
 ## 14. Current implementation state
 
-The repository uses stacked pull requests. The current review sequence is documented in `docs/STATUS.md` and must be checked before work begins.
+Merged into `main`:
 
-Implemented or present under review:
-
-- repository governance and KCS-informed workflow;
-- DDD, UX, accessibility, and content standards;
+- governance and KCS-informed workflow;
+- DDD, UX, accessibility, security, and content standards;
 - product specification, context map, decisions, threat model, requirements, UAT, feature gates, and implementation plan;
-- static interaction prototype and committed review screens;
-- Rust shared identifiers and revisions;
+- interaction prototypes and committed review screens;
 - Workspace and People domain/application slices;
-- Markdown workspace adapter;
-- local CLI workspace and person workflows;
-- provider-neutral Connections contract and provider SDK;
-- local-folder object-store adapter and conformance evidence;
-- native Tauri desktop alpha for local workspace and basic People workflows;
-- cross-platform Rust checks and macOS review-bundle workflows.
+- Markdown workspace adapter and local CLI;
+- provider-neutral Connections contract, WIT, provider SDK, local-folder adapter, and conformance evidence;
+- relationship-memory and attention specification, Topic Pack/Review Policy schemas, examples, validator, and screens;
+- Identity and Profiles runtime domain types and readiness calculation;
+- Review and Attention reason-only policy, suppressions, reasons, deterministic ordering, and capacity-bounded queue.
+
+Under review:
+
+- native Tauri desktop alpha and macOS review bundles;
+- repository context and agent handoff;
+- localization architecture and draft structural locale fixtures.
 
 Not production-ready:
 
 - complete crash-safe journalling and repair;
 - projection rebuild lifecycle;
 - isolated backup and restore;
-- Topic Pack runtime and Review and Attention engine;
+- profile persistence, Topic Pack activation inheritance, encryption, layouts, and editing;
+- cadence/evidence adapters and review-session persistence;
 - organisations, relationships, interactions, events, reminders, resources, facilities, and sharing runtime contexts;
 - WebDAV, S3, Google Drive, CardDAV, calendar, email, and migration providers;
 - local OpenAPI, MCP, Ollama, and plugin host;
@@ -405,6 +358,8 @@ Not production-ready:
 - Developer ID signing, notarization, stapling, Gatekeeper, and clean-machine Mac UAT;
 - formal accessibility conformance evidence;
 - production release.
+
+Several open relationship-contract drafts overlap work already merged through PRs #9 and #10. They require comparison, retargeting, or closure before further implementation. Do not treat every open draft as cumulative accepted scope.
 
 ## 15. Delivery sequence
 
@@ -438,35 +393,26 @@ OpenAPI, webhooks, n8n, MCP, Ollama, remote model grants, WASI plugin host, and 
 
 ## 16. Immediate priorities
 
-Unless an accepted decision changes the order, the next dependency-sensitive priorities are:
+Unless an accepted decision changes the order:
 
-1. finish review and merge the existing stack in order;
-2. close R1 integrity gaps: journalled writes, interruption recovery, projection rebuild, backup verification, isolated restore, and Airgap evidence;
-3. complete native desktop foundations without duplicating application rules;
-4. establish runtime Topic Pack field-state contracts and reason-only Review and Attention;
-5. implement Organisations and Groups before event cohort and workplace workflows;
-6. add Interactions, Commitments, Events, Resources, and Reminders through context-owned vertical slices;
-7. delay weighted Review Priority until reason-only review is trusted;
-8. delay remote providers and AI until grants, secrets, audit, backup, and recovery are real.
+1. reconcile and close duplicate or obsolete relationship/localization PRs;
+2. complete review of the native desktop alpha and macOS artifact workflow;
+3. land the public repository context and agent handoff;
+4. close R1 integrity gaps: journalled writes, interruption recovery, projection rebuild, backup verification, isolated restore, and Airgap evidence;
+5. persist profile values and Topic Pack activation through the open workspace without losing unknown fields;
+6. connect factual cadence, commitment, and important-date inputs to reason-only review;
+7. implement Organisations and Groups before event cohort and workplace workflows;
+8. add Interactions, Commitments, Events, Resources, and Reminders through context-owned vertical slices;
+9. delay weighted Review Priority until reason-only review is trusted;
+10. delay remote providers and AI until grants, secrets, audit, backup, and recovery are real.
 
 Do not expand breadth while integrity or recovery gates remain untested.
 
 ## 17. Development and review method
 
-A complete behavioural change includes:
+A complete behavioural change includes a problem statement, owning context, domain tests, application-service tests, adapter/integration/recovery tests where relevant, shared service exposure, requirements/UAT/gate/schema updates, knowledge and changelog action, privacy/security/accessibility/localization/migration/rollback review, and exact-head CI evidence.
 
-- a problem statement grounded in supplied or observed behaviour;
-- the owning context and ubiquitous-language effect;
-- domain tests and application-service tests;
-- adapter, integration, interruption, and recovery tests where relevant;
-- CLI and other surfaces calling the same service;
-- requirements, UAT, feature-gate, schema, and traceability updates;
-- knowledge article action;
-- changelog and status action;
-- privacy, security, accessibility, localization, migration, compatibility, and rollback review;
-- exact-head CI evidence.
-
-The PR template is not optional ceremony. It records why the change exists and what evidence supports it.
+The PR template records why the change exists and what evidence supports it.
 
 ## 18. Validation baseline
 
@@ -476,6 +422,7 @@ python scripts/check_spec.py
 python scripts/check_architecture.py
 python scripts/check_providers.py
 python scripts/check_wit_contract.py
+python scripts/check_relationship_model.py
 
 cargo fmt --all --check
 cargo check --workspace --all-targets --all-features --locked
@@ -483,7 +430,7 @@ cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 cargo test --workspace --all-features --locked
 ```
 
-Additional checks exist for the interaction prototype, desktop UI, generated assets, provider contracts, macOS bundles, signatures, and release packaging. Run checks implied by the changed paths.
+Additional checks exist for relationship runtime, interaction prototypes, desktop UI, generated assets, provider contracts, macOS bundles, signatures, localization, and release packaging. Run checks implied by changed paths.
 
 ## 19. Repository navigation
 
@@ -491,16 +438,18 @@ Additional checks exist for the interaction prototype, desktop UI, generated ass
 - `AGENTS.md`: normative contributor contract;
 - `AI_BUILD_INSTRUCTIONS.md`: executable task order;
 - `SPEC.md`: normative product/build specification;
-- `docs/STATUS.md`: current implementation, PR stack, and release gates;
+- `docs/STATUS.md`: current implementation, PR state, and release gates;
 - `docs/DEVELOPMENT.md`: setup and commands;
+- `docs/product/relationship-memory-and-attention.md`: accepted relationship/Topic Pack contract;
+- `contexts/profiles/`: merged Identity and Profiles runtime slice;
+- `contexts/review-attention/`: merged reason-only queue runtime slice;
 - `docs/architecture/`: context map, storage, sharing, providers, language;
-- `docs/decisions/`: accepted and proposed architecture decisions;
-- `docs/product/`: roadmap and discovery material;
+- `docs/decisions/`: architecture decisions;
 - `docs/standards/`: DDD, UX, accessibility, knowledge, content, release rules;
-- `docs/knowledge/`: reusable support and operational knowledge;
+- `docs/knowledge/`: reusable operational knowledge;
 - `docs/security/`: threat model and local-integrity requirements;
 - `docs/evidence/`: exact validation and release evidence;
-- `spec/`: machine-readable requirements, UAT, gates, releases, personas, tasks;
+- `spec/`: requirements, UAT, gates, releases, personas, and tasks;
 - `schemas/`: canonical and integration validation schemas;
 - `examples/`: synthetic examples and interoperability contracts.
 

@@ -6,34 +6,54 @@ Public production release: blocked
 
 This file is the short operational source for implementation and release state. Update it when a pull request changes a material capability, test boundary, or release gate.
 
-## Review stack
+## Merged foundation
 
-The repository currently uses stacked pull requests. Review and merge in dependency order, retargeting each descendant to `main` after its parent lands and rerunning exact-head checks.
+The following review layers are merged into `main`:
 
-| Order | Pull request | Scope | Current review state |
-|---:|---|---|---|
-| 1 | #2 | governance, KCS-informed workflow, DDD, UX and content standards | open draft |
-| 2 | #3 | product specification, architecture, requirements, UAT and interaction prototype | open draft |
-| 3 | #4 | Rust Workspace/People core, Markdown adapter and CLI | open draft; cross-platform Rust checks have passed on its reviewed head |
-| 4 | #7 | provider-neutral Connections contract and local provider | open and ready for review; exact-head provider and Rust matrices passed |
-| 5 | #8 | native Tauri desktop alpha and macOS review bundles | open draft; native source is present and platform evidence must be verified on the latest head |
+| Pull request | Scope |
+|---:|---|
+| #2 | governance, KCS-informed workflow, DDD, UX and content standards |
+| #3 | product specification, architecture, requirements, UAT and interaction prototype |
+| #4 | Rust Workspace/People core, Markdown adapter and CLI |
+| #7 | provider-neutral Connections contract and local provider |
+| #9 | relationship-memory, Topic Pack, field-state and review-policy specification |
+| #10 | Identity and Profiles readiness runtime and reason-only Review and Attention runtime |
 
-Do not merge a descendant before its parent merely to place files on the default branch.
+## Active review work
+
+| Pull request | Scope | State and action |
+|---:|---|---|
+| #8 | native Tauri desktop alpha and macOS review bundles | open draft based on `main`; verify latest exact-head Mac artifacts before ready |
+| #13 | localization architecture and human-review gates | open draft; rebase or retarget after resolving its stale relationship-contract base |
+| #17 | repository README, project context and agent handoff | open draft stacked on #8 |
+
+## Overlapping drafts requiring reconciliation
+
+The following open drafts overlap contracts already merged through #9 and #10 or each other:
+
+- #12: Topic Pack and reason-based relationship-review contract on an older desktop base;
+- #15: relationship intent and Topic Pack documentation on a stale relationship base;
+- #16: Topic Pack/Review and Attention contract stacked on the current desktop branch.
+
+Do not merge these as cumulative work. Compare their unique content against `main`, preserve only non-duplicate validated improvements, then retarget or close them with an explanatory comment.
 
 ## Implemented and tested foundations
 
 - repository policy and PR evidence checks;
 - DDD, KCS-informed knowledge, UX, accessibility, security, and content standards;
 - machine-readable requirements, UAT, feature gates, personas, releases, schemas, and implementation plan;
-- product specification, context map, ubiquitous language, threat model, open-workspace, provider, and sharing architecture;
-- static interaction prototype with desktop/mobile review screens and Chromium tests;
+- product specification, context map, decisions, threat model, open-workspace, provider, and sharing architecture;
+- static interaction prototype and relationship-review screens with browser checks;
 - Rust shared IDs and revisions;
 - Workspace manifest, lifecycle services, and validation report;
 - People profile, typed email/phone, partial dates, archive/restore, and repository port;
 - Markdown/YAML adapter with initial unknown-field/body preservation and revision preconditions;
 - CLI workspace initialise/inspect/validate and person create/list workflows;
 - provider descriptors, registry, `object-store@1`, WIT contract, local-folder adapter, and conformance suite;
-- native Tauri desktop alpha for local workspace and basic People workflows;
+- Topic Pack stable IDs, field definitions, classification, explicit information states and sealed-value invariants;
+- versioned Purpose Definitions and purpose-specific readiness gaps;
+- reason-only review policies, factual reasons, hard suppressions, deterministic ordering and capacity bounds;
+- native Tauri desktop alpha for local workspace and basic People workflows on the active branch;
 - Linux, macOS, and Windows Rust matrices;
 - Apple Silicon and Intel macOS review-bundle workflow definitions.
 
@@ -42,7 +62,8 @@ Do not merge a descendant before its parent merely to place files on the default
 - the desktop application can be built as review artifacts;
 - the local-folder provider passed its bounded object-store conformance suite;
 - initial Markdown records can be created and listed;
-- macOS app/DMG generation and ad-hoc signature checks are part of pull-request evidence.
+- profile readiness and reason-only queues execute as domain logic but do not yet persist profile configuration or review sessions;
+- macOS app/DMG generation and ad-hoc signature checks are review evidence only.
 
 These statements do not mean the product is suitable as the sole copy of important data.
 
@@ -61,6 +82,19 @@ These statements do not mean the product is suitable as the sole copy of importa
 - Airgap dependency and socket-denial evidence;
 - CLI dry-run and complete stable error/output contract.
 
+## Profile and review gates still open
+
+- Markdown persistence for Field Definitions, Topic Packs, profile values and Purpose Definitions;
+- Topic Pack activation inheritance across workspace, template, organisation, group, person and plugin;
+- actual encryption/sealing adapter and key lifecycle;
+- profile layouts and editing;
+- cadence, interactions, commitments, dates and event adapters as factual review inputs;
+- maintenance-status calculation;
+- review-session persistence and interruption recovery;
+- monthly Markdown review output;
+- weighted policy simulation and UAT;
+- shared-workspace privacy enforcement for assessments and sealed fields.
+
 ## R2 desktop and platform gates still open
 
 - complete person edit, archive, restore, profile tabs, layouts and field ordering;
@@ -77,12 +111,10 @@ These statements do not mean the product is suitable as the sole copy of importa
 
 ## Product contexts not yet implemented as production runtime
 
-- Topic Packs and field-state registry;
 - Organisations, Groups, Households, Locations, and Memberships;
-- Relationships and relationship intent;
+- Relationships and relationship-intent persistence;
 - Interactions and Commitments;
 - Events, attendance, cohorts, and dietary readiness;
-- Review and Attention;
 - Knowledge and Resources;
 - Reminders;
 - Facilities access import;
@@ -93,7 +125,7 @@ These statements do not mean the product is suitable as the sole copy of importa
 
 ## Publication blockers
 
-A public release remains blocked until the release's declared feature set has:
+A public release remains blocked until the declared feature set has:
 
 1. exact-head tests on every supported platform;
 2. backup creation, verification, isolated restore, and recovery evidence;
@@ -108,15 +140,17 @@ A public release remains blocked until the release's declared feature set has:
 
 ## Immediate dependency order
 
-1. Review and merge the existing stack in order.
-2. Close R1 integrity and recovery gates before broad feature expansion.
-3. Complete R2 desktop foundations and platform packaging.
-4. Establish Topic Pack field-state and reason-only Review and Attention contracts.
-5. Implement Organisations and Groups.
-6. Implement Interactions, Commitments, Events, Resources, and Reminders as separate vertical slices.
-7. Implement the workplace dietary-readiness workflow.
-8. Add sharing and remote providers only after grants, backup, recovery, and audit exist.
-9. Add API, MCP, AI, and plugins only after application authority is enforceable.
+1. Reconcile or close overlapping drafts #12, #15, and #16.
+2. Complete and review #8 against the latest `main`.
+3. Land #17 after #8 or retarget it to `main` if the desktop work lands first.
+4. Close R1 integrity and recovery gates before broad feature expansion.
+5. Persist profile/readiness data and connect reason-only review to factual sources.
+6. Complete localization architecture before proliferating UI strings.
+7. Implement Organisations and Groups before event cohorts.
+8. Implement Interactions, Commitments, Events, Resources, and Reminders as separate vertical slices.
+9. Implement the workplace dietary-readiness workflow.
+10. Add sharing and remote providers only after grants, backup, recovery, and audit exist.
+11. Add API, MCP, AI, and plugins only after application authority is enforceable.
 
 ## Claim discipline
 

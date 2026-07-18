@@ -1,0 +1,121 @@
+schema: liaison/profile-configuration@1
+profile_templates:
+  - id: personal-contact
+    label: Personal contact
+    default_topic_packs:
+      - identity.communication
+      - important-dates
+      - interests
+      - family-household
+      - pets
+    optional_topic_packs:
+      - food-hospitality
+      - travel
+      - favorites-gifts
+      - professional
+  - id: executive-contact
+    label: Executive relationship
+    default_topic_packs:
+      - identity.communication
+      - professional
+      - executive-briefing
+      - important-dates
+      - travel
+      - food-hospitality
+      - resources
+
+topic_packs:
+  - id: pets
+    label: Pets
+    fields:
+      - id: pets.names
+        label: Pet names
+        type: entity_reference_list
+        target_entity_type: household_pet
+        field_state: required
+        stale_after: null
+      - id: pets.notes
+        label: Pet context
+        type: markdown
+        classification: private
+  - id: travel
+    label: Travel preferences
+    fields:
+      - id: travel.home_airport
+        label: Home airport
+        type: short_text
+      - id: travel.seat_preference
+        label: Seat preference
+        type: enum
+        options: [window, aisle, middle, no_preference]
+      - id: travel.hotel_preferences
+        label: Hotel preferences
+        type: markdown
+      - id: travel.accessibility
+        label: Travel accessibility requirements
+        type: markdown
+        classification: sensitive
+        sealed_by_default: true
+  - id: favorites-gifts
+    label: Favorites and gifts
+    fields:
+      - id: favorites.foods
+        label: Favorite foods
+        type: list
+      - id: favorites.books
+        label: Favorite books
+        type: list
+      - id: gifts.ideas
+        label: Gift ideas
+        type: resource_reference_list
+      - id: gifts.avoid
+        label: Avoid buying
+        type: markdown
+
+field_states:
+  allowed:
+    - known
+    - verified
+    - unverified
+    - unknown
+    - not_applicable
+    - declined
+    - stale
+    - conflicting
+    - needs_clarification
+    - derived
+
+review_policies:
+  - id: personal-reason-only
+    name: Calm daily review
+    mode: reason_only
+    daily_capacity: 5
+    reasons:
+      - overdue_relative_to_own_cadence
+      - open_commitment
+      - upcoming_important_date
+      - selected_profile_readiness_gap
+      - manual_pin
+    suppress_when:
+      - archived
+      - do_not_contact
+      - paused
+      - snoozed
+  - id: executive-weighted
+    name: Executive relationship operations
+    mode: weighted
+    components:
+      cadence_status: 0.25
+      manual_importance: 0.20
+      open_commitments: 0.25
+      upcoming_dates: 0.10
+      meeting_or_event_proximity: 0.10
+      briefing_readiness_gap: 0.10
+    suppress_when:
+      - archived
+      - do_not_contact
+      - paused
+      - snoozed
+    explanations_required: true
+    formula_editable: true
+    hidden_components_allowed: false

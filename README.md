@@ -1,8 +1,8 @@
 # Liaison RM
 
-> A local-authoritative relationship memory and attention system with CRM-grade organisation, open files, and no requirement to turn people into leads.
+> A local-authoritative relationship memory and attention system with CRM-grade organisation, readable files, and no requirement to treat people as leads.
 
-Liaison RM is an open-source relationship manager for individuals, families, executive assistants, reception teams, workplace operations, facilities teams, event organisers, and professional networkers. It combines readable Markdown records with a native desktop application, a first-class CLI, relationship and organisation graphs, structured personal context, event history, explainable review queues, and provider-neutral connections.
+Liaison RM is an open-source relationship manager for individuals, families, executive assistants, reception teams, workplace operations, facilities teams, event organisers, and professional networkers. It combines readable Markdown records with a native desktop application, a first-class CLI, structured personal context, purpose-specific profile readiness, explainable review queues, and provider-neutral connections.
 
 Canonical records remain on storage selected by the user. SQLite, search indexes, graph layouts, thumbnails, and caches are disposable projections.
 
@@ -10,19 +10,21 @@ Canonical records remain on storage selected by the user. SQLite, search indexes
 
 **Pre-release. Do not use Liaison RM as the sole copy of important personal or workplace data.**
 
-The repository currently contains:
+The foundational stack through profile readiness, reason-only review, and provider-neutral object storage is merged into `main`. The native Tauri desktop and macOS review bundles remain under review. Remote providers, encrypted sharing, production installers, and publication-grade release evidence are not complete.
 
 | Area | Current state |
 |---|---|
-| Governance, DDD, KCS-informed contribution rules | Implemented and checked |
-| Product specification, requirements, UAT, feature gates | Implemented and checked |
-| Rust Workspace and People bounded contexts | Implemented and cross-platform tested |
-| Markdown/YAML workspace adapter | Initial vertical slice implemented |
-| `liaison` CLI | Initial workspace and person workflows implemented |
-| Provider-neutral Connections contracts | Implemented and cross-platform tested |
+| Governance, DDD, KCS-informed contribution rules | Merged and checked |
+| Product specification, requirements, UAT, feature gates | Merged and checked |
+| Rust Workspace and People contexts | Merged and cross-platform tested |
+| Markdown/YAML workspace adapter and CLI | Initial vertical slice merged |
+| Topic Pack field states and purpose-specific readiness | Initial domain runtime merged |
+| Reason-only Review and Attention queue | Initial domain runtime merged |
+| Provider-neutral Connections contracts | Merged and cross-platform tested |
 | Local-folder object-store provider | Passed with explicit backup/single-writer limits |
 | Native Tauri desktop application | Alpha under review |
-| macOS review bundles | Build workflow exists; public distribution remains gated |
+| Apple Silicon and Intel review bundles | Workflow under review; not a public release |
+| Localization architecture | Draft review work exists; production translations are not approved |
 | Sharing, WebDAV, S3, CardDAV, email, facilities, AI and plugins | Specified; not production-ready |
 
 See [Current status](docs/STATUS.md) before selecting work or making release claims.
@@ -44,18 +46,21 @@ A new contributor or coding agent should read those files in the listed order be
 
 ## Product model
 
-Liaison separates four concepts that conventional CRMs often collapse into a single score:
+Liaison separates concepts that conventional CRMs often collapse into one misleading score:
 
 | Concept | Meaning |
 |---|---|
 | **Relationship intent** | What the user wants from a relationship, its importance, boundaries, cadence, and desired future state |
 | **Relationship evidence** | Recorded interactions, notes, events, commitments, files, calendar references, and imported facts |
 | **Maintenance status** | An explainable state relative to the relationship's own cadence and boundaries |
-| **Profile readiness** | Whether required information is known and current for a specific purpose |
+| **Profile readiness** | Whether required information is known and current for a named purpose |
+| **Review Priority** | Optional ordering of an attention queue, never a measurement of a person or relationship |
 
-Liaison does not infer affection, trust, employee value, or relationship strength from message volume. Optional numeric ordering is called **Review Priority** and exists only to order a review queue. Reason-only review is the personal-use default.
+Liaison does not infer affection, trust, employee value, or relationship strength from message volume. Reason-only review is the personal-use default.
 
-Profiles use configurable **Topic Packs** rather than one universal form. Examples include identity and communication, food and hospitality, travel, family, pets, gifts, professional context, events, accessibility, executive-assistant briefing, and linked resources. Empty values are not interpreted as negative facts; fields can be explicitly unknown, stale, declined, conflicting, not applicable, derived, or awaiting clarification.
+Profiles use configurable **Topic Packs** rather than one universal form. Examples include identity and communication, food and hospitality, travel, family, pets, gifts, professional context, events, accessibility, executive-assistant briefing, and linked resources. Empty values are not interpreted as negative facts. Fields can be explicitly known, verified, unverified, unknown, stale, declined, conflicting, not applicable, derived, or awaiting clarification.
+
+The merged `profiles` and `review-attention` crates provide the first runtime contract for stable field IDs, classifications, sealed sensitive values, purpose-specific readiness, hard review suppressions, factual reasons, deterministic ordering, and capacity-bounded reason-only queues. Persistence, activation inheritance, encryption, profile editing, and weighted policy execution remain open work.
 
 ## Primary workflows
 
@@ -90,7 +95,7 @@ Profiles use configurable **Topic Packs** rather than one universal form. Exampl
 ### Developers and automation users
 
 - use one Rust application core through CLI, desktop, local OpenAPI, MCP, jobs, and plugins;
-- add providers without importing provider SDKs into domain crates;
+- add providers without importing provider SDKs into business contexts;
 - use Ollama-compatible local inference without an external account;
 - stage AI writes for review instead of allowing unrestricted mutation.
 
@@ -109,6 +114,7 @@ Profiles use configurable **Topic Packs** rather than one universal form. Exampl
 - Desktop, CLI, API, MCP, importers, jobs, and plugins call the same application services.
 - Sensitive personal, dietary, accessibility, communication, and facilities data follows least-disclosure policy.
 - Graph and drag interactions always have keyboard and semantic alternatives.
+- No interface, provider, plugin, or AI client calculates its own relationship score, readiness result, maintenance state, or permission decision.
 
 ## Architecture
 
@@ -131,17 +137,19 @@ Desktop / CLI / local API / MCP / jobs / plugins
 Initial bounded contexts:
 
 - **Workspace**: identity, schema version, build profile, settings, lifecycle;
-- **People / Identity and Profiles**: people, contact points, important dates, Topic Packs, field state and provenance;
+- **People**: basic person identity, contact points, important dates, archive;
+- **Identity and Profiles**: Topic Packs, stable fields, information states, classification, readiness;
 - **Organisations and Groups**: organisations, departments, teams, cost centres, households, locations, memberships;
 - **Relationships**: typed edges, intent, boundaries, cadence, private assessments;
 - **Interactions and Commitments**: notes, communications, meetings, promises, tasks, reminders;
 - **Events and Calendar**: events, attendance, recurrence, cohorts, dietary readiness;
 - **Knowledge and Resources**: files, URLs, calendar references, attachments, backlinks;
-- **Review and Attention**: maintenance status, purpose-specific readiness, review reasons and policies;
+- **Review and Attention**: maintenance status, purpose-specific readiness inputs, review reasons, policies, queues, suppressions;
 - **Facilities**: access import, identity resolution, retention and bounded summaries;
 - **Connections**: provider descriptors, contracts, connection instances, grants, jobs and conformance;
 - **Sharing**: members, roles, encrypted operations, private overlays, cards and disclosure;
-- **Automation**: local API, webhooks, MCP, AI proposals and plugin execution.
+- **Automation**: local API, webhooks, MCP, AI proposals and plugin execution;
+- **Customisation**: field schemas, Topic Pack definitions, layouts, saved views and dashboard composition.
 
 A bounded context owns its vocabulary and invariants. Cross-context work uses explicit application interfaces, events, read models, or anti-corruption layers.
 
@@ -174,7 +182,7 @@ workspace/
 └── audit/YYYY/MM/*.jsonl
 ```
 
-Record IDs are stable and independent of filenames. The file format is versioned separately from Rust persistence structs.
+Record IDs are stable and independent of filenames. File formats are versioned separately from Rust persistence structs.
 
 ## Release profiles
 
@@ -194,7 +202,7 @@ Team and family sharing is designed around encrypted immutable operations, ackno
 
 ## Local AI and plugins
 
-The planned automation layer includes a loopback OpenAPI service, MCP tools, n8n examples, Ollama-compatible local inference, and capability-controlled WASI plugins. Read tools must identify source records and grants. AI writes are staged proposals by default. Plugins receive no ambient network, filesystem, database, or secret access.
+The planned automation layer includes a loopback OpenAPI service, MCP tools, n8n examples, Ollama-compatible local inference, and capability-controlled WASI plugins. Read tools identify source records and grants. AI writes are staged proposals by default. Plugins receive no ambient network, filesystem, database, or secret access.
 
 ## Repository map
 
@@ -223,6 +231,7 @@ python scripts/check_spec.py
 python scripts/check_architecture.py
 python scripts/check_providers.py
 python scripts/check_wit_contract.py
+python scripts/check_relationship_model.py
 
 cargo fmt --all --check
 cargo check --workspace --all-targets --all-features --locked
@@ -253,16 +262,17 @@ The dependency order is:
 
 1. repository, architecture, open workspace, CLI, and recovery;
 2. native desktop foundations and platform packaging;
-3. organisations, events, dietary readiness, and workplace roles;
-4. encrypted sharing and provider-backed backup or exchange;
-5. contacts, calendars, email metadata, migration, and facilities;
-6. local API, MCP, AI, and capability-controlled plugins.
+3. profile persistence, organisations, interactions, events, and reason-only review adapters;
+4. workplace event and dietary-readiness workflow;
+5. encrypted sharing and provider-backed backup or exchange;
+6. contacts, calendars, email metadata, migration, and facilities;
+7. local API, MCP, AI, and capability-controlled plugins.
 
-The reason-only review system and Topic Pack contract precede any weighted Review Priority implementation.
+Weighted Review Priority remains after reason-only review and purpose-specific readiness are understood in real workflows.
 
 ## Contributing
 
-Read [AGENTS.md](AGENTS.md), [Project context](docs/PROJECT_CONTEXT.md), and [CONTRIBUTING.md](CONTRIBUTING.md) before changing the repository. Every behavioural pull request must identify the user problem, owning bounded context, domain and privacy effects, knowledge action, tests, risks, rollback, and release impact.
+Read [AGENTS.md](AGENTS.md), [Project context](docs/PROJECT_CONTEXT.md), and [CONTRIBUTING.md](CONTRIBUTING.md) before changing the repository. Every behavioural pull request identifies the user problem, owning bounded context, domain and privacy effects, knowledge action, tests, risks, rollback, and release impact.
 
 The project uses a KCS-informed solve loop. Durable operational knowledge belongs in `docs/knowledge/`; architecture decisions belong in `docs/decisions/`; exact validation and release claims require inspectable evidence.
 
