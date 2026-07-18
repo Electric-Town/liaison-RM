@@ -39,7 +39,7 @@ Canonical records are readable files. SQLite, search, graph layout, thumbnails, 
 
 Status: **pre-alpha**.
 
-The repository has product, architecture, governance, machine-readable planning, prototype, Rust, CLI, Markdown adapter, and provider-contract foundations. It does not yet have a supported public release.
+The default branch contains governance, product and interaction specifications, machine-readable planning, the Rust Workspace/People/CLI and Markdown slice, provider-neutral Connections, Topic Pack contracts, purpose-specific profile readiness, and reason-only Review and Attention runtime foundations. It does not yet have a supported public release.
 
 Do not claim any of the following without exact-head evidence:
 
@@ -56,13 +56,12 @@ Verify this list in GitHub because it will become stale.
 
 As of 2026-07-18:
 
-| PR | Scope | State at last update |
+| Ref | Scope | State at last update |
 |---:|---|---|
-| 2 | Governance, KCS-informed practice, DDD, UX, accessibility, content standards | Open draft |
-| 3 | Product, architecture, requirements, UAT, gates, prototype and screens | Open draft |
-| 4 | Rust Workspace/People, Markdown adapter and CLI | Open draft; cross-platform Rust checks previously passed |
-| 7 | Connections, `object-store@1`, provider SDK and local reference adapter | Open and ready for review |
-| 8 | Native Tauri/macOS alpha | Open draft; no verified Mac app yet |
+| `main` | Governance, product and interaction specification, CLI/Markdown slice, Connections, Topic Pack contract, Profiles and reason-only Review runtime | Implemented on the default branch; no supported public release |
+| 8 | Native Tauri/macOS alpha and architecture-specific review bundles | Open and ready for review; Developer ID signing, notarisation, clean-Mac UAT, and supported distribution remain closed |
+| 20 | Localisation catalogues, pseudolocale, validation, and human-review gates | Open and ready for review; non-source catalogues are structural/draft fixtures, not approved translations |
+| 18 | Repository README, complete project context, agent entry points, and About metadata contract | Current documentation pull request |
 
 An open PR is not part of `main`. Inspect its base, head, changed files, exact-head checks, limitations, and evidence before building on it.
 

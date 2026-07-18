@@ -4,7 +4,7 @@
 
 Liaison RM is an open-source relationship manager for individuals, families, executive assistants, reception and workplace teams, facilities teams, event organisers, professional networkers, and community organisers.
 
-It combines:
+The planned product combines:
 
 - readable Markdown/YAML records that the user owns;
 - a shared Rust application core;
@@ -295,11 +295,10 @@ Repository status changes quickly. Verify branches, pull requests, and exact-hea
 
 As of 2026-07-18:
 
-- PR #2 — governance, KCS-informed practice, DDD, UX, accessibility, and content standards;
-- PR #3 — product, architecture, machine-readable requirements, prototype, and screens;
-- PR #4 — Rust Workspace/People core, Markdown adapter, and CLI;
-- PR #7 — provider-neutral Connections contract and local reference provider;
-- PR #8 — draft native macOS/Tauri alpha; not yet a verified Mac application.
+- `main` includes governance, product and interaction specifications, the Rust Workspace/People/CLI slice, provider-neutral Connections, Topic Pack contracts, purpose-specific readiness, and reason-only Review and Attention runtime foundations;
+- PR #8 contains the native Tauri/macOS alpha and tested review bundles; public signing, notarisation, clean-Mac UAT, and supported distribution remain closed;
+- PR #20 contains localisation architecture, pseudolocale testing, and human-review gates; its non-source catalogues are not production translations;
+- PR #18 is the repository-context and agent-handoff change containing this README and `PROJECT_CONTEXT.md`.
 
 Do not assume an open PR has landed in `main`. Read its base, head, changed files, exact-head checks, and stated limitations.
 
