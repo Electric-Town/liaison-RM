@@ -1,5 +1,5 @@
 schema_version: 1
-status: draft
+status: active
 
 tasks:
   - id: T-R0-001
@@ -160,9 +160,9 @@ tasks:
     title: Build person list, search, profile, and interruption-safe editor
     contexts: [people, experience]
     depends_on: [T-R2-002, T-R1-009]
-    requirements: [LRM-PE-007, LRM-UX-005]
+    requirements: [LRM-UX-005]
     uat: [UAT-003, UAT-022]
-    outputs: [person-list, search, configurable-tabs, draft-recovery]
+    outputs: [person-list, search, profile-view, draft-recovery]
 
   - id: T-R2-004
     release: R2
@@ -188,7 +188,7 @@ tasks:
     contexts: [experience]
     depends_on: [T-R2-002, T-R2-004]
     requirements: [LRM-UX-007]
-    uat: [UAT-020, UAT-021]
+    uat: [UAT-021]
     outputs: [panel-registry, keyboard-layout-editor, restore-defaults]
 
   - id: T-R2-007
@@ -424,3 +424,143 @@ tasks:
     requirements: [LRM-AU-008, LRM-AU-009]
     uat: [UAT-035, UAT-036]
     outputs: [WIT-contracts, component-host, capability-manifest, conformance-kit]
+
+  - id: T-B0-P00
+    release: B0
+    title: Reconcile current contracts, decisions, versions, commands, claims, and branch dispositions
+    rice: {reach: 12, impact: 1, confidence: 0.95, effort_weeks: 1.5, score: 7.60}
+    contexts: [product, governance, all]
+    depends_on: [T-R0-003]
+    requirements: [LRM-AP-001, LRM-A0-001]
+    uat: []
+    outputs: [accepted-ADRs, working-state-contract, schema-inventory, claim-corrections, branch-disposition]
+
+  - id: T-B0-P01
+    release: B0
+    title: Add the application composition root and typed result contract
+    rice: {reach: 12, impact: 3, confidence: 0.90, effort_weeks: 3, score: 10.80}
+    contexts: [application, workspace, people]
+    depends_on: [T-B0-P00]
+    requirements: [LRM-AP-001, LRM-WS-011]
+    uat: [UAT-042]
+    outputs: [liaison-application, typed-DTOs, typed-errors, CLI-Tauri-parity]
+
+  - id: T-B0-P02
+    release: B0
+    title: Establish Workspace Session authority and read-only Health
+    rice: {reach: 12, impact: 3, confidence: 0.85, effort_weeks: 4, score: 7.65}
+    contexts: [workspace]
+    depends_on: [T-B0-P01]
+    requirements: [LRM-WS-009]
+    uat: [UAT-042]
+    outputs: [workspace-session, OS-writer-lock, quiescence, session-bound-repositories]
+
+  - id: T-B0-P03
+    release: B0
+    title: Route canonical mutations through recoverable multi-target operations
+    rice: {reach: 12, impact: 3, confidence: 0.80, effort_weeks: 5, score: 5.76}
+    contexts: [workspace, people]
+    depends_on: [T-B0-P02]
+    requirements: [LRM-WS-010]
+    uat: [UAT-042]
+    outputs: [operation-engine, commit-progress-complete, roll-forward-recovery, fault-matrix]
+
+  - id: T-B0-P04
+    release: B0
+    title: Migrate the desktop to typed React and the semantic design system
+    rice: {reach: 8, impact: 2, confidence: 0.80, effort_weeks: 4, score: 3.20}
+    contexts: [experience, application]
+    depends_on: [T-B0-P03]
+    requirements: [LRM-UX-009]
+    uat: [UAT-041]
+    outputs: [React-Tauri-client, generated-DTOs, semantic-tokens, Atkinson-provenance, accessibility-ratchet]
+
+  - id: T-B0-P05
+    release: B0
+    title: Define revisioned Directory, sensitive profile, local policy, and Event contracts
+    rice: {reach: 10, impact: 3, confidence: 0.75, effort_weeks: 5, score: 4.50}
+    contexts: [people, organisations, profiles, events, workspace-security]
+    depends_on: [T-B0-P03]
+    requirements: [LRM-SEC-001, LRM-SEC-002, LRM-EV-007]
+    uat: [UAT-043]
+    outputs: [versioned-schemas, sealed-envelope-types, dietary-operational-view, migration-fixtures]
+
+  - id: T-B0-P06
+    release: B0
+    title: Add tolerant scalable Directory reads and disposable projection
+    rice: {reach: 7, impact: 2, confidence: 0.75, effort_weeks: 4, score: 2.63}
+    contexts: [directory, workspace]
+    depends_on: [T-B0-P05]
+    requirements: [LRM-DI-001, LRM-DI-002]
+    uat: [UAT-041, UAT-042]
+    outputs: [tolerant-scanner, SQLite-FTS-projection, pagination, scale-fixtures]
+
+  - id: T-B0-P07
+    release: B0
+    title: Add Workspace Security, key recovery, purpose grants, and minimal audit
+    rice: {reach: 9, impact: 3, confidence: 0.65, effort_weeks: 7, score: 2.51}
+    contexts: [workspace-security, profiles, events]
+    depends_on: [T-B0-P05, T-B0-P03]
+    requirements: [LRM-SEC-001, LRM-SEC-002]
+    uat: [UAT-043]
+    outputs: [DEK-lifecycle, authenticated-envelopes, recovery-envelope, Keychain-cache, grants, audit]
+
+  - id: T-B0-P08
+    release: B0
+    title: Add local checkpoints and encrypted recovery packages
+    rice: {reach: 7, impact: 3, confidence: 0.65, effort_weeks: 6, score: 2.28}
+    contexts: [recovery, workspace-security]
+    depends_on: [T-B0-P07, T-B0-P02]
+    requirements: [LRM-RC-001, LRM-RC-002]
+    uat: [UAT-043]
+    outputs: [local-checkpoint, encrypted-recovery-package, clean-install-restore]
+
+  - id: T-B0-P09
+    release: B0
+    title: Complete Directory onboarding and staged idempotent import
+    rice: {reach: 5, impact: 3, confidence: 0.75, effort_weeks: 5, score: 2.25}
+    contexts: [directory, people, organisations]
+    depends_on: [T-B0-P06, T-B0-P03]
+    requirements: [LRM-DI-001, LRM-DI-002]
+    uat: [UAT-041]
+    outputs: [CSV-preview, source-mapping, duplicate-reconciliation, recoverable-batch]
+
+  - id: T-B0-P10
+    release: B0
+    title: Implement immutable cohorts, exact readiness, internal briefs, and verified delivery
+    rice: {reach: 6, impact: 3, confidence: 0.70, effort_weeks: 7, score: 1.80}
+    contexts: [events, profiles, workspace-security]
+    depends_on: [T-B0-P07, T-B0-P09]
+    requirements: [LRM-EV-007, LRM-EV-008, LRM-EV-009]
+    uat: [UAT-041]
+    outputs: [Event-domain, cohort-stream, readiness-derivation, sealed-brief, CSV-HTML-delivery]
+
+  - id: T-B0-P11
+    release: B0
+    title: Implement the B0 desktop workflow and interruption states
+    rice: {reach: 6, impact: 3, confidence: 0.75, effort_weeks: 6, score: 2.25}
+    contexts: [experience, directory, events, recovery]
+    depends_on: [T-B0-P04, T-B0-P08, T-B0-P10]
+    requirements: [LRM-UX-009, LRM-PK-006]
+    uat: [UAT-041, UAT-042, UAT-043]
+    outputs: [Overview, Directory, Events, Health, Settings, Event-Details-state-machine]
+
+  - id: T-B0-ACCEPT
+    release: B0
+    title: Qualify Workplace Review Alpha in the installed universal Mac application
+    rice: {reach: 4, impact: 3, confidence: 0.90, effort_weeks: 3, score: 3.60}
+    contexts: [product, experience, packaging, security]
+    depends_on: [T-B0-P11]
+    requirements: [LRM-PK-006]
+    uat: [UAT-041, UAT-042, UAT-043]
+    outputs: [exact-head-evidence, design-review, native-QA, offline-egress-proof, Mac-review-bundle]
+
+  - id: T-A0-001
+    release: A0
+    title: Implement and qualify Personal Memory Alpha after B0 acceptance
+    rice: {reach: 5, impact: 2, confidence: 0.70, effort_weeks: 8, score: 0.88}
+    contexts: [people, profiles, interactions, commitments, review-attention, experience]
+    depends_on: [T-B0-ACCEPT]
+    requirements: [LRM-A0-001, LRM-PE-007]
+    uat: [UAT-020, UAT-044]
+    outputs: [profile-editing, configurable-profile-tabs, settings-round-trip, interactions, commitments, reason-only-review, open-loops, A0-evidence]

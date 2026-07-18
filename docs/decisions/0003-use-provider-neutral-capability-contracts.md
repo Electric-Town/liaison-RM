@@ -1,6 +1,7 @@
 # 0003: Use provider-neutral capability contracts
 
-- Status: proposed
+- Status: accepted
+- Accepted: 2026-07-18
 - Date: 2026-07-17
 - Contexts: connections, sharing, automation
 

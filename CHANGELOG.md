@@ -6,6 +6,11 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Added
 
+- Accepted working-state decisions for one application composition root, Workspace Session authority, recoverable multi-target commits, workspace key hierarchy and local policy, disposable Directory projection, structurally least-disclosure event readiness, checkpoint/recovery separation, and B0-before-A0 delivery.
+- A repository-hosted working-state delivery contract with current implementation truth, B0/A0 acceptance boundaries, active-branch disposition, and evidence-safe claim language.
+- An evidence-qualified RICE model for B0/A0 work packages, a KCS article explaining dependency and safety overrides, and mandatory PR fields for priority assumptions and decision rationale.
+- A bounded review of maintainer-supplied machine-signal and localization guidance, adopting observable editorial checks while rejecting detector evasion and unsupported authorship classification.
+
 - Repository governance, contribution, knowledge, content-quality, architecture, and user-experience review standards.
 - Pull-request evidence requirements and repository policy checks.
 - Product, domain, security, platform, sharing, provider-neutral connection, and release specifications.

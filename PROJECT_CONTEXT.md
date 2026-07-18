@@ -39,7 +39,11 @@ Canonical records are readable files. SQLite, search, graph layout, thumbnails, 
 
 Status: **pre-alpha**.
 
+The current implementation order is governed by [the working-state delivery contract](docs/product/working-state-delivery.md) and accepted ADR 0012: B0 Workplace Review Alpha is delivered and qualified before A0 Personal Memory Alpha. Roadmap breadth, prototypes, and stale pull requests do not change that order.
+
 The default branch contains governance, product and interaction specifications, machine-readable planning, the Rust Workspace/People/CLI and Markdown slice, provider-neutral Connections, Topic Pack contracts, purpose-specific profile readiness, reason-only Review and Attention runtime foundations, localisation architecture, a native Tauri desktop alpha with macOS review bundles and Windows NSIS build configuration, and a public project site. It does not yet have a supported public release.
+
+The installed macOS alpha launches and renders the local workspace interface. Native QA on 2026-07-18 found that desktop person creation fails at the Tauri argument contract because the frontend sends `request` while the command expects `workspace_path`. CLI Person tests do not prove the installed desktop path. Until the typed application bridge is repaired and retested, public documentation must not say the desktop can add a Person.
 
 Do not claim any of the following without exact-head evidence:
 
@@ -52,19 +56,9 @@ Do not claim any of the following without exact-head evidence:
 
 ### Current review stack
 
-Verify this list in GitHub because it will become stale.
+Do not maintain a hand-written list of open PR states here. It becomes false as soon as a branch is updated or closed. The [working-state delivery contract](docs/product/working-state-delivery.md) records durable scope decisions and reviewed branch dispositions; GitHub remains the authority for live PR state, exact heads, changed files, conflicts, and checks.
 
-As of 2026-07-18:
-
-| Ref | Scope | State at last update |
-|---:|---|---|
-| `main` | Governance, product and interaction specification, CLI/Markdown slice, Connections, Topic Pack contract, Profiles, reason-only Review runtime, localisation architecture, native Tauri desktop alpha, and public project site | Implemented on the default branch; pre-alpha with no supported public release |
-| 8 | Native Tauri/macOS alpha and universal review bundles | Merged on 2026-07-18; Developer ID signing, notarisation, clean-Mac UAT, and supported distribution remain closed |
-| 20 | Localisation catalogues, pseudolocale, validation, and human-review gates | Merged on 2026-07-18; non-source catalogues are structural/draft fixtures, not approved translations |
-| 26 | Windows NSIS packaging configuration and CI review bundle | Merged on 2026-07-18; public signing, supported distribution, and clean-machine UAT remain closed |
-| 18 | Repository README, complete project context, agent entry points, and About metadata contract | Merged on 2026-07-18; the default branch now carries this handoff |
-
-An open PR is not part of `main`. Inspect its base, head, changed files, exact-head checks, limitations, and evidence before building on it.
+An open PR is not part of `main`. A prototype, workflow file, passing unit test, screenshot, and installed bundle are different evidence classes.
 
 ## 3. Canonical read order
 
@@ -72,18 +66,19 @@ Before implementing a task, read:
 
 1. `AGENTS.md`.
 2. This file.
-3. `SPEC.md`.
-4. `AI_BUILD_INSTRUCTIONS.md`.
-5. The owning bounded-context README and tests.
-6. Relevant decision records under `docs/decisions/`.
-7. Relevant knowledge articles under `docs/knowledge/`.
-8. Relevant architecture, security, UX, and data-format documents.
-9. The matching records in:
+3. `docs/product/working-state-delivery.md`.
+4. `SPEC.md`.
+5. `AI_BUILD_INSTRUCTIONS.md`.
+6. The owning bounded-context README and tests.
+7. Relevant decision records under `docs/decisions/`.
+8. Relevant knowledge articles under `docs/knowledge/`.
+9. Relevant architecture, security, UX, and data-format documents.
+10. The matching records in:
    - `spec/requirements.json`;
    - `spec/uat-cases.json`;
    - `spec/feature-gates.yaml`;
    - `spec/implementation-plan.yaml`.
-10. `CHANGELOG.md` and current pull requests touching the same boundary.
+11. `CHANGELOG.md` and current pull requests touching the same boundary.
 
 When sources conflict, do not silently pick one. Open a focused decision or clarification change.
 
@@ -810,48 +805,22 @@ Access logs are not used for productivity, attendance-compliance, performance, r
 
 ## 22. Delivery roadmap
 
-### R0 — Repository foundation
+The current merge order is P00–P11, B0 acceptance, then A0. The complete exit evidence is in `docs/product/roadmap.md`; R0–R6 remains only a long-term capability catalogue.
 
-Governance, product contracts, DDD, decisions, threat model, machine-readable planning, prototype, and agent-ready context.
+- **P00–P03:** reconcile truth, establish one typed application and Workspace Session boundary, and route canonical mutations through recoverable multi-target operations.
+- **P04–P08:** deliver the typed accessible desktop system, B-domain contracts, scalable Directory, local security, quiescent checkpoints, and encrypted recovery packages.
+- **P09–P11:** complete Directory onboarding, immutable event cohorts, exact dietary readiness, least-disclosure brief delivery, and the compiled B0 interface.
+- **B0:** qualify Workplace Review Alpha in a freshly installed universal Mac review application for one trusted local workspace owner.
+- **A0:** add custom profile layouts, personal interactions, commitments, last-interaction context, open loops, and reason-only Review while retaining the complete B0 regression matrix.
+- **After A0:** independently gate sharing, providers, mobile, Meitheal, CardDAV/calendars/email, facilities, OpenAPI, MCP, AI, and plugins.
 
-### R1 — Open workspace and CLI
-
-Workspace lifecycle, people, custom fields, provenance, Markdown/YAML, attachments, CLI, vCard/CSV, backup and isolated restore, Airgap evidence.
-
-### R2 — Native desktop
-
-Tauri shell, search, profiles, forms, custom layouts, dashboard, relationship list/graph plus semantic alternative, localisation, interruption-safe drafts, Linux/macOS/Windows packaging.
-
-### R3 — Workplace event wedge
-
-Organisations, memberships, dietary coverage, bulk import, events, attendance, cohorts, readiness, least-disclosure catering brief, role presets.
-
-### R4 — Sharing and providers
-
-Devices, roles, grants, encrypted operations, overlays, cards, WebDAV, S3-compatible transport, provider-neutral backup/restore, connection UI/CLI.
-
-### R5 — Contacts, calendars, email, migrations, facilities
-
-CardDAV, CalDAV/iCalendar, email metadata, Meerkat/Monica migration, access-log import, event and communication reports.
-
-### R6 — Automation, AI, and plugins
-
-OpenAPI, MCP, webhooks, n8n, Ollama, remote AI grants, WASI host, plugin SDK and conformance.
+B0 has event-bounded preparation and gap resolution only. It does not contain a generic task engine or workplace relationship allocation, cadence, attention weighting, ranking, or scoring.
 
 ## 23. Recommended implementation order
 
-Within the relationship product model:
+Select work from the first incomplete P00–P11 package whose dependencies are complete. Do not revive personal-first R2 work, provider transports, mobile, automation, AI, or plugins as B0 prerequisites. Full custom profile tabs and dashboard configuration belong to A0; B0 uses only the shared typed fields required for the workplace event outcome.
 
-1. People, organisations, groups, households, memberships, and relationships.
-2. Notes, interactions, commitments, reminders, and important dates.
-3. Relationship intent, cadence, and reason-only review queues.
-4. Topic Packs, custom fields, explicit information states, and provenance.
-5. Purpose-specific readiness and missing-information workflows.
-6. Resources, calendar references, and organisation graph.
-7. Weighted Review Priority and policy simulation.
-8. Plugin-supplied packs and review components.
-
-Do not implement weighted scoring before reason-only review is trustworthy and explainable.
+After B0 acceptance, A0 implements factual personal context and reason-only Review before any optional weighted queue policy. A queue-ordering value is never relationship strength and is structurally unavailable to Workplace/B0.
 
 ## 24. Selecting work
 

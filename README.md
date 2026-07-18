@@ -35,14 +35,51 @@ Liaison RM takes four positions:
 
 The intended result is simple: capture a useful detail once, find it before it matters and keep the record even if Liaison RM disappears.
 
+## Start here
+
+### Building with a coding agent
+
+Read these files in order before changing code:
+
+1. [`AGENTS.md`](AGENTS.md) — normative contributor and agent rules.
+2. [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md) — product, architecture, status, terminology, active work, and handoff context.
+3. [Working-state delivery contract](docs/product/working-state-delivery.md) — the accepted B0-then-A0 order, current implementation boundary, and reviewed branch dispositions.
+4. [Normative traceability appendix](docs/product/traceability.md) — atomic requirement, UAT, gate, task, milestone, status, and evidence ownership.
+5. [`SPEC.md`](SPEC.md) — product and build specification.
+6. [`AI_BUILD_INSTRUCTIONS.md`](AI_BUILD_INSTRUCTIONS.md) — task selection and implementation sequence.
+7. The owning bounded-context README under [`contexts/`](contexts/).
+8. Related decisions, knowledge articles, requirements, UAT cases, feature gates, and implementation tasks.
+
+Do not begin with a new screen or provider integration. Start with a dependency-complete vertical slice through domain rules, application services, ports, adapters, CLI or desktop surface, tests, knowledge, and changelog.
+
+### Reviewing the product direction
+
+- [Product and build specification](SPEC.md)
+- [Complete agent handoff and current context](PROJECT_CONTEXT.md)
+- [Working-state delivery contract](docs/product/working-state-delivery.md)
+- [Product roadmap](docs/product/roadmap.md)
+- [Normative traceability appendix](docs/product/traceability.md)
+- [Context map](docs/architecture/context-map.md)
+- [Ubiquitous language](docs/architecture/ubiquitous-language.md)
+- [Open workspace format](docs/architecture/open-workspace.md)
+- [Provider-neutral connections](docs/architecture/provider-connections.md)
+- [Sharing and synchronisation](docs/architecture/sharing-and-synchronization.md)
+- [Threat model](docs/security/threat-model.md)
+- [Local-integrity requirements](docs/security/local-integrity.md)
+- [Interaction prototype and screens](docs/prototypes/README.md)
+- [Machine-readable requirements](spec/requirements.json)
+- [Persona UAT catalogue](spec/uat-cases.json)
+- [Feature gates](spec/feature-gates.yaml)
+- [Implementation plan](spec/implementation-plan.yaml)
+
 ## What works today
 
 | Surface | On the default branch | Boundary |
 |---|---|---|
 | Open workspace | Create, inspect and validate a versioned local workspace | Complete crash recovery, migrations and projection rebuild remain gated |
-| People | Create and list basic person records in readable Markdown | The daily relationship directory and full profile editing flow are not complete |
+| People | CLI and Rust tests create and list basic person records in readable Markdown | The installed desktop person-create path currently fails at its Tauri argument boundary; the daily Directory and full profile editor are not complete |
 | CLI | Human and JSON output for workspace and person commands | Import, edit, backup, sharing and destructive commands remain gated |
-| Desktop alpha | Create or open a workspace, add a person and run validation | Review builds are not signed public releases |
+| Desktop alpha | The installed app launches and renders local workspace controls | Native QA found the person-create command contract broken (`request` versus `workspace_path`); review builds are not signed public releases |
 | Relationship model | Separate intent, evidence, maintenance status and purpose-specific readiness | Weighted priority and the full relationship workflow are not released |
 | Review and Attention | Reason-only policy, hard suppressions and bounded queue foundations | No claim of a complete personal review experience |
 | Connections | Versioned object-store contract, grant model and local reference adapter | Upload evidence does not prove safe multi-writer synchronisation |
@@ -65,7 +102,7 @@ liaison_demo="$(mktemp -d)"
 
 cargo run --locked -p liaison-cli -- \
   --workspace "$liaison_demo" \
-  workspace init --name "Liaison demo" --build-profile airgap
+  workspace init --name "Liaison demo" --build-profile connected-local
 
 cargo run --locked -p liaison-cli -- \
   --workspace "$liaison_demo" \
@@ -193,7 +230,7 @@ Read the [threat model](docs/security/threat-model.md), [local-integrity require
 
 The project targets WCAG 2.2 Level AA and applicable EN 301 549 evidence. This is an engineering target, not a certification claim.
 
-User-facing work must support keyboard completion, visible focus, screen-reader names, 200% zoom and reflow, reduced motion, interruption recovery, long content and a semantic alternative to graph-only or drag-only interaction.
+User-facing work must support keyboard completion, visible focus, screen-reader names, 400% zoom and reflow, reduced motion, interruption recovery, long content and a semantic alternative to graph-only or drag-only interaction.
 
 `en-IE` is the source locale. Draft `ga-IE`, `ja-JP` and `pt-BR` catalogues are not released translations. A locale needs a named fluent reviewer, product-context review, layout evidence and accessibility sampling before it can appear in a production language selector.
 
@@ -201,32 +238,24 @@ See the [UX review standard](docs/standards/ux-review.md), [language-quality sta
 
 ## Build order
 
-| Release | Outcome |
+The accepted working order is P00 through P11, B0 acceptance, then A0. The broader R0–R6 catalogue remains long-term scope, not merge order.
+
+| Gate | Outcome |
 |---|---|
-| **R0** | Governance, product contracts, threat model, requirements, UAT and agent-ready context |
-| **R1** | Open workspace, people, CLI, validation, import/export foundations, backup and recovery |
-| **R2** | Accessible native desktop, search, profiles, dashboard and platform packaging |
-| **R3** | Workplace event cohorts, dietary readiness and least-disclosure catering briefs |
-| **R4** | Encrypted sharing, grants, provider transport and connection management |
-| **R5** | Contacts, calendars, email metadata, migration and bounded facilities imports |
-| **R6** | Local OpenAPI, MCP, webhooks, local AI and capability-controlled plugins |
+| **P00–P03** | Reconciled contracts, one typed application/session boundary, and recoverable canonical operations |
+| **P03 design gate** | Design consultation creates `DESIGN.md`, then plan design review approves the P04 direction |
+| **P04–P08** | Typed accessible desktop system, accessible built-in themes, versioned B-domain contracts, scalable Directory, local security, checkpoints, and encrypted recovery packages |
+| **P09–P11** | Directory import, exact event dietary readiness, least-disclosure brief delivery, and the complete installed desktop workflow |
+| **B0** | Workplace Review Alpha qualified in a freshly installed universal Mac review application |
+| **A0** | Personal Memory Alpha, including user-organised profile tabs, interactions, bounded commitments, reason-only Review, and accessible appearance settings without regressing B0 |
+| **After A0** | Declarative theme packages, sharing, providers, mobile, Meitheal, CardDAV/calendars/email, facilities, OpenAPI, MCP, AI, and plugins as independent gates |
 
 The first operational wedge is event dietary readiness: select an attendee cohort, identify every unresolved coverage state and produce a least-disclosure catering brief.
 
-The dependency order and remaining gates are in the [roadmap](docs/product/roadmap.md), [feature gates](spec/feature-gates.yaml) and [implementation plan](spec/implementation-plan.yaml).
+## Current work
+The [working-state delivery contract](docs/product/working-state-delivery.md) and [generated traceability appendix](docs/product/traceability.md) record the accepted B0 Workplace Review then A0 Personal Memory sequence, current implementation truth, and reviewed branch dispositions. Repository state still changes quickly: verify the default-branch head, open pull requests, changed files, and exact-head checks before using any branch as a dependency.
 
-## Build with a coding agent
-
-Read these files before changing code:
-
-1. [`AGENTS.md`](AGENTS.md), the normative contributor and agent contract.
-2. [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md), the current product and engineering handoff.
-3. [`SPEC.md`](SPEC.md), the product and build specification.
-4. [`AI_BUILD_INSTRUCTIONS.md`](AI_BUILD_INSTRUCTIONS.md), the implementation sequence.
-5. The owning README under [`contexts/`](contexts/).
-6. Related decisions, knowledge articles, requirements, UAT cases, gates and open pull requests.
-
-Do not begin with a new screen or connector. Start with one dependency-complete slice through domain rules, application services, ports, adapters, CLI or API surface, tests, knowledge and changelog.
+An open PR, prototype, screenshot, workflow definition, and installed application are different evidence classes. None proves that planned behaviour is on `main` or release-ready.
 
 ## Validate a change
 

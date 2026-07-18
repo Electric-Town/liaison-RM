@@ -14,3 +14,4 @@ Thumbs.db
 # Local Liaison workspaces and projections created during development
 /.liaison-dev/
 /test-workspaces/
+/.gstack/

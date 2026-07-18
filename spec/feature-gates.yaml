@@ -1,5 +1,5 @@
 schema_version: 1
-status: draft
+status: active
 
 gates:
   - id: FG-R0-001
@@ -354,3 +354,46 @@ gates:
       - Artifacts have checksums and provenance linked to source commit.
       - Claims match test evidence and unresolved risks are disclosed.
     evidence_required: [release checklist, signed checksums, knowledge validation]
+
+  - id: FG-B0-001
+    release: B0
+    name: Workspace authority and recoverable writes proven
+    blocks: [B0]
+    criteria:
+      - CLI and Tauri use one application composition root and structured error contract.
+      - Workspace Session owns the operating-system writer lock and read-only Health remains available.
+      - Every canonical mutation uses final preconditions and recoverable multi-target operations.
+      - Malformed records do not hide healthy Directory records.
+    evidence_required: [UAT-042, fault-injection matrix, CLI-Tauri parity tests]
+
+  - id: FG-B0-002
+    release: B0
+    name: Sensitive data and clean recovery proven
+    blocks: [B0]
+    criteria:
+      - Sensitive persistable types cannot encode plaintext values.
+      - Purpose grants fail closed before decryption or projection.
+      - An encrypted recovery package restores without the original Keychain state.
+      - Local checkpoints are never described as encrypted recovery.
+    evidence_required: [UAT-043, cryptographic vectors, leak scan, clean-install restore]
+
+  - id: FG-B0-003
+    release: B0
+    name: Installed Workplace Review Alpha accepted
+    blocks: [A0]
+    criteria:
+      - The installed universal Mac application completes Directory import through verified brief delivery.
+      - Readiness reconciles every attendee and the operational brief excludes restricted details structurally.
+      - Compiled design review, native QA, accessibility, offline, egress, relaunch, and readable-file evidence pass.
+      - Missing signing or notarisation is disclosed as an internal review-alpha limitation.
+    evidence_required: [UAT-041, compiled design review, native QA report, Mac provenance]
+
+  - id: FG-A0-001
+    release: A0
+    name: Personal Memory Alpha accepted after B0
+    blocks: [A0-release]
+    criteria:
+      - Profile editing, interactions, commitments, reason-only Review, last-interaction context, and open loops complete in the installed app.
+      - Personal workflows recover after interruption and remain open-file or properly sealed.
+      - Every B0 gate and regression remains green.
+    evidence_required: [UAT-044, B0 regression, compiled design review, native QA report]

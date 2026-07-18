@@ -1,6 +1,7 @@
 # 0002: Use open files as canonical storage
 
-- Status: proposed
+- Status: accepted
+- Accepted: 2026-07-18
 - Date: 2026-07-17
 - Contexts: workspace, all record-owning contexts
 

@@ -1,0 +1,49 @@
+# B0 and A0 RICE prioritization
+
+Last scored: 2026-07-18
+
+RICE helps compare useful slices. It does not override a safety gate, accepted dependency, or the maintainer decision to qualify B0 before starting A0.
+
+## Scoring model
+
+The project has no production adoption data, so invented user counts would create false precision. This pre-alpha score uses:
+
+- **Reach:** the number of accepted B0/A0 acceptance paths or downstream work packages directly unblocked, capped at 12.
+- **Impact:** 3 for an alpha-blocking outcome, 2 for a major outcome improvement, 1 for a meaningful support improvement, and 0.5 for a minor improvement.
+- **Confidence:** evidence-weighted certainty from 0.50 to 0.95, based on existing code, tests, prototypes, research, and unresolved technical risk.
+- **Effort:** estimated engineer-weeks for a dependency-complete slice, including tests, KCS, documentation, accessibility, migration, and review evidence.
+
+`RICE = Reach × Impact × Confidence ÷ Effort`
+
+Scores rank work only when its dependencies and safety prerequisites are already satisfied. A low-scoring key-recovery task still blocks sensitive dietary data. A high-scoring personal feature cannot start before B0 acceptance.
+
+## Current scores
+
+| Work package | Reach | Impact | Confidence | Effort | Score | Ordering rule |
+|---|---:|---:|---:|---:|---:|---|
+| P00 Contract and truth reconciliation | 12 | 1 | 0.95 | 1.5 | 7.60 | First because later formats depend on accepted contracts. |
+| P01 Application composition root | 12 | 3 | 0.90 | 3 | 10.80 | Highest current value; enables one CLI/Tauri command model. |
+| P02 Workspace Session authority | 12 | 3 | 0.85 | 4 | 7.65 | Must precede recoverable writes, security, and checkpoints. |
+| P03 Recoverable multi-target operations | 12 | 3 | 0.80 | 5 | 5.76 | Required before new canonical formats or imports. |
+| P04 Typed React/Tauri design system | 8 | 2 | 0.80 | 4 | 3.20 | Starts after stable application/session commands; parity precedes Events UI. |
+| P05 Sensitive and Event contracts | 10 | 3 | 0.75 | 5 | 4.50 | Runs after operation semantics; blocks real dietary data. |
+| P06 Tolerant Directory projection | 7 | 2 | 0.75 | 4 | 2.63 | Required before 10,000-person cohort workflows. |
+| P07 Workspace Security and local policy | 9 | 3 | 0.65 | 7 | 2.51 | Safety gate; score cannot defer it behind user-facing dietary work. |
+| P08 Checkpoint and encrypted recovery | 7 | 3 | 0.65 | 6 | 2.28 | Safety gate; B0 cannot accept sensitive data without clean recovery. |
+| P09 Directory onboarding and import | 5 | 3 | 0.75 | 5 | 2.25 | Begins after operation and projection foundations. |
+| P10 Events core and brief delivery | 6 | 3 | 0.70 | 7 | 1.80 | Product wedge; depends on Directory, security, and recovery contracts. |
+| P11 B0 compiled interface | 6 | 3 | 0.75 | 6 | 2.25 | Uses stable commands; it is not a mock-first screen project. |
+| B0 installed-app qualification | 4 | 3 | 0.90 | 3 | 3.60 | Mandatory acceptance gate before A0. |
+| A0 Personal Memory Alpha | 5 | 2 | 0.70 | 8 | 0.88 | Explicitly starts after B0 acceptance. |
+
+## PR use
+
+Every behavioural PR records:
+
+- its work package and current RICE values;
+- which observed user outcome and accepted gate it advances;
+- dependencies that override the numeric score;
+- evidence that would change reach, impact, confidence, or effort;
+- the score after scope changes.
+
+Mechanical corrections may state `RICE: not applicable`, but must still explain why the change is needed. Product and architecture decisions cannot use a score as a substitute for causal reasoning, safety review, or user observation.

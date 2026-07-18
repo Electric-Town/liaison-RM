@@ -1,6 +1,7 @@
 # 0004: Publish separate Airgap and Connected-local builds
 
-- Status: proposed
+- Status: accepted
+- Accepted: 2026-07-18
 - Date: 2026-07-17
 - Contexts: workspace, connections, automation, packaging
 

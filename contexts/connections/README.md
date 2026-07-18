@@ -47,5 +47,7 @@ Provider adapters implement ports. Other contexts consume the ports through appl
 
 ## Requirements and UAT
 
-- REQ-161 through REQ-164
-- UAT-089 through UAT-092
+- `LRM-CO-001` through `LRM-CO-009`
+- `LRM-CO-012`
+- `UAT-026` through `UAT-028`
+- `UAT-034`

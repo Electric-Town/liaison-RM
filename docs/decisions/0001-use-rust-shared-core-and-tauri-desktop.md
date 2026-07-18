@@ -1,6 +1,7 @@
 # 0001: Use a Rust shared core and Tauri desktop shell
 
-- Status: proposed
+- Status: accepted
+- Accepted: 2026-07-18
 - Date: 2026-07-17
 - Contexts: all
 

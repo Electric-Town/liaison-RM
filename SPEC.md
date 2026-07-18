@@ -1,6 +1,6 @@
 # Liaison RM product and build specification
 
-Status: Draft for review  
+Status: Pre-alpha product contract; B0-before-A0 working order accepted
 Repository: `Electric-Town/liaison-RM`  
 Licence: AGPL-3.0  
 Primary implementation: Rust, Tauri, React, TypeScript  
@@ -13,6 +13,12 @@ Liaison RM is a local-authoritative relationship manager for individuals, famili
 It records people, organisations, locations, relationships, interactions, notes, events, attendance, reminders, important dates, contact methods, structured personal characteristics, dietary requirements, communication metadata, and bounded facilities history. It provides a native desktop interface, relationship graph, configurable profile and dashboard views, first-class CLI, local APIs, MCP tools, provider-neutral connections, and permissioned plugins.
 
 The product does not require an Electric Town account or hosted backend. Users can inspect, back up, transform, and recover canonical records without Liaison RM.
+
+### 1.1 Current implementation boundary
+
+The exact working-state boundary and accepted delivery order are maintained in [`docs/product/working-state-delivery.md`](docs/product/working-state-delivery.md). At the current pre-alpha boundary, `main` contains a narrow Workspace/People/Markdown/CLI/Tauri slice, profile and reason-only Review domain foundations, and provider contracts with a limited local-folder reference adapter. It does **not** contain a complete event workflow, `WorkspaceSession`, recoverable multi-target commits, sealed dietary persistence, local grant enforcement, an encrypted recovery package, a proven Airgap artifact, or a supported public release.
+
+An accepted decision defines what an implementation must become; it does not prove that the current binary satisfies the decision. Screenshots and browser fixtures are not native persistence, security, accessibility, Airgap, or release evidence.
 
 ## 2. Product principles
 
@@ -27,13 +33,15 @@ The product does not require an Electric Town account or hosted backend. Users c
 
 ### 2.2 Separate Airgap and Connected-local profiles
 
-The project publishes two separately testable profiles.
+The product contract requires two separately testable profiles.
 
-**Airgap** compiles out network clients and listeners. It supports local files, removable-media packages, offline import/export, backup, validation, and recovery.
+**Airgap** compiles out network clients and listeners. It supports local files, removable-media packages, offline import/export, validation, and encrypted recovery packages.
 
 **Connected-local** keeps the same local source of truth but may enable explicit providers, CardDAV, calendar import, email-metadata import, local API, webhooks, MCP, and peer exchange. Each connection requires a purpose-bound grant.
 
 A runtime setting alone is not accepted as proof of an Airgap build.
+
+The current installed review application is described as a local-authoritative review build, not as Airgap. It may be relabelled only after its dependency graph, package permissions, metadata, and runtime DNS/loopback/remote-socket denial evidence pass on the exact artifact.
 
 ### 2.3 One application core
 
@@ -110,11 +118,15 @@ The product must remain usable with keyboard and screen reader, at 200% zoom, wi
 
 ### Workspace
 
-Owns workspace identity, schema version, build profile, members, device registrations, workspace settings, enabled modules, and lifecycle.
+Owns workspace identity, schema version, build profile, settings, enabled modules, lifecycle, `WorkspaceSession`, advisory writer authority, recovery state, quiescence, recoverable canonical operations, and projection lifecycle.
 
-### People
+### Identity and Profiles
 
-Owns person identity, name, pronouns, contact points, addresses, personal characteristics, important dates, dietary requirements, field provenance, visibility, and profile revision.
+Owns person identity, name, pronouns, contact points, addresses, personal characteristics, important dates, Topic Packs, stable custom-field schema, field states, dietary source records, provenance, visibility, and profile revision. B0 consumes the shared schema through fixed workplace views; full user-organised profile layouts belong to A0.
+
+### Workspace Security and Local Policy
+
+Owns the workspace data-encryption key, authenticated sealed envelopes, passphrase recovery envelope, optional platform-keychain cache, local owner/device principal, purpose grants, role presets as grant bundles, policy decisions, and payload-minimal activity evidence. For B0 this policy prevents accidental or purpose-inappropriate use; it does not claim confidentiality from a person controlling the unlocked operating-system account and workspace files.
 
 ### Organisations
 
@@ -122,7 +134,7 @@ Owns organisations, teams, departments, cost centres, locations, roles, membersh
 
 ### Relationships
 
-Owns typed person-to-person and person-to-organisation links, circles, priority, status, cadence, relationship notes, and relationship-specific visibility.
+Owns typed person-to-person and person-to-organisation links, circles, priority, status, cadence, relationship notes, and relationship-specific visibility. Workplace/B0 types, projections, filters, exports, and UI structurally omit relationship allocation, relationship-value ranking, and relationship-strength scoring.
 
 ### Interactions
 
@@ -130,7 +142,11 @@ Owns notes, communications, meetings, messages, provenance, direction, participa
 
 ### Events
 
-Owns events, activities, attendance, invitations, participation counts, event groups, catering cohorts, and dietary-readiness evaluation.
+Owns events, activities, attendance, invitations, participation counts, immutable cohort revisions, event-local resolution, dietary-readiness derivation, sealed internal brief evidence, staleness, and external delivery evidence.
+
+### Directory read model
+
+Directory is a cross-context application read model backed by a disposable SQLite/FTS projection. It combines non-sensitive Identity/Profile and Organisation/Membership facts for filtering and pagination but owns no canonical business record. Invalid canonical records remain visible as Health findings, and cohort finalisation revalidates canonical source revisions and hashes.
 
 ### Facilities
 
@@ -138,11 +154,11 @@ Owns access-import jobs, source mappings, badge identity resolution, raw event p
 
 ### Reminders
 
-Owns commitments, follow-up reasons, recurrence, due dates, completion, snooze, and reminder history.
+Owns bounded personal commitments, follow-up reasons, recurrence, due dates, completion, snooze, and reminder history. Liaison does not provide a generic task-management engine, and this context is not a B0 dependency.
 
 ### Connections
 
-Owns provider descriptors, capability contracts, connection instances, grants, jobs, schedules, health, conformance evidence, and revocation.
+Owns provider descriptors, capability contracts, connection instances, provider egress grants, jobs, schedules, health, conformance evidence, and revocation. It does not own B0 local-purpose policy or the workspace key hierarchy.
 
 ### Sharing
 
@@ -150,7 +166,7 @@ Owns workspace roles, field and classification policy, encrypted operations, ack
 
 ### Automation
 
-Owns local API tokens, webhook subscriptions, MCP tools, plugin manifests, AI proposals, approvals, audit, and local-model configuration.
+Owns local API tokens, webhook subscriptions, MCP tools, plugin manifests, AI proposals, automation approvals and activity evidence, and local-model configuration. It does not own the repository-wide local-policy or audit contract.
 
 ## 5. Canonical workspace
 
@@ -187,8 +203,8 @@ workspace/
 - Stable UUID in front matter; filename is human-readable and non-authoritative.
 - Schema version and record revision are mandatory.
 - Unknown front-matter fields and unknown body sections are preserved on rewrite.
-- Writes use a temporary file, flush, atomic replacement where supported, and a recovery journal.
-- Concurrent edit detection uses revision preconditions and content hashes.
+- Every canonical mutation is a Workspace-owned recoverable operation. It stages every target with existence, revision, and digest preconditions, flushes a manifest, rechecks all targets, persists a durable commit decision, publishes with progress evidence, and then completes or marks the projection stale.
+- An operation without a durable commit decision is discarded during recovery. A committed operation rolls forward and stops rather than overwriting a non-cooperating external edit whose digest matches neither expected nor committed content.
 - External edits are validated before projection update.
 - Invalid records remain visible to validation and recovery tools; they are not silently dropped.
 
@@ -206,31 +222,32 @@ workspace/
 - Stored by SHA-256 content address.
 - Metadata records original name, media type, size, classification, provenance, and references.
 - Canonical records reference hashes rather than provider URLs.
-- Remote object storage remains optional transport or backup, not attachment identity.
+- Remote object storage remains optional encrypted-recovery transport, not attachment identity.
 
 ## 6. Person and profile model
 
-A person profile supports:
+A person profile supports the following target capabilities:
 
 - structured names, display name, aliases, pronouns, and optional gender data;
 - multiple typed email addresses, phone numbers, postal addresses, URLs, and messaging handles;
 - birthday with optional unknown year, anniversaries, important dates, and reminders;
 - organisation memberships with role, department, team, cost centre, location, and effective dates;
-- relationship priority, status, cadence, and next-action metadata;
+- references to relationship-owned intent, status, cadence, and next-action views without copying those values into the Person aggregate;
 - freeform Markdown notes plus typed fields;
 - user-defined fields with stable IDs, types, validation, classification, and display policy;
 - configurable tabs and field ordering without changing canonical meaning;
 - provenance, verification date, visibility, and last-updated metadata per sensitive field;
 - archive and restore without destructive deletion.
 
+The stable custom-field schema is shared foundation. B0 uses fixed workplace-oriented layouts and does not ship a general profile-layout designer. A0 owns user-organised profile tabs, stable tab IDs, ordering, visibility, settings export/import, keyboard reordering, and round trips that never lose or reinterpret field data.
+
 ### 6.1 Dietary model
 
 A dietary requirement is not a single preference string. It records:
 
-- `kind`: allergy, intolerance, medical restriction, religious restriction, ethical preference, dislike, positive preference, or other;
+- a constrained operational category such as allergy, intolerance, religious restriction, ethical preference, dislike, positive preference, or another operationally relevant category;
 - `coverage_state`: verified none, provided, pending, stale, declined, unreachable, excluded from catering, or unknown;
 - operational instruction suitable for authorised catering use;
-- optional detailed note with a stricter classification;
 - verification source and date;
 - review due date;
 - disclosure policy;
@@ -239,9 +256,11 @@ A dietary requirement is not a single preference string. It records:
 
 An empty field means unknown. It never means no restriction.
 
+B0 does not collect diagnosis, medical history, treatment detail, or free-form diagnostic narrative. Restricted values and person-to-dietary associations use authenticated sealed envelopes; a plaintext value with a `sealed` marker is invalid. Missing keys or authority have no plaintext fallback.
+
 ## 7. Events and dietary readiness
 
-An event can select attendees directly, by import, or through saved cohort filters. The readiness calculation reports:
+An event can select attendees directly, by import, or through saved cohort filters. Finalisation creates an immutable JSONL cohort stream plus a manifest containing normalized predicates, stable identities, source revisions, schema, and content hash. The readiness calculation reports:
 
 - total selected attendees;
 - confirmed attendees;
@@ -250,10 +269,10 @@ An event can select attendees directly, by import, or through saved cohort filte
 - pending, stale, declined, unreachable, excluded, and unknown counts;
 - duplicate or unresolved identities;
 - requirements requiring manual review;
-- least-disclosure operational instructions grouped for catering;
+- least-disclosure operational instructions grouped for catering through a `DietaryOperationalView` that has no diagnostic-detail field;
 - the exact profile revisions used for the calculation.
 
-The export omits diagnostic detail unless the recipient has a grant for that detail. A later profile change marks an earlier brief stale rather than silently rewriting historical evidence.
+Application services evaluate the current purpose grant before decrypting or deriving this view. Internal generation commits sealed immutable brief evidence. CSV or print-safe HTML delivery is a separate verified operation and never overwrites earlier output. A failed delivery leaves the internal brief valid and retryable. A later profile change marks earlier evidence stale rather than rewriting history.
 
 ## 8. Interaction, calendar, and email metadata
 
@@ -283,9 +302,11 @@ The core product prohibits productivity scoring, performance scoring, attendance
 
 Access streams use stricter role, retention, export, AI, and audit controls than ordinary profile fields.
 
-## 10. Sharing and disclosure
+## 10. Local policy, sharing, and disclosure
 
-### 10.1 Workspace roles
+### 10.1 B0 local role presets
+
+B0 has one honest principal boundary: the trusted local workspace owner on a stable device. Role names are convenience presets that materialize purpose-grant bundles; they do not provide confidentiality from another person controlling the same unlocked operating-system account or files.
 
 Initial roles:
 
@@ -302,13 +323,15 @@ Initial roles:
 
 Permissions can be constrained by context, organisation, location, group, record type, field, classification, purpose, operation, and expiry.
 
+Multi-member identity, authentication, signed operations, and confidentiality between members belong to the later Sharing product and are not implied by these local presets.
+
 ### 10.2 Private overlays
 
 A user may keep a private overlay for a shared person, relationship, event, or organisation. Overlay content:
 
 - is encrypted to its authorised members;
 - is excluded from shared projection and export;
-- is not sent to AI, provider, plugin, search, or backup destinations outside its grant;
+- is not sent to AI, provider, plugin, search, or recovery-package destinations outside its grant;
 - can be independently backed up and recovered.
 
 ### 10.3 Self-service requests
@@ -330,7 +353,7 @@ Initial contracts:
 - `contacts@1` — vCard/CardDAV import, export, and selected-view sync;
 - `calendar@1` — iCalendar/CalDAV discovery and event import;
 - `email-metadata@1` — permissioned message/thread metadata import;
-- `backup@1` — encrypted snapshot publication, verification, listing, retention, and restore;
+- `backup@1` — encrypted recovery-package publication, verification, listing, retention, and restore;
 - `webhook@1` — signed outbound event delivery;
 - `secret-store@1` — reference-based credential retrieval without canonical-file exposure.
 
@@ -355,13 +378,26 @@ The application shows a dry-run summary before first disclosure. Every job recor
 
 ### 11.3 Backup versus sync
 
-Providers advertise safe modes based on evidence. An object store may be approved for encrypted backup without being approved for multi-writer synchronisation. The UI and CLI must not label a provider “sync” merely because it can upload and download files.
+Providers advertise safe modes based on evidence. An object store may be approved as encrypted-recovery transport without being approved for multi-writer synchronisation. The UI and CLI must not label a provider “sync” merely because it can upload and download files.
 
 ## 12. CLI
 
 The `liaison` binary is a supported product surface.
 
-Required command groups:
+### 12.1 Implemented pre-alpha commands
+
+The checked-in CLI currently implements only:
+
+```text
+liaison --workspace PATH workspace init|inspect|validate
+liaison --workspace PATH person create|list
+```
+
+This slice does not yet satisfy the accepted typed result/error envelope, explicit mutation-workspace, non-zero invalid-validation, `WorkspaceSession`, recovery, import, event, or provider command contracts. [`apps/cli/README.md`](apps/cli/README.md) is the current executable command inventory.
+
+### 12.2 Target command groups
+
+The following is a compatibility target, not a claim that the commands exist:
 
 ```text
 liaison workspace init|open|validate|rebuild|repair
@@ -385,9 +421,13 @@ liaison doctor
 
 Mutating commands support `--dry-run`, `--workspace`, `--output human|json`, deterministic exit codes, revision preconditions, non-interactive operation where safe, and explicit confirmation for irreversible actions.
 
+CLI and Tauri use one versioned application result/error envelope with stable code, safe message, cause, typed details, recovery actions, documentation reference, and correlation ID. Sensitive values and unnecessary absolute paths are redacted before either interface receives them.
+
 ## 13. Desktop and browser surfaces
 
 The primary desktop shell uses Tauri 2. The React/TypeScript UI calls typed Tauri commands that map to application services. Tauri capabilities are scoped by window and build profile.
+
+The current pre-alpha shell is directly committed HTML/CSS/JavaScript and is disposable. Before B0 screens land, it migrates once to a React/TypeScript/Vite inbound adapter and must prove Workspace, People, and Health parity through the same Rust application commands. JavaScript does not own canonical persistence, authorization, readiness, recovery, or a second domain model.
 
 Target packages:
 
@@ -428,7 +468,10 @@ Plugins cannot receive a raw database handle or unrestricted workspace path. Ins
 - Logs are local, structured, redacted, bounded by retention, and exportable for review.
 - Sensitive exports require explicit scope and show a preview.
 - Workspace encryption and sharing keys remain under member control.
-- Backups are encrypted before provider upload.
+- Restricted persistable values use authenticated sealed envelopes. No plaintext-plus-marker representation or plaintext fallback is valid.
+- A local checkpoint is a quiescent deterministic diagnostic/migration primitive and may be plaintext. It is never labelled a user-portable backup.
+- An encrypted recovery package contains canonical data, integrity manifests, minimal audit, and a passphrase-wrapped workspace recovery envelope; it must restore without prior platform-keychain state.
+- Encrypted recovery packages are validated before provider upload.
 - Restore verifies manifest, hashes, schema compatibility, and target path before replacement.
 - Deletion distinguishes archive, local deletion, remote deletion, retention expiry, and cryptographic revocation.
 - Audit records actor, operation, scope, purpose, grant, result, and timestamp without copying sensitive payloads unnecessarily.
@@ -437,15 +480,17 @@ Plugins cannot receive a raw database handle or unrestricted workspace path. Ins
 
 ### Reliability
 
-- Crash-safe canonical writes.
-- Deterministic migrations with dry-run and backup.
+- One advisory writer authority per opened workspace and read-only Health/recovery when normal open cannot acquire or validate write authority.
+- Recoverable multi-target canonical operations with a durable commit decision, roll-forward recovery, external-edit refusal, and exhaustive fault tests.
+- Deterministic migrations with dry-run and an appropriate quiescent checkpoint or encrypted recovery package.
 - Idempotent imports and provider jobs.
 - Projection rebuild from canonical files.
-- Backup verification and isolated restore testing.
+- Checkpoint verification and encrypted clean-install recovery testing.
 
 ### Performance
 
-- Common profile and search operations remain responsive with at least 100,000 people and millions of partitioned stream events on supported hardware.
+- B0 Directory rebuild, filtering, import, cohort finalisation, and readiness meet the committed budgets for 10,000 people and 50,000 memberships without loading the complete workspace into the interface.
+- The longer-term architecture supports at least 100,000 people and millions of partitioned stream events; that target is not a B0 completion claim.
 - Large imports stream rather than loading the complete source into memory.
 - Graph views use bounded neighbourhoods, clustering, filters, and progressive loading.
 
@@ -474,39 +519,29 @@ Plugins cannot receive a raw database handle or unrestricted workspace path. Ins
 - Knowledge and release evidence updated with behaviour.
 - No platform-specific domain fork.
 
-## 17. Release sequence
+## 17. Working-state delivery sequence
 
-### R0 — Repository foundation
+The accepted order is dependency-driven and supersedes older personal-desktop-before-event readings of R1/R2/R3. The machine-readable plan must use the same order.
 
-Governance, KCS-informed workflow, product specification, decision records, requirements, feature gates, and review automation.
+1. **P00 — reconcile contracts and truth:** accepted decisions, formats, requirements/UAT/gates/tasks, versions, commands, evidence, dependency licences, installed-binary claims, and stale branches agree.
+2. **P01 — application composition root:** one `liaison-application` command/query/error model is shared by CLI and Tauri; validation and degraded-open semantics are corrected.
+3. **P02 — Workspace authority:** `WorkspaceSession`, advisory writer lock, read-only recovery, quiescence, session-bound ports, and schema behavior.
+4. **P03 — recoverable operations:** staged multi-target writes, durable commit decision, roll-forward recovery, exactly-once minimal evidence, and fault/race tests.
+5. **P04 — desktop adapter migration:** React/TypeScript/Vite over typed Rust commands with Workspace/People/Health parity and a semantic design system.
+6. **P05 — sensitive/domain contracts:** revisioned People, Organisations, Groups, Locations, Memberships, Events, provenance, field state, sealed value, and event-local resolution types.
+7. **P06 — scalable Directory reads:** tolerant scan, disposable SQLite/FTS projection, filters, pagination, canonical revalidation, Health findings, and 10,000/50,000 evidence.
+8. **P07 — Workspace Security and local policy:** key lifecycle, recovery envelope, optional Keychain cache, trusted local owner/device, purpose grants, role presets, and payload-minimal activity evidence.
+9. **P08 — recovery before real sensitive data:** quiescent local checkpoint plus encrypted clean-install recovery package.
+10. **P09 — Directory onboarding:** People maintenance and streaming CSV preview/reconciliation for People, Organisations, Locations, Groups, and Memberships.
+11. **P10 — Events core:** immutable cohort, exact readiness, structurally limited `DietaryOperationalView`, sealed internal brief, verified delivery, and staleness.
+12. **P11 — B interface:** Overview, Directory, Events, Health, and Settings plus the complete cohort-to-brief state machine.
+13. **B0 — Workplace Review Alpha:** for one trusted local workspace owner, the installed universal Mac review artifact passes scale, crash, key, grant, leak, encrypted-restore, accessibility, offline, readable-file, and contributor-journey evidence. Workplace surfaces structurally omit relationship allocation/ranking/scoring. It remains an internal review alpha unless public signing/notarisation gates pass.
+14. **A0 — Personal Memory Alpha:** only after B0 acceptance, add profile editing, stable user-organised tabs/layouts with lossless settings round trips, meaningful interactions, bounded commitments, last-interaction/open-loop views, and reason-only Review over the same foundations. A0 does not add a generic task engine.
+15. **Post-A0:** sharing, provider transports, contacts/calendars/email, facilities, mobile products, Meitheal integration, OpenAPI/MCP/AI/plugins, Linux/Windows support, and public notarized distribution advance under their own gates.
 
-### R1 — Open workspace and CLI
+## 18. Explicit exclusions from B0
 
-Rust workspace, workspace lifecycle, person profiles, Markdown adapter, validation, rebuild, import/export foundations, and complete headless CLI path.
-
-### R2 — Desktop foundations
-
-Tauri shell, accessible navigation, profile tabs, list/search, dashboard framework, graph with semantic alternative, and Linux/macOS/Windows packaging.
-
-### R3 — Workplace event wedge
-
-Organisations, locations, groups, structured dietary model, event cohorts, readiness calculation, least-disclosure catering brief, and receptionist/event-manager UAT.
-
-### R4 — Sharing and provider transport
-
-Roles, private overlays, encrypted operations, self-service requests, Liaison Cards, local/removable-media/WebDAV/object-store transport, backup and restore.
-
-### R5 — Contact, calendar, email metadata, and facilities
-
-CardDAV selected-view sync, CalDAV/iCalendar import, provider-neutral email metadata, access import, retention, interaction counts, and migration adapters.
-
-### R6 — Automation, AI, and plugin ecosystem
-
-Local API, webhooks, n8n, MCP, Ollama, remote AI grants, WASI plugin host, SDK, conformance kit, and provider catalogue.
-
-## 18. Explicit exclusions from the first useful release
-
-The first useful release does not require:
+B0 Workplace Review Alpha does not require:
 
 - multi-writer remote sync;
 - cloud AI;
@@ -515,9 +550,16 @@ The first useful release does not require:
 - plugin marketplace;
 - access-log analysis;
 - full browser PWA;
-- every platform package.
+- native mobile applications or phone synchronisation;
+- every platform package;
+- provider transports, AI, MCP, or Meitheal integration;
+- personal interactions, commitments, or reason-only Review;
+- user-organised profile tabs or a general profile-layout designer;
+- a generic task-management engine;
+- relationship allocation, relationship-value ranking, or relationship-strength scoring;
+- Developer ID signing, notarisation, or a supported public download.
 
-The first observed workflow is a receptionist selecting an event cohort, finding every dietary-information gap, and producing a least-disclosure catering brief from local records.
+The first acceptance workflow is a receptionist selecting an event cohort, finding every dietary-information gap, and producing a purpose-authorised least-disclosure catering brief from local records. B0 is independently reviewable but is not a supported public release.
 
 ## 19. Definition of done
 

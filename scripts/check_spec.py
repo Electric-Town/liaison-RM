@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -44,8 +45,13 @@ def main() -> int:
 
     requirements_doc = load_json("spec/requirements.json")
     uat_doc = load_json("spec/uat-cases.json")
-    requirements = requirements_doc.get("requirements", [])
-    cases = uat_doc.get("cases", [])
+    localization_doc = load_json("spec/localization-requirements.json")
+    localization_requirements = [
+        {"context": localization_doc.get("context", "localization"), **item}
+        for item in localization_doc.get("requirements", [])
+    ]
+    requirements = requirements_doc.get("requirements", []) + localization_requirements
+    cases = uat_doc.get("cases", []) + localization_doc.get("uat", [])
     personas = uat_doc.get("personas", [])
 
     requirement_ids = duplicate_ids(requirements, "requirements", errors)
@@ -53,7 +59,7 @@ def main() -> int:
     persona_ids = duplicate_ids(personas, "personas", errors)
 
     valid_priorities = {"must", "should", "could", "wont"}
-    valid_releases = {"R0", "R1", "R2", "R3", "R4", "R5", "R6"}
+    valid_releases = {"R0", "R1", "R2", "R3", "R4", "R5", "R6", "B0", "A0"}
 
     for req in requirements:
         if req.get("priority") not in valid_priorities:
@@ -95,6 +101,46 @@ def main() -> int:
             for value in [item.strip() for item in uat.split(",") if item.strip()]:
                 if value not in case_ids:
                     errors.append(f"task references unknown UAT case: {value}")
+
+        scored_task_blocks = re.findall(
+            r"(?ms)^  - id:\s*(T-(?:B0|A0)-[^\s]+)\s*$\n(.*?)(?=^  - id:|\Z)",
+            task_text,
+        )
+        expected_scored_tasks = {
+            identifier
+            for identifier in task_ids
+            if identifier.startswith(("T-B0-", "T-A0-"))
+        }
+        found_scored_tasks = {identifier for identifier, _ in scored_task_blocks}
+        for missing in sorted(expected_scored_tasks - found_scored_tasks):
+            errors.append(f"{missing}: missing parseable task block for RICE validation")
+        rice_pattern = re.compile(
+            r"^\s*rice:\s*\{reach:\s*([0-9.]+),\s*impact:\s*([0-9.]+),\s*"
+            r"confidence:\s*([0-9.]+),\s*effort_weeks:\s*([0-9.]+),\s*"
+            r"score:\s*([0-9.]+)\}\s*$",
+            flags=re.MULTILINE,
+        )
+        for identifier, block in scored_task_blocks:
+            match = rice_pattern.search(block)
+            if match is None:
+                errors.append(f"{identifier}: missing or malformed inline RICE evidence")
+                continue
+            reach, impact, confidence, effort, score = map(float, match.groups())
+            if not 0 < reach <= 12:
+                errors.append(f"{identifier}: RICE reach must be greater than 0 and at most 12")
+            if impact not in {0.5, 1.0, 2.0, 3.0}:
+                errors.append(f"{identifier}: RICE impact must be one of 0.5, 1, 2, or 3")
+            if not 0.5 <= confidence <= 0.95:
+                errors.append(f"{identifier}: RICE confidence must be between 0.50 and 0.95")
+            if effort <= 0:
+                errors.append(f"{identifier}: RICE effort_weeks must be greater than 0")
+            if effort > 0:
+                expected_score = round(reach * impact * confidence / effort + 1e-12, 2)
+                if not math.isclose(score, expected_score, abs_tol=0.005):
+                    errors.append(
+                        f"{identifier}: RICE score {score:.2f} differs from calculated "
+                        f"score {expected_score:.2f}"
+                    )
     except (OSError, ValueError) as exc:
         errors.append(f"implementation plan: {exc}")
 

@@ -28,6 +28,19 @@
 - Success measure:
 - What evidence would invalidate this approach:
 
+## Priority and RICE
+
+- Work package:
+- Reach:
+- Impact:
+- Confidence:
+- Effort:
+- RICE score:
+- Dependency or safety override:
+- Evidence that would change the score:
+
+<!-- Mechanical work may use "RICE: not applicable" with a concrete reason. See KCS-0007. -->
+
 ## User experience and accessibility
 
 - [ ] Not user-facing
@@ -63,6 +76,7 @@
 - [ ] Claims are supported by tests, repository evidence, or cited research.
 - [ ] Content-quality check passes.
 - [ ] No deliberate errors or detector-evasion techniques were introduced.
+- [ ] User-facing copy was checked for specific actors, actions, evidence, recovery, repeated cadence, stock contrasts, generic openings, promotional filler, and unsupported claims.
 
 ## Tests and validation
 

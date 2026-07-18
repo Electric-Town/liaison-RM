@@ -1,6 +1,7 @@
 # ADR 0005: Separate relationship intent, evidence, maintenance, and readiness
 
-- Status: Proposed
+- Status: accepted
+- Accepted: 2026-07-18
 - Date: 2026-07-18
 - Owners: Relationships; Identity and Profiles; Review and Attention
 
