@@ -499,7 +499,7 @@ p {
 }
 
 .post-it-red {
-  right: -1rem;
+  right: 0;
   bottom: 2rem;
   background: var(--post-it-pink);
   transform: rotate(4deg);
@@ -528,7 +528,7 @@ p {
 .red-thread {
   position: absolute;
   z-index: 1;
-  inset: 1rem -2rem auto auto;
+  inset: 1rem 0 auto auto;
   width: 90%;
   fill: none;
   stroke: var(--marker-red);
