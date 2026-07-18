@@ -1,0 +1,19 @@
+{
+  "name": "Liaison RM",
+  "short_name": "Liaison RM",
+  "description": "Local-authoritative relationship memory and attention system.",
+  "lang": "en-IE",
+  "start_url": "/liaison-RM/",
+  "scope": "/liaison-RM/",
+  "display": "browser",
+  "background_color": "#f7f1e7",
+  "theme_color": "#f7f1e7",
+  "icons": [
+    {
+      "src": "assets/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

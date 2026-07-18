@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Liaison RM social preview</title>
+  <desc id="desc">A paper-textured card reading Remember the person, not the pipeline</desc>
+  <defs>
+    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.2" fill="#28231f" opacity=".12"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="#f7f1e7"/>
+  <rect width="1200" height="630" fill="url(#dots)"/>
+  <path d="M110 92c64-27 168-16 233 5 55 18 91 8 151-7" fill="none" stroke="#e14a43" stroke-linecap="round" stroke-width="8"/>
+  <g transform="translate(80 82) rotate(-1 520 230)">
+    <rect x="9" y="9" width="1040" height="470" rx="22" fill="#28231f"/>
+    <rect width="1040" height="470" rx="22" fill="#fffdf8" stroke="#28231f" stroke-width="5"/>
+    <rect x="430" y="-18" width="180" height="44" fill="#dfcfb5" opacity=".9" stroke="#28231f" stroke-dasharray="8 8" stroke-width="2"/>
+    <text x="65" y="90" fill="#625a52" font-family="Menlo, Consolas, monospace" font-size="22" font-weight="700" letter-spacing="3">OPEN SOURCE · PRE-ALPHA</text>
+    <text x="65" y="205" fill="#28231f" font-family="Georgia, serif" font-size="72" font-weight="700">Remember the person.</text>
+    <text x="65" y="300" fill="#a92e2a" font-family="Georgia, serif" font-size="78" font-style="italic" font-weight="700">Not the pipeline.</text>
+    <path d="M68 320c191 9 405 8 635-2" fill="none" stroke="#e14a43" stroke-linecap="round" stroke-width="7"/>
+    <text x="65" y="395" fill="#28231f" font-family="Arial, sans-serif" font-size="28">Relationship memory in readable files you control.</text>
+    <g transform="translate(914 28) scale(.78)">
+      <path d="M16 12c31-25 86-21 116 5 24 23 22 75-4 102-28 30-87 29-116-1-25-27-24-80 4-106Z" fill="#e14a43" stroke="#28231f" stroke-width="5"/>
+      <path d="M28 83c24-32 53-35 92-47M35 40c17 26 36 40 74 52" fill="none" stroke="#fffdf8" stroke-linecap="round" stroke-width="8"/>
+    </g>
+  </g>
+  <text x="85" y="590" fill="#28231f" font-family="Menlo, Consolas, monospace" font-size="21" font-weight="700">Electric-Town/liaison-RM</text>
+</svg>
