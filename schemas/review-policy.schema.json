@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://electric-town.github.io/liaison-rm/schemas/review-policy.schema.json",
+  "title": "Liaison RM review policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "version", "mode", "capacity", "suppressions"],
+  "properties": {
+    "schema": {
+      "const": "liaison/review-policy@1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)+$",
+      "maxLength": 160
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "mode": {
+      "enum": ["reason-only", "tiered", "weighted"]
+    },
+    "capacity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maximum_people", "time_budget_minutes"],
+      "properties": {
+        "maximum_people": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "time_budget_minutes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 240
+        },
+        "social_capacity": {
+          "enum": ["low", "normal", "high"]
+        },
+        "contexts": {
+          "type": "array",
+          "items": {
+            "enum": ["personal", "family", "professional", "workplace", "mixed"]
+          },
+          "uniqueItems": true
+        },
+        "quiet_days": {
+          "type": "array",
+          "items": {
+            "enum": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "suppressions": {
+      "type": "array",
+      "items": {
+        "enum": ["archived", "do-not-contact", "relationship-ended", "paused", "snoozed", "excluded"]
+      },
+      "uniqueItems": true
+    },
+    "tier_mappings": {
+      "type": "object",
+      "additionalProperties": {
+        "enum": ["low", "normal", "high", "urgent"]
+      }
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "weight", "explanation_key"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)+$"
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "explanation_key": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "mode": { "const": "weighted" } },
+        "required": ["mode"]
+      },
+      "then": {
+        "required": ["components"]
+      }
+    }
+  ]
+}
