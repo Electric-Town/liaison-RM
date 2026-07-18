@@ -40,6 +40,306 @@ def parse_simple_yaml_ids(path: Path, key: str) -> list[str]:
     return re.findall(r"^\s+- id:\s*([^\s#]+)\s*$", text, flags=re.MULTILINE)
 
 
+def parse_simple_yaml_records(path: Path, key: str) -> dict[str, str]:
+    text = path.read_text(encoding="utf-8")
+    if f"{key}:" not in text:
+        raise ValueError(f"missing top-level {key}")
+    return {
+        identifier: block
+        for identifier, block in re.findall(
+            r"(?ms)^  - id:\s*([^\s#]+)\s*$\n(.*?)(?=^  - id:|\Z)", text
+        )
+    }
+
+
+def inline_edges(blocks: dict[str, str], field: str) -> dict[str, set[str]]:
+    result: dict[str, set[str]] = {}
+    pattern = re.compile(rf"^\s{{4}}{re.escape(field)}:\s*\[([^]]*)\]", re.MULTILINE)
+    for identifier, block in blocks.items():
+        match = pattern.search(block)
+        result[identifier] = {
+            value.strip()
+            for value in match.group(1).split(",")
+            if value.strip()
+        } if match else set()
+    return result
+
+
+def validate_traceability(
+    requirement_ids: set[str],
+    case_ids: set[str],
+    task_blocks: dict[str, str],
+    gate_blocks: dict[str, str],
+    errors: list[str],
+) -> None:
+    try:
+        ownership = load_json("spec/traceability-ownership.json")
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.append(f"traceability ownership: {exc}")
+        return
+
+    task_ids = set(task_blocks)
+    gate_ids = set(gate_blocks)
+    task_ownership = ownership.get("task_ownership", {})
+    gate_ownership = ownership.get("gate_ownership", {})
+    requirement_ownership = ownership.get("requirement_ownership", {})
+    uat_ownership = ownership.get("uat_ownership", {})
+    milestones = ownership.get("milestones", [])
+    evidence_owners = ownership.get("evidence_owners", [])
+
+    expected_maps = (
+        ("requirement", requirement_ids, set(requirement_ownership)),
+        ("UAT", case_ids, set(uat_ownership)),
+        ("task", task_ids, set(task_ownership)),
+        ("gate", gate_ids, set(gate_ownership)),
+    )
+    for label, expected, actual in expected_maps:
+        for value in sorted(expected - actual):
+            errors.append(f"traceability: orphan {label}: {value}")
+        for value in sorted(actual - expected):
+            errors.append(f"traceability: unknown {label} ownership: {value}")
+
+    milestone_ids: set[str] = set()
+    for item in milestones:
+        identifier = item.get("id")
+        if not isinstance(identifier, str) or not re.fullmatch(
+            r"[A-Z0-9]+(?:-[A-Z0-9]+)*", identifier
+        ):
+            errors.append(f"traceability milestones: invalid id: {identifier!r}")
+        elif identifier in milestone_ids:
+            errors.append(f"traceability milestones: duplicate id: {identifier}")
+        milestone_ids.add(identifier)
+    evidence_owner_ids = duplicate_ids(
+        evidence_owners, "traceability evidence owners", errors
+    )
+    allowed_milestone_status = {"complete", "current", "blocked", "deferred"}
+    for item in milestones:
+        if item.get("status") not in allowed_milestone_status:
+            errors.append(f"{item.get('id')}: invalid milestone status")
+        for dependency in item.get("depends_on", []):
+            if dependency not in milestone_ids:
+                errors.append(
+                    f"{item.get('id')}: unknown milestone dependency {dependency}"
+                )
+
+    # Milestone dependency cycles make the delivery order non-executable.
+    dependency_map = {
+        item.get("id"): set(item.get("depends_on", [])) for item in milestones
+    }
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def visit(identifier: str) -> None:
+        if identifier in visiting:
+            errors.append(f"traceability: milestone dependency cycle at {identifier}")
+            return
+        if identifier in visited:
+            return
+        visiting.add(identifier)
+        for dependency in dependency_map.get(identifier, set()):
+            visit(dependency)
+        visiting.remove(identifier)
+        visited.add(identifier)
+
+    for identifier in milestone_ids:
+        visit(identifier)
+
+    allowed_contract_status = {
+        "complete",
+        "current",
+        "blocked",
+        "deferred",
+        "superseded",
+    }
+    task_requirements = inline_edges(task_blocks, "requirements")
+    task_uat = inline_edges(task_blocks, "uat")
+
+    for identifier, edge in task_ownership.items():
+        for field, known in (
+            ("milestone", milestone_ids),
+            ("owning_gate", gate_ids),
+            ("evidence_owner", evidence_owner_ids),
+        ):
+            if edge.get(field) not in known:
+                errors.append(
+                    f"{identifier}: traceability has unknown {field} {edge.get(field)}"
+                )
+        status = edge.get("status")
+        if status not in allowed_contract_status:
+            errors.append(f"{identifier}: invalid traceability status {status}")
+        if status == "superseded":
+            replacement = edge.get("superseded_by")
+            if replacement not in task_ids or replacement == identifier:
+                errors.append(f"{identifier}: invalid superseded_by {replacement}")
+            if not str(edge.get("disposition", "")).strip():
+                errors.append(f"{identifier}: superseded task lacks disposition")
+        elif edge.get("superseded_by"):
+            errors.append(f"{identifier}: non-superseded task has superseded_by")
+
+    for label, records, known_ids, support in (
+        ("requirement", requirement_ownership, requirement_ids, task_requirements),
+        ("UAT", uat_ownership, case_ids, task_uat),
+    ):
+        for identifier, edge in records.items():
+            if identifier not in known_ids:
+                continue
+            task = edge.get("owning_task")
+            gate = edge.get("owning_gate")
+            milestone = edge.get("milestone")
+            evidence_owner = edge.get("evidence_owner")
+            if task not in task_ids:
+                errors.append(f"{identifier}: unknown owning task {task}")
+            if gate not in gate_ids:
+                errors.append(f"{identifier}: unknown owning gate {gate}")
+            if milestone not in milestone_ids:
+                errors.append(f"{identifier}: unknown owning milestone {milestone}")
+            if evidence_owner not in evidence_owner_ids:
+                errors.append(
+                    f"{identifier}: unknown evidence owner {evidence_owner}"
+                )
+            if edge.get("status") not in allowed_contract_status - {"superseded"}:
+                errors.append(f"{identifier}: invalid ownership status {edge.get('status')}")
+            if task in support and identifier not in support[task]:
+                errors.append(
+                    f"{identifier}: owning task {task} does not name the {label}"
+                )
+            gate_edge = gate_ownership.get(gate, {})
+            if gate_edge.get("milestone") != milestone:
+                errors.append(
+                    f"{identifier}: milestone {milestone} disagrees with owning gate "
+                    f"{gate} milestone {gate_edge.get('milestone')}"
+                )
+            if gate_edge.get("evidence_owner") != evidence_owner:
+                errors.append(
+                    f"{identifier}: evidence owner {evidence_owner} disagrees with "
+                    f"owning gate {gate} owner {gate_edge.get('evidence_owner')}"
+                )
+            if label == "UAT" and gate in gate_blocks:
+                if identifier not in set(re.findall(r"\bUAT-[A-Z0-9-]+\b", gate_blocks[gate])):
+                    errors.append(
+                        f"{identifier}: owning gate {gate} does not name the UAT as evidence"
+                    )
+
+    for identifier, edge in gate_ownership.items():
+        task = edge.get("acceptance_task")
+        milestone = edge.get("milestone")
+        evidence_owner = edge.get("evidence_owner")
+        if task not in task_ids:
+            errors.append(f"{identifier}: unknown acceptance task {task}")
+        if milestone not in milestone_ids:
+            errors.append(f"{identifier}: unknown milestone {milestone}")
+        if evidence_owner not in evidence_owner_ids:
+            errors.append(f"{identifier}: unknown evidence owner {evidence_owner}")
+        if edge.get("status") not in allowed_contract_status - {"superseded"}:
+            errors.append(f"{identifier}: invalid gate status {edge.get('status')}")
+        if task in task_ownership:
+            task_edge = task_ownership[task]
+            if task_edge.get("milestone") != milestone:
+                errors.append(
+                    f"{identifier}: milestone {milestone} disagrees with acceptance "
+                    f"task {task} milestone {task_edge.get('milestone')}"
+                )
+            if task_edge.get("evidence_owner") != evidence_owner:
+                errors.append(
+                    f"{identifier}: evidence owner {evidence_owner} disagrees with "
+                    f"acceptance task {task} owner {task_edge.get('evidence_owner')}"
+                )
+
+    owned_tasks = {
+        edge.get("owning_task") for edge in requirement_ownership.values()
+    } | {edge.get("owning_task") for edge in uat_ownership.values()} | {
+        edge.get("acceptance_task") for edge in gate_ownership.values()
+    }
+    for identifier, edge in task_ownership.items():
+        if edge.get("status") != "superseded" and identifier not in owned_tasks:
+            errors.append(
+                f"traceability: orphan executable task {identifier}; it owns no "
+                "requirement, UAT, or gate"
+            )
+
+    # Only G0 work may be executable while G0 is current. This makes B0 -> A0
+    # -> later status a machine rule rather than prose or file ordering.
+    current_milestones = {
+        item.get("id") for item in milestones if item.get("status") == "current"
+    }
+    for identifier, edge in task_ownership.items():
+        if edge.get("status") == "current" and edge.get("milestone") not in current_milestones:
+            errors.append(
+                f"{identifier}: current task belongs to non-current milestone "
+                f"{edge.get('milestone')}"
+            )
+        if edge.get("milestone") not in current_milestones and edge.get("status") == "complete":
+            errors.append(
+                f"{identifier}: non-current milestone task cannot newly claim complete"
+            )
+
+    expected_proposals = {
+        *(f"LRM-WS-{value:03d}" for value in range(12, 17)),
+        *(f"LRM-PE-{value:03d}" for value in range(11, 16)),
+        *(f"LRM-RE-{value:03d}" for value in range(6, 9)),
+        *(f"LRM-IN-{value:03d}" for value in range(6, 9)),
+        *(f"LRM-RM-{value:03d}" for value in range(4, 6)),
+        *(f"LRM-UX-{value:03d}" for value in range(10, 15)),
+        *(f"LRM-EV-{value:03d}" for value in range(10, 14)),
+        *(f"LRM-CO-{value:03d}" for value in range(13, 15)),
+        *(f"LRM-AU-{value:03d}" for value in range(10, 13)),
+        *(f"LRM-PK-{value:03d}" for value in range(7, 10)),
+        *(f"UAT-{value:03d}" for value in range(45, 65)),
+        "FG-UX-THEME-001",
+        "P-PROFESSIONAL",
+    }
+    dispositions = ownership.get("proposal_dispositions", [])
+    disposition_ids = duplicate_ids(dispositions, "proposal dispositions", errors)
+    # duplicate_ids reads `id`; proposal records intentionally name proposal_id.
+    # Recheck them using the normative field and discard the synthetic errors.
+    errors[:] = [
+        value for value in errors if not value.startswith("proposal dispositions:")
+    ]
+    seen_proposals: set[str] = set()
+    for item in dispositions:
+        proposal = item.get("proposal_id")
+        if proposal in seen_proposals:
+            errors.append(f"proposal dispositions: duplicate id: {proposal}")
+        seen_proposals.add(proposal)
+        if item.get("disposition") not in {"adopted", "merged", "deferred", "rejected"}:
+            errors.append(f"{proposal}: invalid proposal disposition")
+        if not str(item.get("rationale", "")).strip():
+            errors.append(f"{proposal}: missing proposal rationale")
+    del disposition_ids
+    for identifier in sorted(expected_proposals - seen_proposals):
+        errors.append(f"traceability: undispositioned founder-plan proposal {identifier}")
+    for identifier in sorted(seen_proposals - expected_proposals):
+        errors.append(f"traceability: unknown founder-plan proposal {identifier}")
+
+    required_branch_dispositions = {"PR #31", "PR #32", "PR #33"}
+    branch_records = ownership.get("review_branch_dispositions", [])
+    branch_ids = {item.get("reference") for item in branch_records}
+    for identifier in sorted(required_branch_dispositions - branch_ids):
+        errors.append(f"traceability: missing review-branch disposition {identifier}")
+    for item in branch_records:
+        if item.get("execution_status") not in {"blocked", "deferred"}:
+            errors.append(
+                f"{item.get('reference')}: review branch cannot be current before B0"
+            )
+
+    try:
+        from generate_traceability import expected_outputs
+
+        report_text, appendix_text = expected_outputs()
+        for relative, expected in (
+            ("spec/traceability-report.json", report_text),
+            ("docs/product/traceability.md", appendix_text),
+        ):
+            path = ROOT / relative
+            if not path.is_file() or path.read_text(encoding="utf-8") != expected:
+                errors.append(
+                    f"traceability: stale generated output {relative}; run "
+                    "python3 scripts/generate_traceability.py"
+                )
+    except (ImportError, KeyError, OSError, ValueError, json.JSONDecodeError) as exc:
+        errors.append(f"traceability generation: {exc}")
+
+
 def main() -> int:
     errors: list[str] = []
 
@@ -59,7 +359,18 @@ def main() -> int:
     persona_ids = duplicate_ids(personas, "personas", errors)
 
     valid_priorities = {"must", "should", "could", "wont"}
-    valid_releases = {"R0", "R1", "R2", "R3", "R4", "R5", "R6", "B0", "A0"}
+    valid_releases = {
+        "R0",
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "B0",
+        "A0",
+        "POST-A0",
+    }
 
     for req in requirements:
         if req.get("priority") not in valid_priorities:
@@ -79,16 +390,36 @@ def main() -> int:
             if not str(case.get(field, "")).strip():
                 errors.append(f"{case.get('id')}: missing {field}")
 
+    gate_blocks: dict[str, str] = {}
     try:
-        gate_ids = parse_simple_yaml_ids(ROOT / "spec/feature-gates.yaml", "gates")
+        gate_blocks = parse_simple_yaml_records(
+            ROOT / "spec/feature-gates.yaml", "gates"
+        )
+        gate_ids = list(gate_blocks)
         duplicate_ids([{"id": value} for value in gate_ids], "feature gates", errors)
+        for identifier, block in gate_blocks.items():
+            release = re.search(
+                r"^\s{4}release:\s*([^\s#]+)", block, flags=re.MULTILINE
+            )
+            if release is None or release.group(1) not in valid_releases | {"all"}:
+                errors.append(f"{identifier}: invalid or missing gate release")
     except (OSError, ValueError) as exc:
         errors.append(f"feature gates: {exc}")
 
+    task_blocks: dict[str, str] = {}
     try:
         task_text = (ROOT / "spec/implementation-plan.yaml").read_text(encoding="utf-8")
-        task_ids = parse_simple_yaml_ids(ROOT / "spec/implementation-plan.yaml", "tasks")
+        task_blocks = parse_simple_yaml_records(
+            ROOT / "spec/implementation-plan.yaml", "tasks"
+        )
+        task_ids = list(task_blocks)
         task_id_set = duplicate_ids([{"id": value} for value in task_ids], "tasks", errors)
+        for identifier, block in task_blocks.items():
+            release = re.search(
+                r"^\s{4}release:\s*([^\s#]+)", block, flags=re.MULTILINE
+            )
+            if release is None or release.group(1) not in valid_releases:
+                errors.append(f"{identifier}: invalid or missing task release")
         for dependency in re.findall(r"depends_on:\s*\[([^]]*)\]", task_text):
             for value in [item.strip() for item in dependency.split(",") if item.strip()]:
                 if value not in task_id_set:
@@ -143,6 +474,11 @@ def main() -> int:
                     )
     except (OSError, ValueError) as exc:
         errors.append(f"implementation plan: {exc}")
+
+    if task_blocks and gate_blocks:
+        validate_traceability(
+            requirement_ids, case_ids, task_blocks, gate_blocks, errors
+        )
 
     if errors:
         print("Specification validation failed:")

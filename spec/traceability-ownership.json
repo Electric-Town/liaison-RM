@@ -1,0 +1,2782 @@
+{
+  "schema_version": 1,
+  "status": "active",
+  "delivery_boundary": "B0 Workplace Review Alpha before A0 Personal Memory Alpha; provider, mobile, AI, MCP, and theme packages remain later.",
+  "design_sequence": "After T-B0-P03, T-B0-P03D runs design consultation to create DESIGN.md and plan design review; T-B0-P04 cannot start before that gate. G0 does not create DESIGN.md.",
+  "milestones": [
+    {
+      "id": "G0",
+      "name": "One source of product truth",
+      "depends_on": [],
+      "status": "current"
+    },
+    {
+      "id": "G1",
+      "name": "Trusted local workspace foundation",
+      "depends_on": [
+        "G0"
+      ],
+      "status": "blocked"
+    },
+    {
+      "id": "G3",
+      "name": "Workplace event-readiness implementation",
+      "depends_on": [
+        "G1"
+      ],
+      "status": "blocked"
+    },
+    {
+      "id": "B0",
+      "name": "Workplace Review Alpha qualification",
+      "depends_on": [
+        "G0",
+        "G1",
+        "G3"
+      ],
+      "status": "blocked"
+    },
+    {
+      "id": "G2A",
+      "name": "People and interaction memory",
+      "depends_on": [
+        "B0"
+      ],
+      "status": "blocked"
+    },
+    {
+      "id": "G2B",
+      "name": "Relationship reminders and attention",
+      "depends_on": [
+        "B0"
+      ],
+      "status": "blocked"
+    },
+    {
+      "id": "G2C",
+      "name": "Working With Me and configuration",
+      "depends_on": [
+        "B0"
+      ],
+      "status": "blocked"
+    },
+    {
+      "id": "A0",
+      "name": "Personal Memory Alpha qualification",
+      "depends_on": [
+        "G2A",
+        "G2B",
+        "G2C",
+        "B0"
+      ],
+      "status": "blocked"
+    },
+    {
+      "id": "POST-A0",
+      "name": "Post-A0 visual extension points",
+      "depends_on": [
+        "A0"
+      ],
+      "status": "deferred"
+    },
+    {
+      "id": "G4",
+      "name": "Provider and sharing trust foundation",
+      "depends_on": [
+        "A0"
+      ],
+      "status": "deferred"
+    },
+    {
+      "id": "G5",
+      "name": "Contact portability and governed signals",
+      "depends_on": [
+        "A0"
+      ],
+      "status": "deferred"
+    },
+    {
+      "id": "G6",
+      "name": "Safe automation and ecosystem",
+      "depends_on": [
+        "A0"
+      ],
+      "status": "deferred"
+    },
+    {
+      "id": "G7",
+      "name": "Public open-source release evidence",
+      "depends_on": [
+        "B0"
+      ],
+      "status": "blocked"
+    }
+  ],
+  "evidence_owners": [
+    {
+      "id": "EO-GOVERNANCE",
+      "role": "Product and architecture owner",
+      "accountable": "Ryan until delegated"
+    },
+    {
+      "id": "EO-WORKSPACE",
+      "role": "Workspace integrity owner",
+      "accountable": "Ryan until delegated"
+    },
+    {
+      "id": "EO-EXPERIENCE",
+      "role": "Experience and accessibility owner",
+      "accountable": "Ryan until delegated"
+    },
+    {
+      "id": "EO-PROFILES",
+      "role": "People and profile owner",
+      "accountable": "Ryan until delegated"
+    },
+    {
+      "id": "EO-EVENTS",
+      "role": "Events and Directory owner",
+      "accountable": "Ryan until delegated"
+    },
+    {
+      "id": "EO-SECURITY",
+      "role": "Security, privacy, and recovery owner",
+      "accountable": "Ryan until delegated"
+    },
+    {
+      "id": "EO-CONNECTIONS",
+      "role": "Connections and sharing owner",
+      "accountable": "Ryan until delegated"
+    },
+    {
+      "id": "EO-AUTOMATION",
+      "role": "Automation and plugin owner",
+      "accountable": "Ryan until delegated"
+    },
+    {
+      "id": "EO-RELEASE",
+      "role": "Packaging and release owner",
+      "accountable": "Ryan until delegated"
+    }
+  ],
+  "task_ownership": {
+    "T-R0-001": {
+      "milestone": "G0",
+      "owning_gate": "FG-R0-001",
+      "evidence_owner": "EO-GOVERNANCE",
+      "status": "complete"
+    },
+    "T-R0-002": {
+      "milestone": "G0",
+      "owning_gate": "FG-R0-002",
+      "evidence_owner": "EO-GOVERNANCE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P00",
+      "disposition": "The broad publication task is preserved as history; P00 owns current product-truth reconciliation and claim disposition."
+    },
+    "T-R0-003": {
+      "milestone": "G0",
+      "owning_gate": "FG-R0-002",
+      "evidence_owner": "EO-GOVERNANCE",
+      "status": "current"
+    },
+    "T-R1-001": {
+      "milestone": "G1",
+      "owning_gate": "FG-R1-004",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P01",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R1-002": {
+      "milestone": "G1",
+      "owning_gate": "FG-R1-001",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P02",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R1-003": {
+      "milestone": "G1",
+      "owning_gate": "FG-R1-002",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P03",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R1-004": {
+      "milestone": "G1",
+      "owning_gate": "FG-R1-001",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P05",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R1-005": {
+      "milestone": "G1",
+      "owning_gate": "FG-R1-001",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P03",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R1-006": {
+      "milestone": "G1",
+      "owning_gate": "FG-R1-003",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P06",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R1-007": {
+      "milestone": "G1",
+      "owning_gate": "FG-R1-005",
+      "evidence_owner": "EO-SECURITY",
+      "status": "superseded",
+      "superseded_by": "T-B0-P08",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R1-008": {
+      "milestone": "G1",
+      "owning_gate": "FG-R1-004",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P01",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R1-009": {
+      "milestone": "G1",
+      "owning_gate": "FG-R1-004",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P09",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R1-010": {
+      "milestone": "G1",
+      "owning_gate": "FG-R1-004",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P09",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R1-011": {
+      "milestone": "G1",
+      "owning_gate": "FG-R1-005",
+      "evidence_owner": "EO-SECURITY",
+      "status": "superseded",
+      "superseded_by": "T-B0-P08",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R1-012": {
+      "milestone": "G7",
+      "owning_gate": "FG-R2-005",
+      "evidence_owner": "EO-RELEASE",
+      "status": "superseded",
+      "superseded_by": "T-B0-ACCEPT",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R2-001": {
+      "milestone": "G1",
+      "owning_gate": "FG-R2-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P04",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R2-002": {
+      "milestone": "G1",
+      "owning_gate": "FG-R2-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P04",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R2-003": {
+      "milestone": "G2A",
+      "owning_gate": "FG-R2-003",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "superseded",
+      "superseded_by": "T-A0-P01",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R2-004": {
+      "milestone": "A0",
+      "owning_gate": "FG-A0-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "superseded",
+      "superseded_by": "T-A0-P03",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R2-005": {
+      "milestone": "G2B",
+      "owning_gate": "FG-R2-002",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "superseded",
+      "superseded_by": "T-A0-P03",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R2-006": {
+      "milestone": "A0",
+      "owning_gate": "FG-A0-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "superseded",
+      "superseded_by": "T-A0-P01",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R2-007": {
+      "milestone": "G7",
+      "owning_gate": "FG-R2-004",
+      "evidence_owner": "EO-RELEASE",
+      "status": "deferred"
+    },
+    "T-R3-001": {
+      "milestone": "G3",
+      "owning_gate": "FG-R3-002",
+      "evidence_owner": "EO-EVENTS",
+      "status": "superseded",
+      "superseded_by": "T-B0-P09",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R3-002": {
+      "milestone": "G3",
+      "owning_gate": "FG-R3-001",
+      "evidence_owner": "EO-EVENTS",
+      "status": "superseded",
+      "superseded_by": "T-B0-P05",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R3-003": {
+      "milestone": "G3",
+      "owning_gate": "FG-R3-002",
+      "evidence_owner": "EO-EVENTS",
+      "status": "superseded",
+      "superseded_by": "T-B0-P09",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R3-004": {
+      "milestone": "G3",
+      "owning_gate": "FG-R3-005",
+      "evidence_owner": "EO-EVENTS",
+      "status": "superseded",
+      "superseded_by": "T-B0-P09",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R3-005": {
+      "milestone": "G3",
+      "owning_gate": "FG-R3-003",
+      "evidence_owner": "EO-EVENTS",
+      "status": "superseded",
+      "superseded_by": "T-B0-P10",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R3-006": {
+      "milestone": "G3",
+      "owning_gate": "FG-R3-004",
+      "evidence_owner": "EO-EVENTS",
+      "status": "superseded",
+      "superseded_by": "T-B0-P10",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R3-007": {
+      "milestone": "B0",
+      "owning_gate": "FG-R3-005",
+      "evidence_owner": "EO-EVENTS",
+      "status": "superseded",
+      "superseded_by": "T-B0-ACCEPT",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    "T-R4-001": {
+      "milestone": "G4",
+      "owning_gate": "FG-R4-007",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "T-R4-002": {
+      "milestone": "G4",
+      "owning_gate": "FG-R4-002",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "T-R4-003": {
+      "milestone": "G4",
+      "owning_gate": "FG-R4-001",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "T-R4-004": {
+      "milestone": "G4",
+      "owning_gate": "FG-R4-003",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "T-R4-005": {
+      "milestone": "G4",
+      "owning_gate": "FG-R4-004",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "T-R4-006": {
+      "milestone": "G4",
+      "owning_gate": "FG-R4-005",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "T-R4-007": {
+      "milestone": "G4",
+      "owning_gate": "FG-R4-006",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "T-R4-008": {
+      "milestone": "G4",
+      "owning_gate": "FG-R4-001",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "T-R5-001": {
+      "milestone": "G5",
+      "owning_gate": "FG-R5-001",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "T-R5-002": {
+      "milestone": "G5",
+      "owning_gate": "FG-R5-002",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "T-R5-003": {
+      "milestone": "G5",
+      "owning_gate": "FG-R5-003",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred"
+    },
+    "T-R5-004": {
+      "milestone": "G5",
+      "owning_gate": "FG-R5-004",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred"
+    },
+    "T-R5-005": {
+      "milestone": "G5",
+      "owning_gate": "FG-R5-005",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "T-R6-001": {
+      "milestone": "G6",
+      "owning_gate": "FG-R6-001",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "T-R6-002": {
+      "milestone": "G6",
+      "owning_gate": "FG-R6-001",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "T-R6-003": {
+      "milestone": "G6",
+      "owning_gate": "FG-R6-002",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "T-R6-004": {
+      "milestone": "G6",
+      "owning_gate": "FG-R6-003",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "T-R6-005": {
+      "milestone": "G6",
+      "owning_gate": "FG-R6-005",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "T-B0-P00": {
+      "milestone": "G0",
+      "owning_gate": "FG-R0-002",
+      "evidence_owner": "EO-GOVERNANCE",
+      "status": "current"
+    },
+    "T-B0-P01": {
+      "milestone": "G1",
+      "owning_gate": "FG-R1-004",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "T-B0-P02": {
+      "milestone": "G1",
+      "owning_gate": "FG-B0-001",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "T-B0-P03": {
+      "milestone": "G1",
+      "owning_gate": "FG-B0-001",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "T-B0-P03D": {
+      "milestone": "G1",
+      "owning_gate": "FG-B0-DESIGN-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "T-B0-P04": {
+      "milestone": "G1",
+      "owning_gate": "FG-R2-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "T-B0-P05": {
+      "milestone": "G3",
+      "owning_gate": "FG-R3-001",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "T-B0-P06": {
+      "milestone": "G1",
+      "owning_gate": "FG-R1-003",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "T-B0-P07": {
+      "milestone": "G1",
+      "owning_gate": "FG-B0-002",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked"
+    },
+    "T-B0-P08": {
+      "milestone": "G1",
+      "owning_gate": "FG-B0-002",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked"
+    },
+    "T-B0-P09": {
+      "milestone": "G3",
+      "owning_gate": "FG-R3-002",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "T-B0-P10": {
+      "milestone": "G3",
+      "owning_gate": "FG-R3-003",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "T-B0-P11": {
+      "milestone": "B0",
+      "owning_gate": "FG-B0-003",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "T-B0-PILOT": {
+      "milestone": "G3",
+      "owning_gate": "FG-B0-PILOT-001",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "T-B0-ACCEPT": {
+      "milestone": "B0",
+      "owning_gate": "FG-B0-003",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "T-A0-P01": {
+      "milestone": "G2C",
+      "owning_gate": "FG-A0-G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "T-A0-P02": {
+      "milestone": "G2A",
+      "owning_gate": "FG-A0-G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "T-A0-P03": {
+      "milestone": "G2B",
+      "owning_gate": "FG-A0-G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "T-A0-001": {
+      "milestone": "A0",
+      "owning_gate": "FG-A0-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "T-R5-006": {
+      "milestone": "G5",
+      "owning_gate": "FG-R5-005",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "T-R5-007": {
+      "milestone": "G5",
+      "owning_gate": "FG-R5-003",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred"
+    },
+    "T-R6-006": {
+      "milestone": "G6",
+      "owning_gate": "FG-R6-006",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "T-UX-THEME-001": {
+      "milestone": "POST-A0",
+      "owning_gate": "FG-UX-THEME-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "deferred"
+    },
+    "T-REL-001": {
+      "milestone": "G7",
+      "owning_gate": "FG-REL-001",
+      "evidence_owner": "EO-RELEASE",
+      "status": "blocked"
+    }
+  },
+  "requirement_ownership": {
+    "LRM-WS-001": {
+      "owning_task": "T-B0-P02",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "LRM-WS-002": {
+      "owning_task": "T-B0-P02",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "LRM-WS-009": {
+      "owning_task": "T-B0-P02",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "LRM-WS-003": {
+      "owning_task": "T-B0-P06",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "LRM-WS-006": {
+      "owning_task": "T-B0-P06",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "LRM-DI-001": {
+      "owning_task": "T-B0-P06",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "LRM-DI-002": {
+      "owning_task": "T-B0-P06",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "LRM-WS-004": {
+      "owning_task": "T-B0-P03",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "LRM-WS-005": {
+      "owning_task": "T-B0-P03",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "LRM-WS-007": {
+      "owning_task": "T-B0-P03",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "LRM-WS-010": {
+      "owning_task": "T-B0-P03",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "LRM-WS-008": {
+      "owning_task": "T-B0-P11",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-WS-013": {
+      "owning_task": "T-B0-P03",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "LRM-WS-014": {
+      "owning_task": "T-B0-P03",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "LRM-UX-005": {
+      "owning_task": "T-B0-P11",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-UX-011": {
+      "owning_task": "T-B0-P11",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-WS-016": {
+      "owning_task": "T-B0-P08",
+      "owning_gate": "FG-B0-002",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked"
+    },
+    "LRM-RC-001": {
+      "owning_task": "T-B0-P08",
+      "owning_gate": "FG-B0-002",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked"
+    },
+    "LRM-RC-002": {
+      "owning_task": "T-B0-P08",
+      "owning_gate": "FG-B0-002",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked"
+    },
+    "LRM-WS-012": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-WS-015": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-PE-006": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-PE-007": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-PE-011": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-PE-012": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-PE-013": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-PE-014": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-PE-015": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-UX-007": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-UX-010": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-UX-013": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-AP-001": {
+      "owning_task": "T-B0-P01",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "LRM-WS-011": {
+      "owning_task": "T-B0-P01",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "LRM-PE-001": {
+      "owning_task": "T-B0-P05",
+      "owning_gate": "FG-R3-001",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-PE-002": {
+      "owning_task": "T-B0-P05",
+      "owning_gate": "FG-R3-001",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-PE-004": {
+      "owning_task": "T-B0-P05",
+      "owning_gate": "FG-R3-001",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-PE-005": {
+      "owning_task": "T-B0-P05",
+      "owning_gate": "FG-R3-001",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-PE-008": {
+      "owning_task": "T-B0-P05",
+      "owning_gate": "FG-R3-001",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-PE-009": {
+      "owning_task": "T-B0-P05",
+      "owning_gate": "FG-R3-001",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-PE-010": {
+      "owning_task": "T-B0-P05",
+      "owning_gate": "FG-R3-001",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-SEC-001": {
+      "owning_task": "T-B0-P07",
+      "owning_gate": "FG-B0-002",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked"
+    },
+    "LRM-SEC-002": {
+      "owning_task": "T-B0-P07",
+      "owning_gate": "FG-B0-002",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked"
+    },
+    "LRM-PE-003": {
+      "owning_task": "T-A0-P02",
+      "owning_gate": "FG-A0-G2A",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "LRM-IN-001": {
+      "owning_task": "T-A0-P02",
+      "owning_gate": "FG-A0-G2A",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "LRM-IN-006": {
+      "owning_task": "T-A0-P02",
+      "owning_gate": "FG-A0-G2A",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "LRM-IN-007": {
+      "owning_task": "T-A0-P02",
+      "owning_gate": "FG-A0-G2A",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "LRM-OR-001": {
+      "owning_task": "T-B0-P09",
+      "owning_gate": "FG-R3-002",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-OR-002": {
+      "owning_task": "T-B0-P09",
+      "owning_gate": "FG-R3-002",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-OR-003": {
+      "owning_task": "T-B0-P09",
+      "owning_gate": "FG-R3-002",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-OR-004": {
+      "owning_task": "T-B0-P09",
+      "owning_gate": "FG-R3-002",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-RE-001": {
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "LRM-RE-002": {
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "LRM-RE-003": {
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "LRM-RE-004": {
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "LRM-RE-005": {
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "LRM-RE-006": {
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "LRM-RE-007": {
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "LRM-RE-008": {
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "LRM-RM-001": {
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "LRM-RM-002": {
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "LRM-RM-003": {
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "LRM-RM-004": {
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "LRM-RM-005": {
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "LRM-IN-002": {
+      "owning_task": "T-R5-003",
+      "owning_gate": "FG-R5-003",
+      "milestone": "G5",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred"
+    },
+    "LRM-IN-003": {
+      "owning_task": "T-R5-003",
+      "owning_gate": "FG-R5-003",
+      "milestone": "G5",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred"
+    },
+    "LRM-IN-004": {
+      "owning_task": "T-R5-003",
+      "owning_gate": "FG-R5-003",
+      "milestone": "G5",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred"
+    },
+    "LRM-IN-005": {
+      "owning_task": "T-R5-007",
+      "owning_gate": "FG-R5-003",
+      "milestone": "G5",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred"
+    },
+    "LRM-EV-006": {
+      "owning_task": "T-R5-007",
+      "owning_gate": "FG-R5-003",
+      "milestone": "G5",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred"
+    },
+    "LRM-IN-008": {
+      "owning_task": "T-R5-006",
+      "owning_gate": "FG-R5-005",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-CO-014": {
+      "owning_task": "T-R5-006",
+      "owning_gate": "FG-R5-005",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-EV-001": {
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-003",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-EV-002": {
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-003",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-EV-003": {
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-003",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-EV-004": {
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-004",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-EV-005": {
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-004",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-EV-007": {
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-003",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-EV-008": {
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-004",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-EV-009": {
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-003",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-EV-010": {
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-003",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-EV-011": {
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-003",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-EV-013": {
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-004",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-EV-012": {
+      "owning_task": "T-B0-PILOT",
+      "owning_gate": "FG-B0-PILOT-001",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "LRM-FA-001": {
+      "owning_task": "T-R5-004",
+      "owning_gate": "FG-R5-004",
+      "milestone": "G5",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred"
+    },
+    "LRM-FA-002": {
+      "owning_task": "T-R5-004",
+      "owning_gate": "FG-R5-004",
+      "milestone": "G5",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred"
+    },
+    "LRM-FA-003": {
+      "owning_task": "T-R5-004",
+      "owning_gate": "FG-R5-004",
+      "milestone": "G5",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred"
+    },
+    "LRM-FA-004": {
+      "owning_task": "T-R5-004",
+      "owning_gate": "FG-R5-004",
+      "milestone": "G5",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred"
+    },
+    "LRM-FA-005": {
+      "owning_task": "T-R5-004",
+      "owning_gate": "FG-R5-004",
+      "milestone": "G5",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred"
+    },
+    "LRM-CO-001": {
+      "owning_task": "T-R4-001",
+      "owning_gate": "FG-R4-001",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-CO-002": {
+      "owning_task": "T-R4-001",
+      "owning_gate": "FG-R4-001",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-CO-003": {
+      "owning_task": "T-R4-001",
+      "owning_gate": "FG-R4-001",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-CO-005": {
+      "owning_task": "T-R4-001",
+      "owning_gate": "FG-R4-001",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-CO-006": {
+      "owning_task": "T-R4-001",
+      "owning_gate": "FG-R4-001",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-CO-004": {
+      "owning_task": "T-R4-003",
+      "owning_gate": "FG-R4-001",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-CO-007": {
+      "owning_task": "T-R4-002",
+      "owning_gate": "FG-R4-002",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-CO-008": {
+      "owning_task": "T-R4-004",
+      "owning_gate": "FG-R4-003",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-CO-009": {
+      "owning_task": "T-R4-004",
+      "owning_gate": "FG-R4-003",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-CO-010": {
+      "owning_task": "T-R5-001",
+      "owning_gate": "FG-R5-001",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-CO-011": {
+      "owning_task": "T-R5-002",
+      "owning_gate": "FG-R5-002",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-CO-012": {
+      "owning_task": "T-R4-008",
+      "owning_gate": "FG-R4-001",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-CO-013": {
+      "owning_task": "T-R5-005",
+      "owning_gate": "FG-R5-005",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-SH-001": {
+      "owning_task": "T-R4-005",
+      "owning_gate": "FG-R4-004",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-SH-002": {
+      "owning_task": "T-R4-005",
+      "owning_gate": "FG-R4-004",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-SH-007": {
+      "owning_task": "T-R4-005",
+      "owning_gate": "FG-R4-004",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-SH-003": {
+      "owning_task": "T-R4-006",
+      "owning_gate": "FG-R4-005",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-SH-004": {
+      "owning_task": "T-R4-006",
+      "owning_gate": "FG-R4-005",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-SH-005": {
+      "owning_task": "T-R4-007",
+      "owning_gate": "FG-R4-006",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-SH-006": {
+      "owning_task": "T-R4-007",
+      "owning_gate": "FG-R4-006",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "LRM-AU-001": {
+      "owning_task": "T-R6-001",
+      "owning_gate": "FG-R6-001",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "LRM-AU-002": {
+      "owning_task": "T-R6-002",
+      "owning_gate": "FG-R6-001",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "LRM-AU-011": {
+      "owning_task": "T-R6-002",
+      "owning_gate": "FG-R6-001",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "LRM-AU-003": {
+      "owning_task": "T-R6-003",
+      "owning_gate": "FG-R6-002",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "LRM-AU-004": {
+      "owning_task": "T-R6-003",
+      "owning_gate": "FG-R6-002",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "LRM-AU-005": {
+      "owning_task": "T-R6-003",
+      "owning_gate": "FG-R6-002",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "LRM-AU-006": {
+      "owning_task": "T-R6-004",
+      "owning_gate": "FG-R6-004",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "LRM-AU-007": {
+      "owning_task": "T-R6-004",
+      "owning_gate": "FG-R6-004",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "LRM-AU-010": {
+      "owning_task": "T-R6-004",
+      "owning_gate": "FG-R6-004",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "LRM-AU-008": {
+      "owning_task": "T-R6-005",
+      "owning_gate": "FG-R6-005",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "LRM-AU-009": {
+      "owning_task": "T-R6-005",
+      "owning_gate": "FG-R6-005",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "LRM-L10N-007": {
+      "owning_task": "T-R6-005",
+      "owning_gate": "FG-R6-005",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "LRM-AU-012": {
+      "owning_task": "T-R6-006",
+      "owning_gate": "FG-R6-006",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "LRM-UX-001": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-UX-002": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-UX-003": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-UX-004": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-UX-006": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-UX-008": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-UX-009": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-UX-012": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-L10N-001": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-L10N-002": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-L10N-003": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-L10N-004": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-L10N-005": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-L10N-006": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-L10N-008": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-UX-014": {
+      "owning_task": "T-UX-THEME-001",
+      "owning_gate": "FG-UX-THEME-001",
+      "milestone": "POST-A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "deferred"
+    },
+    "LRM-PK-001": {
+      "owning_task": "T-R2-007",
+      "owning_gate": "FG-R2-004",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "deferred"
+    },
+    "LRM-PK-002": {
+      "owning_task": "T-R2-007",
+      "owning_gate": "FG-R2-004",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "deferred"
+    },
+    "LRM-PK-003": {
+      "owning_task": "T-R2-007",
+      "owning_gate": "FG-R2-004",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "deferred"
+    },
+    "LRM-PK-004": {
+      "owning_task": "T-R2-007",
+      "owning_gate": "FG-R2-004",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "deferred"
+    },
+    "LRM-PK-005": {
+      "owning_task": "T-R2-007",
+      "owning_gate": "FG-R2-004",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "deferred"
+    },
+    "LRM-PK-006": {
+      "owning_task": "T-B0-ACCEPT",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-PK-008": {
+      "owning_task": "T-REL-001",
+      "owning_gate": "FG-REL-001",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "blocked"
+    },
+    "LRM-PK-007": {
+      "owning_task": "T-B0-P00",
+      "owning_gate": "FG-R0-002",
+      "milestone": "G0",
+      "evidence_owner": "EO-GOVERNANCE",
+      "status": "current"
+    },
+    "LRM-PK-009": {
+      "owning_task": "T-R0-003",
+      "owning_gate": "FG-R0-002",
+      "milestone": "G0",
+      "evidence_owner": "EO-GOVERNANCE",
+      "status": "current"
+    },
+    "LRM-A0-001": {
+      "owning_task": "T-A0-001",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    }
+  },
+  "uat_ownership": {
+    "UAT-001": {
+      "owning_task": "T-B0-P02",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "UAT-002": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-020": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-021": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-045": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-046": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-053": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-054": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-056": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-063": {
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-003": {
+      "owning_task": "T-A0-P02",
+      "owning_gate": "FG-A0-G2A",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "UAT-017": {
+      "owning_task": "T-A0-P02",
+      "owning_gate": "FG-A0-G2A",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "UAT-047": {
+      "owning_task": "T-A0-P02",
+      "owning_gate": "FG-A0-G2A",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "UAT-048": {
+      "owning_task": "T-A0-P02",
+      "owning_gate": "FG-A0-G2A",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "UAT-049": {
+      "owning_task": "T-A0-P02",
+      "owning_gate": "FG-A0-G2A",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "UAT-004": {
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "UAT-023": {
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "UAT-051": {
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "UAT-052": {
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "UAT-005": {
+      "owning_task": "T-R5-003",
+      "owning_gate": "FG-R5-003",
+      "milestone": "G5",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred"
+    },
+    "UAT-006": {
+      "owning_task": "T-R5-007",
+      "owning_gate": "FG-R5-003",
+      "milestone": "G5",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred"
+    },
+    "UAT-013": {
+      "owning_task": "T-R5-007",
+      "owning_gate": "FG-R5-003",
+      "milestone": "G5",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred"
+    },
+    "UAT-007": {
+      "owning_task": "T-R4-006",
+      "owning_gate": "FG-R4-006",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "UAT-008": {
+      "owning_task": "T-B0-P09",
+      "owning_gate": "FG-R3-002",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "UAT-012": {
+      "owning_task": "T-B0-P09",
+      "owning_gate": "FG-R3-002",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "UAT-009": {
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-003",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "UAT-010": {
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-004",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "UAT-011": {
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-004",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "UAT-014": {
+      "owning_task": "T-R5-004",
+      "owning_gate": "FG-R5-004",
+      "milestone": "G5",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred"
+    },
+    "UAT-015": {
+      "owning_task": "T-R5-004",
+      "owning_gate": "FG-R5-004",
+      "milestone": "G5",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred"
+    },
+    "UAT-016": {
+      "owning_task": "T-R5-004",
+      "owning_gate": "FG-R5-004",
+      "milestone": "G5",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred"
+    },
+    "UAT-018": {
+      "owning_task": "T-R4-007",
+      "owning_gate": "FG-R4-006",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "UAT-019": {
+      "owning_task": "T-R4-005",
+      "owning_gate": "FG-R4-004",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "UAT-022": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-062": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-LOC-001": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-LOC-002": {
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-024": {
+      "owning_task": "T-R2-007",
+      "owning_gate": "FG-R2-005",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "deferred"
+    },
+    "UAT-025": {
+      "owning_task": "T-B0-P08",
+      "owning_gate": "FG-B0-002",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked"
+    },
+    "UAT-043": {
+      "owning_task": "T-B0-P08",
+      "owning_gate": "FG-B0-002",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked"
+    },
+    "UAT-055": {
+      "owning_task": "T-B0-P08",
+      "owning_gate": "FG-B0-002",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked"
+    },
+    "UAT-026": {
+      "owning_task": "T-R4-002",
+      "owning_gate": "FG-R4-002",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "UAT-027": {
+      "owning_task": "T-R4-001",
+      "owning_gate": "FG-R4-007",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "UAT-028": {
+      "owning_task": "T-R4-004",
+      "owning_gate": "FG-R4-003",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "UAT-029": {
+      "owning_task": "T-R6-001",
+      "owning_gate": "FG-R6-001",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "UAT-030": {
+      "owning_task": "T-R6-002",
+      "owning_gate": "FG-R6-001",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "UAT-058": {
+      "owning_task": "T-R6-002",
+      "owning_gate": "FG-R6-001",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "UAT-031": {
+      "owning_task": "T-R6-004",
+      "owning_gate": "FG-R6-004",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "UAT-039": {
+      "owning_task": "T-R6-004",
+      "owning_gate": "FG-R6-004",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "UAT-057": {
+      "owning_task": "T-R6-004",
+      "owning_gate": "FG-R6-004",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "UAT-032": {
+      "owning_task": "T-R6-003",
+      "owning_gate": "FG-R6-002",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "UAT-033": {
+      "owning_task": "T-R6-003",
+      "owning_gate": "FG-R6-002",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "UAT-034": {
+      "owning_task": "T-R4-003",
+      "owning_gate": "FG-R4-001",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "UAT-035": {
+      "owning_task": "T-R6-005",
+      "owning_gate": "FG-R6-005",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "UAT-036": {
+      "owning_task": "T-R6-005",
+      "owning_gate": "FG-R6-005",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "UAT-LOC-003": {
+      "owning_task": "T-R6-005",
+      "owning_gate": "FG-R6-005",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "UAT-037": {
+      "owning_task": "T-R5-001",
+      "owning_gate": "FG-R5-001",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "UAT-038": {
+      "owning_task": "T-R5-005",
+      "owning_gate": "FG-R5-005",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "UAT-040": {
+      "owning_task": "T-B0-P03",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "UAT-042": {
+      "owning_task": "T-B0-P03",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "UAT-041": {
+      "owning_task": "T-B0-ACCEPT",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-044": {
+      "owning_task": "T-A0-001",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-050": {
+      "owning_task": "T-B0-P11",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-059": {
+      "owning_task": "T-R5-006",
+      "owning_gate": "FG-R5-005",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "UAT-060": {
+      "owning_task": "T-R5-006",
+      "owning_gate": "FG-R5-005",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "UAT-061": {
+      "owning_task": "T-R6-006",
+      "owning_gate": "FG-R6-006",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "UAT-064": {
+      "owning_task": "T-UX-THEME-001",
+      "owning_gate": "FG-UX-THEME-001",
+      "milestone": "POST-A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "deferred"
+    }
+  },
+  "gate_ownership": {
+    "FG-R0-001": {
+      "acceptance_task": "T-R0-001",
+      "milestone": "G0",
+      "evidence_owner": "EO-GOVERNANCE",
+      "status": "complete"
+    },
+    "FG-R0-002": {
+      "acceptance_task": "T-B0-P00",
+      "milestone": "G0",
+      "evidence_owner": "EO-GOVERNANCE",
+      "status": "current"
+    },
+    "FG-R1-001": {
+      "acceptance_task": "T-B0-P02",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "FG-R1-002": {
+      "acceptance_task": "T-B0-P03",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "FG-R1-003": {
+      "acceptance_task": "T-B0-P06",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "FG-R1-004": {
+      "acceptance_task": "T-B0-P01",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "FG-R1-005": {
+      "acceptance_task": "T-B0-P08",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked"
+    },
+    "FG-R2-001": {
+      "acceptance_task": "T-B0-P04",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "FG-R2-002": {
+      "acceptance_task": "T-A0-P03",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "FG-R2-003": {
+      "acceptance_task": "T-A0-P02",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "FG-R2-004": {
+      "acceptance_task": "T-R2-007",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "deferred"
+    },
+    "FG-R2-005": {
+      "acceptance_task": "T-R2-007",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "deferred"
+    },
+    "FG-R3-001": {
+      "acceptance_task": "T-B0-P05",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "FG-R3-002": {
+      "acceptance_task": "T-B0-P09",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "FG-R3-003": {
+      "acceptance_task": "T-B0-P10",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "FG-R3-004": {
+      "acceptance_task": "T-B0-P10",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "FG-R3-005": {
+      "acceptance_task": "T-B0-ACCEPT",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "FG-R4-001": {
+      "acceptance_task": "T-R4-003",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "FG-R4-002": {
+      "acceptance_task": "T-R4-002",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "FG-R4-003": {
+      "acceptance_task": "T-R4-004",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "FG-R4-004": {
+      "acceptance_task": "T-R4-005",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "FG-R4-005": {
+      "acceptance_task": "T-R4-006",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "FG-R4-006": {
+      "acceptance_task": "T-R4-006",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "FG-R4-007": {
+      "acceptance_task": "T-R4-001",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "FG-R5-001": {
+      "acceptance_task": "T-R5-001",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "FG-R5-002": {
+      "acceptance_task": "T-R5-002",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "FG-R5-003": {
+      "acceptance_task": "T-R5-003",
+      "milestone": "G5",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred"
+    },
+    "FG-R5-004": {
+      "acceptance_task": "T-R5-004",
+      "milestone": "G5",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred"
+    },
+    "FG-R5-005": {
+      "acceptance_task": "T-R5-005",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "FG-R6-001": {
+      "acceptance_task": "T-R6-002",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "FG-R6-002": {
+      "acceptance_task": "T-R6-003",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "FG-R6-003": {
+      "acceptance_task": "T-R6-004",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "FG-R6-004": {
+      "acceptance_task": "T-R6-004",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "FG-R6-005": {
+      "acceptance_task": "T-R6-005",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "FG-R6-006": {
+      "acceptance_task": "T-R6-006",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "FG-REL-001": {
+      "acceptance_task": "T-REL-001",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "blocked"
+    },
+    "FG-B0-001": {
+      "acceptance_task": "T-B0-P03",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "FG-B0-DESIGN-001": {
+      "acceptance_task": "T-B0-P03D",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "FG-B0-002": {
+      "acceptance_task": "T-B0-P08",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked"
+    },
+    "FG-B0-003": {
+      "acceptance_task": "T-B0-ACCEPT",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "FG-B0-PILOT-001": {
+      "acceptance_task": "T-B0-PILOT",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    "FG-A0-001": {
+      "acceptance_task": "T-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "FG-UX-THEME-001": {
+      "acceptance_task": "T-UX-THEME-001",
+      "milestone": "POST-A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "deferred"
+    },
+    "FG-A0-G2A": {
+      "acceptance_task": "T-A0-P02",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "FG-A0-G2B": {
+      "acceptance_task": "T-A0-P03",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    "FG-A0-G2C": {
+      "acceptance_task": "T-A0-P01",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    }
+  },
+  "proposal_dispositions": [
+    {
+      "proposal_id": "LRM-WS-012",
+      "disposition": "adopted",
+      "canonical_id": "LRM-WS-012",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-WS-013",
+      "disposition": "adopted",
+      "canonical_id": "LRM-WS-013",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-WS-014",
+      "disposition": "adopted",
+      "canonical_id": "LRM-WS-014",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-WS-015",
+      "disposition": "adopted",
+      "canonical_id": "LRM-WS-015",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-WS-016",
+      "disposition": "adopted",
+      "canonical_id": "LRM-WS-016",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-PE-011",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-011",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-PE-012",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-012",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-PE-013",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-013",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-PE-014",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-014",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-PE-015",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-015",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-RE-006",
+      "disposition": "adopted",
+      "canonical_id": "LRM-RE-006",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-RE-007",
+      "disposition": "adopted",
+      "canonical_id": "LRM-RE-007",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-RE-008",
+      "disposition": "adopted",
+      "canonical_id": "LRM-RE-008",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-IN-006",
+      "disposition": "adopted",
+      "canonical_id": "LRM-IN-006",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-IN-007",
+      "disposition": "adopted",
+      "canonical_id": "LRM-IN-007",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-IN-008",
+      "disposition": "adopted",
+      "canonical_id": "LRM-IN-008",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-RM-004",
+      "disposition": "adopted",
+      "canonical_id": "LRM-RM-004",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-RM-005",
+      "disposition": "adopted",
+      "canonical_id": "LRM-RM-005",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-UX-010",
+      "disposition": "adopted",
+      "canonical_id": "LRM-UX-010",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-UX-011",
+      "disposition": "adopted",
+      "canonical_id": "LRM-UX-011",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-UX-012",
+      "disposition": "adopted",
+      "canonical_id": "LRM-UX-012",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-UX-013",
+      "disposition": "adopted",
+      "canonical_id": "LRM-UX-013",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-UX-014",
+      "disposition": "adopted",
+      "canonical_id": "LRM-UX-014",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-EV-010",
+      "disposition": "adopted",
+      "canonical_id": "LRM-EV-010",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-EV-011",
+      "disposition": "adopted",
+      "canonical_id": "LRM-EV-011",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-EV-012",
+      "disposition": "adopted",
+      "canonical_id": "LRM-EV-012",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-EV-013",
+      "disposition": "adopted",
+      "canonical_id": "LRM-EV-013",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-CO-013",
+      "disposition": "adopted",
+      "canonical_id": "LRM-CO-013",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-CO-014",
+      "disposition": "adopted",
+      "canonical_id": "LRM-CO-014",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-AU-010",
+      "disposition": "adopted",
+      "canonical_id": "LRM-AU-010",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-AU-011",
+      "disposition": "adopted",
+      "canonical_id": "LRM-AU-011",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-AU-012",
+      "disposition": "adopted",
+      "canonical_id": "LRM-AU-012",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-PK-007",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PK-007",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-PK-008",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PK-008",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-PK-009",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PK-009",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-045",
+      "disposition": "adopted",
+      "canonical_id": "UAT-045",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-046",
+      "disposition": "adopted",
+      "canonical_id": "UAT-046",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-047",
+      "disposition": "adopted",
+      "canonical_id": "UAT-047",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-048",
+      "disposition": "adopted",
+      "canonical_id": "UAT-048",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-049",
+      "disposition": "adopted",
+      "canonical_id": "UAT-049",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-050",
+      "disposition": "adopted",
+      "canonical_id": "UAT-050",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-051",
+      "disposition": "adopted",
+      "canonical_id": "UAT-051",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-052",
+      "disposition": "adopted",
+      "canonical_id": "UAT-052",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-053",
+      "disposition": "adopted",
+      "canonical_id": "UAT-053",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-054",
+      "disposition": "adopted",
+      "canonical_id": "UAT-054",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-055",
+      "disposition": "adopted",
+      "canonical_id": "UAT-055",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-056",
+      "disposition": "adopted",
+      "canonical_id": "UAT-056",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-057",
+      "disposition": "adopted",
+      "canonical_id": "UAT-057",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-058",
+      "disposition": "adopted",
+      "canonical_id": "UAT-058",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-059",
+      "disposition": "adopted",
+      "canonical_id": "UAT-059",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-060",
+      "disposition": "adopted",
+      "canonical_id": "UAT-060",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-061",
+      "disposition": "adopted",
+      "canonical_id": "UAT-061",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-062",
+      "disposition": "adopted",
+      "canonical_id": "UAT-062",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-063",
+      "disposition": "adopted",
+      "canonical_id": "UAT-063",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-064",
+      "disposition": "adopted",
+      "canonical_id": "UAT-064",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "FG-UX-THEME-001",
+      "disposition": "adopted",
+      "canonical_id": "FG-UX-THEME-001",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "P-PROFESSIONAL",
+      "disposition": "adopted",
+      "canonical_id": "P-PROFESSIONAL",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    }
+  ],
+  "review_branch_dispositions": [
+    {
+      "reference": "PR #31",
+      "status": "closed-branch-preserved",
+      "execution_status": "deferred",
+      "milestone": "G1",
+      "condition": "May be reviewed only as design source after P03, design consultation, canonical DESIGN.md, and plan design review; it is not current P04 authority."
+    },
+    {
+      "reference": "PR #32",
+      "status": "closed-branch-preserved",
+      "execution_status": "blocked",
+      "milestone": "G2B",
+      "condition": "A0 relationship intent and cadence work cannot execute or merge before B0 acceptance."
+    },
+    {
+      "reference": "PR #33",
+      "status": "closed-branch-preserved",
+      "execution_status": "blocked",
+      "milestone": "G2B",
+      "condition": "A0 YAML and CLI relationship intent work cannot execute or merge before B0 acceptance."
+    }
+  ]
+}

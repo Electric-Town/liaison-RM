@@ -1,5 +1,8 @@
-schema_version: 1
-status: active
+schema_version: 2
+status: reconciled
+execution_authority: spec/traceability-ownership.json
+delivery_sequence: [G0, G1, G3, B0, G2A, G2B, G2C, A0, POST-A0, G4, G5, G6, G7]
+delivery_rule: B0 acceptance precedes every A0 task; A0 acceptance precedes provider, mobile, AI, MCP, and theme-package delivery. Dependencies may establish seams but never transfer acceptance ownership.
 
 tasks:
   - id: T-R0-001
@@ -25,16 +28,16 @@ tasks:
     title: Validate machine-readable specifications
     contexts: [governance]
     depends_on: [T-R0-002]
-    requirements: []
+    requirements: [LRM-PK-009]
     uat: []
-    outputs: [requirements-validator, uat-validator, feature-gate-validator, traceability-report]
+    outputs: [requirements-validator, uat-validator, feature-gate-validator, traceability-ownership, deterministic-JSON-report, deterministic-Markdown-appendix]
 
   - id: T-R1-001
     release: R1
     title: Create Rust workspace and shared kernel
     contexts: [workspace]
     depends_on: [T-R0-003]
-    requirements: [LRM-PK-001]
+    requirements: []
     uat: []
     outputs: [Cargo-workspace, identifiers, revision-token, clock-port, error-envelope]
 
@@ -115,8 +118,8 @@ tasks:
     title: Implement CSV and vCard import/export foundations
     contexts: [people, connections]
     depends_on: [T-R1-005, T-R1-009]
-    requirements: [LRM-CO-010]
-    uat: [UAT-037]
+    requirements: []
+    uat: []
     outputs: [streaming-import, mapping-preview, duplicate-report, vCard-roundtrip]
 
   - id: T-R1-011
@@ -124,8 +127,8 @@ tasks:
     title: Implement encrypted local backup and isolated restore
     contexts: [workspace, connections]
     depends_on: [T-R1-006, T-R1-007, T-R1-008]
-    requirements: [LRM-CO-008, LRM-CO-009]
-    uat: [UAT-025, UAT-028]
+    requirements: []
+    uat: []
     outputs: [snapshot-manifest, encryption-envelope, verification, isolated-restore]
 
   - id: T-R1-012
@@ -133,8 +136,8 @@ tasks:
     title: Prove Airgap core
     contexts: [packaging]
     depends_on: [T-R1-011]
-    requirements: [LRM-PK-002, LRM-PK-003]
-    uat: [UAT-024, UAT-025]
+    requirements: []
+    uat: []
     outputs: [airgap-feature-graph, dependency-audit, socket-denial-test]
 
   - id: T-R2-001
@@ -358,7 +361,7 @@ tasks:
     title: Implement interactions import and email-metadata contract
     contexts: [interactions, connections]
     depends_on: [T-R2-004, T-R4-002]
-    requirements: [LRM-IN-001, LRM-IN-002, LRM-IN-003, LRM-IN-004]
+    requirements: [LRM-IN-002, LRM-IN-003, LRM-IN-004]
     uat: [UAT-005]
     outputs: [interaction-domain, metadata-contract, initial-provider, counts]
 
@@ -373,10 +376,10 @@ tasks:
 
   - id: T-R5-005
     release: R5
-    title: Implement Meerkat and Monica migration adapters
+    title: Implement Meerkat, Monica, and CRM-in-Markdown migration adapters
     contexts: [people, relationships, interactions, events, reminders]
     depends_on: [T-R5-003, T-R3-005]
-    requirements: []
+    requirements: [LRM-CO-013]
     uat: [UAT-038]
     outputs: [source-readers, anti-corruption-maps, reconciliation-report]
 
@@ -394,8 +397,8 @@ tasks:
     title: Implement signed webhooks and n8n examples
     contexts: [automation]
     depends_on: [T-R6-001]
-    requirements: [LRM-AU-002]
-    uat: [UAT-030]
+    requirements: [LRM-AU-002, LRM-AU-011]
+    uat: [UAT-030, UAT-058]
     outputs: [webhook-domain, delivery-worker, retry-evidence, n8n-templates]
 
   - id: T-R6-003
@@ -412,8 +415,8 @@ tasks:
     title: Implement local and remote model adapters
     contexts: [automation, connections]
     depends_on: [T-R6-003, T-R4-002]
-    requirements: [LRM-AU-006, LRM-AU-007]
-    uat: [UAT-031, UAT-039]
+    requirements: [LRM-AU-006, LRM-AU-007, LRM-AU-010]
+    uat: [UAT-031, UAT-039, UAT-057]
     outputs: [Ollama-adapter, remote-AI-contract, disclosure-preview]
 
   - id: T-R6-005
@@ -421,8 +424,8 @@ tasks:
     title: Implement WASI plugin host and SDK
     contexts: [automation]
     depends_on: [T-R6-001, T-R4-003]
-    requirements: [LRM-AU-008, LRM-AU-009]
-    uat: [UAT-035, UAT-036]
+    requirements: [LRM-AU-008, LRM-AU-009, LRM-L10N-007]
+    uat: [UAT-035, UAT-036, UAT-LOC-003]
     outputs: [WIT-contracts, component-host, capability-manifest, conformance-kit]
 
   - id: T-B0-P00
@@ -431,7 +434,7 @@ tasks:
     rice: {reach: 12, impact: 1, confidence: 0.95, effort_weeks: 1.5, score: 7.60}
     contexts: [product, governance, all]
     depends_on: [T-R0-003]
-    requirements: [LRM-AP-001, LRM-A0-001]
+    requirements: [LRM-PK-007, LRM-PK-009]
     uat: []
     outputs: [accepted-ADRs, working-state-contract, schema-inventory, claim-corrections, branch-disposition]
 
@@ -451,8 +454,8 @@ tasks:
     rice: {reach: 12, impact: 3, confidence: 0.85, effort_weeks: 4, score: 7.65}
     contexts: [workspace]
     depends_on: [T-B0-P01]
-    requirements: [LRM-WS-009]
-    uat: [UAT-042]
+    requirements: [LRM-WS-001, LRM-WS-002, LRM-WS-009]
+    uat: [UAT-001, UAT-042]
     outputs: [workspace-session, OS-writer-lock, quiescence, session-bound-repositories]
 
   - id: T-B0-P03
@@ -461,19 +464,29 @@ tasks:
     rice: {reach: 12, impact: 3, confidence: 0.80, effort_weeks: 5, score: 5.76}
     contexts: [workspace, people]
     depends_on: [T-B0-P02]
-    requirements: [LRM-WS-010]
-    uat: [UAT-042]
-    outputs: [operation-engine, commit-progress-complete, roll-forward-recovery, fault-matrix]
+    requirements: [LRM-WS-004, LRM-WS-005, LRM-WS-007, LRM-WS-010, LRM-WS-013, LRM-WS-014]
+    uat: [UAT-040, UAT-042]
+    outputs: [operation-engine, per-file-final-preconditions, durable-commit-decision, commit-progress-complete, roll-forward-recovery, migration-dry-run, fault-matrix]
+
+  - id: T-B0-P03D
+    release: B0
+    title: Run design consultation and plan design review before desktop implementation
+    rice: {reach: 8, impact: 2, confidence: 0.80, effort_weeks: 1.5, score: 8.53}
+    contexts: [experience, product]
+    depends_on: [T-B0-P03]
+    requirements: [LRM-UX-012]
+    uat: [UAT-062]
+    outputs: [design-consultation, DESIGN.md, selected-semantic-direction, plan-design-review, P04-plan-amendments]
 
   - id: T-B0-P04
     release: B0
     title: Migrate the desktop to typed React and the semantic design system
     rice: {reach: 8, impact: 2, confidence: 0.80, effort_weeks: 4, score: 3.20}
     contexts: [experience, application]
-    depends_on: [T-B0-P03]
-    requirements: [LRM-UX-009]
-    uat: [UAT-041]
-    outputs: [React-Tauri-client, generated-DTOs, semantic-tokens, Atkinson-provenance, accessibility-ratchet]
+    depends_on: [T-B0-P03D]
+    requirements: [LRM-UX-001, LRM-UX-002, LRM-UX-003, LRM-UX-004, LRM-UX-006, LRM-UX-008, LRM-UX-009, LRM-UX-012, LRM-L10N-001, LRM-L10N-002, LRM-L10N-003, LRM-L10N-004, LRM-L10N-005, LRM-L10N-006, LRM-L10N-008]
+    uat: [UAT-022, UAT-041, UAT-062, UAT-LOC-001, UAT-LOC-002]
+    outputs: [React-Tauri-client, generated-DTOs, versioned-semantic-token-contract, component-contract, system-light-dark-high_contrast-registry, Atkinson-provenance, accessibility-and-localisation-ratchet]
 
   - id: T-B0-P05
     release: B0
@@ -481,9 +494,9 @@ tasks:
     rice: {reach: 10, impact: 3, confidence: 0.75, effort_weeks: 5, score: 4.50}
     contexts: [people, organisations, profiles, events, workspace-security]
     depends_on: [T-B0-P03]
-    requirements: [LRM-SEC-001, LRM-SEC-002, LRM-EV-007]
-    uat: [UAT-043]
-    outputs: [versioned-schemas, sealed-envelope-types, dietary-operational-view, migration-fixtures]
+    requirements: [LRM-PE-001, LRM-PE-002, LRM-PE-004, LRM-PE-005, LRM-PE-008, LRM-PE-009, LRM-PE-010, LRM-SEC-001, LRM-SEC-002, LRM-EV-007]
+    uat: [UAT-009, UAT-010, UAT-043]
+    outputs: [versioned-schemas, sealed-envelope-types, orthogonal-dietary-facts, dietary-operational-view, migration-fixtures]
 
   - id: T-B0-P06
     release: B0
@@ -491,7 +504,7 @@ tasks:
     rice: {reach: 7, impact: 2, confidence: 0.75, effort_weeks: 4, score: 2.63}
     contexts: [directory, workspace]
     depends_on: [T-B0-P05]
-    requirements: [LRM-DI-001, LRM-DI-002]
+    requirements: [LRM-WS-003, LRM-WS-006, LRM-DI-001, LRM-DI-002]
     uat: [UAT-041, UAT-042]
     outputs: [tolerant-scanner, SQLite-FTS-projection, pagination, scale-fixtures]
 
@@ -511,9 +524,9 @@ tasks:
     rice: {reach: 7, impact: 3, confidence: 0.65, effort_weeks: 6, score: 2.28}
     contexts: [recovery, workspace-security]
     depends_on: [T-B0-P07, T-B0-P02]
-    requirements: [LRM-RC-001, LRM-RC-002]
-    uat: [UAT-043]
-    outputs: [local-checkpoint, encrypted-recovery-package, clean-install-restore]
+    requirements: [LRM-WS-016, LRM-RC-001, LRM-RC-002]
+    uat: [UAT-025, UAT-043, UAT-055]
+    outputs: [local-checkpoint, encrypted-recovery-package, clean-install-restore, authenticated-deletion-replay, purge-safe-compaction]
 
   - id: T-B0-P09
     release: B0
@@ -521,9 +534,9 @@ tasks:
     rice: {reach: 5, impact: 3, confidence: 0.75, effort_weeks: 5, score: 2.25}
     contexts: [directory, people, organisations]
     depends_on: [T-B0-P06, T-B0-P03]
-    requirements: [LRM-DI-001, LRM-DI-002]
-    uat: [UAT-041]
-    outputs: [CSV-preview, source-mapping, duplicate-reconciliation, recoverable-batch]
+    requirements: [LRM-OR-001, LRM-OR-002, LRM-OR-003, LRM-OR-004, LRM-DI-001, LRM-DI-002]
+    uat: [UAT-008, UAT-012, UAT-041]
+    outputs: [Directory-minimum-typed-facts, organisations, locations, effective-memberships, cohort-predicates, CSV-preview, source-mapping, duplicate-reconciliation, recoverable-batch]
 
   - id: T-B0-P10
     release: B0
@@ -531,9 +544,9 @@ tasks:
     rice: {reach: 6, impact: 3, confidence: 0.70, effort_weeks: 7, score: 1.80}
     contexts: [events, profiles, workspace-security]
     depends_on: [T-B0-P07, T-B0-P09]
-    requirements: [LRM-EV-007, LRM-EV-008, LRM-EV-009]
-    uat: [UAT-041]
-    outputs: [Event-domain, cohort-stream, readiness-derivation, sealed-brief, CSV-HTML-delivery]
+    requirements: [LRM-EV-001, LRM-EV-002, LRM-EV-003, LRM-EV-004, LRM-EV-005, LRM-EV-007, LRM-EV-008, LRM-EV-009, LRM-EV-010, LRM-EV-011, LRM-EV-013]
+    uat: [UAT-009, UAT-010, UAT-011, UAT-012, UAT-041]
+    outputs: [Event-domain, Details-Cohort-Attendees-Readiness-Brief-state-machine, immutable-cohort-stream, attendee-lifecycle, ordered-versioned-decision-table, bounded-EventReadinessFollowUp, exact-denominator, sealed-immutable-brief, preview-emitted-byte-equality, negative-disclosure-fixture, CSV-HTML-delivery]
 
   - id: T-B0-P11
     release: B0
@@ -541,9 +554,19 @@ tasks:
     rice: {reach: 6, impact: 3, confidence: 0.75, effort_weeks: 6, score: 2.25}
     contexts: [experience, directory, events, recovery]
     depends_on: [T-B0-P04, T-B0-P08, T-B0-P10]
-    requirements: [LRM-UX-009, LRM-PK-006]
-    uat: [UAT-041, UAT-042, UAT-043]
-    outputs: [Overview, Directory, Events, Health, Settings, Event-Details-state-machine]
+    requirements: [LRM-WS-008, LRM-WS-013, LRM-WS-014, LRM-UX-005, LRM-UX-009, LRM-UX-011, LRM-PK-006]
+    uat: [UAT-041, UAT-042, UAT-043, UAT-050, UAT-062]
+    outputs: [Overview, Directory, Events, Health, Settings, Event-Details-state-machine, settings-preview-diff-rollback, appearance-persistence, interruption-recovery]
+
+  - id: T-B0-PILOT
+    release: B0
+    title: Authorise a real workplace-data pilot independently of synthetic B0 UAT
+    rice: {reach: 2, impact: 3, confidence: 0.70, effort_weeks: 2, score: 2.10}
+    contexts: [product, privacy, events]
+    depends_on: [T-B0-P00]
+    requirements: [LRM-EV-012]
+    uat: []
+    outputs: [data-controller-record, lawful-purpose-record, special-category-condition, DPIA-decision, participant-notice, retention-and-rights-plan, incident-plan, independent-review]
 
   - id: T-B0-ACCEPT
     release: B0
@@ -551,16 +574,91 @@ tasks:
     rice: {reach: 4, impact: 3, confidence: 0.90, effort_weeks: 3, score: 3.60}
     contexts: [product, experience, packaging, security]
     depends_on: [T-B0-P11]
-    requirements: [LRM-PK-006]
-    uat: [UAT-041, UAT-042, UAT-043]
+    requirements: [LRM-PK-006, LRM-PK-008]
+    uat: [UAT-041, UAT-042, UAT-043, UAT-050, UAT-055, UAT-062]
     outputs: [exact-head-evidence, design-review, native-QA, offline-egress-proof, Mac-review-bundle]
+
+  - id: T-A0-P01
+    release: A0
+    title: Implement purpose-bound People, Working With Me, custom fields, tabs, and settings
+    rice: {reach: 5, impact: 2, confidence: 0.65, effort_weeks: 8, score: 0.81}
+    contexts: [workspace, people, profiles, experience]
+    depends_on: [T-B0-ACCEPT]
+    requirements: [LRM-WS-012, LRM-WS-015, LRM-PE-001, LRM-PE-002, LRM-PE-003, LRM-PE-004, LRM-PE-005, LRM-PE-006, LRM-PE-007, LRM-PE-011, LRM-PE-012, LRM-PE-013, LRM-PE-014, LRM-PE-015, LRM-UX-007, LRM-UX-010, LRM-UX-013]
+    uat: [UAT-002, UAT-020, UAT-021, UAT-045, UAT-046, UAT-050, UAT-053, UAT-054, UAT-056, UAT-063]
+    outputs: [purpose-bound-contexts, Working-With-Me, merge-split-preview, typed-custom-fields, stable-tabs, safe-rehoming, density-text-scale-motion-palette, settings-round-trip]
+
+  - id: T-A0-P02
+    release: A0
+    title: Implement notes, interactions, important dates, timeline, search, and saved views
+    rice: {reach: 5, impact: 2, confidence: 0.70, effort_weeks: 7, score: 1.00}
+    contexts: [interactions, people, experience]
+    depends_on: [T-A0-P01]
+    requirements: [LRM-PE-003, LRM-IN-001, LRM-IN-006, LRM-IN-007, LRM-UX-010]
+    uat: [UAT-003, UAT-017, UAT-047, UAT-048, UAT-049]
+    outputs: [manual-interaction, Markdown-note, timeline, last-interaction, important-dates, grant-filtered-search, saved-view-settings]
+
+  - id: T-A0-P03
+    release: A0
+    title: Implement relationship contexts, bounded reminders, reason-only Review, and handoff envelope
+    rice: {reach: 4, impact: 2, confidence: 0.65, effort_weeks: 8, score: 0.65}
+    contexts: [relationships, reminders, review-attention]
+    depends_on: [T-A0-P02]
+    requirements: [LRM-RE-001, LRM-RE-002, LRM-RE-003, LRM-RE-004, LRM-RE-005, LRM-RE-006, LRM-RE-007, LRM-RE-008, LRM-RM-001, LRM-RM-002, LRM-RM-003, LRM-RM-004, LRM-RM-005]
+    uat: [UAT-004, UAT-023, UAT-051, UAT-052]
+    outputs: [relationship-contexts, manual-assessment, derived-freshness, source-linked-reasons, bounded-reminders, reason-only-Review, connector-neutral-handoff]
 
   - id: T-A0-001
     release: A0
     title: Implement and qualify Personal Memory Alpha after B0 acceptance
     rice: {reach: 5, impact: 2, confidence: 0.70, effort_weeks: 8, score: 0.88}
     contexts: [people, profiles, interactions, commitments, review-attention, experience]
-    depends_on: [T-B0-ACCEPT]
-    requirements: [LRM-A0-001, LRM-PE-007]
-    uat: [UAT-020, UAT-044]
+    depends_on: [T-A0-P01, T-A0-P02, T-A0-P03]
+    requirements: [LRM-A0-001]
+    uat: [UAT-044]
     outputs: [profile-editing, configurable-profile-tabs, settings-round-trip, interactions, commitments, reason-only-review, open-loops, A0-evidence]
+
+  - id: T-R5-006
+    release: R5
+    title: Implement denied-network local voice and business-card capture
+    contexts: [interactions, connections, people]
+    depends_on: [T-A0-001]
+    requirements: [LRM-IN-008, LRM-CO-014]
+    uat: [UAT-059, UAT-060]
+    outputs: [local-voice-proposal, local-OCR-proposal, source-provenance, duplicate-preview, confirmation, retention]
+
+  - id: T-R5-007
+    release: R5
+    title: Implement source-linked meeting briefings and bounded participation metrics
+    contexts: [interactions, events, people]
+    depends_on: [T-A0-001, T-R5-002, T-R5-003]
+    requirements: [LRM-IN-005, LRM-EV-006]
+    uat: [UAT-006, UAT-013]
+    outputs: [source-linked-meeting-briefing, participation-count-policy, inspectable-event-links, coverage-limits]
+
+  - id: T-R6-006
+    release: R6
+    title: Implement connector-neutral relationship follow-up handoff
+    contexts: [automation, reminders]
+    depends_on: [T-A0-001, T-R6-001]
+    requirements: [LRM-AU-012]
+    uat: [UAT-061]
+    outputs: [grant-scoped-handoff, read-only-external-status, revoke-evidence, negative-task-surface]
+
+  - id: T-UX-THEME-001
+    release: POST-A0
+    title: Implement sandboxed declarative theme packages after A0
+    contexts: [experience, security, packaging]
+    depends_on: [T-A0-001]
+    requirements: [LRM-UX-014]
+    uat: [UAT-064]
+    outputs: [theme-manifest-schema, checksum-and-licence-validation, no-code-no-network-denial, safe-preview, conformance-label, rollback]
+
+  - id: T-REL-001
+    release: R1
+    title: Prepare milestone-scoped public release evidence and support paths
+    contexts: [packaging, governance, support]
+    depends_on: [T-B0-ACCEPT]
+    requirements: [LRM-PK-008]
+    uat: []
+    outputs: [install-path, recovery-path, migration-notes, accessibility-evidence, privacy-security-notes, support-path, contribution-path, checksums, provenance, known-issues]
