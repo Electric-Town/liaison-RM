@@ -1,0 +1,356 @@
+schema_version: 1
+status: draft
+
+gates:
+  - id: FG-R0-001
+    release: R0
+    name: Repository governance active
+    blocks: [merge, release]
+    criteria:
+      - Governance, contribution, security, conduct, DDD, knowledge, UX, and content standards are reviewed.
+      - Pull-request and repository policy checks run in CI.
+      - Protected principles are recorded.
+    evidence:
+      - .github/workflows/policy.yml
+      - AGENTS.md
+      - GOVERNANCE.md
+
+  - id: FG-R0-002
+    release: R0
+    name: Product specification traceable
+    blocks: [R1]
+    criteria:
+      - Normative specification, context map, ubiquitous language, threat model, requirements, UAT, gates, and implementation plan exist.
+      - Every R1 task names requirements and UAT.
+      - Architecture decisions cover Rust/Tauri, canonical files, provider contracts, and build profiles.
+    evidence:
+      - SPEC.md
+      - spec/requirements.json
+      - spec/uat-cases.json
+      - docs/decisions/
+
+  - id: FG-R1-001
+    release: R1
+    name: Canonical workspace round trip
+    blocks: [R1-release]
+    criteria:
+      - Create, open, edit, close, and reopen preserve all supported fields.
+      - Unknown extensions and sections survive.
+      - Stable IDs survive filename changes.
+    evidence_required:
+      - unit tests
+      - fixture diff report
+      - UAT-001
+      - UAT-002
+
+  - id: FG-R1-002
+    release: R1
+    name: Crash-safe writes and repair
+    blocks: [R1-release]
+    criteria:
+      - Interrupted writes leave old valid state or recoverable journal.
+      - Duplicate IDs, invalid schemas, revision regressions, and unsafe paths are reported.
+      - Repair creates backup and preview.
+    evidence_required: [fault-injection tests, UAT-040, recovery knowledge article]
+
+  - id: FG-R1-003
+    release: R1
+    name: Projection rebuild complete
+    blocks: [R1-release]
+    criteria:
+      - Deleting projections and rebuilding preserves semantic data.
+      - Reconciliation report covers all canonical records and stream partitions.
+      - Projection failure never rolls back canonical success.
+    evidence_required: [rebuild integration test, reconciliation fixture]
+
+  - id: FG-R1-004
+    release: R1
+    name: CLI contract stable for R1
+    blocks: [R1-release]
+    criteria:
+      - Workspace, person, import/export, backup, restore, validate, rebuild, repair, and doctor commands are documented.
+      - Human and JSON outputs are tested.
+      - Mutations support dry-run and deterministic exit codes.
+    evidence_required: [CLI contract tests, UAT-001, UAT-025]
+
+  - id: FG-R1-005
+    release: R1
+    name: Offline backup recoverable
+    blocks: [R1-release]
+    criteria:
+      - Snapshot is encrypted locally.
+      - Manifest covers records, streams, and attachments.
+      - Isolated restore verifies before activation.
+    evidence_required: [restore exercise, corrupted-backup test, UAT-025]
+
+  - id: FG-R2-001
+    release: R2
+    name: Accessible desktop core
+    blocks: [R2-release]
+    criteria:
+      - Core UAT is keyboard-completable with visible focus.
+      - Screen-reader, 200 percent zoom, reflow, reduced motion, and status-message evidence exists.
+      - Critical and serious applicable defects are resolved or release is blocked.
+    evidence_required: [accessibility report, UAT-022]
+
+  - id: FG-R2-002
+    release: R2
+    name: Graph has semantic parity
+    blocks: [R2-release]
+    criteria:
+      - Graph nodes, edges, filters, detail, and supported actions have table or tree equivalents.
+      - No relationship task requires pointer or canvas interaction.
+    evidence_required: [parity test, UAT-023]
+
+  - id: FG-R2-003
+    release: R2
+    name: Interruption recovery
+    blocks: [R2-release]
+    criteria:
+      - Profile and dashboard workflows preserve drafts and clear resume points.
+      - Restart and navigation do not duplicate or discard work silently.
+    evidence_required: [UAT-003, restart integration test]
+
+  - id: FG-R2-004
+    release: R2
+    name: Cross-platform packages smoke tested
+    blocks: [R2-release]
+    criteria:
+      - Ubuntu/Flatpak, macOS, and Windows artifacts install and launch.
+      - Workspace create/open and upgrade smoke tests pass.
+      - Uninstall does not silently delete user-selected workspace.
+    evidence_required: [platform CI matrix, installer logs, provenance]
+
+  - id: FG-R2-005
+    release: R2
+    name: Airgap artifact proven
+    blocks: [Airgap-release]
+    criteria:
+      - Network clients and listeners are absent from the Airgap dependency graph.
+      - Flatpak requests no network permission.
+      - Runtime DNS, loopback, and remote socket denial tests pass.
+    evidence_required: [binary/dependency inspection, UAT-024, Flatpak manifest]
+
+  - id: FG-R3-001
+    release: R3
+    name: Dietary model complete
+    blocks: [R3-release]
+    criteria:
+      - Required kinds and coverage states are modelled as typed values.
+      - Empty is never interpreted as verified none.
+      - Operational instruction and detailed note use separate disclosure controls.
+    evidence_required: [domain tests, schema tests, UAT-009, UAT-010]
+
+  - id: FG-R3-002
+    release: R3
+    name: Cohort selection reproducible
+    blocks: [R3-release]
+    criteria:
+      - Organisation, location, department, team, cost centre, role, group, and attendance filters are supported.
+      - Active filters are visible and keyboard removable.
+      - Saved cohorts retain predicate definitions and revision context.
+    evidence_required: [UAT-012, filter contract tests]
+
+  - id: FG-R3-003
+    release: R3
+    name: Readiness reconciles all attendees
+    blocks: [R3-release]
+    criteria:
+      - Every selected attendee appears in exactly one outcome.
+      - Unknown identities are explicit.
+      - Counts reconcile to cohort total.
+    evidence_required: [property tests, UAT-009]
+
+  - id: FG-R3-004
+    release: R3
+    name: Catering export is least disclosure
+    blocks: [R3-release]
+    criteria:
+      - Export contains only authorised operational fields.
+      - Source revisions and stale-state detection are present.
+      - Restricted diagnostic detail and private overlays are absent.
+    evidence_required: [disclosure fixture, UAT-010, UAT-011]
+
+  - id: FG-R3-005
+    release: R3
+    name: Workplace workflow observed
+    blocks: [R3-release]
+    criteria:
+      - Representative receptionist or event users complete cohort-to-brief flow without guidance.
+      - Interruptions, errors, missing information, and recovery are recorded.
+      - Findings update requirements, UAT, and knowledge.
+    evidence_required: [redacted observation report, issue links]
+
+  - id: FG-R4-001
+    release: R4
+    name: Provider registration conforms
+    blocks: [provider-release]
+    criteria:
+      - Descriptor declares contracts, destinations, secrets, limits, consistency, and safe modes.
+      - Conformance suite passes supported claims.
+      - Evidence version and expiry are recorded.
+    evidence_required: [provider report, descriptor validation]
+
+  - id: FG-R4-002
+    release: R4
+    name: Grant and egress enforcement
+    blocks: [Connected-local-release]
+    criteria:
+      - No provider data access occurs before an active grant.
+      - Destination, redirect, operation, field/data class, record scope, schedule, and expiry are enforced.
+      - Revocation blocks later jobs.
+    evidence_required: [UAT-026, redirect test, DNS-rebinding test]
+
+  - id: FG-R4-003
+    release: R4
+    name: Backup verified by restore
+    blocks: [provider-backup-release]
+    criteria:
+      - Encryption occurs before upload.
+      - Remote corruption and omission are detected.
+      - Isolated restore succeeds before backup is labelled recoverable.
+    evidence_required: [UAT-028, restore evidence]
+
+  - id: FG-R4-004
+    release: R4
+    name: Shared operations authenticated
+    blocks: [sharing-release]
+    criteria:
+      - Operations verify workspace, actor, device, signature, chain, schema, authorisation, and revision.
+      - Replay and revoked-device tests pass.
+      - Missing dependencies are quarantined.
+    evidence_required: [operation conformance tests, UAT-019]
+
+  - id: FG-R4-005
+    release: R4
+    name: Conflict semantics safe
+    blocks: [sharing-release]
+    criteria:
+      - Compatible independent changes merge deterministically.
+      - Same-invariant changes create inspectable conflicts.
+      - Latest wall-clock timestamp is not a universal resolver.
+    evidence_required: [two-device conflict suite, UAT-019]
+
+  - id: FG-R4-006
+    release: R4
+    name: Private overlays non-disclosing
+    blocks: [sharing-release]
+    criteria:
+      - Unauthorised materialisation, search, export, provider, AI, count, error, and existence channels reveal no overlay.
+    evidence_required: [non-interference tests, UAT-007]
+
+  - id: FG-R4-007
+    release: R4
+    name: Provider mode labels honest
+    blocks: [provider-release]
+    criteria:
+      - UI and CLI distinguish backup, single-writer publication, transport, and multi-writer sync.
+      - Advertised mode never exceeds current conformance evidence.
+    evidence_required: [UAT-027]
+
+  - id: FG-R5-001
+    release: R5
+    name: Contact sync selected and lossless
+    blocks: [contacts-provider-release]
+    criteria:
+      - Only granted saved views/groups synchronise.
+      - Stable UIDs, ETags/preconditions, and unknown vCard fields are preserved.
+      - Conflicts are inspectable.
+    evidence_required: [UAT-037, vCard round-trip suite]
+
+  - id: FG-R5-002
+    release: R5
+    name: Calendar recurrence identity correct
+    blocks: [calendar-provider-release]
+    criteria:
+      - UID, recurrence ID, source revision, update, and tombstone semantics pass fixtures.
+      - Refresh is idempotent.
+    evidence_required: [recurrence suite]
+
+  - id: FG-R5-003
+    release: R5
+    name: Email default is metadata only
+    blocks: [email-provider-release]
+    criteria:
+      - Default grant retrieves no body or attachment.
+      - Counts show source, time range, and completeness limitation.
+      - Incremental refresh is idempotent.
+    evidence_required: [UAT-005, network payload fixtures]
+
+  - id: FG-R5-004
+    release: R5
+    name: Facilities purpose bounded
+    blocks: [facilities-release]
+    criteria:
+      - Unknown badge mappings require authorised confirmation.
+      - Retention and deletion tests pass.
+      - Productivity, performance, compliance, and risk scoring are absent and denied.
+    evidence_required: [UAT-014, UAT-015, UAT-016]
+
+  - id: FG-R5-005
+    release: R5
+    name: Legacy migration reconciled
+    blocks: [migration-release]
+    criteria:
+      - Meerkat and Monica imports report mapped, transformed, unresolved, and unsupported data.
+      - Source provenance remains.
+      - Re-import is idempotent.
+    evidence_required: [UAT-038, synthetic fixtures]
+
+  - id: FG-R6-001
+    release: R6
+    name: Local API least privilege
+    blocks: [automation-release]
+    criteria:
+      - Loopback default, scoped expiring tokens, operation denial, and audit pass.
+      - No raw database or workspace path API exists.
+    evidence_required: [UAT-029]
+
+  - id: FG-R6-002
+    release: R6
+    name: MCP source linked and write staged
+    blocks: [MCP-release]
+    criteria:
+      - Reads include sources and grants.
+      - Writes produce inspectable proposals by default.
+      - Out-of-scope proposals are rejected before domain execution.
+    evidence_required: [UAT-032, UAT-033]
+
+  - id: FG-R6-003
+    release: R6
+    name: Local model path independent
+    blocks: [AI-release]
+    criteria:
+      - Ollama-compatible workflow completes with network denied and no remote account.
+      - Model output remains untrusted and validated.
+    evidence_required: [UAT-031]
+
+  - id: FG-R6-004
+    release: R6
+    name: Remote AI disclosure exact
+    blocks: [remote-AI-release]
+    criteria:
+      - Grant and preview name provider, endpoint, purpose, records, fields, operation, retention, and expiry.
+      - Preview fixture equals actual outbound payload.
+      - Expired grant cannot be reused.
+    evidence_required: [UAT-039]
+
+  - id: FG-R6-005
+    release: R6
+    name: Plugin sandbox denied by default
+    blocks: [plugin-release]
+    criteria:
+      - WIT contract and manifest version validate.
+      - Undeclared filesystem, network, secret, and record access fail.
+      - Plugin receives no raw database handle.
+    evidence_required: [UAT-035, resource-limit tests]
+
+  - id: FG-REL-001
+    release: all
+    name: Release evidence complete
+    blocks: [release]
+    criteria:
+      - Changelog, migration, known issues, installation, upgrade, backup, restore, rollback, and recovery knowledge are current.
+      - Artifacts have checksums and provenance linked to source commit.
+      - Claims match test evidence and unresolved risks are disclosed.
+    evidence_required: [release checklist, signed checksums, knowledge validation]

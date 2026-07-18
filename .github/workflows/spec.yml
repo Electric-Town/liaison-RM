@@ -1,0 +1,39 @@
+name: Product specification
+
+on:
+  pull_request:
+    paths:
+      - "SPEC.md"
+      - "AI_BUILD_INSTRUCTIONS.md"
+      - "docs/architecture/**"
+      - "docs/decisions/**"
+      - "docs/product/**"
+      - "docs/security/**"
+      - "spec/**"
+      - "scripts/check_spec.py"
+      - ".github/workflows/spec.yml"
+  push:
+    branches: [main]
+    paths:
+      - "SPEC.md"
+      - "AI_BUILD_INSTRUCTIONS.md"
+      - "docs/architecture/**"
+      - "docs/decisions/**"
+      - "docs/product/**"
+      - "docs/security/**"
+      - "spec/**"
+      - "scripts/check_spec.py"
+      - ".github/workflows/spec.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/check_spec.py

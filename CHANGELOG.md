@@ -8,11 +8,15 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 - Repository governance, contribution, knowledge, content-quality, architecture, and user-experience review standards.
 - Pull-request evidence requirements and repository policy checks.
+- Product, domain, security, platform, sharing, provider-neutral connection, and release specifications.
+- Machine-readable requirements, persona UAT cases, feature gates, and implementation tasks.
+- Interactive desktop and mobile concept with six committed review screens and browser-level interaction and accessibility smoke tests.
 
 ### Changed
 
-- The repository README now defines Liaison RM as a local-authoritative, open-file relationship manager.
+- The repository README defines Liaison RM as a local-authoritative, open-file relationship manager.
 
 ### Security
 
 - Documented the prohibition on undeclared network requests, hidden telemetry, secret material in canonical files, and provider or plugin access without an explicit grant.
+- Defined separate Airgap and Connected-local build profiles and least-disclosure handling for sensitive relationship and workplace data.
