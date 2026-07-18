@@ -1,0 +1,65 @@
+name: Provider contracts
+
+on:
+  pull_request:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "adapters/object-store-local/**"
+      - "adapters/provider-registry-memory/**"
+      - "contexts/connections/**"
+      - "crates/liaison-provider-sdk/**"
+      - "interfaces/wit/**"
+      - "providers/**"
+      - "scripts/check_providers.py"
+      - "scripts/check_wit_contract.py"
+      - ".github/workflows/providers.yml"
+  push:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "adapters/object-store-local/**"
+      - "adapters/provider-registry-memory/**"
+      - "contexts/connections/**"
+      - "crates/liaison-provider-sdk/**"
+      - "interfaces/wit/**"
+      - "providers/**"
+      - "scripts/check_providers.py"
+      - "scripts/check_wit_contract.py"
+      - ".github/workflows/providers.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/check_architecture.py
+      - run: python scripts/check_providers.py
+      - run: python scripts/check_wit_contract.py
+
+  conformance:
+    name: Provider conformance (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show toolchain
+        run: rustc --version --verbose
+      - name: Check formatting
+        run: cargo fmt --all --check
+      - name: Check provider packages
+        run: cargo check -p liaison-connections -p liaison-provider-registry-memory -p liaison-object-store-local -p liaison-provider-sdk --all-targets --all-features --locked
+      - name: Lint provider packages
+        run: cargo clippy -p liaison-connections -p liaison-provider-registry-memory -p liaison-object-store-local -p liaison-provider-sdk --all-targets --all-features --locked -- -D warnings
+      - name: Test provider packages
+        run: cargo test -p liaison-connections -p liaison-provider-registry-memory -p liaison-object-store-local -p liaison-provider-sdk --all-features --locked

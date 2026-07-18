@@ -1,12 +1,12 @@
-# Liaison RM interaction prototype
+# Liaison RM interaction prototypes
 
-This directory contains the reviewable interaction prototype used to establish information architecture before the production Tauri application is implemented.
+This directory contains reviewable interaction artifacts used to establish information architecture before production interfaces are declared complete.
 
-The prototype is deliberately static. It demonstrates navigation, profile tabs, event dietary readiness, network graph and semantic table modes, feature gates, keyboard interaction, responsive layout, reduced-motion behaviour, and local-authority messaging. It does not claim production accessibility, privacy, security, or platform conformance.
+The prototypes are deliberately static. They demonstrate navigation, profile tabs, event dietary readiness, network graph and semantic table modes, feature gates, reason-only review, purpose-specific profile readiness, keyboard interaction, responsive layout, reduced-motion behaviour, and local-authority messaging. They do not claim production accessibility, privacy, security, or platform conformance.
 
-Open [`liaison-rm-review.html`](liaison-rm-review.html) in a browser to exercise the interaction model.
+Open [`liaison-rm-review.html`](liaison-rm-review.html) in a browser to exercise the original application concept.
 
-## Desktop screens
+## Core application screens
 
 ### Today
 
@@ -28,23 +28,42 @@ Open [`liaison-rm-review.html`](liaison-rm-review.html) in a browser to exercise
 
 ![Settings and feature gates](screens/settings.svg)
 
-## Mobile screen
+### Mobile dashboard
 
 ![Mobile dashboard](screens/mobile-dashboard.svg)
+
+## Relationship memory and attention screens
+
+### Reason-only daily review
+
+![Reason-only relationship review](screens/review-reasons.svg)
+
+### Purpose-specific profile readiness
+
+![Purpose-specific profile readiness](screens/profile-readiness.svg)
+
+### Low-capacity mobile review
+
+![Low-capacity mobile review](screens/review-mobile.svg)
 
 ## Review focus
 
 Reviewers should check:
 
 - whether the next action is clear without relying on colour;
+- whether every surfaced person has a factual explanation;
+- whether infrequent contact is kept separate from relationship value;
 - whether the interface supports interruption recovery and low-capacity review;
+- whether unused Topic Packs avoid creating universal completeness pressure;
 - whether sensitive dietary information is separated from operational catering output;
 - whether graph information has an equivalent semantic table;
 - whether settings explain local, Airgap, and Connected-local behaviour accurately;
 - whether the layout remains usable at 390 CSS pixels and with text expansion;
 - whether wording avoids guilt, gamification, sales language, and unsupported claims.
 
-## Running the prototype tests
+## Validation
+
+The original interaction concept uses:
 
 ```bash
 python -m pip install playwright==1.57.0
@@ -52,10 +71,11 @@ python -m playwright install chromium
 python scripts/test_prototype.py
 ```
 
-For a system Chromium installation:
+The relationship model and its three additional SVG screens use:
 
 ```bash
-CHROMIUM_PATH=/usr/bin/chromium python scripts/test_prototype.py
+python -m pip install PyYAML==6.0.2
+python scripts/check_relationship_model.py
 ```
 
-The test parses all six committed SVG screens, verifies their dimensions and accessible titles/descriptions, then checks routes, focus, labels, tabs, event coverage, graph/table equivalence, feature gates, mobile navigation, and horizontal overflow in Chromium. The images are reviewer evidence, not production conformance evidence.
+The images are reviewer evidence, not production conformance evidence.
