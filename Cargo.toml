@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "apps/cli",
+    "adapters/backup-local",
     "adapters/object-store-local",
     "adapters/provider-registry-memory",
     "adapters/vault-markdown",
