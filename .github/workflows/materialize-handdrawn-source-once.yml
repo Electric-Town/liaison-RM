@@ -1,16 +1,16 @@
 name: Materialize hand-drawn CRM source once
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches: [main]
+  push:
+    branches: [feat/handdrawn-crm-baseline]
+    paths:
+      - ".github/.crm-source-v2/READY"
 
 permissions:
   contents: write
 
 jobs:
   materialize:
-    if: github.head_ref == 'feat/handdrawn-crm-baseline'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -22,7 +22,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat .github/.handdrawn-payload/part* | tr -d '\r\n' | base64 --decode > /tmp/handdrawn-crm-source.tar.gz
+          cat .github/.crm-source-v2/part* | tr -d '\r\n' | base64 --decode > /tmp/handdrawn-crm-source.tar.gz
+          echo '890b88324d3fce3b61a76809aeb1b826233a59b6bb8f85055f323ae0ce88a593  /tmp/handdrawn-crm-source.tar.gz' | sha256sum -c -
           gzip -t /tmp/handdrawn-crm-source.tar.gz
           if tar -tzf /tmp/handdrawn-crm-source.tar.gz | grep -E '(^/|(^|/)\.\.(/|$))'; then
             echo 'unsafe archive path' >&2
@@ -34,6 +35,7 @@ jobs:
         run: |
           set -euo pipefail
           tar -xzf /tmp/handdrawn-crm-source.tar.gz -C "$GITHUB_WORKSPACE"
+          rm -rf .github/.crm-source-v2
           rm -rf .github/.handdrawn-payload
           rm -f .github/workflows/export-worktree-once.yml
           rm .github/workflows/materialize-handdrawn-source-once.yml
@@ -47,8 +49,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          test ! -e .github/.crm-source-v2
           test ! -e .github/.handdrawn-payload
           test ! -e .github/workflows/export-worktree-once.yml
+          python scripts/check_crm_baseline.py
+          python scripts/check_desktop_shell.py
           python scripts/check_architecture.py
           python scripts/check_repository.py
           python scripts/check_spec.py
