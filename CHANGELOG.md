@@ -25,6 +25,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - A version-controlled public About-description and repository-topic recommendation.
 - A project-context workflow that validates repository links/content policy and machine-readable product specifications together.
 - Versioned locale-catalog architecture with an `en-IE` source catalogue, `en-XA` expansion pseudolocale, draft Irish, Japanese, and Brazilian Portuguese fixtures, Unicode and placeholder validation, human-review gates, and release-evidence guidance.
+- Windows desktop packaging: an NSIS installer target (per-user install, embedded WebView2 bootstrapper) and a `windows-2022` CI workflow that checks, lints, tests, builds, and checksums the desktop bundle.
 
 ### Changed
 
