@@ -15,10 +15,12 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Cross-platform Rust formatting, checking, Clippy, domain, adapter, CLI, architecture, repository, and specification tests.
 - Provider-neutral Connections context, `object-store@1`, local-folder reference adapter, WIT contract, and cross-platform conformance suite.
 - Local Tauri desktop alpha for workspace creation, People capture, validation, accessible reflow, and universal macOS review bundles.
+- Comprehensive public README, project handoff, status, development, documentation index, repository metadata contract, and coding-agent entry points.
 
 ### Changed
 
-- The repository README defines Liaison RM as a local-authoritative, open-file relationship manager.
+- The repository README now documents the product model, personas, architecture, storage, release profiles, provider and sharing boundaries, development commands, status, and claim discipline.
+- Agent instructions now require the project handoff and current status before task selection.
 
 ### Fixed
 
