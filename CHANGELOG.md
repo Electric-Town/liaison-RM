@@ -18,6 +18,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Topic Pack, field-state, profile-readiness, and Review Policy examples, schemas, validation, and three review screens.
 - Identity and Profiles domain types for Topic Packs, explicit information states, sealed sensitive values, Purpose Definitions, and purpose-specific readiness.
 - Review and Attention reason-only policies, hard suppressions, explainable queue items, and capacity-bounded queue construction.
+- Versioned locale catalogs, an expansion pseudolocale, Unicode and placeholder validation, and human-review gates for Irish, Japanese, and Brazilian Portuguese.
 
 ### Changed
 
