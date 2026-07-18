@@ -1,0 +1,24 @@
+name: Export worktree once
+
+on:
+  push:
+    branches: [feat/handdrawn-crm-baseline]
+    paths:
+      - ".github/workflows/export-worktree-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: liaison-worktree
+          include-hidden-files: true
+          retention-days: 1
+          path: |
+            .
+            !.git/**
