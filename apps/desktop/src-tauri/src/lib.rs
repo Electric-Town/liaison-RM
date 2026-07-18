@@ -86,11 +86,13 @@ fn initialise_workspace(request: InitialiseWorkspaceRequest) -> Result<Workspace
 }
 
 #[tauri::command]
+#[allow(clippy::needless_pass_by_value)] // Tauri commands must own their deserialized arguments.
 fn open_workspace(path: String) -> Result<WorkspaceView, String> {
     open_workspace_impl(&path)
 }
 
 #[tauri::command]
+#[allow(clippy::needless_pass_by_value)] // Tauri commands must own their deserialized arguments.
 fn list_people(workspace_path: String) -> Result<Vec<PersonView>, String> {
     list_people_impl(&workspace_path)
 }
@@ -101,6 +103,7 @@ fn create_person(request: CreatePersonRequest) -> Result<PersonView, String> {
 }
 
 #[tauri::command]
+#[allow(clippy::needless_pass_by_value)] // Tauri commands must own their deserialized arguments.
 fn validate_workspace(path: String) -> Result<ValidationView, String> {
     validate_workspace_impl(&path)
 }
@@ -108,8 +111,7 @@ fn validate_workspace(path: String) -> Result<ValidationView, String> {
 fn default_workspace_path_impl() -> PathBuf {
     let home = std::env::var_os("HOME")
         .or_else(|| std::env::var_os("USERPROFILE"))
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from("."));
+        .map_or_else(|| PathBuf::from("."), PathBuf::from);
     home.join("Documents").join("Liaison RM")
 }
 

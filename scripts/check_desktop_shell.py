@@ -136,7 +136,7 @@ def main() -> int:
     if "textContent" not in javascript or "innerHTML =" not in javascript:
         errors.append("desktop JavaScript must use safe text rendering and a fixed static template")
 
-    for icon in ["32x32.png", "128x128.png", "128x128@2x.png", "icon.icns"]:
+    for icon in ["32x32.png", "128x128.png", "128x128@2x.png", "icon.icns", "icon.ico"]:
         if not (TAURI / "icons" / icon).is_file():
             errors.append(f"desktop icon is missing: {icon}")
 

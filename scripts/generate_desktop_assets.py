@@ -42,13 +42,23 @@ def write_assets(destination: Path) -> None:
     base_icon(128).save(destination / "128x128.png", format="PNG", optimize=False)
     base_icon(256).save(destination / "128x128@2x.png", format="PNG", optimize=False)
     base_icon(1024).save(destination / "icon.icns", format="ICNS")
+    # Windows Resource icon required by tauri-build. Use uncompressed BMP
+    # entries so the output is byte-identical across platforms (PNG entries
+    # would vary with the host zlib) and stays reproducible under --check.
+    ico_sizes = [16, 24, 32, 48, 64, 128, 256]
+    base_icon(256).save(
+        destination / "icon.ico",
+        format="ICO",
+        bitmap_format="bmp",
+        sizes=[(size, size) for size in ico_sizes],
+    )
 
 
 def check_assets() -> int:
     with tempfile.TemporaryDirectory() as temporary:
         generated = Path(temporary)
         write_assets(generated)
-        expected = ["32x32.png", "128x128.png", "128x128@2x.png", "icon.icns"]
+        expected = ["32x32.png", "128x128.png", "128x128@2x.png", "icon.icns", "icon.ico"]
         mismatches = [
             name for name in expected
             if not (DESTINATION / name).is_file()

@@ -20,6 +20,10 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 - The repository README defines Liaison RM as a local-authoritative, open-file relationship manager.
 
+### Fixed
+
+- Desktop alpha now compiles and lints cleanly across Linux, macOS, and Windows: Tauri command arguments acknowledge required ownership, the default workspace path uses `map_or_else`, and a deterministic Windows `icon.ico` resource is generated for `tauri-build`.
+
 ### Security
 
 - Documented the prohibition on undeclared network requests, hidden telemetry, secret material in canonical files, and provider or plugin access without an explicit grant.
