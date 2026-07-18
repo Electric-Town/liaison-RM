@@ -27,6 +27,8 @@ Review artifacts are committed under:
 
 The separate [installed baseline QA record](installed-baseline-qa-2026-07-18.md) captures the native argument-contract failure and version/build-profile mismatches observed in the pre-P01 installed bundle.
 
+The [P01 native QA record](p01-native-qa-2026-07-18.md) binds the corrected Workspace/Person/Health workflow to an exact Apple Silicon source commit and executable checksum while keeping signing, universal packaging, relaunch restoration, network, accessibility, and release gates open.
+
 The browser fixture exercises interface behavior with a deterministic fake Tauri command bridge. It does not replace the native Rust, filesystem, package, signature, or clean-machine tests.
 
 ## Installed review observation

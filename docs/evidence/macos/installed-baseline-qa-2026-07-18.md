@@ -4,6 +4,8 @@ Status: **failed baseline; not release evidence**
 
 This record captures the installed application that existed before the P01 composition-root build. It explains the native defect P01 must eliminate and does not claim that P01 has passed installed-app QA.
 
+The later [P01 native QA record](p01-native-qa-2026-07-18.md) proves the corrected narrow workflow on an exact Apple Silicon build; it does not turn this baseline artifact into a passing build.
+
 ## Artifact observed
 
 - bundle: `/Applications/Liaison RM.app`;
