@@ -1,15 +1,15 @@
 # Liaison RM instructions for GitHub Copilot
 
-The normative instructions are in [`AGENTS.md`](../AGENTS.md). The complete product and engineering handoff is in [`PROJECT_CONTEXT.md`](../PROJECT_CONTEXT.md).
+Read `AGENTS.md`, `PROJECT_CONTEXT.md`, `SPEC.md`, and `AI_BUILD_INSTRUCTIONS.md` before editing.
 
-Before editing code:
+Then:
 
-1. Confirm the branch, pull-request base, exact head, and current checks.
-2. Read `AGENTS.md`, `PROJECT_CONTEXT.md`, `SPEC.md`, and `AI_BUILD_INSTRUCTIONS.md`.
-3. Identify the owning bounded context and read its README and tests.
-4. Search decisions, knowledge articles, requirements, UAT cases, feature gates, implementation tasks, and open pull requests.
-5. Distinguish implemented behaviour from planned behaviour.
+- confirm the branch, PR base, exact head, changed files, and checks;
+- identify the owning bounded context;
+- read its README and tests;
+- search decisions, knowledge, requirements, UAT, gates, tasks, and overlapping PRs;
+- distinguish implemented, proposed, blocked, and prohibited behaviour.
 
-Do not put business rules in the UI, provider adapters, connectors, or plugins. Preserve local authority, open canonical formats, Airgap boundaries, explicit grants, unknown-field round trips, accessibility requirements, and exact evidence for completion claims.
+Keep rules in the owning Rust context and application services. Preserve local authority, open formats, grants, Airgap boundaries, accessibility, privacy, compatibility, and recovery.
 
-Leave enough committed context for another contributor to continue without private prompt history.
+Leave committed handoff context. Do not add private prompt history, personal data, credentials, or unsupported completion claims.
