@@ -365,7 +365,7 @@ pub enum BackupError {
 
 #[cfg(test)]
 mod tests {
-    use super::{BackupFile, BackupManifest, BACKUP_FORMAT};
+    use super::{BACKUP_FORMAT, BackupFile, BackupManifest};
     use crate::{BuildProfile, WorkspaceManifest, WorkspaceProfile};
 
     #[test]

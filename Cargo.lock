@@ -1745,11 +1745,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "liaison-backup-local"
+version = "0.1.0"
+dependencies = [
+ "liaison-workspace",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "walkdir",
+]
+
+[[package]]
 name = "liaison-cli"
 version = "0.1.0"
 dependencies = [
  "assert_cmd",
  "clap",
+ "liaison-backup-local",
  "liaison-people",
  "liaison-vault-markdown",
  "liaison-workspace",

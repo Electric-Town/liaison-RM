@@ -106,7 +106,10 @@ impl WorkspaceBackupStore for LocalWorkspaceBackup {
             .collect::<BTreeSet<_>>();
         compare_sets(&actual_files, &expected_files)?;
 
-        let actual_directories = actual_layout.directories.into_iter().collect::<BTreeSet<_>>();
+        let actual_directories = actual_layout
+            .directories
+            .into_iter()
+            .collect::<BTreeSet<_>>();
         let expected_directories = manifest
             .directories
             .iter()
@@ -128,9 +131,9 @@ impl WorkspaceBackupStore for LocalWorkspaceBackup {
                     found: digest,
                 });
             }
-            total_bytes = total_bytes.checked_add(size_bytes).ok_or_else(|| {
-                BackupError::Storage("backup byte count overflowed".to_owned())
-            })?;
+            total_bytes = total_bytes
+                .checked_add(size_bytes)
+                .ok_or_else(|| BackupError::Storage("backup byte count overflowed".to_owned()))?;
         }
 
         Ok(BackupVerificationReport {
@@ -180,9 +183,9 @@ impl WorkspaceBackupStore for LocalWorkspaceBackup {
                     found: digest,
                 });
             }
-            total_bytes = total_bytes.checked_add(size_bytes).ok_or_else(|| {
-                BackupError::Storage("restore byte count overflowed".to_owned())
-            })?;
+            total_bytes = total_bytes
+                .checked_add(size_bytes)
+                .ok_or_else(|| BackupError::Storage("restore byte count overflowed".to_owned()))?;
         }
 
         staging.commit_to(&target)?;
@@ -287,8 +290,7 @@ fn collect_entry(
 fn create_directories(root: &Path, directories: &[String]) -> Result<(), BackupError> {
     for directory in directories {
         let path = root.join(relative_path(directory)?);
-        fs::create_dir_all(&path)
-            .map_err(|error| storage("create snapshot directory", &error))?;
+        fs::create_dir_all(&path).map_err(|error| storage("create snapshot directory", &error))?;
     }
     Ok(())
 }
@@ -449,9 +451,9 @@ fn hexadecimal(bytes: &[u8]) -> String {
 
 fn reject_symlink(path: &Path) -> Result<(), BackupError> {
     match fs::symlink_metadata(path) {
-        Ok(metadata) if metadata.file_type().is_symlink() => Err(BackupError::SymbolicLink(
-            path.display().to_string(),
-        )),
+        Ok(metadata) if metadata.file_type().is_symlink() => {
+            Err(BackupError::SymbolicLink(path.display().to_string()))
+        }
         Ok(_) => Ok(()),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
         Err(error) => Err(storage("inspect path", &error)),
@@ -527,14 +529,19 @@ mod tests {
         let root = tempfile::tempdir()
             .unwrap_or_else(|error| unreachable!("could not create test directory: {error}"));
         let workspace = root.path().join("workspace");
-        fs::create_dir_all(workspace.join(".liaison/projections"))
-            .unwrap_or_else(|error| unreachable!("could not create workspace directories: {error}"));
+        fs::create_dir_all(workspace.join(".liaison/projections")).unwrap_or_else(|error| {
+            unreachable!("could not create workspace directories: {error}")
+        });
         fs::create_dir_all(workspace.join("people"))
             .unwrap_or_else(|error| unreachable!("could not create people directory: {error}"));
-        fs::create_dir_all(workspace.join("organisations"))
-            .unwrap_or_else(|error| unreachable!("could not create empty directory fixture: {error}"));
-        fs::write(workspace.join(".liaison/workspace.yaml"), b"workspace: fixture\n")
-            .unwrap_or_else(|error| unreachable!("could not write manifest fixture: {error}"));
+        fs::create_dir_all(workspace.join("organisations")).unwrap_or_else(|error| {
+            unreachable!("could not create empty directory fixture: {error}")
+        });
+        fs::write(
+            workspace.join(".liaison/workspace.yaml"),
+            b"workspace: fixture\n",
+        )
+        .unwrap_or_else(|error| unreachable!("could not write manifest fixture: {error}"));
         fs::write(workspace.join("people/alex.md"), b"# Alex\n")
             .unwrap_or_else(|error| unreachable!("could not write person fixture: {error}"));
         fs::write(
@@ -557,10 +564,12 @@ mod tests {
             .unwrap_or_else(|error| unreachable!("could not create backup: {error}"));
         assert_eq!(manifest.files.len(), 2);
         assert!(manifest.directories.contains(&"organisations".to_owned()));
-        assert!(!backup
-            .join(PAYLOAD_DIRECTORY)
-            .join(".liaison/projections/cache")
-            .exists());
+        assert!(
+            !backup
+                .join(PAYLOAD_DIRECTORY)
+                .join(".liaison/projections/cache")
+                .exists()
+        );
 
         let verified = adapter
             .verify_snapshot(&backup)

@@ -3,9 +3,8 @@ use liaison_backup_local::LocalWorkspaceBackup;
 use liaison_people::{CreatePerson, ListPeople, PeopleError};
 use liaison_vault_markdown::MarkdownVault;
 use liaison_workspace::{
-    BackupError, BuildProfile, CreateWorkspaceBackup, InitialiseWorkspace,
-    RestoreWorkspaceBackup, ValidateWorkspace, VerifyWorkspaceBackup, WorkspaceError,
-    WorkspaceProfile, WorkspaceStore,
+    BackupError, BuildProfile, CreateWorkspaceBackup, InitialiseWorkspace, RestoreWorkspaceBackup,
+    ValidateWorkspace, VerifyWorkspaceBackup, WorkspaceError, WorkspaceProfile, WorkspaceStore,
 };
 use serde::Serialize;
 use serde_json::json;
@@ -176,7 +175,10 @@ impl CliError {
     const fn code(&self) -> &'static str {
         match self {
             Self::Workspace(WorkspaceError::AlreadyExists) => "workspace.already-exists",
-            Self::Workspace(WorkspaceError::NotFound) => "workspace.not-found",
+            Self::Workspace(WorkspaceError::NotFound)
+            | Self::Backup(BackupError::Workspace(WorkspaceError::NotFound)) => {
+                "workspace.not-found"
+            }
             Self::Workspace(WorkspaceError::UnsupportedSchema { .. }) => {
                 "workspace.unsupported-schema"
             }
@@ -195,6 +197,7 @@ impl CliError {
                 | BackupError::EmptySnapshot
                 | BackupError::DuplicatePath(_)
                 | BackupError::UnsortedManifest
+                | BackupError::PathKindConflict(_)
                 | BackupError::UnsafePath(_)
                 | BackupError::InvalidDigest(_)
                 | BackupError::ManifestMissing(_)
@@ -207,9 +210,6 @@ impl CliError {
             Self::Backup(BackupError::SymbolicLink(_)) => "backup.symbolic-link",
             Self::Backup(BackupError::CleanupFailed { .. } | BackupError::Storage(_)) => {
                 "backup.storage-error"
-            }
-            Self::Backup(BackupError::Workspace(WorkspaceError::NotFound)) => {
-                "workspace.not-found"
             }
             Self::Backup(BackupError::Workspace(_)) => "backup.workspace-error",
             Self::People(PeopleError::AlreadyExists) => "people.already-exists",
@@ -240,6 +240,7 @@ impl CliError {
                 | BackupError::EmptySnapshot
                 | BackupError::DuplicatePath(_)
                 | BackupError::UnsortedManifest
+                | BackupError::PathKindConflict(_)
                 | BackupError::UnsafePath(_)
                 | BackupError::InvalidDigest(_)
                 | BackupError::SymbolicLink(_)
@@ -250,10 +251,7 @@ impl CliError {
                 | BackupError::WorkspaceSchemaMismatch { .. }
                 | BackupError::WorkspaceInvalid(_),
             ) => 5,
-            Self::Workspace(_)
-            | Self::Backup(_)
-            | Self::People(_)
-            | Self::Serialisation(_) => 1,
+            Self::Workspace(_) | Self::Backup(_) | Self::People(_) | Self::Serialisation(_) => 1,
         }
     }
 }
@@ -270,6 +268,8 @@ fn main() -> ExitCode {
     }
 }
 
+// Keeping top-level CLI dispatch together makes application-service composition auditable.
+#[allow(clippy::too_many_lines)]
 fn execute(cli: Cli) -> Result<(), CliError> {
     let vault = MarkdownVault::new();
     let backup_store = LocalWorkspaceBackup::new();
@@ -323,11 +323,8 @@ fn execute(cli: Cli) -> Result<(), CliError> {
         },
         TopLevelCommand::Backup(args) => match args.command {
             BackupCommand::Create { destination } => {
-                let manifest =
-                    CreateWorkspaceBackup::new(vault, backup_store).execute(
-                        &cli.workspace,
-                        &destination,
-                    )?;
+                let manifest = CreateWorkspaceBackup::new(vault, backup_store)
+                    .execute(&cli.workspace, &destination)?;
                 let human = format!(
                     "Created backup for workspace {} at {} with {} file(s)",
                     manifest.workspace_id,
@@ -345,8 +342,8 @@ fn execute(cli: Cli) -> Result<(), CliError> {
                 write_success(cli.output, &human, &report)
             }
             BackupCommand::Restore { backup, target } => {
-                let report = RestoreWorkspaceBackup::new(vault, backup_store)
-                    .execute(&backup, &target)?;
+                let report =
+                    RestoreWorkspaceBackup::new(vault, backup_store).execute(&backup, &target)?;
                 let human = format!(
                     "Restored workspace {} to {} with {} file(s)",
                     report.workspace_id, report.target, report.files_restored
