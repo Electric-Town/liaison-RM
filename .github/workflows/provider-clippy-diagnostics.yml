@@ -1,0 +1,36 @@
+name: Provider Clippy diagnostics
+
+on:
+  pull_request:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "contexts/connections/**"
+      - "adapters/object-store-local/**"
+      - "adapters/provider-registry-memory/**"
+      - "crates/liaison-provider-sdk/**"
+      - ".github/workflows/provider-clippy-diagnostics.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture Clippy output
+        run: |
+          set +e
+          cargo clippy --workspace --all-targets --all-features --locked -- -D warnings > provider-clippy.log 2>&1
+          status=$?
+          echo "$status" > provider-clippy.status
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: provider-clippy-diagnostics
+          path: |
+            provider-clippy.log
+            provider-clippy.status
+          if-no-files-found: error
+          retention-days: 3
