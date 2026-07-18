@@ -12,7 +12,9 @@ liaison-shared-kernel = { path = "../../crates/liaison-shared-kernel" }
 liaison-workspace = { path = "../../contexts/workspace" }
 serde.workspace = true
 serde_yaml.workspace = true
+sha2.workspace = true
 tempfile.workspace = true
+uuid.workspace = true
 walkdir.workspace = true
 
 [dev-dependencies]
