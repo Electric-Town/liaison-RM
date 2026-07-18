@@ -411,6 +411,48 @@ impl ProviderDescriptor {
     }
 }
 
+pub trait ProviderRegistry {
+    fn register(&mut self, descriptor: ProviderDescriptor) -> Result<(), ProviderDomainError>;
+    fn list(&self) -> Result<Vec<ProviderDescriptor>, ProviderDomainError>;
+}
+
+#[derive(Debug)]
+pub struct RegisterProvider<'a, Registry> {
+    registry: &'a mut Registry,
+}
+
+impl<'a, Registry> RegisterProvider<'a, Registry>
+where
+    Registry: ProviderRegistry,
+{
+    #[must_use]
+    pub const fn new(registry: &'a mut Registry) -> Self {
+        Self { registry }
+    }
+
+    pub fn execute(&mut self, descriptor: ProviderDescriptor) -> Result<(), ProviderDomainError> {
+        self.registry.register(descriptor)
+    }
+}
+
+#[derive(Debug)]
+pub struct ListProviders<'a, Registry> {
+    registry: &'a Registry,
+}
+
+impl<'a, Registry> ListProviders<'a, Registry>
+where
+    Registry: ProviderRegistry,
+{
+    #[must_use]
+    pub const fn new(registry: &'a Registry) -> Self {
+        Self { registry }
+    }
+
+    pub fn execute(&self) -> Result<Vec<ProviderDescriptor>, ProviderDomainError> {
+        self.registry.list()
+    }
+}
 fn valid_version_suffix(value: &str) -> bool {
     !value.is_empty()
         && value.split('.').all(|segment| {
