@@ -15,6 +15,8 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Cross-platform Rust formatting, checking, Clippy, domain, adapter, CLI, architecture, repository, and specification tests.
 - Provider-neutral Connections context, `object-store@1`, local-folder reference adapter, WIT contract, and cross-platform conformance suite.
 - Local Tauri desktop alpha for workspace creation, People capture, validation, accessible reflow, and universal macOS review bundles.
+- Review and Attention and Topic Pack contracts that separate relationship intent, factual evidence, maintenance status, purpose-specific readiness, and optional Review Priority.
+- Machine-validated profile-configuration and review-policy schemas with an open YAML example.
 
 ### Changed
 
@@ -31,3 +33,4 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Kept network, provider, SQL, Tauri, and secret-storage dependencies out of the initial Workspace and People domain crates.
 - Provider registration remains inert without a purpose-bound grant, and the local adapter claims backup/single-writer modes only.
 - Desktop alpha compiles no network client, uses a local-only CSP, and separates ad-hoc review artifacts from notarized release artifacts.
+- Review and Attention prohibits employee ranking, social-credit behavior, hidden relationship-value inference, and private-assessment disclosure without an explicit decision.
