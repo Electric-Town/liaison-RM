@@ -3,15 +3,16 @@ name: Apply relationship contracts once
 on:
   push:
     branches: [agent/r3-relationship-topic-packs-review-v5]
-    paths:
-      - ".github/workflows/apply-relationship-contracts-once.yml"
-      - ".bootstrap/relationship/**"
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [agent/r3-relationship-base]
 
 permissions:
   contents: write
 
 jobs:
   apply:
+    if: github.event_name == 'push' || github.head_ref == 'agent/r3-relationship-topic-packs-review-v5'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -33,5 +34,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git am /tmp/relationship.patch
           git rm -r .bootstrap/relationship .github/workflows/apply-relationship-contracts-once.yml
+          rm -f .bootstrap/relationship-trigger
+          git add -A
           git commit -m "chore: remove relationship contract staging files"
           git push origin HEAD:agent/r3-relationship-topic-packs-review-v5
