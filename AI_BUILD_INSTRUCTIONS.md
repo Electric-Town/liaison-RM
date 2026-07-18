@@ -13,13 +13,14 @@ For each task:
 1. `AGENTS.md`
 2. `PROJECT_CONTEXT.md`
 3. `docs/product/working-state-delivery.md`
-4. `SPEC.md`
-5. owning context README and domain tests
-6. related decision records
-7. related knowledge articles
-8. machine-readable requirement, UAT, feature gate, and implementation task
-9. adapter or application README
-10. current changelog
+4. `spec/traceability-ownership.json` and generated `docs/product/traceability.md`
+5. `SPEC.md`
+6. owning context README and domain tests
+7. related decision records
+8. related knowledge articles
+9. machine-readable requirement, UAT, feature gate, and implementation task
+10. adapter or application README
+11. current changelog
 
 State which sources were read in the pull request.
 
@@ -46,11 +47,12 @@ Work follows this order. A later item may be explored in isolation, but it canno
 2. **P01 — application composition:** add `liaison-application`, typed commands/DTOs/errors, common CLI/Tauri composition, tolerant Health, and correct validation/error semantics.
 3. **P02 — workspace authority:** add `WorkspaceSession`, one advisory writer lock, read-only recovery, quiescence, and explicit schema handling.
 4. **P03 — recoverable operations:** route every canonical mutation through staged multi-target operations with a durable commit decision and roll-forward recovery.
-5. **P04 — desktop inbound adapter:** migrate to React/TypeScript/Vite over typed Rust commands and prove Workspace, People, and Health parity before new event UI.
-6. **P05–P08 — B foundations:** define typed sensitive/domain contracts; add tolerant Directory projection; add workspace security and honest local policy; then prove checkpoint and encrypted clean-install recovery.
-7. **P09–P11 — B product:** complete Directory import, Events/cohort/readiness/brief workflows, and the installed desktop experience.
-8. **B0 qualification:** with one trusted local workspace owner, run scale, crash, key, grant, leak, accessibility, offline, installed-app, and developer-journey evidence on the exact review artifact. Workplace domain types and outputs must structurally omit relationship allocation, ranking, and scoring.
-9. **A0:** only after B0 acceptance, implement personal profile editing, stable custom-field layouts and user-organised profile tabs, interactions, bounded commitments, reason-only Review, and the personal-memory journey. Do not introduce a generic task engine.
+5. **P03 design gate:** run design consultation to create canonical `DESIGN.md`, then run plan design review against the complete B0 journey and amend P04 before implementation. G0 records this gate but does not create the file or preselect the direction.
+6. **P04 — desktop inbound adapter:** migrate to React/TypeScript/Vite over typed Rust commands and prove Workspace, People, and Health parity before new event UI.
+7. **P05–P08 — B foundations:** define typed sensitive/domain contracts; add tolerant Directory projection; add workspace security and honest local policy; then prove checkpoint and encrypted clean-install recovery.
+8. **P09–P11 — B product:** complete Directory import, Events/cohort/readiness/brief workflows, and the installed desktop experience.
+9. **B0 qualification:** with one trusted local workspace owner, run scale, crash, key, grant, leak, accessibility, offline, installed-app, and developer-journey evidence on the exact review artifact. Workplace domain types and outputs must structurally omit relationship allocation, ranking, and scoring.
+10. **A0:** only after B0 acceptance, implement personal profile editing, stable custom-field layouts and user-organised profile tabs, interactions, bounded commitments, reason-only Review, and the personal-memory journey. Do not introduce a generic task engine.
 
 Mobile products, provider transports, multi-writer sharing, AI/MCP, Meitheal integration, broad platform support, and public notarized distribution remain later gates unless a prerequisite contract explicitly requires a narrow seam.
 
@@ -121,7 +123,7 @@ Every user-facing task supports:
 - interruption-safe draft preservation;
 - screen-reader names and status messages;
 - reduced motion;
-- 200% zoom/reflow;
+- 400% zoom/reflow;
 - localisation and long-content handling;
 - a semantic alternative to graph or drag interaction.
 

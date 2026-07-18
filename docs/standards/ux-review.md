@@ -87,7 +87,7 @@ User-facing changes require evidence for the relevant items:
 - logical focus order and focus restoration after dialogs;
 - semantic names, roles, states, relationships, errors, and instructions;
 - screen-reader operation on at least one supported platform;
-- 200% zoom and reflow without lost information or action;
+- 400% zoom and reflow without lost information or action;
 - target size and spacing appropriate to WCAG 2.2;
 - contrast that meets the applicable success criteria;
 - no colour-only, shape-only, sound-only, or position-only meaning;

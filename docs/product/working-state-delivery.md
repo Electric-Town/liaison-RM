@@ -27,10 +27,11 @@ Work-package scores and the rules for dependency and safety overrides are in [B0
 1. Reconcile contracts, decisions, versions, commands, evidence, and stale branch claims.
 2. Add one application composition root and Workspace Session.
 3. Route every canonical mutation through recoverable multi-target operations.
-4. Replace the disposable vanilla shell with a typed React/Tauri adapter and an evidence-tested semantic design system.
-5. Implement Directory, security/local policy, checkpoint and encrypted recovery, import, Events core, and B0 interface.
-6. Qualify B0 in the compiled installed Mac application.
-7. Implement and independently qualify A0.
+4. After P03, run design consultation to create canonical `DESIGN.md`, then plan design review to approve an amended P04 direction. G0 does not create or pre-empt this artifact.
+5. Replace the disposable vanilla shell with a typed React/Tauri adapter and an evidence-tested semantic design system.
+6. Implement Directory, security/local policy, checkpoint and encrypted recovery, import, Events core, and B0 interface.
+7. Qualify B0 in the compiled installed Mac application.
+8. Implement and independently qualify A0.
 
 ## B0 Workplace Review Alpha
 
@@ -65,6 +66,9 @@ A0 starts only after B0 acceptance and adds Person/profile editing, user-organis
 | #27 personal CRM baseline | Closed and superseded | It contains truncated hidden payloads rather than reviewable product source and starts A before B. |
 | #28 write journal | Transplant algorithms into the multi-target operation engine | It is single-target and unwired, with no explicit durable commit decision. |
 | #29 parity/WCAG audit | Closed as historical intake | Its inventory/checklist is useful, but its personal-first plan contradicts the accepted order. |
+| #31 desktop visual direction | Closed; branch preserved as deferred design input | It may be reviewed only after P03, design consultation, canonical `DESIGN.md`, and plan design review. It is not current P04 authority. |
+| #32 relationship model | Closed; branch preserved for A0 | Relationship intent and cadence are G2B work blocked until B0 acceptance. |
+| #33 relationship YAML/CLI | Closed; branch preserved for A0 | Its G2B implementation cannot execute or merge before B0 acceptance. |
 
 Branches are preserved until useful material has been transplanted or deliberately rejected. None is merged wholesale.
 

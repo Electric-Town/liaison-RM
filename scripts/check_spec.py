@@ -65,9 +65,186 @@ def inline_edges(blocks: dict[str, str], field: str) -> dict[str, set[str]]:
     return result
 
 
+def require_fragments(
+    identifier: str, text: str, fragments: tuple[str, ...], errors: list[str]
+) -> None:
+    """Keep critical product semantics machine-enforced, not merely traceable."""
+
+    lower = text.lower()
+    for fragment in fragments:
+        if fragment.lower() not in lower:
+            errors.append(
+                f"{identifier}: missing required semantic assertion {fragment!r}"
+            )
+
+
+def validate_b0_workplace_contract(
+    requirements: list[dict],
+    cases: list[dict],
+    task_blocks: dict[str, str],
+    gate_blocks: dict[str, str],
+    errors: list[str],
+) -> None:
+    """Reject high-risk B0 wording contradictions even when IDs are connected."""
+
+    requirement_text = {
+        item["id"]: f"{item.get('statement', '')} {item.get('acceptance', '')}"
+        for item in requirements
+    }
+    case_text = {
+        item["id"]: " ".join(
+            str(item.get(field, "")) for field in ("title", "given", "when", "then")
+        )
+        for item in cases
+    }
+
+    required_requirement_fragments = {
+        "LRM-PE-010": (
+            "immutable least-disclosure brief bytes",
+            "never receive workspace access",
+            "never receive",
+            "catering-role grant",
+        ),
+        "LRM-EV-004": (
+            "immutable purpose-bound least-disclosure snapshot",
+            "names shall be absent by default",
+            "approved policy explicitly requires",
+            "no workspace account, role grant, or query capability",
+        ),
+        "LRM-EV-009": (
+            "eventreadinessfollowup",
+            "bounded to an event",
+            "generic task engine",
+            "relationship allocation",
+            "cadence",
+            "attention weighting",
+        ),
+        "LRM-EV-010": (
+            "availability",
+            "freshness",
+            "conflict",
+            "disclosure",
+            "exactly one outcome",
+            "ordered, versioned, fail-closed decision table",
+        ),
+        "LRM-EV-011": (
+            "duplicate",
+            "unresolved identity",
+            "cancellation",
+            "removal",
+            "walk-in",
+            "no-show",
+            "event cancellation",
+            "exact denominator reconciliation",
+            "superseding corrections",
+        ),
+        "LRM-EV-012": (
+            "data-controller",
+            "legal-basis",
+            "sensitive-data condition",
+            "dpia decision",
+            "independent legal-review",
+        ),
+        "LRM-EV-013": (
+            "one trusted workspace owner",
+            "recipients shall never access the workspace",
+            "immutable, purpose-bound, expiring, audited least-disclosure brief",
+            "emitted bytes match preview",
+            "structural absence of names",
+            "explicitly required by the approved policy",
+        ),
+    }
+    for identifier, fragments in required_requirement_fragments.items():
+        require_fragments(
+            identifier, requirement_text.get(identifier, ""), fragments, errors
+        )
+
+    require_fragments(
+        "UAT-010",
+        case_text.get("UAT-010", ""),
+        (
+            "one trusted workspace owner",
+            "preview and emitted bytes match",
+            "names are absent by default",
+            "approved policy explicitly requires",
+            "workspace access",
+            "catering-role grant",
+            "structurally absent",
+        ),
+        errors,
+    )
+    uat_010 = case_text.get("UAT-010", "").lower()
+    for contradiction in (
+        "catering-export permission",
+        "brief contains names or approved identifiers",
+    ):
+        if contradiction in uat_010:
+            errors.append(f"UAT-010: prohibited B0 recipient/role claim {contradiction!r}")
+
+    require_fragments(
+        "UAT-041",
+        case_text.get("UAT-041", ""),
+        (
+            "one trusted workspace owner",
+            "every lifecycle transition and active denominator reconcile exactly",
+            "preview and emitted bytes match",
+            "relationship allocation",
+            "cadence",
+            "attention weights",
+            "structurally absent",
+            "400 percent zoom and reflow",
+        ),
+        errors,
+    )
+    require_fragments(
+        "FG-R3-001",
+        gate_blocks.get("FG-R3-001", ""),
+        ("no B0 catering-role grant exists",),
+        errors,
+    )
+    require_fragments(
+        "FG-R3-004",
+        gate_blocks.get("FG-R3-004", ""),
+        (
+            "names are absent by default",
+            "approved policy explicitly requires",
+            "catering-role grants are structurally absent",
+            "preview bytes and emitted bytes match",
+        ),
+        errors,
+    )
+    require_fragments(
+        "FG-B0-003",
+        gate_blocks.get("FG-B0-003", ""),
+        (
+            "names are absent by default",
+            "catering-role grants",
+            "relationship allocation",
+            "cadence",
+            "attention weights",
+            "structurally absent",
+        ),
+        errors,
+    )
+    require_fragments(
+        "T-B0-P10",
+        task_blocks.get("T-B0-P10", ""),
+        (
+            "ordered-versioned-decision-table",
+            "attendee-lifecycle",
+            "exact-denominator",
+            "names-absent-by-default-policy",
+            "negative-disclosure-and-role-grant-fixture",
+            "preview-emitted-byte-equality",
+        ),
+        errors,
+    )
+
+
 def validate_traceability(
     requirement_ids: set[str],
     case_ids: set[str],
+    persona_ids: set[str],
     task_blocks: dict[str, str],
     gate_blocks: dict[str, str],
     errors: list[str],
@@ -144,6 +321,20 @@ def validate_traceability(
     for identifier in milestone_ids:
         visit(identifier)
 
+    milestone_order = {
+        item.get("id"): index for index, item in enumerate(milestones)
+    }
+    for identifier, dependencies in dependency_map.items():
+        for dependency in dependencies:
+            if (
+                dependency in milestone_order
+                and identifier in milestone_order
+                and milestone_order[dependency] >= milestone_order[identifier]
+            ):
+                errors.append(
+                    f"{identifier}: milestone dependency {dependency} must appear earlier"
+                )
+
     allowed_contract_status = {
         "complete",
         "current",
@@ -153,6 +344,30 @@ def validate_traceability(
     }
     task_requirements = inline_edges(task_blocks, "requirements")
     task_uat = inline_edges(task_blocks, "uat")
+    task_dependencies = inline_edges(task_blocks, "depends_on")
+    task_order = {identifier: index for index, identifier in enumerate(task_blocks)}
+    visiting_tasks: set[str] = set()
+    visited_tasks: set[str] = set()
+
+    def visit_task(identifier: str) -> None:
+        if identifier in visiting_tasks:
+            errors.append(f"traceability: task dependency cycle at {identifier}")
+            return
+        if identifier in visited_tasks:
+            return
+        visiting_tasks.add(identifier)
+        for dependency in task_dependencies.get(identifier, set()):
+            if dependency in task_blocks:
+                visit_task(dependency)
+                if task_order[dependency] >= task_order[identifier]:
+                    errors.append(
+                        f"{identifier}: task dependency {dependency} must appear earlier"
+                    )
+        visiting_tasks.remove(identifier)
+        visited_tasks.add(identifier)
+
+    for identifier in task_blocks:
+        visit_task(identifier)
 
     for identifier, edge in task_ownership.items():
         for field, known in (
@@ -289,12 +504,9 @@ def validate_traceability(
         "P-PROFESSIONAL",
     }
     dispositions = ownership.get("proposal_dispositions", [])
-    disposition_ids = duplicate_ids(dispositions, "proposal dispositions", errors)
-    # duplicate_ids reads `id`; proposal records intentionally name proposal_id.
-    # Recheck them using the normative field and discard the synthetic errors.
-    errors[:] = [
-        value for value in errors if not value.startswith("proposal dispositions:")
-    ]
+    known_canonical_ids = (
+        requirement_ids | case_ids | persona_ids | task_ids | gate_ids | milestone_ids
+    )
     seen_proposals: set[str] = set()
     for item in dispositions:
         proposal = item.get("proposal_id")
@@ -305,7 +517,13 @@ def validate_traceability(
             errors.append(f"{proposal}: invalid proposal disposition")
         if not str(item.get("rationale", "")).strip():
             errors.append(f"{proposal}: missing proposal rationale")
-    del disposition_ids
+        if item.get("disposition") in {"adopted", "merged"}:
+            canonical_id = item.get("canonical_id")
+            if canonical_id not in known_canonical_ids:
+                errors.append(
+                    f"{proposal}: adopted proposal has unknown canonical_id "
+                    f"{canonical_id!r}"
+                )
     for identifier in sorted(expected_proposals - seen_proposals):
         errors.append(f"traceability: undispositioned founder-plan proposal {identifier}")
     for identifier in sorted(seen_proposals - expected_proposals):
@@ -476,8 +694,16 @@ def main() -> int:
         errors.append(f"implementation plan: {exc}")
 
     if task_blocks and gate_blocks:
+        validate_b0_workplace_contract(
+            requirements, cases, task_blocks, gate_blocks, errors
+        )
         validate_traceability(
-            requirement_ids, case_ids, task_blocks, gate_blocks, errors
+            requirement_ids,
+            case_ids,
+            persona_ids,
+            task_blocks,
+            gate_blocks,
+            errors,
         )
 
     if errors:

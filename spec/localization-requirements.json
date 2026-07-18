@@ -22,7 +22,7 @@
       "release": "R2",
       "priority": "must",
       "statement": "The interface shall tolerate pseudolocalized expansion, reflow, and language-specific line breaking without clipping, inaccessible focus, or horizontal overflow.",
-      "acceptance": "The en-XA suite passes at 320 and 390 CSS pixels and at 200% zoom for the supported desktop workflows."
+      "acceptance": "The en-XA suite passes at 320 and 390 CSS pixels and at 400% zoom and reflow for the supported desktop workflows."
     },
     {
       "id": "LRM-L10N-004",
@@ -66,7 +66,7 @@
       "persona": "P-ELDER",
       "release": "R2",
       "title": "Use a pseudolocalized workflow without layout loss",
-      "given": "The desktop interface is running with the en-XA test catalog at 390 CSS pixels and 200% zoom.",
+      "given": "The desktop interface is running with the en-XA test catalog at 390 CSS pixels and 400% zoom and reflow.",
       "when": "The user creates a workspace, opens People, submits a validation error, and returns to the previous field.",
       "then": "Text wraps without clipping or horizontal overflow, focus remains visible, and every action and error has an accessible name."
     },

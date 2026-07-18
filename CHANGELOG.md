@@ -10,6 +10,10 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - A repository-hosted working-state delivery contract with current implementation truth, B0/A0 acceptance boundaries, active-branch disposition, and evidence-safe claim language.
 - An evidence-qualified RICE model for B0/A0 work packages, a KCS article explaining dependency and safety overrides, and mandatory PR fields for priority assumptions and decision rationale.
 - A bounded review of maintainer-supplied machine-signal and localization guidance, adopting observable editorial checks while rejecting detector evasion and unsupported authorship classification.
+- Exact, deterministic ownership for every requirement, UAT case, feature gate, and implementation task, with milestone, status, evidence owner, zero-orphan validation, and generated human- and machine-readable reports.
+- A post-P03 design gate that runs design consultation to create `DESIGN.md`, then plan design review before P04 begins; G0 records the gate without pre-empting the design artifact.
+- Explicit B0 event-readiness contracts for ordered outcomes, attendee corrections and denominator reconciliation, real-pilot privacy approval, one trusted owner, and byte-identical least-disclosure recipient briefs.
+- KCS guidance for changing product contracts without creating traceability orphans.
 
 - Repository governance, contribution, knowledge, content-quality, architecture, and user-experience review standards.
 - Pull-request evidence requirements and repository policy checks.
@@ -42,6 +46,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Review queues preserve factual reasons and do not expose a relationship-strength score.
 - The R2 roadmap now includes locale-catalog, expansion, Unicode, accessible-name, formatting, and named human-review evidence gates.
 - The README and GitHub About contract now lead with the product outcome, state the pre-alpha boundary plainly, and route readers to current evidence, contribution guidance, and the public site.
+- Public site, README, project context, roadmap, and agent guidance now put B0 before A0, distinguish the tested CLI from the broken installed desktop Person-create path, and use 400% reflow as the accessibility evidence target.
 
 ### Fixed
 

@@ -217,6 +217,35 @@ def check_index(errors: list[str]) -> None:
         if not target.is_file():
             errors.append(f"site/index.html: missing local asset: {target.relative_to(ROOT)}")
 
+    delivery_stages = [
+        item.get("data-delivery-stage")
+        for item in tags(parser, "article")
+        if item.get("data-delivery-stage")
+    ]
+    if delivery_stages != ["foundation", "b0", "a0", "later"]:
+        errors.append(
+            "site/index.html: roadmap must order foundation, B0, A0, then later"
+        )
+
+    visible_copy = index.read_text(encoding="utf-8").lower()
+    required_claims = (
+        "a0 direction after b0",
+        "person-create command contract broken",
+        "p00 now; p01–p03 follow",
+        "after the post-p03 design gate",
+        "b0 workplace review",
+        "a0 personal memory",
+    )
+    for phrase in required_claims:
+        if phrase not in visible_copy:
+            errors.append(f"site/index.html: missing public truth marker '{phrase}'")
+    for false_claim in (
+        "open a workspace, add a basic person",
+        "next</span>\n            <h3>daily relationship work",
+    ):
+        if false_claim in visible_copy:
+            errors.append(f"site/index.html: stale or disproven claim '{false_claim}'")
+
 
 def check_css(errors: list[str]) -> None:
     css = (SITE / "assets/site.css").read_text(encoding="utf-8")
@@ -280,6 +309,38 @@ def check_public_copy(errors: list[str]) -> None:
         for word in sorted(DISALLOWED_WORDS):
             if re.search(rf"(?<![\w-]){re.escape(word)}(?![\w-])", lower):
                 errors.append(f"{path.relative_to(ROOT)}: replace stock word '{word}' with a concrete claim")
+
+    readme = (ROOT / "README.md").read_text(encoding="utf-8").lower()
+    if "desktop person-create path currently fails" not in readme:
+        errors.append(
+            "README.md: installed desktop Person-create limitation must remain explicit"
+        )
+    if '--build-profile airgap' in readme:
+        errors.append(
+            "README.md: demo cannot label an ordinary source run as an Airgap artifact"
+        )
+    for phrase in (
+        "b0 acceptance, then a0",
+        "installed desktop person-create path currently fails",
+        "p03 design gate",
+    ):
+        if phrase not in readme:
+            errors.append(f"README.md: missing delivery/current-state marker {phrase!r}")
+
+    project_context = (ROOT / "PROJECT_CONTEXT.md").read_text(
+        encoding="utf-8"
+    ).lower()
+    for phrase in (
+        "b0 workplace review alpha is delivered and qualified before a0 personal memory alpha",
+        "desktop person creation fails at the tauri argument contract",
+        "cli person tests do not prove the installed desktop path",
+        "p03 design gate",
+        "g0 does not create `design.md`",
+    ):
+        if phrase not in project_context:
+            errors.append(
+                f"PROJECT_CONTEXT.md: missing delivery/current-state marker {phrase!r}"
+            )
 
 
 def main() -> int:

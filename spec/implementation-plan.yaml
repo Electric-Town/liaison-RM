@@ -546,7 +546,7 @@ tasks:
     depends_on: [T-B0-P07, T-B0-P09]
     requirements: [LRM-EV-001, LRM-EV-002, LRM-EV-003, LRM-EV-004, LRM-EV-005, LRM-EV-007, LRM-EV-008, LRM-EV-009, LRM-EV-010, LRM-EV-011, LRM-EV-013]
     uat: [UAT-009, UAT-010, UAT-011, UAT-012, UAT-041]
-    outputs: [Event-domain, Details-Cohort-Attendees-Readiness-Brief-state-machine, immutable-cohort-stream, attendee-lifecycle, ordered-versioned-decision-table, bounded-EventReadinessFollowUp, exact-denominator, sealed-immutable-brief, preview-emitted-byte-equality, negative-disclosure-fixture, CSV-HTML-delivery]
+    outputs: [Event-domain, Details-Cohort-Attendees-Readiness-Brief-state-machine, immutable-cohort-stream, attendee-lifecycle, ordered-versioned-decision-table, bounded-EventReadinessFollowUp, exact-denominator, sealed-immutable-brief, names-absent-by-default-policy, preview-emitted-byte-equality, negative-disclosure-and-role-grant-fixture, CSV-HTML-delivery]
 
   - id: T-B0-P11
     release: B0

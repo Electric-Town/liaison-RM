@@ -61,7 +61,7 @@ Private overlays remain outside shared indexes and disclosures. A workspace can 
 
 ### 2.6 Accessible, interruption-tolerant interaction
 
-The product must remain usable with keyboard and screen reader, at 200% zoom, with reduced motion, after interruption, and under time pressure. Graph and drag interactions always have semantic alternatives. The project targets WCAG 2.2 Level AA with corresponding EN 301 549 evidence; this is an engineering target, not an unsupported certification claim.
+The product must remain usable with keyboard and screen reader, at 400% zoom, with reduced motion, after interruption, and under time pressure. Graph and drag interactions always have semantic alternatives. The project targets WCAG 2.2 Level AA with corresponding EN 301 549 evidence; this is an engineering target, not an unsupported certification claim.
 
 ## 3. Primary personas and outcomes
 
@@ -500,7 +500,7 @@ Plugins cannot receive a raw database handle or unrestricted workspace path. Ins
 - EN 301 549 evidence for applicable desktop and web requirements.
 - Complete keyboard support and visible focus.
 - Screen-reader semantics and status announcements.
-- 200% zoom/reflow and localisation-safe layout.
+- 400% zoom/reflow and localisation-safe layout.
 - Reduced motion.
 - Graph and drag alternatives.
 
@@ -527,17 +527,18 @@ The accepted order is dependency-driven and supersedes older personal-desktop-be
 2. **P01 — application composition root:** one `liaison-application` command/query/error model is shared by CLI and Tauri; validation and degraded-open semantics are corrected.
 3. **P02 — Workspace authority:** `WorkspaceSession`, advisory writer lock, read-only recovery, quiescence, session-bound ports, and schema behavior.
 4. **P03 — recoverable operations:** staged multi-target writes, durable commit decision, roll-forward recovery, exactly-once minimal evidence, and fault/race tests.
-5. **P04 — desktop adapter migration:** React/TypeScript/Vite over typed Rust commands with Workspace/People/Health parity and a semantic design system.
-6. **P05 — sensitive/domain contracts:** revisioned People, Organisations, Groups, Locations, Memberships, Events, provenance, field state, sealed value, and event-local resolution types.
-7. **P06 — scalable Directory reads:** tolerant scan, disposable SQLite/FTS projection, filters, pagination, canonical revalidation, Health findings, and 10,000/50,000 evidence.
-8. **P07 — Workspace Security and local policy:** key lifecycle, recovery envelope, optional Keychain cache, trusted local owner/device, purpose grants, role presets, and payload-minimal activity evidence.
-9. **P08 — recovery before real sensitive data:** quiescent local checkpoint plus encrypted clean-install recovery package.
-10. **P09 — Directory onboarding:** People maintenance and streaming CSV preview/reconciliation for People, Organisations, Locations, Groups, and Memberships.
-11. **P10 — Events core:** immutable cohort, exact readiness, structurally limited `DietaryOperationalView`, sealed internal brief, verified delivery, and staleness.
-12. **P11 — B interface:** Overview, Directory, Events, Health, and Settings plus the complete cohort-to-brief state machine.
-13. **B0 — Workplace Review Alpha:** for one trusted local workspace owner, the installed universal Mac review artifact passes scale, crash, key, grant, leak, encrypted-restore, accessibility, offline, readable-file, and contributor-journey evidence. Workplace surfaces structurally omit relationship allocation/ranking/scoring. It remains an internal review alpha unless public signing/notarisation gates pass.
-14. **A0 — Personal Memory Alpha:** only after B0 acceptance, add profile editing, stable user-organised tabs/layouts with lossless settings round trips, meaningful interactions, bounded commitments, last-interaction/open-loop views, and reason-only Review over the same foundations. A0 does not add a generic task engine.
-15. **Post-A0:** sharing, provider transports, contacts/calendars/email, facilities, mobile products, Meitheal integration, OpenAPI/MCP/AI/plugins, Linux/Windows support, and public notarized distribution advance under their own gates.
+5. **P03 design gate:** after P03, design consultation creates canonical `DESIGN.md`; plan design review checks it against the complete B0 journey and amends P04 before desktop implementation. G0 records but does not execute this gate.
+6. **P04 — desktop adapter migration:** React/TypeScript/Vite over typed Rust commands with Workspace/People/Health parity and a semantic design system.
+7. **P05 — sensitive/domain contracts:** revisioned People, Organisations, Groups, Locations, Memberships, Events, provenance, field state, sealed value, and event-local resolution types.
+8. **P06 — scalable Directory reads:** tolerant scan, disposable SQLite/FTS projection, filters, pagination, canonical revalidation, Health findings, and 10,000/50,000 evidence.
+9. **P07 — Workspace Security and local policy:** key lifecycle, recovery envelope, optional Keychain cache, trusted local owner/device, purpose grants, role presets, and payload-minimal activity evidence.
+10. **P08 — recovery before real sensitive data:** quiescent local checkpoint plus encrypted clean-install recovery package.
+11. **P09 — Directory onboarding:** People maintenance and streaming CSV preview/reconciliation for People, Organisations, Locations, Groups, and Memberships.
+12. **P10 — Events core:** immutable cohort, exact readiness, structurally limited `DietaryOperationalView`, sealed internal brief, verified delivery, and staleness.
+13. **P11 — B interface:** Overview, Directory, Events, Health, and Settings plus the complete cohort-to-brief state machine.
+14. **B0 — Workplace Review Alpha:** for one trusted local workspace owner, the installed universal Mac review artifact passes scale, crash, key, grant, leak, encrypted-restore, accessibility, offline, readable-file, and contributor-journey evidence. Workplace surfaces structurally omit relationship allocation/ranking/scoring. It remains an internal review alpha unless public signing/notarisation gates pass.
+15. **A0 — Personal Memory Alpha:** only after B0 acceptance, add profile editing, stable user-organised tabs/layouts with lossless settings round trips, meaningful interactions, bounded commitments, last-interaction/open-loop views, and reason-only Review over the same foundations. A0 does not add a generic task engine.
+16. **Post-A0:** sharing, provider transports, contacts/calendars/email, facilities, mobile products, Meitheal integration, OpenAPI/MCP/AI/plugins, Linux/Windows support, and public notarized distribution advance under their own gates.
 
 ## 18. Explicit exclusions from B0
 

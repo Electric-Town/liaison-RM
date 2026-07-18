@@ -41,12 +41,12 @@ The intended result is simple: capture a useful detail once, find it before it m
 
 Read these files in order before changing code:
 
-1. [`AGENTS.md`](AGENTS.md) — normative contributor and agent rules.
-2. [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md) — product, architecture, status, terminology, active work, and handoff context.
-3. [Working-state delivery contract](docs/product/working-state-delivery.md) — the accepted B0-then-A0 order, current implementation boundary, and reviewed branch dispositions.
-4. [Normative traceability appendix](docs/product/traceability.md) — atomic requirement, UAT, gate, task, milestone, status, and evidence ownership.
-5. [`SPEC.md`](SPEC.md) — product and build specification.
-6. [`AI_BUILD_INSTRUCTIONS.md`](AI_BUILD_INSTRUCTIONS.md) — task selection and implementation sequence.
+1. [`AGENTS.md`](AGENTS.md): normative contributor and agent rules.
+2. [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md): product, architecture, status, terminology, active work, and handoff context.
+3. [Working-state delivery contract](docs/product/working-state-delivery.md): the accepted B0-then-A0 order, current implementation boundary, and reviewed branch dispositions.
+4. [Normative traceability appendix](docs/product/traceability.md): atomic requirement, UAT, gate, task, milestone, status, and evidence ownership.
+5. [`SPEC.md`](SPEC.md): product and build specification.
+6. [`AI_BUILD_INSTRUCTIONS.md`](AI_BUILD_INSTRUCTIONS.md): task selection and implementation sequence.
 7. The owning bounded-context README under [`contexts/`](contexts/).
 8. Related decisions, knowledge articles, requirements, UAT cases, feature gates, and implementation tasks.
 
@@ -71,6 +71,8 @@ Do not begin with a new screen or provider integration. Start with a dependency-
 - [Persona UAT catalogue](spec/uat-cases.json)
 - [Feature gates](spec/feature-gates.yaml)
 - [Implementation plan](spec/implementation-plan.yaml)
+- [Normative traceability ownership](spec/traceability-ownership.json)
+- [Generated traceability report](spec/traceability-report.json)
 
 ## What works today
 
@@ -79,7 +81,7 @@ Do not begin with a new screen or provider integration. Start with a dependency-
 | Open workspace | Create, inspect and validate a versioned local workspace | Complete crash recovery, migrations and projection rebuild remain gated |
 | People | CLI and Rust tests create and list basic person records in readable Markdown | The installed desktop person-create path currently fails at its Tauri argument boundary; the daily Directory and full profile editor are not complete |
 | CLI | Human and JSON output for workspace and person commands | Import, edit, backup, sharing and destructive commands remain gated |
-| Desktop alpha | The installed app launches and renders local workspace controls | Native QA found the person-create command contract broken (`request` versus `workspace_path`); review builds are not signed public releases |
+| Desktop alpha | The installed app launches and renders local workspace controls | Native QA found the person-create request fields broken (`workspacePath`/`displayName` versus `workspace_path`/`display_name`); review builds are not signed public releases |
 | Relationship model | Separate intent, evidence, maintenance status and purpose-specific readiness | Weighted priority and the full relationship workflow are not released |
 | Review and Attention | Reason-only policy, hard suppressions and bounded queue foundations | No claim of a complete personal review experience |
 | Connections | Versioned object-store contract, grant model and local reference adapter | Upload evidence does not prove safe multi-writer synchronisation |

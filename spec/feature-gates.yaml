@@ -171,8 +171,9 @@ gates:
     blocks: [R3-release]
     criteria:
       - Preview bytes and emitted bytes match and contain only policy-authorised operational fields for the named purpose and recipient.
+      - Names are absent by default; an opaque attendee identifier is permitted only when the approved policy explicitly requires it.
       - Source revisions and stale-state detection are present.
-      - Restricted diagnostic detail, private overlays, hidden-row counts, and workspace access are structurally absent.
+      - Restricted diagnostic detail, private overlays, hidden-row counts, workspace access, and catering-role grants are structurally absent.
     evidence_required: [byte-equality disclosure fixture, negative-disclosure fixture, UAT-010, UAT-011, UAT-041]
 
   - id: FG-R3-005
@@ -412,7 +413,7 @@ gates:
     criteria:
       - The installed universal Mac application completes Event Details, Cohort, Attendees, Readiness, and Brief after Directory import.
       - The ordered decision table and attendee transition matrix reconcile every active attendee and invalid combination; only bounded EventReadinessFollowUp exists.
-      - Immutable preview and emitted brief bytes match while diagnostic detail, private notes, hidden-row metadata, generic tasks, relationship allocation, cadence, ranking, scoring, and attention weights are structurally absent.
+      - Immutable preview and emitted brief bytes match; names are absent by default and opaque identifiers require explicit approved policy; diagnostic detail, private notes, hidden-row metadata, catering-role grants, generic tasks, relationship allocation, cadence, ranking, scoring, and attention weights are structurally absent.
       - System, light, dark, and high_contrast built-ins use one semantic contract and preserve meaning across the complete keyboard, VoiceOver, contrast, 400 percent zoom and reflow, target, reduced-motion, localisation, interruption, offline, egress, relaunch, and readable-file matrix.
       - Missing signing or notarisation is disclosed as an internal review-alpha limitation.
     evidence_required: [UAT-009, UAT-010, UAT-011, UAT-041, UAT-050, UAT-062, decision-table and attendee-lifecycle property tests, byte-equality and negative-disclosure fixtures, compiled design review, native QA report, Mac provenance]

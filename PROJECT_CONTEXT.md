@@ -43,7 +43,7 @@ The current implementation order is governed by [the working-state delivery cont
 
 The default branch contains governance, product and interaction specifications, machine-readable planning, the Rust Workspace/People/CLI and Markdown slice, provider-neutral Connections, Topic Pack contracts, purpose-specific profile readiness, reason-only Review and Attention runtime foundations, localisation architecture, a native Tauri desktop alpha with macOS review bundles and Windows NSIS build configuration, and a public project site. It does not yet have a supported public release.
 
-The installed macOS alpha launches and renders the local workspace interface. Native QA on 2026-07-18 found that desktop person creation fails at the Tauri argument contract because the frontend sends `request` while the command expects `workspace_path`. CLI Person tests do not prove the installed desktop path. Until the typed application bridge is repaired and retested, public documentation must not say the desktop can add a Person.
+The installed macOS alpha launches and renders the local workspace interface. Native QA on 2026-07-18 found that desktop person creation fails at the Tauri argument contract because the frontend request uses camel-case `workspacePath` and `displayName` fields while the Rust request deserializer expects `workspace_path` and `display_name`. CLI Person tests do not prove the installed desktop path. Until the typed application bridge is repaired and retested, public documentation must not say the desktop can add a Person.
 
 Do not claim any of the following without exact-head evidence:
 
@@ -67,18 +67,20 @@ Before implementing a task, read:
 1. `AGENTS.md`.
 2. This file.
 3. `docs/product/working-state-delivery.md`.
-4. `SPEC.md`.
-5. `AI_BUILD_INSTRUCTIONS.md`.
-6. The owning bounded-context README and tests.
-7. Relevant decision records under `docs/decisions/`.
-8. Relevant knowledge articles under `docs/knowledge/`.
-9. Relevant architecture, security, UX, and data-format documents.
-10. The matching records in:
+4. `spec/traceability-ownership.json` and generated `docs/product/traceability.md`.
+5. `SPEC.md`.
+6. `AI_BUILD_INSTRUCTIONS.md`.
+7. The owning bounded-context README and tests.
+8. Relevant decision records under `docs/decisions/`.
+9. Relevant knowledge articles under `docs/knowledge/`.
+10. Relevant architecture, security, UX, and data-format documents.
+11. The matching records in:
    - `spec/requirements.json`;
    - `spec/uat-cases.json`;
    - `spec/feature-gates.yaml`;
-   - `spec/implementation-plan.yaml`.
-11. `CHANGELOG.md` and current pull requests touching the same boundary.
+   - `spec/implementation-plan.yaml`;
+   - `spec/traceability-ownership.json`.
+12. `CHANGELOG.md` and current pull requests touching the same boundary.
 
 When sources conflict, do not silently pick one. Open a focused decision or clarification change.
 
@@ -772,7 +774,7 @@ Required behaviour:
 - keyboard completion;
 - visible focus;
 - screen-reader names and live regions;
-- 200% zoom and reflow;
+- 400% zoom and reflow;
 - reduced motion;
 - low-stimulation and density options;
 - persistent drafts and return to the same place after interruption;
@@ -808,6 +810,7 @@ Access logs are not used for productivity, attendance-compliance, performance, r
 The current merge order is P00–P11, B0 acceptance, then A0. The complete exit evidence is in `docs/product/roadmap.md`; R0–R6 remains only a long-term capability catalogue.
 
 - **P00–P03:** reconcile truth, establish one typed application and Workspace Session boundary, and route canonical mutations through recoverable multi-target operations.
+- **P03 design gate:** design consultation creates canonical `DESIGN.md`, then plan design review approves an amended P04 direction. G0 does not create `DESIGN.md`.
 - **P04–P08:** deliver the typed accessible desktop system, B-domain contracts, scalable Directory, local security, quiescent checkpoints, and encrypted recovery packages.
 - **P09–P11:** complete Directory onboarding, immutable event cohorts, exact dietary readiness, least-disclosure brief delivery, and the compiled B0 interface.
 - **B0:** qualify Workplace Review Alpha in a freshly installed universal Mac review application for one trusted local workspace owner.

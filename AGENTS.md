@@ -8,10 +8,11 @@ Before selecting or implementing work, read:
 
 1. `PROJECT_CONTEXT.md` — complete product, architecture, status, and handoff context.
 2. `docs/product/working-state-delivery.md` — accepted B0-before-A0 delivery and claim boundary.
-3. `SPEC.md` — product and build contract.
-4. `AI_BUILD_INSTRUCTIONS.md` — executable order of work.
-5. The owning bounded-context README and tests.
-6. Relevant decisions, knowledge articles, requirements, UAT cases, feature gates, implementation tasks, and open pull requests.
+3. `spec/traceability-ownership.json` and generated `docs/product/traceability.md` — exact requirement, UAT, gate, task, milestone, status, and evidence ownership.
+4. `SPEC.md` — product and build contract.
+5. `AI_BUILD_INSTRUCTIONS.md` — executable order of work.
+6. The owning bounded-context README and tests.
+7. Relevant decisions, knowledge articles, requirements, UAT cases, feature gates, implementation tasks, and open pull requests.
 
 Confirm the repository, branch, base, exact head, and current CI state. Do not assume an open pull request is part of `main`, a prototype is production code, or a passing unit test proves a platform or release claim.
 
@@ -55,7 +56,7 @@ When sources conflict, stop and create a focused clarification or decision. Do n
 9. Update `CHANGELOG.md` for user-visible, operator-visible, or contributor-visible behaviour.
 10. Complete the pull-request template with risks, rollback, accessibility evidence, and exact validation results.
 
-The accepted working sequence is P00 through P11, then B0 qualification, then A0. Do not revive the older personal-desktop-before-event ordering from R1/R2/R3 roadmap prose or a stale pull request.
+The accepted working sequence is P00 through P03, the design-consultation and plan-design-review gate, P04 through P11, B0 qualification, then A0. G0 records that future design gate but does not create `DESIGN.md`; it runs only after P03 stabilises the typed state and operation contracts. Do not revive the older personal-desktop-before-event ordering from R1/R2/R3 roadmap prose or a stale pull request.
 
 ## Domain-driven design rules
 
@@ -132,7 +133,7 @@ Every user-facing change must use `docs/standards/ux-review.md`. At minimum, rev
 - AskTog interaction principles;
 - Gestalt grouping and information hierarchy;
 - relevant IxDF research topics;
-- 200% zoom, reflow, reduced motion, long content, and localisation;
+- 400% zoom, reflow, reduced motion, long content, and localisation;
 - empty, loading, partial, stale, conflict, permission, success, undo, and recovery states;
 - a semantic alternative to graph-only or drag-only interaction.
 

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "active",
-  "source_sha256": "f56242661c3e153ce6e311a70f58d47564bca97908189877640132119a148e02",
+  "source_sha256": "e6b2b188de29d3b80fb496c2385ca33809192582be2c24b68cdb7d15b1a2a980",
   "delivery_boundary": "B0 Workplace Review Alpha before A0 Personal Memory Alpha; provider, mobile, AI, MCP, and theme packages remain later.",
   "design_sequence": "After T-B0-P03, T-B0-P03D runs design consultation to create DESIGN.md and plan design review; T-B0-P04 cannot start before that gate. G0 does not create DESIGN.md.",
   "counts": {
@@ -742,7 +742,7 @@
       "repository_release": "R3",
       "context": "events",
       "priority": "must",
-      "statement": "A catering brief shall be an immutable purpose-bound least-disclosure snapshot for a named recipient or recipient class and omit diagnostic detail, private notes, and hidden-row metadata.",
+      "statement": "A catering brief shall be an immutable purpose-bound least-disclosure snapshot for a named recipient or recipient class; names shall be absent by default and an opaque attendee identifier shall appear only when the approved policy explicitly requires one.",
       "owning_task": "T-B0-P10",
       "owning_gate": "FG-R3-004",
       "milestone": "G3",

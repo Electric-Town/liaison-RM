@@ -1,6 +1,8 @@
 /target/
 /node_modules/
 /dist/
+__pycache__/
+*.py[cod]
 /.idea/
 /.vscode/
 .DS_Store
@@ -15,3 +17,6 @@ Thumbs.db
 /.liaison-dev/
 /test-workspaces/
 /.gstack/
+
+# Tauri regenerates capability schemas during local builds.
+/apps/desktop/src-tauri/gen/

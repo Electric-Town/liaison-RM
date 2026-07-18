@@ -60,6 +60,8 @@ Exit evidence:
 
 ## P04 — Typed desktop inbound adapter
 
+P04 cannot begin directly after P03. Once P03 has stabilised typed commands, state, errors, and recoverable-operation contracts, design consultation creates canonical `DESIGN.md`. Plan design review then checks the proposed P04 direction against the complete B0 journey, localisation, recovery states, the semantic theme contract, and the accessibility matrix. G0 records this future gate; it does not create `DESIGN.md` or preselect a visual direction.
+
 Outcome: React/TypeScript/Vite replaces the disposable vanilla shell as a Tauri inbound adapter while Rust remains the only domain, storage, authorization, readiness, and recovery authority.
 
 Exit evidence:
@@ -145,7 +147,7 @@ Outcome: the installed application provides Overview, Directory, Events, Health,
 
 Exit evidence:
 
-- keyboard, VoiceOver, 200% zoom/reflow, reduced motion, contrast, narrow-window, pseudolocale, and long-content tests pass;
+- keyboard, VoiceOver, 400% zoom/reflow, reduced motion, contrast, narrow-window, pseudolocale, and long-content tests pass;
 - interruption-safe drafts and explicit empty/loading/partial/stale/conflict/permission/error/success/undo/recovery states pass;
 - disclosure preview and artifact evidence show scope, grant, revisions, path, checksum, and staleness;
 - relaunch, offline, readable-file, and native installed-app flows pass.
