@@ -1,0 +1,32 @@
+{
+  "schema": "liaison/locale-catalog@1",
+  "locale": "ja-JP",
+  "source_locale": "en-IE",
+  "source_revision": 1,
+  "status": "human-review-required",
+  "reviewer": null,
+  "reviewed_on": null,
+  "notes": [
+    "Structural fixture only. A named Japanese reviewer must approve register, line breaking, terminology, counters, and action labels before release."
+  ],
+  "messages": {
+    "app.name": "Liaison RM",
+    "app.local_only": "関係情報は、選択したローカルワークスペース内に保存されます。",
+    "workspace.create": "ワークスペースを作成",
+    "workspace.open": "ワークスペースを開く",
+    "workspace.validate": "ワークスペースを検証",
+    "workspace.validation_ok": "ワークスペースの問題は見つかりませんでした。",
+    "people.title": "人物",
+    "people.add": "人物を追加",
+    "people.name_label": "名前",
+    "people.email_label": "メールアドレス",
+    "people.count": "{count}人",
+    "review.why_now": "今確認する理由",
+    "review.reason.commitment": "未完了の約束が1件あります。",
+    "review.reason.upcoming_date": "重要な日付が近づいています。",
+    "review.reason.cadence": "設定した連絡頻度の確認時期です。",
+    "review.action.snooze": "後で確認",
+    "review.action.pause": "関係を一時停止",
+    "error.recovery": "詳細を確認して、もう一度お試しください。"
+  }
+}
