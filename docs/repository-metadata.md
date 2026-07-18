@@ -1,5 +1,7 @@
 # Repository metadata
 
+Last reviewed: 2026-07-18
+
 This file records the intended public GitHub About metadata so repository settings remain consistent with the product boundary.
 
 The remaining settings action is tracked in [issue #19](https://github.com/Electric-Town/liaison-RM/issues/19). Repository settings are not considered updated until that issue is completed and the live About panel is verified.
