@@ -1,0 +1,61 @@
+name: Rust workspace
+
+on:
+  pull_request:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "apps/**"
+      - "adapters/**"
+      - "contexts/**"
+      - "crates/**"
+      - "scripts/check_architecture.py"
+      - ".github/workflows/rust.yml"
+  push:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "apps/**"
+      - "adapters/**"
+      - "contexts/**"
+      - "crates/**"
+      - "scripts/check_architecture.py"
+      - ".github/workflows/rust.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  architecture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/check_architecture.py
+      - run: python scripts/check_repository.py
+      - run: python scripts/check_spec.py
+
+  rust:
+    name: Rust (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show toolchain
+        run: rustc --version --verbose
+      - name: Check formatting
+        run: cargo fmt --all --check
+      - name: Check all targets
+        run: cargo check --workspace --all-targets --all-features --locked
+      - name: Lint all targets
+        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+      - name: Test workspace
+        run: cargo test --workspace --all-features --locked
