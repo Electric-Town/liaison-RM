@@ -1,7 +1,13 @@
 # Gemini repository entry point
 
-Read [`AGENTS.md`](AGENTS.md) first. Then read [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md), [`SPEC.md`](SPEC.md), and [`AI_BUILD_INSTRUCTIONS.md`](AI_BUILD_INSTRUCTIONS.md).
+Use this read order:
 
-`AGENTS.md` is normative. `PROJECT_CONTEXT.md` contains the complete product, architecture, status, terminology, delivery, and handoff context. Do not infer implementation from prototypes or open pull requests; verify the branch, exact head, changed files, and CI evidence.
+1. `AGENTS.md`
+2. `PROJECT_CONTEXT.md`
+3. `SPEC.md`
+4. `AI_BUILD_INSTRUCTIONS.md`
+5. relevant decisions, knowledge, requirements, UAT, and gates
 
-Use domain-driven vertical slices. Keep business rules in the owning Rust context and application services. Preserve local authority, readable canonical files, explicit provider and AI grants, Airgap separation, accessibility, privacy, and recovery requirements.
+Confirm what exists on the checked-out branch before proposing work. Do not turn planned features, screenshots, or draft PRs into completion claims.
+
+Prefer one dependency-complete vertical slice. Domain rules belong to the owning Rust context; interfaces and providers call application services and receive no authority by convenience.
