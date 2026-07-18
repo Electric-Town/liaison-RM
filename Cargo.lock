@@ -1804,7 +1804,7 @@ name = "liaison-profiles"
 version = "0.1.0"
 dependencies = [
  "serde",
- "thiserror",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -1828,7 +1828,7 @@ dependencies = [
  "chrono",
  "liaison-shared-kernel",
  "serde",
- "thiserror",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
