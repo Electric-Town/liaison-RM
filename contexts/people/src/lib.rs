@@ -8,7 +8,6 @@
 use chrono::NaiveDate;
 use liaison_shared_kernel::{PersonId, Revision};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 use thiserror::Error;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -248,69 +247,58 @@ pub enum PeopleError {
     Storage(String),
 }
 
-pub trait PersonRepository: Send + Sync {
-    fn create(&self, workspace: &Path, person: &PersonProfile) -> Result<(), PeopleError>;
-    fn list(
-        &self,
-        workspace: &Path,
-        include_archived: bool,
-    ) -> Result<Vec<PersonProfile>, PeopleError>;
-    fn find(&self, workspace: &Path, id: PersonId) -> Result<PersonProfile, PeopleError>;
-    fn save(
-        &self,
-        workspace: &Path,
-        person: &PersonProfile,
-        expected_revision: Revision,
-    ) -> Result<(), PeopleError>;
+/// Person persistence already bound to the root owned by a `WorkspaceSession`.
+/// Application commands use this port after opening; no later raw path can be
+/// substituted for the writer-authoritative workspace.
+pub trait PersonRepository: std::fmt::Debug + Send + Sync {
+    fn create(&self, person: &PersonProfile) -> Result<(), PeopleError>;
+    fn list(&self, include_archived: bool) -> Result<Vec<PersonProfile>, PeopleError>;
+    fn find(&self, id: PersonId) -> Result<PersonProfile, PeopleError>;
+    fn save(&self, person: &PersonProfile, expected_revision: Revision) -> Result<(), PeopleError>;
 }
 
 #[derive(Debug)]
-pub struct CreatePerson<R> {
-    repository: R,
+pub struct CreatePerson<'repository, R> {
+    repository: &'repository R,
 }
 
-impl<R> CreatePerson<R>
+impl<'repository, R> CreatePerson<'repository, R>
 where
     R: PersonRepository,
 {
     #[must_use]
-    pub const fn new(repository: R) -> Self {
+    pub const fn new(repository: &'repository R) -> Self {
         Self { repository }
     }
 
     pub fn execute(
         &self,
-        workspace: &Path,
         person_id: PersonId,
         display_name: impl Into<String>,
         email: Option<String>,
     ) -> Result<PersonProfile, PeopleError> {
         let person = PersonProfile::create_with_primary_email(person_id, display_name, email)?;
-        self.repository.create(workspace, &person)?;
+        self.repository.create(&person)?;
         Ok(person)
     }
 }
 
 #[derive(Debug)]
-pub struct ListPeople<R> {
-    repository: R,
+pub struct ListPeople<'repository, R> {
+    repository: &'repository R,
 }
 
-impl<R> ListPeople<R>
+impl<'repository, R> ListPeople<'repository, R>
 where
     R: PersonRepository,
 {
     #[must_use]
-    pub const fn new(repository: R) -> Self {
+    pub const fn new(repository: &'repository R) -> Self {
         Self { repository }
     }
 
-    pub fn execute(
-        &self,
-        workspace: &Path,
-        include_archived: bool,
-    ) -> Result<Vec<PersonProfile>, PeopleError> {
-        self.repository.list(workspace, include_archived)
+    pub fn execute(&self, include_archived: bool) -> Result<Vec<PersonProfile>, PeopleError> {
+        self.repository.list(include_archived)
     }
 }
 

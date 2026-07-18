@@ -7,9 +7,13 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+chrono.workspace = true
 liaison-shared-kernel = { path = "../../crates/liaison-shared-kernel" }
 serde.workspace = true
 thiserror.workspace = true
+
+[dev-dependencies]
+uuid.workspace = true
 
 [lints]
 workspace = true

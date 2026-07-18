@@ -19,6 +19,7 @@ search_terms:
   - WebKit event currentTarget
 related_requirements:
   - LRM-AP-001
+  - LRM-WS-009
   - LRM-WS-011
 related_uat:
   - UAT-042
@@ -30,7 +31,7 @@ related_adrs:
 
 ## Problem
 
-An inbound adapter needs to open or create a workspace, validate it, and work with People. Constructing context services or a Markdown repository inside each adapter makes the raw path an accidental identity, produces different errors and revisions, and leaves no single place for later writer locks, recovery, keys, or projection state.
+An inbound adapter needs to open or create a workspace, validate it, and work with People. Constructing context services or a Markdown repository inside each adapter makes the raw path an accidental identity, produces different errors and revisions, and bypasses the single owner of writer authority, recovery, keys, and projection state.
 
 ## Resolution
 
@@ -42,7 +43,15 @@ Workspace-relative paths inside Health findings are logical record identifiers, 
 
 User-selected or operating-system-provided absolute folders are different: they remain native host paths because the OS must open them. Tests construct expected defaults through `PathBuf::join`; they do not impose Unix separators on a Windows Documents path.
 
-The CLI opens a session for the command lifetime. Tauri keeps one managed application instance and its session map in native state; the current disposable UI holds only the opaque active session identifier returned by that native application. Browser fixtures may fake the typed bridge for interaction testing, but they are not storage or domain implementations.
+The CLI opens a write-authoritative session for the command lifetime, except
+that `workspace validate` runs one-shot lock-free Health. Tauri keeps one
+managed application instance and its session map in native state; the current
+disposable UI holds only the opaque active session identifier returned by that
+native application. Replacing the selected workspace first opens the
+replacement, then closes the previous session before accepting it; failure to
+close the previous session keeps it selected and best-effort closes the
+replacement. Browser fixtures may fake the typed bridge for interaction
+testing, but they are not storage or domain implementations.
 
 Browser fixtures also cannot prove the native WebKit event lifecycle. Capture any form, button, or other event target that is needed after an `await` before yielding to the native command. A compiled P01 review exposed a false-failure path where the Person file was written successfully and WebKit then cleared `event.currentTarget`; the interface reported failure and made a dangerous retry look appropriate. The native request shape, success message, file result, and post-command UI state must be tested together.
 
@@ -50,7 +59,12 @@ Browser fixtures also cannot prove the native WebKit event lifecycle. Capture an
 
 The composition root owns cross-context orchestration while each bounded context retains its invariants and ports. The same application method therefore determines initial revision, tolerant reads, validation findings, error codes, and recovery guidance for every inbound adapter. `spec/fixtures/application-parity.json` records the stable subset both adapter-boundary tests must satisfy.
 
-This first slice binds workspace identity and repository access. It does not yet claim writer-lock authority, operation recovery, key availability, projection health, Airgap isolation, or release readiness. Those status changes require their own implementation and evidence.
+The P02 slice binds workspace identity/schema, one retained root capability,
+path-free repository access, one operating-system writer authority, and a
+quiescence barrier. Lock metadata is diagnostic only. Recovery, key, and
+projection states remain explicit unavailable values; recoverable operations,
+final mutation preconditions, Airgap isolation, and release readiness require
+their own implementation and evidence.
 
 ## Verify
 
@@ -73,6 +87,13 @@ Check that:
 - Health exposes the same `/`-separated workspace-relative record path on macOS, Linux, and Windows;
 - semantic corruption and duplicate Person identities are findings rather than silently omitted data;
 - invalid validation returns a deterministic non-zero CLI exit after emitting the report;
+- a second writer receives the stable typed contention code while read-only
+  Health remains available and does not create lock artifacts;
+- forced process exit releases the operating-system lock without a PID or age
+  heuristic;
+- opening and creating a replacement workspace close the previous session, and
+  failed switching best-effort closes the replacement without changing the
+  selected workspace;
 - human and JSON failures retain the same stable code, recovery action, safe details, and correlation identifier;
 - the rejected email or phone value is absent from errors and test output;
 - the exact compiled Tauri bundle accepts the same request DTO names exercised by adapter tests;
@@ -81,7 +102,10 @@ Check that:
 
 Record the compiled artifact checksum, source commit, architecture, signature result, workflow steps, and remaining gates under `docs/evidence/macos/`. A Chromium fake-bridge pass is necessary interaction evidence, but it is not a substitute for compiled WebKit and filesystem proof.
 
-Keep this article in Draft until the P01 exact head passes the remote macOS, Windows, Linux, policy, architecture, and interface matrices. Local reproduction alone is not release evidence.
+Keep this article in Draft until the P02 exact head passes the remote macOS,
+Windows, Linux, policy, architecture, and interface matrices. Local
+reproduction alone is not release evidence, and P03 remains necessary for the
+crash/recovery portions of UAT-042.
 
 ## If the surfaces disagree
 

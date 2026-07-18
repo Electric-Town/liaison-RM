@@ -1,5 +1,5 @@
 [package]
-name = "liaison-vault-markdown"
+name = "liaison-workspace-session-local"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,16 +9,14 @@ rust-version.workspace = true
 [dependencies]
 cap-fs-ext.workspace = true
 cap-std.workspace = true
-liaison-people = { path = "../../contexts/people" }
-liaison-shared-kernel = { path = "../../crates/liaison-shared-kernel" }
 liaison-workspace = { path = "../../contexts/workspace" }
-serde.workspace = true
-serde_yaml.workspace = true
-tempfile.workspace = true
-walkdir.workspace = true
+serde_json.workspace = true
 
 [dev-dependencies]
+chrono.workspace = true
+liaison-shared-kernel = { path = "../../crates/liaison-shared-kernel" }
 tempfile.workspace = true
+uuid.workspace = true
 
 [lints]
 workspace = true

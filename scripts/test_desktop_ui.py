@@ -19,6 +19,10 @@ BRIDGE = r"""
 (() => {
   const people = [];
   let workspace = null;
+  const sessions = new Map();
+  const closedSessions = [];
+  let nextSessionNumber = 101;
+  let failNextCloseFor = null;
   let commandNumber = 1;
   let initialiseAttempts = 0;
   let validationNeedsAttention = false;
@@ -52,7 +56,7 @@ BRIDGE = r"""
     }] : [],
   });
   const requireSession = (sessionId) => {
-    if (!workspace || sessionId !== workspace.workspace.session_id) {
+    if (!sessions.has(sessionId)) {
       throw applicationError(
         "application.workspace-session-not-found",
         "the workspace session is not open",
@@ -60,6 +64,33 @@ BRIDGE = r"""
         { private_diagnostic: "must not be rendered" },
       );
     }
+  };
+  const openResult = (path, name, profile) => {
+    const sessionId = `01900000-0000-7000-8000-${String(nextSessionNumber++).padStart(12, "0")}`;
+    const opened = {
+      workspace: {
+        session_id: sessionId,
+        path,
+        workspace_id: "01900000-0000-7000-8000-000000000001",
+        schema_version: 1,
+        name,
+        profile,
+        build_profile: "connected-local",
+        locale: "en-IE",
+      },
+      people: people.slice(),
+      validation: null,
+    };
+    workspace = opened;
+    opened.validation = validation();
+    sessions.set(sessionId, opened);
+    return opened;
+  };
+  window.__liaisonBridgeState = {
+    activeSessions: () => Array.from(sessions.keys()),
+    closedSessions: () => closedSessions.slice(),
+    currentSession: () => workspace?.workspace.session_id || null,
+    failNextClose: (sessionId) => { failNextCloseFor = sessionId; },
   };
   window.__TAURI__ = {
     core: {
@@ -86,22 +117,7 @@ BRIDGE = r"""
               );
             }
             validationNeedsAttention = false;
-            workspace = {
-              workspace: {
-                session_id: "01900000-0000-7000-8000-000000000101",
-                path: payload.request.path,
-                workspace_id: "01900000-0000-7000-8000-000000000001",
-                schema_version: 1,
-                name: payload.request.name,
-                profile: payload.request.profile,
-                build_profile: "connected-local",
-                locale: "en-IE",
-              },
-              people: people.slice(),
-              validation: null,
-            };
-            workspace.validation = validation();
-            return result(workspace);
+            return result(openResult(payload.request.path, payload.request.name, payload.request.profile));
           case "open_workspace":
             if (!workspace) {
               throw applicationError(
@@ -112,10 +128,22 @@ BRIDGE = r"""
               );
             }
             validationNeedsAttention = payload.path.includes("needs-attention");
-            workspace.workspace.path = payload.path;
-            workspace.people = people.slice();
-            workspace.validation = validation();
-            return result(workspace);
+            return result(openResult(payload.path, "Opened workspace", "workplace"));
+          case "close_workspace": {
+            const sessionId = payload.request.sessionId;
+            requireSession(sessionId);
+            if (failNextCloseFor === sessionId) {
+              failNextCloseFor = null;
+              throw applicationError(
+                "workspace.authority-unavailable",
+                "the current workspace could not be closed safely",
+                "keep the current workspace selected and retry the switch",
+              );
+            }
+            sessions.delete(sessionId);
+            closedSessions.push(sessionId);
+            return result({ session_id: sessionId });
+          }
           case "list_people": {
             requireSession(payload.request.sessionId);
             return result(people.slice());
@@ -210,6 +238,8 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     page.get_by_role("heading", name="Remember useful context without scoring people").wait_for()
     assert page.get_by_role("heading", name="Remember useful context without scoring people").evaluate("el => el === document.activeElement")
     assert page.locator("#people-workspace-warning").is_hidden()
+    first_session = page.evaluate("window.__liaisonBridgeState.currentSession()")
+    assert page.evaluate("window.__liaisonBridgeState.activeSessions().length") == 1
 
     page.get_by_label("Display name").fill("Alex Murphy")
     page.get_by_label("Email optional").fill("alex@example.test")
@@ -224,6 +254,10 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     page.get_by_role("button", name="Open existing workspace").click()
     page.locator("#live-status").get_by_text("review Health before editing", exact=False).wait_for()
     assert page.get_by_role("button", name="Open existing workspace").is_enabled()
+    second_session = page.evaluate("window.__liaisonBridgeState.currentSession()")
+    assert second_session != first_session
+    assert page.evaluate("window.__liaisonBridgeState.activeSessions()") == [second_session]
+    assert first_session in page.evaluate("window.__liaisonBridgeState.closedSessions()")
 
     page.get_by_role("button", name="Health").click()
     page.get_by_role("heading", name="Validate the open-file workspace").wait_for()
@@ -231,6 +265,24 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     page.get_by_text("Workspace needs attention", exact=True).wait_for()
     assert "people.invalid-record" in page.locator("#validation-findings").inner_text()
     assert "Recovery:" in page.locator("#validation-findings").inner_text()
+
+    page.get_by_role("button", name="Workspace").click()
+    page.get_by_label("Absolute folder path").fill("/Users/tester/Documents/created-replacement")
+    page.get_by_label("Workspace name").fill("Created replacement")
+    page.get_by_role("button", name="Create local workspace").click()
+    page.get_by_role("heading", name="Remember useful context without scoring people").wait_for()
+    third_session = page.evaluate("window.__liaisonBridgeState.currentSession()")
+    assert third_session != second_session
+    assert page.evaluate("window.__liaisonBridgeState.activeSessions()") == [third_session]
+    assert second_session in page.evaluate("window.__liaisonBridgeState.closedSessions()")
+
+    page.get_by_role("button", name="Workspace").click()
+    page.evaluate("sessionId => window.__liaisonBridgeState.failNextClose(sessionId)", third_session)
+    page.get_by_label("Absolute folder path").fill("/Users/tester/Documents/rolled-back-replacement")
+    page.get_by_role("button", name="Open existing workspace").click()
+    page.locator("#live-status").get_by_text("Workspace switch did not complete", exact=False).wait_for()
+    assert page.locator("#workspace-path-label").inner_text() == "/Users/tester/Documents/created-replacement"
+    assert page.evaluate("window.__liaisonBridgeState.activeSessions()") == [third_session]
 
     SCREENSHOTS.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(SCREENSHOTS / "desktop-workspace-health.png"), full_page=True)
@@ -309,7 +361,7 @@ def main() -> int:
 
     REPORT.parent.mkdir(parents=True, exist_ok=True)
     REPORT.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
-    print("Desktop UI tests passed: workspace, person, validation, focus, mobile reflow, dark mode, and zero external requests")
+    print("Desktop UI tests passed: workspace switching/rollback, person, validation, focus, mobile reflow, dark mode, and zero external requests")
     return 0
 
 

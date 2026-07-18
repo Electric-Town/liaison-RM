@@ -5,13 +5,21 @@
 
 #![allow(clippy::module_name_repetitions, clippy::missing_errors_doc)]
 
-use liaison_shared_kernel::WorkspaceId;
+use chrono::{DateTime, Utc};
+use liaison_shared_kernel::{WorkspaceId, WorkspaceSessionId};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
+use std::{
+    error::Error as StdError,
+    fmt,
+    path::Path,
+    sync::{Condvar, Mutex},
+};
 use thiserror::Error;
 
 pub const WORKSPACE_FORMAT: &str = "liaison-workspace";
 pub const CURRENT_SCHEMA_VERSION: u32 = 1;
+pub const WRITER_DIAGNOSTIC_FORMAT: &str = "liaison-workspace-writer-diagnostic";
+pub const WRITER_DIAGNOSTIC_SCHEMA_VERSION: u32 = 1;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -102,8 +110,520 @@ pub enum WorkspaceError {
     InitialiseTargetNotEmpty,
     #[error("workspace does not exist")]
     NotFound,
+    #[error("workspace identity changed after the session opened")]
+    SessionIdentityChanged {
+        expected: WorkspaceId,
+        found: WorkspaceId,
+    },
+    #[error("workspace schema changed after the session opened")]
+    SessionSchemaChanged { expected: u32, found: u32 },
     #[error("workspace storage error: {0}")]
     Storage(String),
+}
+
+/// Best-effort information written only after the operating-system lock has
+/// been acquired. This value is never proof of authority: it may be absent,
+/// stale, malformed, or unrelated to the live holder.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct WriterDiagnostic {
+    format: String,
+    schema_version: u32,
+    session_id: WorkspaceSessionId,
+    process_id: u32,
+    acquired_at: DateTime<Utc>,
+}
+
+impl WriterDiagnostic {
+    #[must_use]
+    pub fn new(
+        session_id: WorkspaceSessionId,
+        process_id: u32,
+        acquired_at: DateTime<Utc>,
+    ) -> Self {
+        Self {
+            format: WRITER_DIAGNOSTIC_FORMAT.to_owned(),
+            schema_version: WRITER_DIAGNOSTIC_SCHEMA_VERSION,
+            session_id,
+            process_id,
+            acquired_at,
+        }
+    }
+
+    #[must_use]
+    pub fn is_current_format(&self) -> bool {
+        self.format == WRITER_DIAGNOSTIC_FORMAT
+            && self.schema_version == WRITER_DIAGNOSTIC_SCHEMA_VERSION
+    }
+
+    #[must_use]
+    pub const fn session_id(&self) -> WorkspaceSessionId {
+        self.session_id
+    }
+
+    #[must_use]
+    pub const fn process_id(&self) -> u32 {
+        self.process_id
+    }
+
+    #[must_use]
+    pub const fn acquired_at(&self) -> DateTime<Utc> {
+        self.acquired_at
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum WorkspaceAuthorityPathIssue {
+    RootMustBeAbsolute,
+    RootIsNotDirectory,
+    ControlDirectoryMissing,
+    ControlDirectoryIsSymlink,
+    ControlDirectoryIsNotDirectory,
+    ControlDirectoryWasReplaced,
+    LockFileIsSymlink,
+    LockPathIsNotFile,
+    LockFileWasReplaced,
+}
+
+impl fmt::Display for WorkspaceAuthorityPathIssue {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(match self {
+            Self::RootMustBeAbsolute => "the workspace root must be absolute",
+            Self::RootIsNotDirectory => "the workspace root is not a directory",
+            Self::ControlDirectoryMissing => "the workspace control directory is missing",
+            Self::ControlDirectoryIsSymlink => {
+                "the workspace control directory must not be a symbolic link"
+            }
+            Self::ControlDirectoryIsNotDirectory => "the workspace control path is not a directory",
+            Self::ControlDirectoryWasReplaced => {
+                "the workspace control directory changed after it was bound"
+            }
+            Self::LockFileIsSymlink => "the writer-lock path must not be a symbolic link",
+            Self::LockPathIsNotFile => "the writer-lock path is not a regular file",
+            Self::LockFileWasReplaced => "the writer-lock file changed while it was being opened",
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum WorkspaceAuthorityOperation {
+    ResolveRoot,
+    InspectControlDirectory,
+    OpenLockFile,
+    AcquireWriterLock,
+}
+
+impl fmt::Display for WorkspaceAuthorityOperation {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(match self {
+            Self::ResolveRoot => "resolving the workspace root",
+            Self::InspectControlDirectory => "inspecting the workspace control directory",
+            Self::OpenLockFile => "opening the workspace writer-lock file",
+            Self::AcquireWriterLock => "acquiring the workspace writer lock",
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum WorkspaceAuthorityFailureKind {
+    NotFound,
+    PermissionDenied,
+    ReadOnlyFilesystem,
+    ResourceBusy,
+    ResourceExhausted,
+    Unsupported,
+    InvalidData,
+    Unexpected,
+}
+
+impl fmt::Display for WorkspaceAuthorityFailureKind {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(match self {
+            Self::NotFound => "not found",
+            Self::PermissionDenied => "permission denied",
+            Self::ReadOnlyFilesystem => "read-only filesystem",
+            Self::ResourceBusy => "resource busy",
+            Self::ResourceExhausted => "resource exhausted",
+            Self::Unsupported => "unsupported filesystem operation",
+            Self::InvalidData => "invalid filesystem data",
+            Self::Unexpected => "unexpected filesystem failure",
+        })
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum WorkspaceSessionError {
+    #[error(transparent)]
+    Workspace(#[from] WorkspaceError),
+    #[error("another workspace writer is active")]
+    WriterAlreadyActive {
+        /// Untrusted diagnostics observed only after the OS rejected the lock.
+        observed_diagnostic: Option<WriterDiagnostic>,
+    },
+    #[error("unsafe workspace authority path: {issue}")]
+    UnsafeAuthorityPath { issue: WorkspaceAuthorityPathIssue },
+    #[error("workspace writer authority failed while {operation}: {failure}")]
+    AuthorityUnavailable {
+        operation: WorkspaceAuthorityOperation,
+        failure: WorkspaceAuthorityFailureKind,
+        #[source]
+        source: Box<dyn StdError + Send + Sync>,
+    },
+    #[error("workspace session is quiescing")]
+    Quiescing,
+    #[error("workspace session is closed")]
+    Closed,
+    #[error("workspace session state is unavailable")]
+    StateUnavailable,
+}
+
+/// The exclusive OS authority held for this value's lifetime. Implementations
+/// release authority on drop; process termination is released by OS handle
+/// cleanup, never PID age or sidecar deletion.
+pub trait WorkspaceWriterAuthority: fmt::Debug + Send + Sync {
+    fn diagnostic(&self) -> &WriterDiagnostic;
+    fn diagnostic_published(&self) -> bool;
+    fn verify_authority(&self) -> Result<(), WorkspaceSessionError>;
+}
+
+/// Adapter-bound writer authority. No raw path crosses this port.
+pub trait WorkspaceWriterAuthorityPort: fmt::Debug + Send + Sync {
+    fn acquire_writer(
+        &self,
+        diagnostic: WriterDiagnostic,
+    ) -> Result<Box<dyn WorkspaceWriterAuthority>, WorkspaceSessionError>;
+}
+
+/// Manifest and Health access bound to one adapter-owned workspace root.
+pub trait BoundWorkspaceStore: fmt::Debug + Send + Sync {
+    fn load_manifest(&self) -> Result<WorkspaceManifest, WorkspaceError>;
+    fn validate_layout(&self) -> Result<Vec<ValidationFinding>, WorkspaceError>;
+}
+
+/// One composition-time binding for writer authority and all session-bound
+/// repositories. Consuming the binding prevents application code from pairing
+/// a live authority with a later arbitrary path.
+pub trait BoundWorkspaceSessionPort:
+    BoundWorkspaceStore + WorkspaceWriterAuthorityPort + Sized
+{
+    type Repositories: BoundWorkspaceStore;
+
+    fn into_repositories(self) -> Self::Repositories;
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum WorkspaceRecoveryState {
+    UnavailableUntilRecoverableOperations,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum WorkspaceKeyState {
+    UnavailableUntilWorkspaceSecurity,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum WorkspaceProjectionState {
+    UnavailableUntilDirectoryProjection,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SessionPhase {
+    Open,
+    Quiescing,
+    Closed,
+}
+
+#[derive(Debug)]
+struct SessionLifecycle {
+    phase: SessionPhase,
+    in_flight: usize,
+}
+
+/// Arc-owned, non-cloneable Workspace capability aggregate.
+///
+/// The aggregate owns one OS writer authority, identity/schema, path-free
+/// repositories, explicit not-yet-available capability states, and a
+/// quiescence barrier. Callers may share it with `Arc`; they cannot clone the
+/// authority-bearing aggregate itself.
+pub struct WorkspaceSession<R>
+where
+    R: BoundWorkspaceStore,
+{
+    manifest: WorkspaceManifest,
+    repositories: R,
+    writer_authority: Mutex<Option<Box<dyn WorkspaceWriterAuthority>>>,
+    lifecycle: Mutex<SessionLifecycle>,
+    lifecycle_changed: Condvar,
+    recovery_state: WorkspaceRecoveryState,
+    key_state: WorkspaceKeyState,
+    projection_state: WorkspaceProjectionState,
+}
+
+impl<R> fmt::Debug for WorkspaceSession<R>
+where
+    R: BoundWorkspaceStore,
+{
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("WorkspaceSession")
+            .field("manifest", &self.manifest)
+            .field("repositories", &self.repositories)
+            .field("recovery_state", &self.recovery_state)
+            .field("key_state", &self.key_state)
+            .field("projection_state", &self.projection_state)
+            .finish_non_exhaustive()
+    }
+}
+
+impl<R> WorkspaceSession<R>
+where
+    R: BoundWorkspaceStore,
+{
+    #[must_use]
+    pub const fn workspace_id(&self) -> WorkspaceId {
+        self.manifest.workspace_id
+    }
+
+    #[must_use]
+    pub const fn schema_version(&self) -> u32 {
+        self.manifest.schema_version
+    }
+
+    #[must_use]
+    pub const fn manifest(&self) -> &WorkspaceManifest {
+        &self.manifest
+    }
+
+    #[must_use]
+    pub const fn recovery_state(&self) -> WorkspaceRecoveryState {
+        self.recovery_state
+    }
+
+    #[must_use]
+    pub const fn key_state(&self) -> WorkspaceKeyState {
+        self.key_state
+    }
+
+    #[must_use]
+    pub const fn projection_state(&self) -> WorkspaceProjectionState {
+        self.projection_state
+    }
+
+    pub fn session_id(&self) -> Result<WorkspaceSessionId, WorkspaceSessionError> {
+        let authority = self
+            .writer_authority
+            .lock()
+            .map_err(|_| WorkspaceSessionError::StateUnavailable)?;
+        authority
+            .as_ref()
+            .map(|authority| authority.diagnostic().session_id())
+            .ok_or(WorkspaceSessionError::Closed)
+    }
+
+    /// Starts one unit of session work. Once close begins, new work is
+    /// rejected while previously issued guards are allowed to drain.
+    pub fn begin_work(&self) -> Result<WorkspaceWorkGuard<'_, R>, WorkspaceSessionError> {
+        let mut lifecycle = self
+            .lifecycle
+            .lock()
+            .map_err(|_| WorkspaceSessionError::StateUnavailable)?;
+        match lifecycle.phase {
+            SessionPhase::Open => {
+                {
+                    let authority = self
+                        .writer_authority
+                        .lock()
+                        .map_err(|_| WorkspaceSessionError::StateUnavailable)?;
+                    authority
+                        .as_ref()
+                        .ok_or(WorkspaceSessionError::Closed)?
+                        .verify_authority()?;
+                }
+                lifecycle.in_flight = lifecycle
+                    .in_flight
+                    .checked_add(1)
+                    .ok_or(WorkspaceSessionError::StateUnavailable)?;
+                Ok(WorkspaceWorkGuard {
+                    session: self,
+                    active: true,
+                })
+            }
+            SessionPhase::Quiescing => Err(WorkspaceSessionError::Quiescing),
+            SessionPhase::Closed => Err(WorkspaceSessionError::Closed),
+        }
+    }
+
+    /// Rejects new work, drains issued work guards, and then releases the OS
+    /// writer authority. Concurrent or repeated close calls are idempotent.
+    pub fn close(&self) -> Result<(), WorkspaceSessionError> {
+        let mut lifecycle = self
+            .lifecycle
+            .lock()
+            .map_err(|_| WorkspaceSessionError::StateUnavailable)?;
+        if lifecycle.phase == SessionPhase::Closed {
+            return Ok(());
+        }
+        if lifecycle.phase == SessionPhase::Open {
+            lifecycle.phase = SessionPhase::Quiescing;
+            self.lifecycle_changed.notify_all();
+        }
+        while lifecycle.in_flight != 0 {
+            lifecycle = self
+                .lifecycle_changed
+                .wait(lifecycle)
+                .map_err(|_| WorkspaceSessionError::StateUnavailable)?;
+        }
+        lifecycle.phase = SessionPhase::Closed;
+        self.lifecycle_changed.notify_all();
+        drop(lifecycle);
+
+        let authority = match self.writer_authority.lock() {
+            Ok(mut authority) => authority.take(),
+            Err(poisoned) => poisoned.into_inner().take(),
+        };
+        drop(authority);
+        Ok(())
+    }
+}
+
+impl<R> Drop for WorkspaceSession<R>
+where
+    R: BoundWorkspaceStore,
+{
+    fn drop(&mut self) {
+        let authority = match self.writer_authority.get_mut() {
+            Ok(authority) => authority.take(),
+            Err(poisoned) => poisoned.into_inner().take(),
+        };
+        drop(authority);
+    }
+}
+
+#[derive(Debug)]
+pub struct WorkspaceWorkGuard<'session, R>
+where
+    R: BoundWorkspaceStore,
+{
+    session: &'session WorkspaceSession<R>,
+    active: bool,
+}
+
+impl<R> WorkspaceWorkGuard<'_, R>
+where
+    R: BoundWorkspaceStore,
+{
+    /// The only public route to session-bound repositories. Holding this
+    /// borrowed guard proves the session is open and prevents close from
+    /// releasing writer authority until the operation finishes.
+    #[must_use]
+    pub const fn repositories(&self) -> &R {
+        &self.session.repositories
+    }
+
+    pub fn verify_identity(&self) -> Result<(), WorkspaceError> {
+        let manifest = self.session.repositories.load_manifest()?;
+        manifest.validate()?;
+        if manifest.workspace_id != self.session.manifest.workspace_id {
+            return Err(WorkspaceError::SessionIdentityChanged {
+                expected: self.session.manifest.workspace_id,
+                found: manifest.workspace_id,
+            });
+        }
+        if manifest.schema_version != self.session.manifest.schema_version {
+            return Err(WorkspaceError::SessionSchemaChanged {
+                expected: self.session.manifest.schema_version,
+                found: manifest.schema_version,
+            });
+        }
+        Ok(())
+    }
+
+    pub fn validate_current_layout(&self) -> Result<WorkspaceValidationReport, WorkspaceError> {
+        let manifest = self.session.repositories.load_manifest()?;
+        manifest.validate()?;
+        if manifest.workspace_id != self.session.manifest.workspace_id {
+            return Err(WorkspaceError::SessionIdentityChanged {
+                expected: self.session.manifest.workspace_id,
+                found: manifest.workspace_id,
+            });
+        }
+        if manifest.schema_version != self.session.manifest.schema_version {
+            return Err(WorkspaceError::SessionSchemaChanged {
+                expected: self.session.manifest.schema_version,
+                found: manifest.schema_version,
+            });
+        }
+        Ok(WorkspaceValidationReport {
+            workspace_id: manifest.workspace_id,
+            schema_version: manifest.schema_version,
+            findings: self.session.repositories.validate_layout()?,
+        })
+    }
+}
+
+impl<R> Drop for WorkspaceWorkGuard<'_, R>
+where
+    R: BoundWorkspaceStore,
+{
+    fn drop(&mut self) {
+        if !self.active {
+            return;
+        }
+        let mut lifecycle = match self.session.lifecycle.lock() {
+            Ok(lifecycle) => lifecycle,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        if lifecycle.in_flight > 0 {
+            lifecycle.in_flight -= 1;
+        }
+        self.active = false;
+        if lifecycle.in_flight == 0 {
+            self.session.lifecycle_changed.notify_all();
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct OpenWorkspaceSession<B> {
+    binding: B,
+}
+
+impl<B> OpenWorkspaceSession<B>
+where
+    B: BoundWorkspaceSessionPort,
+{
+    #[must_use]
+    pub const fn new(binding: B) -> Self {
+        Self { binding }
+    }
+
+    pub fn execute(
+        self,
+        diagnostic: WriterDiagnostic,
+    ) -> Result<WorkspaceSession<B::Repositories>, WorkspaceSessionError> {
+        let writer_authority = self.binding.acquire_writer(diagnostic)?;
+        let manifest = self.binding.load_manifest()?;
+        manifest.validate()?;
+        let repositories = self.binding.into_repositories();
+        Ok(WorkspaceSession {
+            manifest,
+            repositories,
+            writer_authority: Mutex::new(Some(writer_authority)),
+            lifecycle: Mutex::new(SessionLifecycle {
+                phase: SessionPhase::Open,
+                in_flight: 0,
+            }),
+            lifecycle_changed: Condvar::new(),
+            recovery_state: WorkspaceRecoveryState::UnavailableUntilRecoverableOperations,
+            key_state: WorkspaceKeyState::UnavailableUntilWorkspaceSecurity,
+            projection_state: WorkspaceProjectionState::UnavailableUntilDirectoryProjection,
+        })
+    }
 }
 
 pub trait WorkspaceStore: Send + Sync {
@@ -205,8 +725,131 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{BuildProfile, WorkspaceError, WorkspaceManifest, WorkspaceProfile};
-    use liaison_shared_kernel::WorkspaceId;
+    use super::{
+        BoundWorkspaceSessionPort, BoundWorkspaceStore, BuildProfile, OpenWorkspaceSession,
+        ValidationFinding, WorkspaceError, WorkspaceKeyState, WorkspaceManifest, WorkspaceProfile,
+        WorkspaceProjectionState, WorkspaceRecoveryState, WorkspaceSessionError,
+        WorkspaceWriterAuthority, WorkspaceWriterAuthorityPort, WriterDiagnostic,
+    };
+    use chrono::{DateTime, Utc};
+    use liaison_shared_kernel::{WorkspaceId, WorkspaceSessionId};
+    use std::{
+        sync::{
+            Arc,
+            atomic::{AtomicBool, Ordering},
+            mpsc,
+        },
+        thread,
+        time::Duration,
+    };
+    use uuid::Uuid;
+
+    #[derive(Debug)]
+    struct MemoryRepositories {
+        manifest: WorkspaceManifest,
+    }
+
+    impl BoundWorkspaceStore for MemoryRepositories {
+        fn load_manifest(&self) -> Result<WorkspaceManifest, WorkspaceError> {
+            Ok(self.manifest.clone())
+        }
+
+        fn validate_layout(&self) -> Result<Vec<ValidationFinding>, WorkspaceError> {
+            Ok(Vec::new())
+        }
+    }
+
+    #[derive(Debug)]
+    struct TrackingBinding {
+        repositories: MemoryRepositories,
+        authority_dropped: Arc<AtomicBool>,
+    }
+
+    impl BoundWorkspaceStore for TrackingBinding {
+        fn load_manifest(&self) -> Result<WorkspaceManifest, WorkspaceError> {
+            self.repositories.load_manifest()
+        }
+
+        fn validate_layout(&self) -> Result<Vec<ValidationFinding>, WorkspaceError> {
+            self.repositories.validate_layout()
+        }
+    }
+
+    impl WorkspaceWriterAuthorityPort for TrackingBinding {
+        fn acquire_writer(
+            &self,
+            diagnostic: WriterDiagnostic,
+        ) -> Result<Box<dyn WorkspaceWriterAuthority>, WorkspaceSessionError> {
+            Ok(Box::new(TrackingAuthority {
+                diagnostic,
+                dropped: Arc::clone(&self.authority_dropped),
+            }))
+        }
+    }
+
+    impl BoundWorkspaceSessionPort for TrackingBinding {
+        type Repositories = MemoryRepositories;
+
+        fn into_repositories(self) -> Self::Repositories {
+            self.repositories
+        }
+    }
+
+    #[derive(Debug)]
+    struct TrackingAuthority {
+        diagnostic: WriterDiagnostic,
+        dropped: Arc<AtomicBool>,
+    }
+
+    impl WorkspaceWriterAuthority for TrackingAuthority {
+        fn diagnostic(&self) -> &WriterDiagnostic {
+            &self.diagnostic
+        }
+
+        fn diagnostic_published(&self) -> bool {
+            true
+        }
+
+        fn verify_authority(&self) -> Result<(), WorkspaceSessionError> {
+            Ok(())
+        }
+    }
+
+    impl Drop for TrackingAuthority {
+        fn drop(&mut self) {
+            self.dropped.store(true, Ordering::SeqCst);
+        }
+    }
+
+    fn manifest() -> WorkspaceManifest {
+        WorkspaceManifest::new(
+            WorkspaceId::from_uuid(Uuid::from_u128(1)),
+            "People",
+            WorkspaceProfile::Personal,
+            BuildProfile::Airgap,
+            "en-IE",
+        )
+        .unwrap_or_else(|error| unreachable!("test manifest must be valid: {error}"))
+    }
+
+    fn diagnostic() -> WriterDiagnostic {
+        WriterDiagnostic::new(
+            WorkspaceSessionId::from_uuid(Uuid::from_u128(2)),
+            42,
+            DateTime::<Utc>::UNIX_EPOCH,
+        )
+    }
+
+    fn tracking_session(
+        manifest: WorkspaceManifest,
+        dropped: &Arc<AtomicBool>,
+    ) -> Result<super::WorkspaceSession<MemoryRepositories>, WorkspaceSessionError> {
+        OpenWorkspaceSession::new(TrackingBinding {
+            repositories: MemoryRepositories { manifest },
+            authority_dropped: Arc::clone(dropped),
+        })
+        .execute(diagnostic())
+    }
 
     #[test]
     fn manifest_rejects_blank_name() {
@@ -234,5 +877,109 @@ mod tests {
         assert_eq!(manifest.format, "liaison-workspace");
         assert_eq!(manifest.schema_version, 1);
         assert!(manifest.validate().is_ok());
+    }
+
+    #[test]
+    fn session_owns_authority_repositories_and_honest_unavailable_states() {
+        let dropped = Arc::new(AtomicBool::new(false));
+        let expected_manifest = manifest();
+        let session = tracking_session(expected_manifest.clone(), &dropped);
+        assert!(session.is_ok());
+        let Ok(session) = session else {
+            return;
+        };
+        assert_eq!(session.workspace_id(), expected_manifest.workspace_id);
+        assert_eq!(session.schema_version(), expected_manifest.schema_version);
+        assert!(matches!(
+            session.session_id(),
+            Ok(found) if found == diagnostic().session_id()
+        ));
+        assert_eq!(
+            session.recovery_state(),
+            WorkspaceRecoveryState::UnavailableUntilRecoverableOperations
+        );
+        assert_eq!(
+            session.key_state(),
+            WorkspaceKeyState::UnavailableUntilWorkspaceSecurity
+        );
+        assert_eq!(
+            session.projection_state(),
+            WorkspaceProjectionState::UnavailableUntilDirectoryProjection
+        );
+        {
+            let work = session.begin_work();
+            assert!(work.is_ok());
+            if let Ok(work) = work {
+                assert!(work.verify_identity().is_ok());
+                assert!(work.validate_current_layout().is_ok());
+            }
+        }
+        assert!(!dropped.load(Ordering::SeqCst));
+        drop(session);
+        assert!(dropped.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn close_rejects_new_work_drains_in_flight_and_releases_authority() {
+        let dropped = Arc::new(AtomicBool::new(false));
+        let session = tracking_session(manifest(), &dropped);
+        assert!(session.is_ok());
+        let Ok(session) = session else {
+            return;
+        };
+        let session = Arc::new(session);
+        let work = session.begin_work();
+        assert!(work.is_ok());
+        let Ok(work) = work else {
+            return;
+        };
+        let closing_session = Arc::clone(&session);
+        let (done_sender, done_receiver) = mpsc::sync_channel(1);
+        let closer = thread::spawn(move || {
+            let result = closing_session.close();
+            let _ = done_sender.send(result);
+        });
+
+        let mut observed_quiescence = false;
+        for _ in 0..10_000 {
+            match session.begin_work() {
+                Err(WorkspaceSessionError::Quiescing | WorkspaceSessionError::Closed) => {
+                    observed_quiescence = true;
+                    break;
+                }
+                Ok(extra_work) => drop(extra_work),
+                Err(_) => break,
+            }
+            thread::yield_now();
+        }
+        assert!(observed_quiescence);
+        assert!(done_receiver.try_recv().is_err());
+        assert!(!dropped.load(Ordering::SeqCst));
+
+        drop(work);
+        let close_result = done_receiver.recv_timeout(Duration::from_secs(2));
+        assert!(matches!(close_result, Ok(Ok(()))));
+        assert!(closer.join().is_ok());
+        assert!(dropped.load(Ordering::SeqCst));
+        assert!(matches!(
+            session.begin_work(),
+            Err(WorkspaceSessionError::Closed)
+        ));
+        assert!(session.close().is_ok());
+    }
+
+    #[test]
+    fn invalid_schema_releases_authority_before_returning_error() {
+        let dropped = Arc::new(AtomicBool::new(false));
+        let mut invalid = manifest();
+        invalid.schema_version += 1;
+        let result = tracking_session(invalid, &dropped);
+        assert!(matches!(
+            result,
+            Err(WorkspaceSessionError::Workspace(
+                WorkspaceError::UnsupportedSchema { .. }
+            ))
+        ));
+        assert!(dropped.load(Ordering::SeqCst));
     }
 }

@@ -5,6 +5,7 @@ members = [
     "adapters/object-store-local",
     "adapters/provider-registry-memory",
     "adapters/vault-markdown",
+    "adapters/workspace-session-local",
     "contexts/connections",
     "contexts/people",
     "contexts/profiles",
@@ -25,6 +26,8 @@ rust-version = "1.97.1"
 
 [workspace.dependencies]
 assert_cmd = "2.0"
+cap-fs-ext = "4.0.2"
+cap-std = "4.0.2"
 chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "4.5", features = ["derive"] }
 getrandom = "0.4.3"

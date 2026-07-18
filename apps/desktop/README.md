@@ -2,6 +2,11 @@
 
 The desktop application is an inbound Tauri adapter over `liaison-application`, the sole Rust composition root. Tauri owns one managed application instance. Opening or creating a workspace returns an opaque session identifier; later commands use that session rather than accepting another filesystem path.
 
+When the user opens or creates a replacement workspace, the interface closes
+the previous native session before accepting the replacement. If the previous
+session cannot close, it keeps the previous selection and best-effort closes
+the replacement so an unused writer lock is not silently retained.
+
 ## Current review-build workflow
 
 - show the build's local-authority status;

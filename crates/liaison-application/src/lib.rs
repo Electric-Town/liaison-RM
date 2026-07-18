@@ -3,9 +3,9 @@
 //! Inbound adapters call this crate instead of constructing context services
 //! themselves. A workspace path is accepted only while a workspace is opened
 //! or initialised. Later commands use the resulting session identifier. The
-//! session currently binds identity and repository access; writer locking,
-//! recovery, key state, and projections are added by the Workspace Session
-//! delivery phase rather than being implied here.
+//! session owns OS writer authority and root-bound repositories. Recovery,
+//! key, and projection capabilities are explicit unavailable states until
+//! their later delivery phases rather than implied capabilities.
 
 #![allow(clippy::missing_errors_doc, clippy::module_name_repetitions)]
 
@@ -16,12 +16,15 @@ use liaison_people::{
 pub use liaison_shared_kernel::{
     CommandId, JobId, PersonId, Revision, WorkspaceId, WorkspaceSessionId,
 };
-use liaison_vault_markdown::MarkdownVault;
-pub use liaison_workspace::{BuildProfile, WorkspaceProfile};
+use liaison_vault_markdown::{BoundMarkdownVault, MarkdownVault};
 use liaison_workspace::{
-    FindingSeverity, InitialiseWorkspace, ValidateWorkspace, ValidationFinding, WorkspaceError,
-    WorkspaceManifest, WorkspaceStore,
+    BoundWorkspaceSessionPort, BoundWorkspaceStore, FindingSeverity, InitialiseWorkspace,
+    OpenWorkspaceSession, ValidationFinding, WorkspaceAuthorityFailureKind,
+    WorkspaceAuthorityOperation, WorkspaceError, WorkspaceSession, WorkspaceSessionError,
+    WorkspaceWriterAuthority, WorkspaceWriterAuthorityPort, WriterDiagnostic,
 };
+pub use liaison_workspace::{BuildProfile, WorkspaceProfile};
+use liaison_workspace_session_local::LocalWorkspaceSessionAuthority;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{
@@ -133,8 +136,18 @@ pub struct OpenWorkspaceCommand {
     pub path: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct InspectWorkspaceHealthQuery {
+    pub path: String,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WorkspaceSessionCommand {
+    pub session_id: WorkspaceSessionId,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct WorkspaceClosedDto {
     pub session_id: WorkspaceSessionId,
 }
 
@@ -248,10 +261,50 @@ impl fmt::Display for ApplicationError {
 
 impl std::error::Error for ApplicationError {}
 
-#[derive(Debug, Clone)]
-struct SessionState {
-    root: PathBuf,
-    workspace_id: WorkspaceId,
+type LocalWorkspaceSession = WorkspaceSession<BoundMarkdownVault>;
+
+#[derive(Debug)]
+struct LocalMarkdownBinding {
+    authority: LocalWorkspaceSessionAuthority,
+    repositories: BoundMarkdownVault,
+}
+
+impl LocalMarkdownBinding {
+    fn bind(vault: &MarkdownVault, root: &Path) -> Result<Self, WorkspaceSessionError> {
+        let authority = LocalWorkspaceSessionAuthority::bind(root)?;
+        let repositories = vault.bind_directory(authority.try_clone_root_directory()?);
+        Ok(Self {
+            authority,
+            repositories,
+        })
+    }
+}
+
+impl BoundWorkspaceStore for LocalMarkdownBinding {
+    fn load_manifest(&self) -> Result<liaison_workspace::WorkspaceManifest, WorkspaceError> {
+        self.repositories.load_manifest()
+    }
+
+    fn validate_layout(&self) -> Result<Vec<ValidationFinding>, WorkspaceError> {
+        self.repositories.validate_layout()
+    }
+}
+
+impl WorkspaceWriterAuthorityPort for LocalMarkdownBinding {
+    fn acquire_writer(
+        &self,
+        diagnostic: WriterDiagnostic,
+    ) -> Result<Box<dyn WorkspaceWriterAuthority>, WorkspaceSessionError> {
+        self.authority.acquire_writer(diagnostic)
+    }
+}
+
+impl BoundWorkspaceSessionPort for LocalMarkdownBinding {
+    type Repositories = BoundMarkdownVault;
+
+    fn into_repositories(self) -> Self::Repositories {
+        self.repositories
+    }
 }
 
 /// Sole application composition root for the current local Markdown adapter.
@@ -259,7 +312,7 @@ struct SessionState {
 pub struct LiaisonApplication {
     vault: MarkdownVault,
     runtime: Arc<dyn RuntimePorts>,
-    sessions: Mutex<HashMap<WorkspaceSessionId, SessionState>>,
+    sessions: Mutex<HashMap<WorkspaceSessionId, Arc<LocalWorkspaceSession>>>,
 }
 
 impl LiaisonApplication {
@@ -317,7 +370,7 @@ impl LiaisonApplication {
     ) -> Result<CommandResult<WorkspaceOpenDto>, ApplicationError> {
         let command_id = self.runtime.next_command_id();
         let root = Self::absolute_workspace_path(&command.path, command_id)?;
-        let manifest = InitialiseWorkspace::new(self.vault.clone())
+        let _manifest = InitialiseWorkspace::new(self.vault.clone())
             .execute(
                 &root,
                 self.runtime.next_workspace_id(),
@@ -328,7 +381,7 @@ impl LiaisonApplication {
             )
             .map_err(|error| initialise_workspace_error(error, command_id))?;
         let value = self
-            .opened_workspace(&root, manifest, command_id)
+            .opened_workspace(&root, command_id)
             .map_err(|error| workspace_initialised_open_error(error, command_id))?;
         Ok(self.complete(command_id, value))
     }
@@ -340,12 +393,24 @@ impl LiaisonApplication {
         let command_id = self.runtime.next_command_id();
         let OpenWorkspaceCommand { path } = command;
         let root = Self::absolute_workspace_path(&path, command_id)?;
-        let manifest = self
-            .vault
-            .load(&root)
-            .map_err(|error| workspace_error(error, command_id))?;
-        let value = self.opened_workspace(&root, manifest, command_id)?;
+        let value = self.opened_workspace(&root, command_id)?;
         Ok(self.complete(command_id, value))
+    }
+
+    /// Performs one-shot read-only Health without acquiring, creating, or
+    /// consulting the writer lock. This remains available during contention.
+    pub fn inspect_workspace_health(
+        &self,
+        query: InspectWorkspaceHealthQuery,
+    ) -> Result<CommandResult<WorkspaceValidationDto>, ApplicationError> {
+        let command_id = self.runtime.next_command_id();
+        let InspectWorkspaceHealthQuery { path } = query;
+        let root = Self::absolute_workspace_path(&path, command_id)?;
+        let report = self
+            .vault
+            .inspect_health(&root)
+            .map_err(|error| workspace_error(error, command_id))?;
+        Ok(self.complete(command_id, validation_dto(report)))
     }
 
     pub fn validate_workspace(
@@ -354,8 +419,11 @@ impl LiaisonApplication {
     ) -> Result<CommandResult<WorkspaceValidationDto>, ApplicationError> {
         let command_id = self.runtime.next_command_id();
         let session = self.resolve_session(command.session_id, command_id)?;
-        let report = ValidateWorkspace::new(self.vault.clone())
-            .execute(&session.root)
+        let work = session
+            .begin_work()
+            .map_err(|error| workspace_session_error(error, command_id))?;
+        let report = work
+            .validate_current_layout()
             .map_err(|error| workspace_error(error, command_id))?;
         Ok(self.complete(command_id, validation_dto(report)))
     }
@@ -366,17 +434,17 @@ impl LiaisonApplication {
     ) -> Result<CommandResult<PersonDto>, ApplicationError> {
         let command_id = self.runtime.next_command_id();
         let session = self.resolve_session(command.session_id, command_id)?;
+        let work = session
+            .begin_work()
+            .map_err(|error| workspace_session_error(error, command_id))?;
+        work.verify_identity()
+            .map_err(|error| workspace_error(error, command_id))?;
         let email = command.email.and_then(|value| {
             let value = value.trim().to_owned();
             (!value.is_empty()).then_some(value)
         });
-        let person = CreatePerson::new(self.vault.clone())
-            .execute(
-                &session.root,
-                self.runtime.next_person_id(),
-                command.display_name,
-                email,
-            )
+        let person = CreatePerson::new(work.repositories())
+            .execute(self.runtime.next_person_id(), command.display_name, email)
             .map_err(|error| people_error(&error, command_id))?;
         Ok(self.complete(command_id, person_dto(person)))
     }
@@ -387,8 +455,13 @@ impl LiaisonApplication {
     ) -> Result<CommandResult<Vec<PersonDto>>, ApplicationError> {
         let command_id = self.runtime.next_command_id();
         let session = self.resolve_session(query.session_id, command_id)?;
-        let people = ListPeople::new(self.vault.clone())
-            .execute(&session.root, query.include_archived)
+        let work = session
+            .begin_work()
+            .map_err(|error| workspace_session_error(error, command_id))?;
+        work.verify_identity()
+            .map_err(|error| workspace_error(error, command_id))?;
+        let people = ListPeople::new(work.repositories())
+            .execute(query.include_archived)
             .map_err(|error| people_error(&error, command_id))?
             .into_iter()
             .map(person_dto)
@@ -396,31 +469,75 @@ impl LiaisonApplication {
         Ok(self.complete(command_id, people))
     }
 
+    pub fn close_workspace(
+        &self,
+        command: WorkspaceSessionCommand,
+    ) -> Result<CommandResult<WorkspaceClosedDto>, ApplicationError> {
+        let command_id = self.runtime.next_command_id();
+        let session = self
+            .sessions
+            .lock()
+            .map_err(|_| session_state_unavailable(command_id))?
+            .get(&command.session_id)
+            .cloned()
+            .ok_or_else(|| workspace_session_not_found(command.session_id, command_id))?;
+        session
+            .close()
+            .map_err(|error| workspace_session_error(error, command_id))?;
+        let mut sessions = self
+            .sessions
+            .lock()
+            .map_err(|_| session_state_unavailable(command_id))?;
+        if sessions
+            .get(&command.session_id)
+            .is_some_and(|registered| Arc::ptr_eq(registered, &session))
+        {
+            sessions.remove(&command.session_id);
+        }
+        Ok(self.complete(
+            command_id,
+            WorkspaceClosedDto {
+                session_id: command.session_id,
+            },
+        ))
+    }
+
     fn opened_workspace(
         &self,
         root: &Path,
-        manifest: WorkspaceManifest,
         command_id: CommandId,
     ) -> Result<WorkspaceOpenDto, ApplicationError> {
-        let report = ValidateWorkspace::new(self.vault.clone())
-            .execute(root)
+        let session_id = self.runtime.next_workspace_session_id();
+        let binding = LocalMarkdownBinding::bind(&self.vault, root)
+            .map_err(|error| workspace_session_error(error, command_id))?;
+        let session = Arc::new(
+            OpenWorkspaceSession::new(binding)
+                .execute(WriterDiagnostic::new(
+                    session_id,
+                    std::process::id(),
+                    self.runtime.now(),
+                ))
+                .map_err(|error| workspace_session_error(error, command_id))?,
+        );
+        let work = session
+            .begin_work()
+            .map_err(|error| workspace_session_error(error, command_id))?;
+        let report = work
+            .validate_current_layout()
             .map_err(|error| workspace_error(error, command_id))?;
-        let people = ListPeople::new(self.vault.clone())
-            .execute(root, false)
+        let people = ListPeople::new(work.repositories())
+            .execute(false)
             .map_err(|error| people_error(&error, command_id))?
             .into_iter()
             .map(person_dto)
             .collect();
-        let session_id = self.runtime.next_workspace_session_id();
-        let mut sessions = self.sessions.lock().map_err(|_| {
-            application_error(
-                "application.session-state-unavailable",
-                "workspace session state is unavailable",
-                "close Liaison RM, reopen it, and open the workspace again",
-                BTreeMap::new(),
-                command_id,
-            )
-        })?;
+        let manifest = session.manifest().clone();
+        drop(work);
+
+        let mut sessions = self
+            .sessions
+            .lock()
+            .map_err(|_| session_state_unavailable(command_id))?;
         if sessions.contains_key(&session_id) {
             return Err(application_error(
                 "application.identifier-collision",
@@ -430,13 +547,7 @@ impl LiaisonApplication {
                 command_id,
             ));
         }
-        sessions.insert(
-            session_id,
-            SessionState {
-                root: root.to_path_buf(),
-                workspace_id: manifest.workspace_id,
-            },
-        );
+        sessions.insert(session_id, session);
         Ok(WorkspaceOpenDto {
             workspace: WorkspaceDto {
                 session_id,
@@ -457,53 +568,13 @@ impl LiaisonApplication {
         &self,
         session_id: WorkspaceSessionId,
         command_id: CommandId,
-    ) -> Result<SessionState, ApplicationError> {
-        let session = self
-            .sessions
+    ) -> Result<Arc<LocalWorkspaceSession>, ApplicationError> {
+        self.sessions
             .lock()
-            .map_err(|_| {
-                application_error(
-                    "application.session-state-unavailable",
-                    "workspace session state is unavailable",
-                    "close Liaison RM, reopen it, and open the workspace again",
-                    BTreeMap::new(),
-                    command_id,
-                )
-            })?
+            .map_err(|_| session_state_unavailable(command_id))?
             .get(&session_id)
             .cloned()
-            .ok_or_else(|| {
-                application_error(
-                    "application.workspace-session-not-found",
-                    "the workspace session is not open",
-                    "open the workspace again and retry the operation",
-                    details([("session_id", Value::String(session_id.to_string()))]),
-                    command_id,
-                )
-            })?;
-        let manifest = self
-            .vault
-            .load(&session.root)
-            .map_err(|error| workspace_error(error, command_id))?;
-        if manifest.workspace_id != session.workspace_id {
-            return Err(application_error(
-                "application.workspace-session-stale",
-                "the workspace identity changed after this session was opened",
-                "stop editing and open the intended workspace again",
-                details([
-                    (
-                        "expected_workspace_id",
-                        Value::String(session.workspace_id.to_string()),
-                    ),
-                    (
-                        "found_workspace_id",
-                        Value::String(manifest.workspace_id.to_string()),
-                    ),
-                ]),
-                command_id,
-            ));
-        }
-        Ok(session)
+            .ok_or_else(|| workspace_session_not_found(session_id, command_id))
     }
 
     fn absolute_workspace_path(
@@ -680,6 +751,26 @@ fn workspace_error(error: WorkspaceError, correlation_id: CommandId) -> Applicat
             BTreeMap::new(),
             correlation_id,
         ),
+        WorkspaceError::SessionIdentityChanged { expected, found } => application_error(
+            "application.workspace-session-stale",
+            "the workspace identity changed after this session was opened",
+            "stop editing and open the intended workspace again",
+            details([
+                ("expected_workspace_id", Value::String(expected.to_string())),
+                ("found_workspace_id", Value::String(found.to_string())),
+            ]),
+            correlation_id,
+        ),
+        WorkspaceError::SessionSchemaChanged { expected, found } => application_error(
+            "application.workspace-session-stale",
+            "the workspace schema changed after this session was opened",
+            "stop editing and open the workspace with a compatible Liaison build",
+            details([
+                ("expected_schema_version", Value::from(expected)),
+                ("found_schema_version", Value::from(found)),
+            ]),
+            correlation_id,
+        ),
         WorkspaceError::Storage(_) => application_error(
             "workspace.storage-error",
             "the workspace storage operation failed",
@@ -688,6 +779,94 @@ fn workspace_error(error: WorkspaceError, correlation_id: CommandId) -> Applicat
             correlation_id,
         ),
     }
+}
+
+fn workspace_session_error(
+    error: WorkspaceSessionError,
+    correlation_id: CommandId,
+) -> ApplicationError {
+    match error {
+        WorkspaceSessionError::Workspace(error) => workspace_error(error, correlation_id),
+        WorkspaceSessionError::WriterAlreadyActive { .. } => application_error(
+            "workspace.writer-already-active",
+            "another Liaison writer is active for this workspace",
+            "use read-only Health or close the other Liaison process before retrying the mutation",
+            BTreeMap::new(),
+            correlation_id,
+        ),
+        WorkspaceSessionError::UnsafeAuthorityPath { issue } => application_error(
+            "workspace.writer-authority-path-unsafe",
+            "the workspace writer-authority path is unsafe",
+            "preserve the workspace and inspect its local control paths before retrying",
+            details([(
+                "issue",
+                serde_json::to_value(issue).unwrap_or(Value::String("unexpected".to_owned())),
+            )]),
+            correlation_id,
+        ),
+        WorkspaceSessionError::AuthorityUnavailable {
+            operation: WorkspaceAuthorityOperation::ResolveRoot,
+            failure: WorkspaceAuthorityFailureKind::NotFound,
+            ..
+        } => workspace_error(WorkspaceError::NotFound, correlation_id),
+        WorkspaceSessionError::AuthorityUnavailable {
+            operation, failure, ..
+        } => application_error(
+            "workspace.writer-authority-unavailable",
+            "workspace writer authority is unavailable",
+            "keep the workspace read-only, correct local filesystem access, and retry",
+            details([
+                (
+                    "operation",
+                    serde_json::to_value(operation)
+                        .unwrap_or(Value::String("unexpected".to_owned())),
+                ),
+                (
+                    "failure",
+                    serde_json::to_value(failure).unwrap_or(Value::String("unexpected".to_owned())),
+                ),
+            ]),
+            correlation_id,
+        ),
+        WorkspaceSessionError::Quiescing => application_error(
+            "application.workspace-session-quiescing",
+            "the workspace session is closing",
+            "wait for close to finish, then open the workspace again",
+            BTreeMap::new(),
+            correlation_id,
+        ),
+        WorkspaceSessionError::Closed => application_error(
+            "application.workspace-session-closed",
+            "the workspace session is closed",
+            "open the workspace again before retrying the operation",
+            BTreeMap::new(),
+            correlation_id,
+        ),
+        WorkspaceSessionError::StateUnavailable => session_state_unavailable(correlation_id),
+    }
+}
+
+fn session_state_unavailable(correlation_id: CommandId) -> ApplicationError {
+    application_error(
+        "application.session-state-unavailable",
+        "workspace session state is unavailable",
+        "close Liaison RM, reopen it, and open the workspace again",
+        BTreeMap::new(),
+        correlation_id,
+    )
+}
+
+fn workspace_session_not_found(
+    session_id: WorkspaceSessionId,
+    correlation_id: CommandId,
+) -> ApplicationError {
+    application_error(
+        "application.workspace-session-not-found",
+        "the workspace session is not open",
+        "open the workspace again and retry the operation",
+        details([("session_id", Value::String(session_id.to_string()))]),
+        correlation_id,
+    )
 }
 
 fn people_error(error: &PeopleError, correlation_id: CommandId) -> ApplicationError {
@@ -819,12 +998,13 @@ fn details<const N: usize>(entries: [(&str, Value); N]) -> BTreeMap<String, Valu
 mod tests {
     use super::{
         APPLICATION_CONTRACT_VERSION, AppStatusDto, CreatePersonCommand,
-        InitialiseWorkspaceCommand, LiaisonApplication, ListPeopleQuery, OpenWorkspaceCommand,
-        RuntimePortError, RuntimePorts, WorkspaceSessionCommand,
+        InitialiseWorkspaceCommand, InspectWorkspaceHealthQuery, LiaisonApplication,
+        ListPeopleQuery, OpenWorkspaceCommand, RuntimePortError, RuntimePorts,
+        WorkspaceSessionCommand,
     };
     use chrono::{DateTime, TimeZone, Utc};
     use liaison_shared_kernel::{CommandId, JobId, PersonId, WorkspaceId, WorkspaceSessionId};
-    use liaison_workspace::{BuildProfile, WorkspaceProfile};
+    use liaison_workspace::{BuildProfile, InitialiseWorkspace, WorkspaceProfile};
     use std::{
         fs,
         path::PathBuf,
@@ -1028,12 +1208,18 @@ mod tests {
             });
             assert!(initial.is_ok());
             if let Ok(initial) = initial {
+                let session_id = initial.value.workspace.session_id;
                 let created = application.create_person(CreatePersonCommand {
-                    session_id: initial.value.workspace.session_id,
+                    session_id,
                     display_name: "Healthy Person".to_owned(),
                     email: None,
                 });
                 assert!(created.is_ok());
+                assert!(
+                    application
+                        .close_workspace(WorkspaceSessionCommand { session_id })
+                        .is_ok()
+                );
             }
             assert!(fs::write(root.join("people/broken.md"), "not front matter\n").is_ok());
 
@@ -1167,6 +1353,359 @@ mod tests {
             assert!(second.join(".liaison/workspace.yaml").is_file());
             assert!(error.recovery.contains("do not initialise it again"));
         }
+    }
+
+    #[test]
+    fn contention_is_typed_while_read_only_health_remains_available() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        let Ok(directory) = directory else {
+            return;
+        };
+        let root = directory.path().join("workspace");
+        let (writer, _) = application();
+        let (observer, _) = application();
+        let opened = writer.initialise_workspace(InitialiseWorkspaceCommand {
+            path: root.to_string_lossy().into_owned(),
+            name: "Contended".to_owned(),
+            profile: WorkspaceProfile::Workplace,
+            build_profile: BuildProfile::ConnectedLocal,
+            locale: "en-IE".to_owned(),
+        });
+        assert!(opened.is_ok());
+        let Ok(opened) = opened else {
+            return;
+        };
+        assert!(
+            writer
+                .create_person(CreatePersonCommand {
+                    session_id: opened.value.workspace.session_id,
+                    display_name: "Healthy Person".to_owned(),
+                    email: None,
+                })
+                .is_ok()
+        );
+        assert!(fs::write(root.join("people/malformed.md"), "not front matter\n").is_ok());
+        let diagnostic_path = root.join(".liaison/workspace-writer.json");
+        let diagnostic_before = fs::read(&diagnostic_path);
+        assert!(diagnostic_before.is_ok());
+        let Ok(diagnostic_before) = diagnostic_before else {
+            return;
+        };
+
+        let contended = observer.open_workspace(OpenWorkspaceCommand {
+            path: root.to_string_lossy().into_owned(),
+        });
+        assert!(contended.is_err());
+        if let Err(error) = contended {
+            assert_eq!(error.code, "workspace.writer-already-active");
+            assert!(error.details.is_empty());
+            let rendered = serde_json::to_string(&error);
+            assert!(rendered.is_ok());
+            if let Ok(rendered) = rendered {
+                assert!(!rendered.contains(&root.to_string_lossy().into_owned()));
+                assert!(!rendered.contains("process_id"));
+                assert!(!rendered.contains("observed_diagnostic"));
+            }
+        }
+
+        let health = observer.inspect_workspace_health(InspectWorkspaceHealthQuery {
+            path: root.to_string_lossy().into_owned(),
+        });
+        assert!(health.is_ok());
+        if let Ok(health) = health {
+            assert!(!health.value.valid);
+            assert!(
+                health
+                    .value
+                    .findings
+                    .iter()
+                    .any(|finding| finding.code == "people.invalid-record")
+            );
+        }
+        assert!(matches!(
+            fs::read(diagnostic_path),
+            Ok(after) if after == diagnostic_before
+        ));
+    }
+
+    #[test]
+    fn read_only_health_does_not_materialise_writer_artifacts() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        let Ok(directory) = directory else {
+            return;
+        };
+        let root = directory.path().join("workspace");
+        let initialised = InitialiseWorkspace::new(liaison_vault_markdown::MarkdownVault::new())
+            .execute(
+                &root,
+                WorkspaceId::from_uuid(Uuid::from_u128(900)),
+                "Read only",
+                WorkspaceProfile::Personal,
+                BuildProfile::Airgap,
+                "en-IE",
+            );
+        assert!(initialised.is_ok());
+        let lock = root.join(".liaison/workspace-writer.lock");
+        let diagnostic = root.join(".liaison/workspace-writer.json");
+        assert!(!lock.exists());
+        assert!(!diagnostic.exists());
+
+        let (application, _) = application();
+        let health = application.inspect_workspace_health(InspectWorkspaceHealthQuery {
+            path: root.to_string_lossy().into_owned(),
+        });
+        assert!(matches!(health, Ok(report) if report.value.valid));
+        assert!(!lock.exists());
+        assert!(!diagnostic.exists());
+    }
+
+    #[test]
+    fn close_releases_authority_and_invalidates_the_old_session() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        let Ok(directory) = directory else {
+            return;
+        };
+        let root = directory.path().join("workspace");
+        let (first, _) = application();
+        let (second, _) = application();
+        let opened = first.initialise_workspace(InitialiseWorkspaceCommand {
+            path: root.to_string_lossy().into_owned(),
+            name: "Close".to_owned(),
+            profile: WorkspaceProfile::Personal,
+            build_profile: BuildProfile::Airgap,
+            locale: "en-IE".to_owned(),
+        });
+        assert!(opened.is_ok());
+        let Ok(opened) = opened else {
+            return;
+        };
+        let session_id = opened.value.workspace.session_id;
+        assert!(
+            second
+                .open_workspace(OpenWorkspaceCommand {
+                    path: root.to_string_lossy().into_owned(),
+                })
+                .is_err()
+        );
+        assert!(
+            first
+                .close_workspace(WorkspaceSessionCommand { session_id })
+                .is_ok()
+        );
+        let stale = first.list_people(ListPeopleQuery {
+            session_id,
+            include_archived: false,
+        });
+        assert!(matches!(
+            stale,
+            Err(error) if error.code == "application.workspace-session-not-found"
+        ));
+        assert!(
+            second
+                .open_workspace(OpenWorkspaceCommand {
+                    path: root.to_string_lossy().into_owned(),
+                })
+                .is_ok()
+        );
+    }
+
+    #[test]
+    fn workspace_switch_close_sequence_releases_open_and_create_locks() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        let Ok(directory) = directory else {
+            return;
+        };
+        let first_root = directory.path().join("first");
+        let opened_root = directory.path().join("opened");
+        let created_root = directory.path().join("created");
+        let (owner, _) = application();
+        let (observer, _) = application();
+
+        let first = owner.initialise_workspace(InitialiseWorkspaceCommand {
+            path: first_root.to_string_lossy().into_owned(),
+            name: "First".to_owned(),
+            profile: WorkspaceProfile::Personal,
+            build_profile: BuildProfile::Airgap,
+            locale: "en-IE".to_owned(),
+        });
+        assert!(first.is_ok());
+        let Ok(first) = first else {
+            return;
+        };
+
+        let prepared = InitialiseWorkspace::new(liaison_vault_markdown::MarkdownVault::new())
+            .execute(
+                &opened_root,
+                WorkspaceId::from_uuid(Uuid::from_u128(901)),
+                "Opened",
+                WorkspaceProfile::Workplace,
+                BuildProfile::ConnectedLocal,
+                "en-IE",
+            );
+        assert!(prepared.is_ok());
+        let opened = owner.open_workspace(OpenWorkspaceCommand {
+            path: opened_root.to_string_lossy().into_owned(),
+        });
+        assert!(opened.is_ok());
+        let Ok(opened) = opened else {
+            return;
+        };
+
+        assert!(
+            owner
+                .close_workspace(WorkspaceSessionCommand {
+                    session_id: first.value.workspace.session_id,
+                })
+                .is_ok()
+        );
+        let observed_first = observer.open_workspace(OpenWorkspaceCommand {
+            path: first_root.to_string_lossy().into_owned(),
+        });
+        assert!(observed_first.is_ok());
+
+        let created = owner.initialise_workspace(InitialiseWorkspaceCommand {
+            path: created_root.to_string_lossy().into_owned(),
+            name: "Created".to_owned(),
+            profile: WorkspaceProfile::Family,
+            build_profile: BuildProfile::ConnectedLocal,
+            locale: "en-IE".to_owned(),
+        });
+        assert!(created.is_ok());
+        let Ok(created) = created else {
+            return;
+        };
+        assert!(
+            owner
+                .close_workspace(WorkspaceSessionCommand {
+                    session_id: opened.value.workspace.session_id,
+                })
+                .is_ok()
+        );
+        let observed_opened = observer.open_workspace(OpenWorkspaceCommand {
+            path: opened_root.to_string_lossy().into_owned(),
+        });
+        assert!(observed_opened.is_ok());
+
+        assert!(
+            owner
+                .close_workspace(WorkspaceSessionCommand {
+                    session_id: created.value.workspace.session_id,
+                })
+                .is_ok()
+        );
+        let observed_created = observer.open_workspace(OpenWorkspaceCommand {
+            path: created_root.to_string_lossy().into_owned(),
+        });
+        assert!(observed_created.is_ok());
+    }
+
+    #[test]
+    fn newer_schema_is_health_visible_but_never_write_opened() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        let Ok(directory) = directory else {
+            return;
+        };
+        let root = directory.path().join("workspace");
+        let (application, _) = application();
+        let opened = application.initialise_workspace(InitialiseWorkspaceCommand {
+            path: root.to_string_lossy().into_owned(),
+            name: "Future".to_owned(),
+            profile: WorkspaceProfile::Workplace,
+            build_profile: BuildProfile::ConnectedLocal,
+            locale: "en-IE".to_owned(),
+        });
+        assert!(opened.is_ok());
+        let Ok(opened) = opened else {
+            return;
+        };
+        assert!(
+            application
+                .close_workspace(WorkspaceSessionCommand {
+                    session_id: opened.value.workspace.session_id,
+                })
+                .is_ok()
+        );
+        let manifest_path = root.join(".liaison/workspace.yaml");
+        let manifest = fs::read_to_string(&manifest_path);
+        assert!(manifest.is_ok());
+        let Ok(manifest) = manifest else {
+            return;
+        };
+        assert!(
+            fs::write(
+                &manifest_path,
+                manifest.replace("schema_version: 1", "schema_version: 999")
+            )
+            .is_ok()
+        );
+
+        let health = application.inspect_workspace_health(InspectWorkspaceHealthQuery {
+            path: root.to_string_lossy().into_owned(),
+        });
+        assert!(health.is_ok());
+        if let Ok(health) = health {
+            assert!(!health.value.valid);
+            assert_eq!(health.value.schema_version, 999);
+            assert!(health.value.findings.iter().any(|finding| {
+                finding.code == "workspace.unsupported-schema"
+                    && finding.path == ".liaison/workspace.yaml"
+            }));
+        }
+        let open = application.open_workspace(OpenWorkspaceCommand {
+            path: root.to_string_lossy().into_owned(),
+        });
+        assert!(matches!(open, Err(error) if error.code == "workspace.unsupported-schema"));
+
+        assert!(fs::write(&manifest_path, manifest).is_ok());
+        assert!(
+            application
+                .open_workspace(OpenWorkspaceCommand {
+                    path: root.to_string_lossy().into_owned(),
+                })
+                .is_ok()
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn session_repositories_stay_on_the_same_retained_root_after_path_replacement() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        let Ok(directory) = directory else {
+            return;
+        };
+        let root = directory.path().join("workspace");
+        let moved = directory.path().join("workspace-moved");
+        let (application, _) = application();
+        let opened = application.initialise_workspace(InitialiseWorkspaceCommand {
+            path: root.to_string_lossy().into_owned(),
+            name: "Retained root".to_owned(),
+            profile: WorkspaceProfile::Personal,
+            build_profile: BuildProfile::Airgap,
+            locale: "en-IE".to_owned(),
+        });
+        assert!(opened.is_ok());
+        let Ok(opened) = opened else {
+            return;
+        };
+        assert!(fs::rename(&root, &moved).is_ok());
+        assert!(fs::create_dir(&root).is_ok());
+
+        let created = application.create_person(CreatePersonCommand {
+            session_id: opened.value.workspace.session_id,
+            display_name: "Retained Person".to_owned(),
+            email: None,
+        });
+        assert!(created.is_ok());
+        let moved_count = fs::read_dir(moved.join("people"))
+            .map(|entries| entries.filter_map(Result::ok).count());
+        assert_eq!(moved_count.ok(), Some(1));
+        assert!(!root.join("people").exists());
     }
 
     #[test]

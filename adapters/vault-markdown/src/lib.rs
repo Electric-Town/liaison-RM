@@ -6,10 +6,16 @@
 
 #![allow(clippy::module_name_repetitions, clippy::missing_errors_doc)]
 
+use cap_fs_ext::{DirExt, FollowSymlinks, OpenOptionsFollowExt};
+use cap_std::{
+    ambient_authority,
+    fs::{Dir, OpenOptions},
+};
 use liaison_people::{PeopleError, PersonProfile, PersonRepository};
 use liaison_shared_kernel::{PersonId, Revision};
 use liaison_workspace::{
-    FindingSeverity, ValidationFinding, WorkspaceError, WorkspaceManifest, WorkspaceStore,
+    BoundWorkspaceStore, FindingSeverity, ValidationFinding, WorkspaceError, WorkspaceManifest,
+    WorkspaceStore, WorkspaceValidationReport,
 };
 use serde::{Deserialize, Serialize};
 use serde_yaml::Value;
@@ -29,10 +35,23 @@ const PERSON_SCHEMA_VERSION: u32 = 1;
 #[derive(Debug, Clone, Default)]
 pub struct MarkdownVault;
 
+/// Markdown repositories bound once to the root retained by a
+/// `WorkspaceSession`. The root is deliberately private and no path-taking
+/// repository method is exposed on this capability.
+#[derive(Debug)]
+pub struct BoundMarkdownVault {
+    root: Dir,
+}
+
 impl MarkdownVault {
     #[must_use]
     pub const fn new() -> Self {
         Self
+    }
+
+    #[must_use]
+    pub fn bind_directory(&self, root: Dir) -> BoundMarkdownVault {
+        BoundMarkdownVault { root }
     }
 
     fn manifest_path(root: &Path) -> PathBuf {
@@ -51,6 +70,43 @@ impl MarkdownVault {
         }
     }
 
+    fn read_manifest(root: &Path) -> Result<WorkspaceManifest, WorkspaceError> {
+        let path = Self::manifest_path(root);
+        let text = fs::read_to_string(path).map_err(|error| {
+            if error.kind() == io::ErrorKind::NotFound {
+                WorkspaceError::NotFound
+            } else {
+                storage_workspace(error)
+            }
+        })?;
+        serde_yaml::from_str(&text).map_err(storage_workspace)
+    }
+
+    /// Read-only Health deliberately does not acquire writer authority. A
+    /// parseable newer-schema manifest is reported as a finding while safe
+    /// layout checks still run; malformed manifests remain a typed read error.
+    pub fn inspect_health(&self, root: &Path) -> Result<WorkspaceValidationReport, WorkspaceError> {
+        let root = Dir::open_ambient_dir(root, ambient_authority()).map_err(|error| {
+            if error.kind() == io::ErrorKind::NotFound {
+                WorkspaceError::NotFound
+            } else {
+                storage_workspace(error)
+            }
+        })?;
+        let manifest = bound_read_manifest_unvalidated(&root)?;
+        let mut findings = Vec::new();
+        if let Err(error) = manifest.validate() {
+            findings.push(manifest_validation_finding(&error));
+        }
+        findings.extend(bound_validate_layout(&root)?);
+        Ok(WorkspaceValidationReport {
+            workspace_id: manifest.workspace_id,
+            schema_version: manifest.schema_version,
+            findings,
+        })
+    }
+
+    #[cfg(test)]
     fn find_person_path(root: &Path, id: PersonId) -> Result<PathBuf, PeopleError> {
         let people = Self::people_path(root);
         if !people.is_dir() {
@@ -145,15 +201,7 @@ impl WorkspaceStore for MarkdownVault {
     }
 
     fn load(&self, root: &Path) -> Result<WorkspaceManifest, WorkspaceError> {
-        let path = Self::manifest_path(root);
-        let text = fs::read_to_string(path).map_err(|error| {
-            if error.kind() == io::ErrorKind::NotFound {
-                WorkspaceError::NotFound
-            } else {
-                storage_workspace(error)
-            }
-        })?;
-        let manifest: WorkspaceManifest = serde_yaml::from_str(&text).map_err(storage_workspace)?;
+        let manifest = Self::read_manifest(root)?;
         manifest.validate()?;
         Ok(manifest)
     }
@@ -260,105 +308,333 @@ fn portable_workspace_path(path: &Path) -> String {
         .join("/")
 }
 
-impl PersonRepository for MarkdownVault {
-    fn create(&self, workspace: &Path, person: &PersonProfile) -> Result<(), PeopleError> {
-        MarkdownVault::ensure_workspace(workspace)
-            .map_err(|error| PeopleError::Storage(error.to_string()))?;
-        match MarkdownVault::find_person_path(workspace, person.id) {
-            Ok(_) => return Err(PeopleError::AlreadyExists),
-            Err(PeopleError::NotFound) => {}
-            Err(error) => return Err(error),
-        }
-        let filename = format!("{}--{}.md", slug(&person.display_name), person.id);
-        let path = Self::people_path(workspace).join(filename);
-        let document = PersonDocument::from_domain(person, BTreeMap::new());
-        let rendered = render_person(&document, &default_person_body(person))?;
-        atomic_create(&path, rendered.as_bytes()).map_err(storage_people)
+impl BoundWorkspaceStore for BoundMarkdownVault {
+    fn load_manifest(&self) -> Result<WorkspaceManifest, WorkspaceError> {
+        bound_load_manifest(&self.root)
     }
 
-    fn list(
-        &self,
-        workspace: &Path,
-        include_archived: bool,
-    ) -> Result<Vec<PersonProfile>, PeopleError> {
-        MarkdownVault::ensure_workspace(workspace)
-            .map_err(|error| PeopleError::Storage(error.to_string()))?;
-        let people = Self::people_path(workspace);
-        let mut by_identity = BTreeMap::<String, Vec<PersonProfile>>::new();
-        for entry in WalkDir::new(&people)
-            .min_depth(1)
-            .max_depth(1)
-            .sort_by_file_name()
-        {
-            let Ok(entry) = entry else {
-                continue;
-            };
-            if !entry.file_type().is_file()
-                || entry.path().extension().and_then(|value| value.to_str()) != Some("md")
-            {
-                continue;
-            }
-            let Ok(parsed) = read_person_document(entry.path()) else {
-                // Validation owns the diagnostic view. Listing remains useful
-                // for healthy records while a malformed sibling is repaired.
-                continue;
-            };
-            let Ok(person) = parsed.document.into_domain() else {
-                continue;
-            };
-            if include_archived || !person.archived {
-                by_identity
-                    .entry(person.id.to_string())
-                    .or_default()
-                    .push(person);
-            }
+    fn validate_layout(&self) -> Result<Vec<ValidationFinding>, WorkspaceError> {
+        bound_validate_layout(&self.root)
+    }
+}
+
+impl PersonRepository for BoundMarkdownVault {
+    fn create(&self, person: &PersonProfile) -> Result<(), PeopleError> {
+        bound_create_person(&self.root, person)
+    }
+
+    fn list(&self, include_archived: bool) -> Result<Vec<PersonProfile>, PeopleError> {
+        bound_list_people(&self.root, include_archived)
+    }
+
+    fn find(&self, id: PersonId) -> Result<PersonProfile, PeopleError> {
+        let (_, parsed) = bound_find_person(&self.root, id)?;
+        parsed.document.into_domain()
+    }
+
+    fn save(&self, person: &PersonProfile, expected_revision: Revision) -> Result<(), PeopleError> {
+        bound_save_person(&self.root, person, expected_revision)
+    }
+}
+
+fn nofollow_read_options() -> OpenOptions {
+    let mut options = OpenOptions::new();
+    options.read(true).follow(FollowSymlinks::No);
+    options
+}
+
+fn bound_read_text(directory: &Dir, path: &Path) -> io::Result<String> {
+    let mut file = directory.open_with(path, &nofollow_read_options())?;
+    if !file.metadata()?.is_file() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "record is not a regular file",
+        ));
+    }
+    let mut text = String::new();
+    std::io::Read::read_to_string(&mut file, &mut text)?;
+    Ok(text)
+}
+
+fn bound_load_manifest(root: &Dir) -> Result<WorkspaceManifest, WorkspaceError> {
+    let manifest = bound_read_manifest_unvalidated(root)?;
+    manifest.validate()?;
+    Ok(manifest)
+}
+
+fn bound_read_manifest_unvalidated(root: &Dir) -> Result<WorkspaceManifest, WorkspaceError> {
+    let text = bound_read_text(root, Path::new(MANIFEST_PATH)).map_err(|error| {
+        if error.kind() == io::ErrorKind::NotFound {
+            WorkspaceError::NotFound
+        } else {
+            storage_workspace(error)
         }
-        let mut result = by_identity
-            .into_values()
-            .filter_map(|mut people| (people.len() == 1).then(|| people.remove(0)))
-            .collect::<Vec<_>>();
-        result.sort_by(|left, right| {
-            left.display_name
-                .to_lowercase()
-                .cmp(&right.display_name.to_lowercase())
-                .then_with(|| left.id.to_string().cmp(&right.id.to_string()))
+    })?;
+    serde_yaml::from_str(&text).map_err(storage_workspace)
+}
+
+fn bound_people_directory(root: &Dir) -> Result<Dir, PeopleError> {
+    root.open_dir_nofollow("people").map_err(storage_people)
+}
+
+fn bound_person_entries(people: &Dir) -> Result<Vec<cap_std::fs::DirEntry>, PeopleError> {
+    let mut entries = people
+        .entries()
+        .map_err(storage_people)?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(storage_people)?;
+    entries.sort_by_key(cap_std::fs::DirEntry::file_name);
+    Ok(entries)
+}
+
+fn bound_read_person_entry(entry: &cap_std::fs::DirEntry) -> Result<ParsedPerson, PeopleError> {
+    let mut file = entry
+        .open_with(&nofollow_read_options())
+        .map_err(storage_people)?;
+    if !file.metadata().map_err(storage_people)?.is_file() {
+        return Err(PeopleError::Storage(
+            "person record is not a regular file".to_owned(),
+        ));
+    }
+    let mut text = String::new();
+    std::io::Read::read_to_string(&mut file, &mut text).map_err(storage_people)?;
+    parse_person_document(&text)
+}
+
+fn bound_list_people(
+    root: &Dir,
+    include_archived: bool,
+) -> Result<Vec<PersonProfile>, PeopleError> {
+    bound_load_manifest(root).map_err(|error| PeopleError::Storage(error.to_string()))?;
+    let people = bound_people_directory(root)?;
+    let mut by_identity = BTreeMap::<String, Vec<PersonProfile>>::new();
+    for entry in bound_person_entries(&people)? {
+        let name = PathBuf::from(entry.file_name());
+        if name.extension().and_then(|value| value.to_str()) != Some("md") {
+            continue;
+        }
+        let Ok(parsed) = bound_read_person_entry(&entry) else {
+            continue;
+        };
+        let Ok(person) = parsed.document.into_domain() else {
+            continue;
+        };
+        if include_archived || !person.archived {
+            by_identity
+                .entry(person.id.to_string())
+                .or_default()
+                .push(person);
+        }
+    }
+    let mut result = by_identity
+        .into_values()
+        .filter_map(|mut people| (people.len() == 1).then(|| people.remove(0)))
+        .collect::<Vec<_>>();
+    result.sort_by(|left, right| {
+        left.display_name
+            .to_lowercase()
+            .cmp(&right.display_name.to_lowercase())
+            .then_with(|| left.id.to_string().cmp(&right.id.to_string()))
+    });
+    Ok(result)
+}
+
+fn bound_find_person(root: &Dir, id: PersonId) -> Result<(PathBuf, ParsedPerson), PeopleError> {
+    let people = bound_people_directory(root)?;
+    let mut found = Vec::new();
+    for entry in bound_person_entries(&people)? {
+        let name = PathBuf::from(entry.file_name());
+        if name.extension().and_then(|value| value.to_str()) != Some("md") {
+            continue;
+        }
+        let Ok(parsed) = bound_read_person_entry(&entry) else {
+            continue;
+        };
+        if parsed.document.id == id {
+            found.push((name, parsed));
+        }
+    }
+    match found.len() {
+        0 => Err(PeopleError::NotFound),
+        1 => found.pop().ok_or(PeopleError::NotFound),
+        _ => Err(PeopleError::Storage(
+            "duplicate person identity requires repair".to_owned(),
+        )),
+    }
+}
+
+fn bound_create_person(root: &Dir, person: &PersonProfile) -> Result<(), PeopleError> {
+    bound_load_manifest(root).map_err(|error| PeopleError::Storage(error.to_string()))?;
+    match bound_find_person(root, person.id) {
+        Ok(_) => return Err(PeopleError::AlreadyExists),
+        Err(PeopleError::NotFound) => {}
+        Err(error) => return Err(error),
+    }
+    let people = bound_people_directory(root)?;
+    let filename = format!("{}--{}.md", slug(&person.display_name), person.id);
+    let temporary = format!(".person-{}.tmp", person.id);
+    let document = PersonDocument::from_domain(person, BTreeMap::new());
+    let rendered = render_person(&document, &default_person_body(person))?;
+    let mut options = OpenOptions::new();
+    options
+        .write(true)
+        .create_new(true)
+        .follow(FollowSymlinks::No);
+    let mut file = people
+        .open_with(&temporary, &options)
+        .map_err(storage_people)?;
+    if let Err(error) = file
+        .write_all(rendered.as_bytes())
+        .and_then(|()| file.sync_all())
+    {
+        drop(file);
+        let _ = people.remove_file(&temporary);
+        return Err(storage_people(error));
+    }
+    drop(file);
+    if let Err(error) = people.hard_link(&temporary, &people, &filename) {
+        let _ = people.remove_file(&temporary);
+        if error.kind() == io::ErrorKind::AlreadyExists {
+            return Err(PeopleError::AlreadyExists);
+        }
+        return Err(storage_people(error));
+    }
+    // Publication is complete once the no-clobber hard link exists. A crash
+    // before this point leaves only an ignored staging file; cleanup failure
+    // after publication must not report a false failed creation.
+    let _ = people.remove_file(&temporary);
+    Ok(())
+}
+
+fn bound_save_person(
+    root: &Dir,
+    person: &PersonProfile,
+    expected_revision: Revision,
+) -> Result<(), PeopleError> {
+    let (filename, existing) = bound_find_person(root, person.id)?;
+    let found = existing.document.revision;
+    if found != expected_revision {
+        return Err(PeopleError::RevisionConflict {
+            expected: expected_revision.get(),
+            found: found.get(),
         });
-        Ok(result)
     }
-
-    fn find(&self, workspace: &Path, id: PersonId) -> Result<PersonProfile, PeopleError> {
-        let path = Self::find_person_path(workspace, id)?;
-        read_person_document(&path)?.document.into_domain()
+    let required_revision = expected_revision
+        .next()
+        .map_err(|_| PeopleError::RevisionOverflow)?;
+    if person.revision != required_revision {
+        return Err(PeopleError::RevisionConflict {
+            expected: required_revision.get(),
+            found: person.revision.get(),
+        });
     }
+    let people = bound_people_directory(root)?;
+    let temporary = format!(".person-{}-{}.tmp", person.id, person.revision.get());
+    let document = PersonDocument::from_domain(person, existing.document.extra);
+    let rendered = render_person(&document, &existing.body)?;
+    let mut options = OpenOptions::new();
+    options
+        .write(true)
+        .create_new(true)
+        .follow(FollowSymlinks::No);
+    let mut file = people
+        .open_with(&temporary, &options)
+        .map_err(storage_people)?;
+    if let Err(error) = file
+        .write_all(rendered.as_bytes())
+        .and_then(|()| file.sync_all())
+    {
+        drop(file);
+        let _ = people.remove_file(&temporary);
+        return Err(storage_people(error));
+    }
+    drop(file);
+    people
+        .rename(&temporary, &people, &filename)
+        .map_err(storage_people)
+}
 
-    fn save(
-        &self,
-        workspace: &Path,
-        person: &PersonProfile,
-        expected_revision: Revision,
-    ) -> Result<(), PeopleError> {
-        let path = Self::find_person_path(workspace, person.id)?;
-        let existing = read_person_document(&path)?;
-        let found = existing.document.revision;
-        if found != expected_revision {
-            return Err(PeopleError::RevisionConflict {
-                expected: expected_revision.get(),
-                found: found.get(),
+fn bound_validate_layout(root: &Dir) -> Result<Vec<ValidationFinding>, WorkspaceError> {
+    let _manifest = bound_read_text(root, Path::new(MANIFEST_PATH)).map_err(storage_workspace)?;
+    let mut findings = Vec::new();
+    for required in [
+        "people",
+        "organisations",
+        "relationships",
+        "interactions",
+        "events",
+    ] {
+        let valid = root
+            .symlink_metadata(required)
+            .is_ok_and(|metadata| metadata.is_dir() && !metadata.file_type().is_symlink());
+        if !valid {
+            findings.push(ValidationFinding {
+                code: "workspace.missing-directory".to_owned(),
+                severity: FindingSeverity::Error,
+                path: required.to_owned(),
+                message: format!("required workspace directory is missing: {required}"),
+                recovery: format!(
+                    "create the directory after taking a workspace backup: {required}"
+                ),
             });
         }
-        let required_revision = expected_revision
-            .next()
-            .map_err(|_| PeopleError::RevisionOverflow)?;
-        if person.revision != required_revision {
-            return Err(PeopleError::RevisionConflict {
-                expected: required_revision.get(),
-                found: person.revision.get(),
-            });
-        }
-        let document = PersonDocument::from_domain(person, existing.document.extra);
-        let rendered = render_person(&document, &existing.body)?;
-        atomic_replace(&path, rendered.as_bytes()).map_err(storage_people)
     }
+    let Ok(people) = root.open_dir_nofollow("people") else {
+        return Ok(findings);
+    };
+    let Ok(entries) = people.entries() else {
+        findings.push(ValidationFinding {
+            code: "people.unreadable-entry".to_owned(),
+            severity: FindingSeverity::Error,
+            path: "people".to_owned(),
+            message: "the Person directory could not be read".to_owned(),
+            recovery: "preserve the workspace, correct local file access, and run Health again"
+                .to_owned(),
+        });
+        return Ok(findings);
+    };
+    let mut identities = BTreeMap::<String, String>::new();
+    for entry in entries {
+        let Ok(entry) = entry else {
+            findings.push(ValidationFinding {
+                code: "people.unreadable-entry".to_owned(),
+                severity: FindingSeverity::Error,
+                path: "people".to_owned(),
+                message: "a Person directory entry could not be read".to_owned(),
+                recovery: "preserve the workspace, correct local file access, and run Health again"
+                    .to_owned(),
+            });
+            continue;
+        };
+        let name = PathBuf::from(entry.file_name());
+        if name.extension().and_then(|value| value.to_str()) != Some("md") {
+            continue;
+        }
+        let relative = format!("people/{}", name.to_string_lossy());
+        match bound_read_person_entry(&entry).and_then(|parsed| parsed.document.into_domain()) {
+            Ok(person) => {
+                if let Some(first_path) = identities.insert(person.id.to_string(), relative.clone()) {
+                    findings.push(ValidationFinding {
+                        code: "people.duplicate-id".to_owned(),
+                        severity: FindingSeverity::Error,
+                        path: relative,
+                        message: "person identity appears in more than one record".to_owned(),
+                        recovery: format!(
+                            "preserve both files and resolve the duplicate identity with the first record at {first_path}; Liaison will not merge or delete either file automatically"
+                        ),
+                    });
+                }
+            }
+            Err(error) => findings.push(ValidationFinding {
+                code: "people.invalid-record".to_owned(),
+                severity: FindingSeverity::Error,
+                path: relative,
+                message: safe_people_validation_message(&error).to_owned(),
+                recovery: "inspect the file, preserve a copy, and repair its front matter; Liaison will not delete it automatically".to_owned(),
+            }),
+        }
+    }
+    Ok(findings)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -433,7 +709,11 @@ struct ParsedPerson {
 
 fn read_person_document(path: &Path) -> Result<ParsedPerson, PeopleError> {
     let text = fs::read_to_string(path).map_err(storage_people)?;
-    let (front_matter, body) = split_front_matter(&text)?;
+    parse_person_document(&text)
+}
+
+fn parse_person_document(text: &str) -> Result<ParsedPerson, PeopleError> {
+    let (front_matter, body) = split_front_matter(text)?;
     let document: PersonDocument = serde_yaml::from_str(front_matter).map_err(storage_people)?;
     if document.revision.get() == 0 {
         return Err(PeopleError::Storage(
@@ -459,6 +739,44 @@ fn safe_people_validation_message(error: &PeopleError) -> &'static str {
         }
         PeopleError::RevisionOverflow => "person record revision is outside the supported range",
         PeopleError::Storage(_) => "person record format or schema is invalid",
+    }
+}
+
+fn manifest_validation_finding(error: &WorkspaceError) -> ValidationFinding {
+    match error {
+        WorkspaceError::UnsupportedSchema { found, supported } => ValidationFinding {
+            code: "workspace.unsupported-schema".to_owned(),
+            severity: FindingSeverity::Error,
+            path: MANIFEST_PATH.to_owned(),
+            message: format!(
+                "workspace schema {found} is newer than this build supports ({supported})"
+            ),
+            recovery: "keep the workspace read-only and open it with a compatible Liaison build; do not rewrite the manifest manually".to_owned(),
+        },
+        WorkspaceError::UnexpectedFormat(_) => ValidationFinding {
+            code: "workspace.unexpected-format".to_owned(),
+            severity: FindingSeverity::Error,
+            path: MANIFEST_PATH.to_owned(),
+            message: "workspace manifest format is not supported".to_owned(),
+            recovery: "keep the workspace read-only and restore a verified Liaison manifest"
+                .to_owned(),
+        },
+        WorkspaceError::RequiredField(_) => ValidationFinding {
+            code: "workspace.invalid-manifest".to_owned(),
+            severity: FindingSeverity::Error,
+            path: MANIFEST_PATH.to_owned(),
+            message: "workspace manifest is missing a required value".to_owned(),
+            recovery: "preserve the workspace and repair the manifest from a verified copy"
+                .to_owned(),
+        },
+        _ => ValidationFinding {
+            code: "workspace.invalid-manifest".to_owned(),
+            severity: FindingSeverity::Error,
+            path: MANIFEST_PATH.to_owned(),
+            message: "workspace manifest is invalid".to_owned(),
+            recovery: "preserve the workspace and inspect the manifest before making changes"
+                .to_owned(),
+        },
     }
 }
 
@@ -525,19 +843,6 @@ fn atomic_create(path: &Path, bytes: &[u8]) -> io::Result<()> {
     write_temp_and_persist(path, bytes)
 }
 
-fn atomic_replace(path: &Path, bytes: &[u8]) -> io::Result<()> {
-    let parent = path
-        .parent()
-        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "target has no parent"))?;
-    let mut temporary = NamedTempFile::new_in(parent)?;
-    temporary.write_all(bytes)?;
-    temporary.as_file().sync_all()?;
-    temporary
-        .persist(path)
-        .map(|_| ())
-        .map_err(|error| error.error)
-}
-
 fn write_temp_and_persist(path: &Path, bytes: &[u8]) -> io::Result<()> {
     let parent = path
         .parent()
@@ -562,14 +867,21 @@ fn storage_people(error: impl std::fmt::Display) -> PeopleError {
 
 #[cfg(test)]
 mod tests {
-    use super::MarkdownVault;
+    use super::{BoundMarkdownVault, MarkdownVault, slug};
+    use cap_std::{ambient_authority, fs::Dir};
     use liaison_people::{CreatePerson, ListPeople, PersonProfile, PersonRepository};
     use liaison_shared_kernel::{PersonId, WorkspaceId};
     use liaison_workspace::{
         BuildProfile, InitialiseWorkspace, ValidateWorkspace, WorkspaceError, WorkspaceProfile,
     };
-    use std::fs;
+    use std::{fs, path::Path};
     use tempfile::tempdir;
+
+    fn bound_vault(vault: &MarkdownVault, root: &Path) -> BoundMarkdownVault {
+        let directory = Dir::open_ambient_dir(root, ambient_authority())
+            .unwrap_or_else(|error| unreachable!("test workspace must open: {error}"));
+        vault.bind_directory(directory)
+    }
 
     #[test]
     fn creates_workspace_and_person_as_readable_files() {
@@ -589,9 +901,9 @@ mod tests {
             );
             assert!(created.is_ok());
 
-            let create_person = CreatePerson::new(vault.clone());
+            let bound = bound_vault(&vault, root);
+            let create_person = CreatePerson::new(&bound);
             let person = create_person.execute(
-                root,
                 PersonId::new(),
                 "Alex Murphy",
                 Some("alex@example.test".to_owned()),
@@ -634,8 +946,9 @@ mod tests {
                     )
                     .is_ok()
             );
-            let create = CreatePerson::new(vault.clone());
-            let person = create.execute(root, PersonId::new(), "Alex Murphy", None);
+            let bound = bound_vault(&vault, root);
+            let create = CreatePerson::new(&bound);
+            let person = create.execute(PersonId::new(), "Alex Murphy", None);
             assert!(person.is_ok());
             if let Ok(mut person) = person {
                 let path = MarkdownVault::find_person_path(root, person.id);
@@ -652,7 +965,7 @@ mod tests {
                         assert!(fs::write(&path, changed).is_ok());
                         let expected = person.revision;
                         assert!(person.rename("Alex M. Murphy").is_ok());
-                        assert!(vault.save(root, &person, expected).is_ok());
+                        assert!(bound.save(&person, expected).is_ok());
                         let saved = fs::read_to_string(&path);
                         assert!(saved.is_ok());
                         if let Ok(saved) = saved {
@@ -683,18 +996,19 @@ mod tests {
                     )
                     .is_ok()
             );
-            let create = CreatePerson::new(vault.clone());
+            let bound = bound_vault(&vault, root);
+            let create = CreatePerson::new(&bound);
             assert!(
                 create
-                    .execute(root, PersonId::new(), "Zara Example", None)
+                    .execute(PersonId::new(), "Zara Example", None)
                     .is_ok()
             );
             assert!(
                 create
-                    .execute(root, PersonId::new(), "Alex Example", None)
+                    .execute(PersonId::new(), "Alex Example", None)
                     .is_ok()
             );
-            let people = ListPeople::new(vault).execute(root, false);
+            let people = ListPeople::new(&bound).execute(false);
             assert!(people.is_ok());
             if let Ok(people) = people {
                 let names: Vec<&str> = people
@@ -725,8 +1039,8 @@ mod tests {
                     )
                     .is_ok()
             );
-            let created = CreatePerson::new(vault.clone()).execute(
-                root,
+            let bound = bound_vault(&vault, root);
+            let created = CreatePerson::new(&bound).execute(
                 PersonId::new(),
                 "Alex Example",
                 Some("alex@example.test".to_owned()),
@@ -743,14 +1057,14 @@ mod tests {
                 .is_ok()
             );
 
-            let listed = ListPeople::new(vault.clone()).execute(root, false);
+            let listed = ListPeople::new(&bound).execute(false);
             assert!(listed.is_ok());
             if let Ok(listed) = listed {
                 assert_eq!(listed.len(), 1);
                 assert_eq!(listed[0].id, created.id);
             }
 
-            let found = vault.find(root, created.id);
+            let found = bound.find(created.id);
             assert!(found.is_ok());
             if let Ok(found) = found {
                 assert_eq!(found.display_name, "Alex Example");
@@ -807,8 +1121,8 @@ mod tests {
                     .is_ok()
             );
             assert!(
-                CreatePerson::new(vault.clone())
-                    .execute(root, PersonId::new(), "Healthy Person", None)
+                CreatePerson::new(&bound_vault(&vault, root))
+                    .execute(PersonId::new(), "Healthy Person", None)
                     .is_ok()
             );
             let invalid_id = PersonId::new();
@@ -826,7 +1140,8 @@ mod tests {
                         && finding.message == "person record format or schema is invalid"
                 }));
             }
-            let listed = ListPeople::new(vault).execute(root, false);
+            let bound = bound_vault(&vault, root);
+            let listed = ListPeople::new(&bound).execute(false);
             assert!(listed.is_ok());
             if let Ok(listed) = listed {
                 assert_eq!(listed.len(), 1);
@@ -870,7 +1185,8 @@ mod tests {
                         && !finding.recovery.contains(private_input)
                 }));
             }
-            let listed = ListPeople::new(vault).execute(root, false);
+            let bound = bound_vault(&vault, root);
+            let listed = ListPeople::new(&bound).execute(false);
             assert!(matches!(listed, Ok(people) if people.is_empty()));
         }
     }
@@ -894,12 +1210,9 @@ mod tests {
                     )
                     .is_ok()
             );
-            let created = CreatePerson::new(vault.clone()).execute(
-                root,
-                PersonId::new(),
-                "Duplicate Person",
-                None,
-            );
+            let bound = bound_vault(&vault, root);
+            let created =
+                CreatePerson::new(&bound).execute(PersonId::new(), "Duplicate Person", None);
             assert!(created.is_ok());
             let Ok(created) = created else {
                 return;
@@ -919,17 +1232,17 @@ mod tests {
                         && finding.path == "people/zzz-duplicate-copy.md"
                 }));
             }
-            let listed = ListPeople::new(vault.clone()).execute(root, false);
+            let listed = ListPeople::new(&bound).execute(false);
             assert!(listed.is_ok());
             if let Ok(listed) = listed {
                 assert!(listed.is_empty());
             }
-            assert!(vault.find(root, created.id).is_err());
+            assert!(bound.find(created.id).is_err());
             let colliding = PersonProfile::create(created.id, "Third Duplicate");
             assert!(colliding.is_ok());
             if let Ok(colliding) = colliding {
                 assert!(matches!(
-                    vault.create(root, &colliding),
+                    bound.create(&colliding),
                     Err(liaison_people::PeopleError::Storage(_))
                 ));
                 let record_count = fs::read_dir(root.join("people"))
@@ -959,8 +1272,8 @@ mod tests {
                     .is_ok()
             );
             assert!(
-                CreatePerson::new(vault.clone())
-                    .execute(root, PersonId::new(), "Healthy Person", None)
+                CreatePerson::new(&bound_vault(&vault, root))
+                    .execute(PersonId::new(), "Healthy Person", None)
                     .is_ok()
             );
             assert!(fs::create_dir(root.join("people/not-a-record.md")).is_ok());
@@ -974,12 +1287,95 @@ mod tests {
                         && finding.message == "person record is not a regular file"
                 }));
             }
-            let listed = ListPeople::new(vault).execute(root, false);
+            let bound = bound_vault(&vault, root);
+            let listed = ListPeople::new(&bound).execute(false);
             assert!(listed.is_ok());
             if let Ok(listed) = listed {
                 assert_eq!(listed.len(), 1);
                 assert_eq!(listed[0].display_name, "Healthy Person");
             }
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn read_only_health_never_follows_a_manifest_symlink() {
+        use std::os::unix::fs::symlink;
+
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        let Ok(directory) = directory else {
+            return;
+        };
+        let root = directory.path().join("workspace");
+        let vault = MarkdownVault::new();
+        assert!(
+            InitialiseWorkspace::new(vault.clone())
+                .execute(
+                    &root,
+                    WorkspaceId::new(),
+                    "People",
+                    WorkspaceProfile::Personal,
+                    BuildProfile::Airgap,
+                    "en-IE",
+                )
+                .is_ok()
+        );
+        let manifest = root.join(".liaison/workspace.yaml");
+        let outside = directory.path().join("outside-private.yaml");
+        assert!(fs::rename(&manifest, &outside).is_ok());
+        assert!(symlink(&outside, &manifest).is_ok());
+
+        assert!(matches!(
+            vault.inspect_health(&root),
+            Err(WorkspaceError::Storage(_))
+        ));
+    }
+
+    #[test]
+    fn bound_create_stages_and_never_clobbers_an_existing_final_record() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        let Ok(directory) = directory else {
+            return;
+        };
+        let root = directory.path();
+        let vault = MarkdownVault::new();
+        assert!(
+            InitialiseWorkspace::new(vault.clone())
+                .execute(
+                    root,
+                    WorkspaceId::new(),
+                    "People",
+                    WorkspaceProfile::Personal,
+                    BuildProfile::Airgap,
+                    "en-IE",
+                )
+                .is_ok()
+        );
+        let person = PersonProfile::create(PersonId::new(), "External Record");
+        assert!(person.is_ok());
+        let Ok(person) = person else {
+            return;
+        };
+        let filename = format!("{}--{}.md", slug(&person.display_name), person.id);
+        let final_path = root.join("people").join(filename);
+        assert!(fs::write(&final_path, "external edit\n").is_ok());
+        let bound = bound_vault(&vault, root);
+
+        assert!(matches!(
+            bound.create(&person),
+            Err(liaison_people::PeopleError::AlreadyExists)
+        ));
+        assert_eq!(
+            fs::read_to_string(&final_path).as_deref().ok(),
+            Some("external edit\n")
+        );
+        assert!(
+            !root
+                .join("people")
+                .join(format!(".person-{}.tmp", person.id))
+                .exists()
+        );
     }
 }

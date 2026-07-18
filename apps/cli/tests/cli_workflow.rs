@@ -1,4 +1,8 @@
 use assert_cmd::Command;
+use chrono::Utc;
+use liaison_application::WorkspaceSessionId;
+use liaison_workspace::{WorkspaceWriterAuthorityPort, WriterDiagnostic};
+use liaison_workspace_session_local::LocalWorkspaceSessionAuthority;
 use predicates::prelude::*;
 use serde_json::Value;
 use std::{error::Error, fs};
@@ -268,5 +272,56 @@ fn invalid_email_error_does_not_repeat_the_input() -> Result<(), Box<dyn Error>>
         .count();
     assert_eq!(markdown_count, 0);
 
+    Ok(())
+}
+
+#[test]
+fn writer_contention_is_typed_but_cli_health_stays_read_only() -> Result<(), Box<dyn Error>> {
+    let directory = tempdir()?;
+    let workspace = directory.path().join("Contended");
+    let mut initialise = Command::cargo_bin("liaison")?;
+    initialise
+        .arg("--workspace")
+        .arg(&workspace)
+        .args(["workspace", "init", "--name", "Contended"])
+        .assert()
+        .success();
+
+    let authority = LocalWorkspaceSessionAuthority::bind(&workspace)?.acquire_writer(
+        WriterDiagnostic::new(WorkspaceSessionId::new(), std::process::id(), Utc::now()),
+    )?;
+
+    let mut health = Command::cargo_bin("liaison")?;
+    health
+        .arg("--workspace")
+        .arg(&workspace)
+        .args(["--output", "json", "workspace", "validate"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"valid\": true"));
+
+    let mut create = Command::cargo_bin("liaison")?;
+    let output = create
+        .arg("--workspace")
+        .arg(&workspace)
+        .args([
+            "--output",
+            "json",
+            "person",
+            "create",
+            "--name",
+            "Blocked Person",
+        ])
+        .output()?;
+    assert_eq!(output.status.code(), Some(4));
+    let error: Value = serde_json::from_slice(&output.stderr)?;
+    assert_eq!(error["error"]["code"], "workspace.writer-already-active");
+    assert_eq!(error["error"]["details"], serde_json::json!({}));
+    let rendered = String::from_utf8_lossy(&output.stderr);
+    assert!(!rendered.contains(&workspace.to_string_lossy().into_owned()));
+    assert!(!rendered.contains("process_id"));
+    assert!(!rendered.contains("observed_diagnostic"));
+
+    drop(authority);
     Ok(())
 }

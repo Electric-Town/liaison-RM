@@ -6,7 +6,17 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Added
 
-- One `liaison-application` composition root shared by the CLI and desktop, with typed command results, structured recoverable errors, deterministic runtime ports, and identity-bound workspace sessions.
+- A write-authoritative, `Arc`-owned Workspace Session that retains one
+  capability root, workspace identity/schema, path-free repositories, an
+  operating-system writer lock, quiescence, and explicit unavailable recovery,
+  key, and projection states.
+- A local Workspace Session adapter with no-follow capability traversal,
+  typed writer contention, diagnostic-only bounded sidecars, process-exit lock
+  release, retained-root identity checks, and lock-free read-only Health.
+- Safe desktop workspace switching that closes the previous session before
+  accepting its replacement and best-effort closes the replacement if the
+  previous session cannot close.
+- One `liaison-application` composition root shared by the CLI and desktop, with typed command results, structured recoverable errors, deterministic runtime ports, and typed workspace session identifiers.
 - Shared-fixture CLI and Tauri parity for workspace initialise/open/validate and Person create/list, including versioned envelopes, tolerant malformed-sibling reads, and initial Person revision 1.
 - Semantic Person validation, duplicate-identity Health findings, safe workspace-path rejection, actionable human Health output, retryable desktop create/open actions, native-safe keyboard form submission, correct hidden-state rendering, and automated base/dark text-contrast gates.
 - KCS-0010 and executable evidence for keeping inbound adapters on the same application workflow.

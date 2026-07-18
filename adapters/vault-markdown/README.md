@@ -9,6 +9,7 @@ This adapter implements Workspace and People repository ports using the open Lia
 - preserve unknown YAML properties and human-authored body sections;
 - use stable ID-bearing filenames;
 - apply revision preconditions before replacement;
+- retain a capability-bound root for all open-session manifest and Person access;
 - return validation findings without deleting invalid files;
 - keep healthy People readable while Health reports malformed sibling records;
 - keep format documents private to the adapter.
@@ -23,10 +24,11 @@ This R1 draft establishes the vertical slice. The following remain gated before 
 
 - durable write journal and directory flush behaviour on every supported filesystem;
 - cross-platform atomic-replacement fallback and fault injection;
-- workspace locking and bound workspace sessions;
 - complete unknown Markdown-section round-trip tests;
 - duplicate-ID validation across all records;
 - schema-generated format validation;
 - projection rebuild and migration services.
 
-The pull request remains draft until the Rust CI matrix and these release dependencies are addressed.
+Local P02 tests exercise the bound-root behavior. Exact-head remote Linux,
+macOS, and Windows matrices and the remaining release dependencies are still
+required before a release claim.

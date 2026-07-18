@@ -6,7 +6,7 @@ The broad R1–R6 catalog remains useful as long-term scope, but it is not the w
 
 ## Current boundary
 
-The reviewed P01 stack is pre-alpha. It has governance and product contracts, one Rust application composition root shared by CLI and Tauri, typed identity-bound session identifiers, structured results/errors, a narrow Workspace/People/Markdown slice, profile/readiness and reason-only Review foundations, provider contracts, and review packaging workflows. It does not yet have Workspace Session writer authority, recoverable multi-target writes, sealed dietary persistence, local-purpose authorization, scalable Directory reads, encrypted clean-install recovery, or the cohort-to-brief workflow. B0 assumes one trusted local workspace owner and must structurally omit relationship allocation, ranking, and scoring.
+The current P02 source state is pre-alpha. It has governance and product contracts, one Rust application composition root shared by CLI and Tauri, path-bound write-authoritative Workspace Sessions with operating-system writer exclusion and retained capability roots, lock-free read-only Health, structured results/errors, a narrow Workspace/People/Markdown slice, profile/readiness and reason-only Review foundations, provider contracts, and review packaging workflows. It does not yet reject an independently copied workspace with the same workspace identity at another path, so `LRM-WS-009` and `T-B0-P02` remain blocked. It also lacks recoverable multi-target writes, final mutation preconditions, sealed dietary persistence, local-purpose authorization, scalable Directory reads, encrypted clean-install recovery, and the cohort-to-brief workflow. B0 assumes one trusted local workspace owner and must structurally omit relationship allocation, ranking, and scoring.
 
 The current installed Mac app is an internal local-authoritative review build. It is not a proven Airgap artifact, notarized public release, or supported daily-use product.
 
@@ -47,6 +47,14 @@ Exit evidence:
 - checkpoint/import/mutation code cannot bypass the session authority.
 
 P02 owns the readable manifest contract and session authority only. Installed no-account/no-egress workspace creation, projection deletion/rebuild, and the complete canonical round trip remain acceptance evidence rather than P02 implementation claims.
+
+Local source-worktree evidence covers the session aggregate, capability-root
+binding, same-path typed contention, quiescence, lock-free Health,
+process-exit release, and current inbound-adapter mutations. A copied workspace
+at another path can still obtain an independent path-local lock, so the
+workspace-identity authority requirement remains open. Windows runtime and
+exact-head remote matrices also remain open; P03 still owns recoverable writes
+and final preconditions.
 
 ## P03 — Recoverable canonical operations
 

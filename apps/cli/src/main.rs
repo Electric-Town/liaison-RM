@@ -1,9 +1,9 @@
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use liaison_application::{
     APPLICATION_CONTRACT_VERSION, ApplicationError, BuildProfile, CommandResult,
-    CreatePersonCommand, FindingSeverityDto, InitialiseWorkspaceCommand, LiaisonApplication,
-    ListPeopleQuery, OpenWorkspaceCommand, WorkspaceDto, WorkspaceOpenDto, WorkspaceProfile,
-    WorkspaceSessionCommand, WorkspaceValidationDto,
+    CreatePersonCommand, FindingSeverityDto, InitialiseWorkspaceCommand,
+    InspectWorkspaceHealthQuery, LiaisonApplication, ListPeopleQuery, OpenWorkspaceCommand,
+    WorkspaceDto, WorkspaceOpenDto, WorkspaceProfile, WorkspaceValidationDto,
 };
 use serde::Serialize;
 use serde_json::json;
@@ -159,7 +159,9 @@ fn application_exit_code(code: &str) -> u8 {
         | "workspace.initialise-target-not-empty"
         | "people.already-exists"
         | "people.revision-conflict"
-        | "application.workspace-session-stale" => EXIT_CONFLICT,
+        | "application.workspace-session-stale"
+        | "application.workspace-session-quiescing"
+        | "workspace.writer-already-active" => EXIT_CONFLICT,
         "workspace.unsupported-schema" => EXIT_UNSUPPORTED,
         _ => EXIT_GENERAL_ERROR,
     }
@@ -229,9 +231,8 @@ fn execute_workspace(
             Ok(EXIT_SUCCESS)
         }
         WorkspaceCommand::Validate => {
-            let opened = open_workspace(application, workspace_path)?;
-            let report = application.validate_workspace(WorkspaceSessionCommand {
-                session_id: opened.value.workspace.session_id,
+            let report = application.inspect_workspace_health(InspectWorkspaceHealthQuery {
+                path: workspace_path,
             })?;
             let validity = if report.value.valid {
                 "valid"

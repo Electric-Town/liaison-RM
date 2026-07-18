@@ -173,7 +173,26 @@
     renderWorkspace();
   };
 
-  const acceptWorkspace = (opened, action) => {
+  const acceptWorkspace = async (opened, action) => {
+    const previous = state.workspace;
+    if (previous && previous.session_id !== opened.workspace.session_id) {
+      try {
+        await invokeValue("close_workspace", {
+          request: { sessionId: previous.session_id },
+        });
+      } catch (error) {
+        try {
+          await invokeValue("close_workspace", {
+            request: { sessionId: opened.workspace.session_id },
+          });
+        } catch {
+          // Closing the replacement is best-effort; the original close error
+          // is the actionable failure and the original selection stays put.
+        }
+        status(`Workspace switch did not complete: ${errorText(error)}`);
+        return false;
+      }
+    }
     state.workspace = opened.workspace;
     state.people = opened.people;
     byId("workspace-path").value = state.workspace.path;
@@ -185,6 +204,7 @@
       ? "Workspace Health is valid."
       : `Workspace Health reports ${opened.validation.findings.length} finding${opened.validation.findings.length === 1 ? "" : "s"}; review Health before editing.`;
     status(`${action}: ${state.workspace.name}. ${state.people.length} people loaded. ${health}`);
+    return true;
   };
 
   const showValidation = (report) => {
@@ -234,8 +254,9 @@
             profile: byId("workspace-profile").value,
           },
         });
-        acceptWorkspace(opened, "Created local workspace");
-        navigate("people");
+        if (await acceptWorkspace(opened, "Created local workspace")) {
+          navigate("people");
+        }
       } catch (error) {
         status(`Workspace setup did not complete: ${errorText(error)}`);
       }
@@ -246,7 +267,7 @@
     await withBusy(event.currentTarget, "Opening…", async () => {
       try {
         const opened = await invokeValue("open_workspace", { path: byId("workspace-path").value });
-        acceptWorkspace(opened, "Opened workspace");
+        await acceptWorkspace(opened, "Opened workspace");
       } catch (error) {
         status(`Workspace was not opened: ${errorText(error)}`);
       }

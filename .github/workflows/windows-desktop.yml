@@ -6,6 +6,8 @@ on:
       - "Cargo.toml"
       - "Cargo.lock"
       - "apps/desktop/**"
+      - "crates/liaison-application/**"
+      - "adapters/workspace-session-local/**"
       - "adapters/vault-markdown/**"
       - "contexts/people/**"
       - "contexts/workspace/**"
