@@ -37,7 +37,7 @@
   "network_destinations": [],
   "conformance": {
     "suite_version": 1,
-    "status": "not-tested",
+    "status": "passed-with-limits",
     "evidence_ref": "providers/local-folder/evidence/README.md"
   }
 }
