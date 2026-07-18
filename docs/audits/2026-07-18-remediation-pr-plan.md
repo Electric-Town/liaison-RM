@@ -94,3 +94,35 @@ Each PR is a **bounded vertical slice** (domain rule → application service →
 - **RICE** (audit §8) recorded here per PR; ratify scores with the team and store in `spec/`.
 - **DDD:** no UI/CLI computes domain rules; all logic stays in the owning context's application services.
 - **KCS:** each PR links/creates a knowledge article for its workflow.
+
+---
+
+## CEO review outcome (2026-07-18, SCOPE EXPANSION)
+
+`/plan-ceo-review` ran in **SCOPE EXPANSION** mode. Two decisions locked and seven expansions accepted.
+
+**D1 — UI stack: PWA-first React/TS, Tauri wraps desktop.** One React/TS app serves as an installable offline PWA and a Tauri webview. **Architecture guardrail (see review):** the PWA is the *optional browser client that never owns canonical data* (README:144); the authoritative Rust core ships via **Tauri desktop + Tauri Mobile**. This resolves the mobile decision (req #1) and aligns tech with meitheal. → **PR 1 becomes "design system + PWA/Tauri React shell."**
+
+> **Confirmed 2026-07-18 (owner):** **Tauri Mobile is the mobile delivery target** — it carries the Rust core on-device, so the phone keeps full local authority and works offline. The PWA is a secondary browser client only and never holds canonical data. A pure-PWA-on-phone + sync-server model is **rejected**: it breaks Airgap and local authority. PR 1's shell must be structured so the same React UI mounts in three hosts (Tauri desktop, Tauri Mobile, browser PWA) over one typed command boundary to the Rust core.
+
+**Accepted expansions (all opt-in ADD):**
+
+| ID | Expansion | Folds into |
+|---|---|---|
+| E1 | On-device voice + NL quick-add capture (local model, Airgap-safe) | PR 5 |
+| E2 | Auto-assembled **source-linked briefing card** (the differentiator) | new slice after PR 5 |
+| E3 | Migration importers (vCard + Meerkat/Monica/CRM-in-MD) | "getting people in" slice w/ PR 4 |
+| E4 | **meitheal emit-only bridge** (brought forward from R6) | Automation/MCP slice |
+| E5 | Local business-card / photo OCR add (req #4) | "getting people in" slice |
+| E6 | Local API + **MCP surface** (Review/Readiness as infrastructure) | Automation/MCP slice (substrate for E4) |
+| E7 | **"Quiet day" / low-capacity mode** as first-class control | PR 3 |
+
+**Deferred:** two-way meitheal sync; weighted Review Priority; graph rendering (semantic tree/table first).
+
+**Top review findings (must-address before build):**
+1. **Local-authority landmine (architecture):** choice C only preserves local authority if PWA = browser client and Tauri desktop + Tauri Mobile carry the Rust core. A pure-PWA-on-mobile + sync-server model breaks Airgap and must be rejected.
+2. **Disclosure boundary (privacy):** E4/E6 emit + MCP surface must enforce grant / least-disclosure so **private relationship overlays never leak into the household (meitheal) layer**. The emit bridge carries commitments/dates only, never private assessments.
+3. **Briefing provenance (correctness):** E2 must label every line's source and information-state; it may never invent or present unverified/stale fields as fact.
+4. **a11y is a ratchet, not a phase:** the PR 2 axe/pa11y gate lands before the surface PRs and every later PR inherits it.
+
+Full deep-review notes (failure modes, shadow paths, diagrams, deployment) are in the CEO plan artifact `~/.gstack/projects/Electric-Town-liaison-RM/ceo-plans/2026-07-18-app-parity-cathedral.md`.
