@@ -2,6 +2,8 @@
 
 This file records the intended public GitHub About metadata so repository settings remain consistent with the product boundary.
 
+The remaining settings action is tracked in [issue #19](https://github.com/Electric-Town/liaison-RM/issues/19). Repository settings are not considered updated until that issue is completed and the live About panel is verified.
+
 ## Description
 
 ```text
@@ -61,3 +63,4 @@ Do not use a screen that exposes real personal information. Use synthetic data o
 - [ ] Topics reflect the product rather than temporary implementation experiments.
 - [ ] Social preview uses synthetic data.
 - [ ] No field claims a supported release before release evidence exists.
+- [ ] Issue #19 is closed only after the live GitHub About panel is checked.
