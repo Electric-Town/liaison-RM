@@ -1,0 +1,158 @@
+schema: liaison/profile-and-review-example@1
+
+profile_configuration:
+  schema: liaison/profile-configuration@1
+  packs:
+    - id: identity.communication
+      version: 1
+      label: Identity and communication
+      description: Preferred identity and contact context.
+      fields:
+        - id: identity.preferred_name
+          label: Preferred name
+          type: short-text
+          classification: private
+          required_for: [basic.contact]
+        - id: identity.pronunciation
+          label: Pronunciation
+          type: short-text
+          classification: private
+        - id: communication.preferred_channel
+          label: Preferred channel
+          type: enum
+          options: [email, phone, message, video, in-person, no-preference]
+          classification: private
+          required_for: [basic.contact]
+
+    - id: hospitality.food
+      version: 1
+      label: Food and hospitality
+      description: Purpose-limited food and hosting context.
+      fields:
+        - id: food.coverage_state
+          label: Catering coverage state
+          type: enum
+          options:
+            - provided
+            - verified-none
+            - pending
+            - stale
+            - declined
+            - unreachable
+            - excluded
+            - unknown
+          classification: restricted
+          required_for: [event.catering]
+        - id: food.operational_instruction
+          label: Operational catering instruction
+          type: long-text
+          classification: restricted
+          required_for: [event.catering]
+        - id: food.detail
+          label: Detailed food requirement
+          type: sealed
+          classification: sealed
+
+    - id: travel.preferences
+      version: 1
+      label: Travel
+      fields:
+        - id: travel.home_airport
+          label: Home airport
+          type: short-text
+          classification: private
+          required_for: [executive.travel]
+        - id: travel.seat_preference
+          label: Seat preference
+          type: enum
+          options: [window, aisle, middle, no-preference]
+          classification: private
+          required_for: [executive.travel]
+          stale_after: P2Y
+        - id: travel.hotel_preference
+          label: Hotel preference
+          type: long-text
+          classification: private
+          required_for: [executive.travel]
+          stale_after: P2Y
+
+  readiness_purposes:
+    - id: basic.contact
+      version: 1
+      label: Basic contact readiness
+      required_fields:
+        - identity.preferred_name
+        - communication.preferred_channel
+      acceptable_states: [known, verified]
+    - id: event.catering
+      version: 1
+      label: Event catering readiness
+      required_fields:
+        - food.coverage_state
+        - food.operational_instruction
+      acceptable_states: [known, verified, not-applicable, declined]
+    - id: executive.travel
+      version: 1
+      label: Executive travel readiness
+      required_fields:
+        - travel.home_airport
+        - travel.seat_preference
+        - travel.hotel_preference
+      acceptable_states: [known, verified]
+
+review_policies:
+  - schema: liaison/review-policy@1
+    id: review.personal.reason-only
+    version: 1
+    label: Personal reason-only review
+    mode: reason-only
+    capacity:
+      maximum_people: 5
+      time_budget_minutes: 15
+      social_capacity: normal
+      contexts: [personal, family]
+      quiet_days: [sunday]
+    suppressions:
+      - archived
+      - do-not-contact
+      - relationship-ended
+      - paused
+      - snoozed
+      - excluded
+
+  - schema: liaison/review-policy@1
+    id: review.professional.weighted
+    version: 1
+    label: Professional weighted review
+    mode: weighted
+    capacity:
+      maximum_people: 10
+      time_budget_minutes: 30
+      social_capacity: normal
+      contexts: [professional]
+    suppressions:
+      - archived
+      - do-not-contact
+      - relationship-ended
+      - paused
+      - snoozed
+      - excluded
+    components:
+      - id: review.cadence_status
+        weight: 0.30
+        explanation_key: review.reason.cadence
+      - id: review.manual_importance
+        weight: 0.20
+        explanation_key: review.reason.importance
+      - id: review.open_commitments
+        weight: 0.20
+        explanation_key: review.reason.commitments
+      - id: review.upcoming_dates
+        weight: 0.10
+        explanation_key: review.reason.upcoming_date
+      - id: review.stale_required_context
+        weight: 0.10
+        explanation_key: review.reason.stale_context
+      - id: review.manual_boost
+        weight: 0.10
+        explanation_key: review.reason.manual_boost
