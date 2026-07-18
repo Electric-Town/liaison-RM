@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://electric-town.github.io/liaison-rm/schemas/profile-configuration.schema.json",
+  "title": "Liaison RM profile configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "packs"],
+  "properties": {
+    "schema": {
+      "const": "liaison/profile-configuration@1"
+    },
+    "packs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/topicPack" }
+    },
+    "readiness_purposes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/readinessPurpose" }
+    }
+  },
+  "$defs": {
+    "stableId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)+$",
+      "maxLength": 160
+    },
+    "topicPack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "label", "fields"],
+      "properties": {
+        "id": { "$ref": "#/$defs/stableId" },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "namespace_owner": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/fieldDefinition" }
+        }
+      }
+    },
+    "fieldDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "type", "classification"],
+      "properties": {
+        "id": { "$ref": "#/$defs/stableId" },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "type": {
+          "enum": [
+            "short-text",
+            "long-text",
+            "markdown",
+            "date",
+            "partial-date",
+            "recurring-date",
+            "enum",
+            "multi-select",
+            "boolean",
+            "number",
+            "measurement",
+            "address",
+            "location",
+            "entity-reference",
+            "file-reference",
+            "url-reference",
+            "sealed",
+            "calculated"
+          ]
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "classification": {
+          "enum": ["public", "internal", "private", "restricted", "sealed"]
+        },
+        "required_for": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/stableId" },
+          "uniqueItems": true
+        },
+        "stale_after": {
+          "type": "string",
+          "pattern": "^P(?:\\d+Y)?(?:\\d+M)?(?:\\d+D)?$"
+        },
+        "plugin_id": { "$ref": "#/$defs/stableId" },
+        "read_only": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": { "enum": ["enum", "multi-select"] }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["options"]
+          }
+        }
+      ]
+    },
+    "readinessPurpose": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "required_fields"],
+      "properties": {
+        "id": { "$ref": "#/$defs/stableId" },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_fields": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/stableId" },
+          "uniqueItems": true
+        },
+        "acceptable_states": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "known",
+              "verified",
+              "unverified",
+              "unknown",
+              "not-applicable",
+              "declined",
+              "stale",
+              "conflicting",
+              "needs-clarification",
+              "derived"
+            ]
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}
