@@ -3,6 +3,8 @@ members = [
     "apps/cli",
     "adapters/vault-markdown",
     "contexts/people",
+    "contexts/profiles",
+    "contexts/review-attention",
     "contexts/workspace",
     "crates/liaison-shared-kernel",
 ]
