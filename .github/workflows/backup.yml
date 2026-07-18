@@ -1,0 +1,46 @@
+name: Workspace backup and restore
+
+on:
+  pull_request:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "apps/cli/**"
+      - "adapters/backup-local/**"
+      - "contexts/workspace/**"
+      - "docs/evidence/backup/**"
+      - ".github/workflows/backup.yml"
+  push:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "apps/cli/**"
+      - "adapters/backup-local/**"
+      - "contexts/workspace/**"
+      - "docs/evidence/backup/**"
+      - ".github/workflows/backup.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Backup and restore (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show toolchain
+        run: rustc --version --verbose
+      - name: Check formatting
+        run: cargo fmt --all --check
+      - name: Check backup packages
+        run: cargo check -p liaison-workspace -p liaison-backup-local -p liaison-cli --all-targets --all-features --locked
+      - name: Lint backup packages
+        run: cargo clippy -p liaison-workspace -p liaison-backup-local -p liaison-cli --all-targets --all-features --locked -- -D warnings
+      - name: Test backup packages
+        run: cargo test -p liaison-workspace -p liaison-backup-local -p liaison-cli --all-features --locked
