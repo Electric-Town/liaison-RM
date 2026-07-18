@@ -22,6 +22,25 @@ jobs:
           set +e
           python scripts/check_repository.py > /tmp/context-policy.log 2>&1
           status=$?
+          python - <<'PY' >> /tmp/context-policy.log
+          import re
+          from pathlib import Path
+
+          seen = {}
+          for path in [Path('README.md'), Path('PROJECT_CONTEXT.md')]:
+              text = path.read_text(encoding='utf-8')
+              paragraphs = [
+                  re.sub(r'\s+', ' ', item.strip()).lower()
+                  for item in re.split(r'\n\s*\n', text)
+                  if len(item.strip()) >= 180 and not item.lstrip().startswith('```')
+              ]
+              for paragraph in paragraphs:
+                  if paragraph in seen:
+                      print('\nExact duplicate paragraph:')
+                      print(paragraph)
+                  else:
+                      seen[paragraph] = path
+          PY
           {
             echo "### Repository context diagnostics"
             echo
