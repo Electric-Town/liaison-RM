@@ -1,0 +1,31 @@
+{
+  "schema": "liaison/locale-catalog@1",
+  "locale": "pt-BR",
+  "source_locale": "en-IE",
+  "catalog_version": 1,
+  "status": "human-review-required",
+  "review": {
+    "reviewer": null,
+    "reviewed_at": null,
+    "notes": "Sample navigation terms only. Brazilian Portuguese product-language review is required before release."
+  },
+  "messages": {
+    "app.name": "Liaison RM",
+    "nav.today": "Hoje",
+    "nav.people": "Pessoas",
+    "nav.events": "Eventos",
+    "nav.network": "Rede",
+    "nav.settings": "Configurações",
+    "action.save": "Salvar",
+    "action.cancel": "Cancelar",
+    "action.search": "Pesquisar",
+    "action.snooze": "Snooze",
+    "status.local_workspace": "Espaço de trabalho local",
+    "review.why.open_commitment": "Open commitment with {person_name}",
+    "review.why.birthday": "Birthday in {day_count} days",
+    "review.no_strength_score": "Liaison does not calculate relationship strength.",
+    "profile.readiness.missing": "Missing for {purpose_name}: {field_list}",
+    "error.workspace_not_found.title": "Workspace not found",
+    "error.workspace_not_found.recovery": "Choose a Liaison workspace folder or create a new one."
+  }
+}
