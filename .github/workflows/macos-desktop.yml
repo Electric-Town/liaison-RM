@@ -22,11 +22,11 @@ jobs:
   interface:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
       - name: Install browser-test dependencies
@@ -44,7 +44,7 @@ jobs:
           DESKTOP_SCREENSHOT_DIR: artifacts/desktop-screens
           DESKTOP_TEST_REPORT: artifacts/desktop-ui-report.json
         run: python scripts/test_desktop_ui.py
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: liaison-desktop-interface-evidence
           path: artifacts/
@@ -54,7 +54,7 @@ jobs:
   rust:
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Show toolchain
         run: rustc --version --verbose
       - name: Check formatting
@@ -73,7 +73,7 @@ jobs:
     env:
       MACOSX_DEPLOYMENT_TARGET: "10.15"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install universal Rust targets
         run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
       - name: Install pinned Tauri CLI
@@ -94,7 +94,7 @@ jobs:
           hdiutil create -volname "Liaison RM" -srcfolder "$APP_PATH" -ov -format UDZO artifacts/macos/Liaison-RM-universal-macos.dmg
           hdiutil verify artifacts/macos/Liaison-RM-universal-macos.dmg
           shasum -a 256 artifacts/macos/* > artifacts/macos/SHA256SUMS
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: liaison-rm-universal-macos-review
           path: artifacts/macos/
