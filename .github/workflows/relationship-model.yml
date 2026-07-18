@@ -1,0 +1,46 @@
+name: Relationship model
+
+on:
+  pull_request:
+    paths:
+      - "docs/product/relationship-memory-and-attention.md"
+      - "docs/decisions/0005-separate-intent-evidence-maintenance-and-readiness.md"
+      - "examples/profile-configuration/**"
+      - "schemas/topic-pack.schema.json"
+      - "schemas/review-policy.schema.json"
+      - "docs/prototypes/screens/review-*.svg"
+      - "docs/prototypes/screens/profile-readiness.svg"
+      - "docs/evidence/ux/review-attention-spec-review.md"
+      - "scripts/check_relationship_model.py"
+      - ".github/workflows/relationship-model.yml"
+  push:
+    branches: [main]
+    paths:
+      - "docs/product/relationship-memory-and-attention.md"
+      - "docs/decisions/0005-separate-intent-evidence-maintenance-and-readiness.md"
+      - "examples/profile-configuration/**"
+      - "schemas/topic-pack.schema.json"
+      - "schemas/review-policy.schema.json"
+      - "docs/prototypes/screens/review-*.svg"
+      - "docs/prototypes/screens/profile-readiness.svg"
+      - "docs/evidence/ux/review-attention-spec-review.md"
+      - "scripts/check_relationship_model.py"
+      - ".github/workflows/relationship-model.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install YAML parser
+        run: python -m pip install PyYAML==6.0.2
+      - name: Validate relationship model
+        run: python scripts/check_relationship_model.py
+      - name: Validate repository policy
+        run: python scripts/check_repository.py

@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://electric-town.github.io/liaison-rm/schemas/review-policy.schema.json",
+  "title": "Liaison RM Review Policy",
+  "type": "object",
+  "required": ["id", "name", "mode", "suppress_when"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1
+    },
+    "mode": {
+      "enum": ["reason_only", "tiered", "weighted"]
+    },
+    "daily_capacity": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50
+    },
+    "reasons": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "overdue_relative_to_own_cadence",
+          "open_commitment",
+          "upcoming_important_date",
+          "selected_profile_readiness_gap",
+          "stale_required_context",
+          "manual_pin"
+        ]
+      }
+    },
+    "components": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "suppress_when": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "archived",
+          "do_not_contact",
+          "relationship_ended",
+          "paused",
+          "snoozed",
+          "excluded"
+        ]
+      }
+    },
+    "explanations_required": { "type": "boolean" },
+    "formula_editable": { "type": "boolean" },
+    "hidden_components_allowed": { "type": "boolean" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "mode": { "const": "weighted" } },
+        "required": ["mode"]
+      },
+      "then": {
+        "required": ["components", "explanations_required"],
+        "properties": {
+          "explanations_required": { "const": true },
+          "hidden_components_allowed": { "const": false }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "mode": { "const": "reason_only" } },
+        "required": ["mode"]
+      },
+      "then": {
+        "required": ["reasons"],
+        "not": { "required": ["components"] }
+      }
+    }
+  ]
+}
