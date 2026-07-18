@@ -54,12 +54,18 @@ Deliverables:
 - configurable field visibility and ordering;
 - dashboard framework with user-configurable panels and keyboard controls;
 - relationship list and graph with equivalent semantic table/tree;
-- theme, density, reduced motion, localisation structure, and interruption-safe drafts;
+- theme, density, reduced motion, interruption-safe drafts, and versioned locale catalogues;
+- `en-IE` source catalogue and `en-XA` expansion pseudolocale;
+- locale-aware date, number, currency, unit, list, and relative-time formatting;
+- named human-review evidence for every released language, including localized accessible names and recovery messages;
 - Linux Flatpak, macOS, and Windows packaging pipelines.
 
 Exit evidence:
 
 - keyboard, screen-reader, 200% zoom, reflow, contrast, target-size, and reduced-motion tests;
+- 320/390-pixel pseudolocale expansion and Unicode/NFC checks;
+- placeholder and key parity across released locale catalogues;
+- native-language review evidence for visible copy, accessible names, errors, and recovery guidance;
 - graph/table parity test;
 - installer smoke tests and local-data uninstall/reinstall behaviour;
 - no mandatory account or network request on first run.
