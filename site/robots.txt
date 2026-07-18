@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://electric-town.github.io/liaison-RM/sitemap.xml

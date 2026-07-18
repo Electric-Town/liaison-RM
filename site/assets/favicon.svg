@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Liaison RM</title>
+  <desc id="desc">Red hand-drawn circle crossed by white relationship threads</desc>
+  <path d="M13 13c10-9 28-7 38 2 8 8 7 26-1 35-9 10-29 10-38 0-8-9-8-28 1-37Z" fill="#e14a43" stroke="#28231f" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M17 39c9-12 20-13 33-17M20 24c6 9 13 14 26 19" fill="none" stroke="#fffdf8" stroke-linecap="round" stroke-width="4"/>
+</svg>
