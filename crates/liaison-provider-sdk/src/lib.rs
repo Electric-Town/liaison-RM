@@ -193,12 +193,8 @@ fn check_manifest_revisions<Store>(
 {
     let first_content = b"{\"revision\":1}";
     let first_digest = ContentDigest::sha256(first_content);
-    let first_revision = store.replace_manifest_if_revision(
-        &keys.manifest,
-        None,
-        first_content,
-        &first_digest,
-    );
+    let first_revision =
+        store.replace_manifest_if_revision(&keys.manifest, None, first_content, &first_digest);
     checks.push(match &first_revision {
         Ok(revision) => ConformanceCheck {
             name: "create manifest with absent precondition".to_owned(),
