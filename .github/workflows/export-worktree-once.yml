@@ -5,12 +5,16 @@ on:
     branches: [feat/handdrawn-crm-baseline]
     paths:
       - ".github/workflows/export-worktree-once.yml"
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
 
 permissions:
   contents: read
 
 jobs:
   export:
+    if: github.event_name == 'push' || github.head_ref == 'feat/handdrawn-crm-baseline'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
