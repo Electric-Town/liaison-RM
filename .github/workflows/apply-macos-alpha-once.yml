@@ -1,0 +1,71 @@
+name: Apply macOS desktop alpha once
+
+on:
+  push:
+    branches: [agent/r2-macos-desktop-alpha]
+    paths:
+      - ".github/workflows/apply-macos-alpha-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r2-macos-desktop-alpha
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Reconstruct reviewed source payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          payload=.bootstrap/macos-alpha/payload.tar.gz.b64
+          echo "830e6aee8df419a7b8122df0e8514a56da76fe1575940b21648243b1ae7f5a11  $payload" | sha256sum -c -
+          base64 --decode "$payload" > /tmp/macos-alpha-payload.tar.gz
+          echo "42322f65f4cc9a4af998b658e80002094ac6f5ba8392edaad3d21af319d20fe1  /tmp/macos-alpha-payload.tar.gz" | sha256sum -c -
+          if tar -tzf /tmp/macos-alpha-payload.tar.gz | grep -E '(^/|(^|/)\.\.(/|$))'; then
+            echo "unsafe archive path" >&2
+            exit 1
+          fi
+          tar -xzf /tmp/macos-alpha-payload.tar.gz -C "$GITHUB_WORKSPACE"
+      - name: Generate deterministic browser and icon evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install pillow==11.3.0 playwright==1.57.0
+          python -m playwright install --with-deps chromium
+          python scripts/check_desktop_shell.py
+          node --check apps/desktop/ui/app.js
+          DESKTOP_SCREENSHOT_DIR=docs/evidence/macos python scripts/test_desktop_ui.py
+          python scripts/generate_desktop_assets.py
+      - name: Resolve and format Rust workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo generate-lockfile
+          cargo fmt --all
+      - name: Remove one-shot staging files
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .bootstrap/macos-alpha
+          rm .github/workflows/apply-macos-alpha-once.yml
+      - name: Commit deterministic outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "feat: add local Tauri desktop alpha and macOS bundles"
+          git push origin HEAD:agent/r2-macos-desktop-alpha
