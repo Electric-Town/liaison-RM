@@ -11,6 +11,6 @@ The provider remains `not-tested` in `descriptor.json` until the same source com
 - the full Rust workspace test suite;
 - Ubuntu, macOS, and Windows jobs.
 
-Any source, descriptor, WIT, workflow, or evidence change invalidates the prior run and requires the matrix to run again.
+Any source, descriptor, WIT, workflow, or evidence change invalidates the prior run and requires the matrix to run again. The evidence SHA is recorded only after the complete matrix is green.
 
 A green matrix proves only the checked local-folder contract. It does not prove multi-writer synchronization, durability on arbitrary network filesystems, or successful workspace restore.
