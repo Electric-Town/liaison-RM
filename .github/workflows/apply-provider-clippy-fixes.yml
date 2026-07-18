@@ -1,0 +1,55 @@
+name: Apply provider Clippy fixes
+
+on:
+  push:
+    branches: [agent/r1-provider-sdk-v4]
+    paths:
+      - ".github/workflows/apply-provider-clippy-fixes.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r1-provider-sdk-v4
+          fetch-depth: 0
+      - name: Apply reviewed lint corrections
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path("adapters/object-store-local/src/lib.rs")
+          text = path.read_text(encoding="utf-8")
+          old = '''    #[must_use]
+              pub fn descriptor() -> Result<ProviderDescriptor, liaison_connections::ProviderDomainError> {
+          '''
+          # rustfmt may use four spaces; handle the exact function independently.
+          text = text.replace(
+              '    #[must_use]\n    pub fn descriptor() -> Result<ProviderDescriptor, liaison_connections::ProviderDomainError> {',
+              '    /// Builds the provider descriptor published by the local-folder package.\n    ///\n    /// # Errors\n    ///\n    /// Returns an error when a checked-in provider identifier, version,\n    /// operation, safe mode, or configuration field violates the Connections\n    /// domain contract.\n    pub fn descriptor() -> Result<ProviderDescriptor, liaison_connections::ProviderDomainError> {',
+              1,
+          )
+          text = text.replace(
+              'fn map_io(action: &str, error: std::io::Error) -> ObjectStoreError {',
+              'fn map_io(action: &str, error: &std::io::Error) -> ObjectStoreError {',
+              1,
+          )
+          text = re.sub(r'map_io\(([^,\n]+), error\)', r'map_io(\1, &error)', text)
+          path.write_text(text, encoding="utf-8")
+          PY
+          rm -f .github/workflows/provider-clippy-diagnostics.yml
+          rm .github/workflows/apply-provider-clippy-fixes.yml
+          cargo fmt --all
+      - name: Commit corrections
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "fix: satisfy local provider lint contract"
+          git push origin HEAD:agent/r1-provider-sdk-v4
