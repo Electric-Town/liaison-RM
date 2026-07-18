@@ -14,10 +14,13 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Rust Workspace and People bounded contexts, typed shared identifiers and revisions, a Markdown/YAML vault adapter, and a local `liaison` CLI vertical slice.
 - Cross-platform Rust formatting, checking, Clippy, domain, adapter, CLI, architecture, repository, and specification tests.
 - Provider-neutral Connections context, `object-store@1`, local-folder reference adapter, WIT contract, and cross-platform conformance suite.
+- Relationship-memory contract separating intent, evidence, maintenance status, and purpose-specific readiness.
+- Topic Pack, field-state, profile-readiness, and Review Policy examples, schemas, validation, and three review screens.
 
 ### Changed
 
 - The repository README defines Liaison RM as a local-authoritative, open-file relationship manager.
+- Reason-only review is the personal-workspace default; weighted Review Priority is explicitly queue ordering rather than relationship strength.
 
 ### Security
 
@@ -25,3 +28,4 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Defined separate Airgap and Connected-local build profiles and least-disclosure handling for sensitive relationship and workplace data.
 - Kept network, provider, SQL, Tauri, and secret-storage dependencies out of the initial Workspace and People domain crates.
 - Provider registration remains inert without a purpose-bound grant, and the local adapter claims backup/single-writer modes only.
+- Private assessments and sensitive Topic Pack values require explicit classification, purpose, and sharing grants.
