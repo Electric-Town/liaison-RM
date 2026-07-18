@@ -17,10 +17,12 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Local Tauri desktop alpha for workspace creation, People capture, validation, accessible reflow, and universal macOS review bundles.
 - Review and Attention and Topic Pack contracts that separate relationship intent, factual evidence, maintenance status, purpose-specific readiness, and optional Review Priority.
 - Machine-validated profile-configuration and review-policy schemas with an open YAML example.
+- Versioned locale-catalogue schema, source and pseudolocale fixtures, draft Irish, Japanese, and Brazilian Portuguese catalogues, and automated key, placeholder, Unicode, and expansion checks.
 
 ### Changed
 
 - The repository README defines Liaison RM as a local-authoritative, open-file relationship manager.
+- Localization review now requires stable keys, human approval for production language, locale-aware formatting, and explicit public/private metadata boundaries.
 
 ### Fixed
 
@@ -34,3 +36,4 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Provider registration remains inert without a purpose-bound grant, and the local adapter claims backup/single-writer modes only.
 - Desktop alpha compiles no network client, uses a local-only CSP, and separates ad-hoc review artifacts from notarized release artifacts.
 - Review and Attention prohibits employee ranking, social-credit behavior, hidden relationship-value inference, and private-assessment disclosure without an explicit decision.
+- Localization tooling may not transmit private vault text or insert private relationship data into public structured metadata without an explicit approved boundary.
