@@ -1,7 +1,13 @@
 # Claude repository entry point
 
-Read [`AGENTS.md`](AGENTS.md) first. Then read [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md), [`SPEC.md`](SPEC.md), and [`AI_BUILD_INSTRUCTIONS.md`](AI_BUILD_INSTRUCTIONS.md).
+Read these files before editing:
 
-`AGENTS.md` is normative. `PROJECT_CONTEXT.md` contains the complete product, architecture, status, terminology, delivery, and handoff context. Do not infer implementation from prototypes or open pull requests; verify the branch, exact head, changed files, and CI evidence.
+1. `AGENTS.md`
+2. `PROJECT_CONTEXT.md`
+3. `SPEC.md`
+4. `AI_BUILD_INSTRUCTIONS.md`
+5. the owning context README and tests
 
-Use domain-driven vertical slices. Keep business rules in the owning Rust context and application services. Preserve local authority, readable canonical files, explicit provider and AI grants, Airgap separation, accessibility, privacy, and recovery requirements.
+Verify the branch, pull-request base, exact head, changed files, and CI. A prototype or open pull request is not proof of implemented behaviour.
+
+Build a domain-driven vertical slice. Keep business rules in Rust contexts and application services. Preserve local authority, open formats, grants, Airgap separation, accessibility, privacy, and recovery.
