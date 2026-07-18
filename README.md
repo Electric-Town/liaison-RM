@@ -17,7 +17,7 @@ The planned product combines:
 
 Liaison RM does **not** require an Electric Town account or hosted relationship database. Canonical records remain on storage selected and controlled by the workspace owner. Search indexes, caches, and graph layouts are rebuildable projections.
 
-> **Status: pre-alpha.** The repository contains a reviewed product specification, interaction prototype, Rust domain foundations, Markdown/CLI vertical slices, and provider-contract work. It is not yet ready for daily use or public binary distribution. Do not describe planned features as implemented.
+> **Status: pre-alpha.** The default branch contains reviewed product and interaction specifications, Rust/CLI/Markdown/provider/profile/review foundations, and a native Tauri desktop alpha. It is not yet ready for daily use or public binary distribution. Do not describe planned features as implemented.
 
 ## Start here
 
@@ -296,7 +296,7 @@ Repository status changes quickly. Verify branches, pull requests, and exact-hea
 As of 2026-07-18:
 
 - `main` includes governance, product and interaction specifications, the Rust Workspace/People/CLI slice, provider-neutral Connections, Topic Pack contracts, purpose-specific readiness, and reason-only Review and Attention runtime foundations;
-- PR #8 contains the native Tauri/macOS alpha and tested review bundles; public signing, notarisation, clean-Mac UAT, and supported distribution remain closed;
+- PR #8 merged the native Tauri/macOS alpha and tested review bundles into `main`; public signing, notarisation, clean-Mac UAT, and supported distribution remain closed;
 - PR #20 contains localisation architecture, pseudolocale testing, and human-review gates; its non-source catalogues are not production translations;
 - PR #18 is the repository-context and agent-handoff change containing this README and `PROJECT_CONTEXT.md`.
 

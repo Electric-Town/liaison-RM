@@ -39,7 +39,7 @@ Canonical records are readable files. SQLite, search, graph layout, thumbnails, 
 
 Status: **pre-alpha**.
 
-The default branch contains governance, product and interaction specifications, machine-readable planning, the Rust Workspace/People/CLI and Markdown slice, provider-neutral Connections, Topic Pack contracts, purpose-specific profile readiness, and reason-only Review and Attention runtime foundations. It does not yet have a supported public release.
+The default branch contains governance, product and interaction specifications, machine-readable planning, the Rust Workspace/People/CLI and Markdown slice, provider-neutral Connections, Topic Pack contracts, purpose-specific profile readiness, reason-only Review and Attention runtime foundations, and a native Tauri desktop alpha with universal macOS review bundles. It does not yet have a supported public release.
 
 Do not claim any of the following without exact-head evidence:
 
@@ -58,8 +58,8 @@ As of 2026-07-18:
 
 | Ref | Scope | State at last update |
 |---:|---|---|
-| `main` | Governance, product and interaction specification, CLI/Markdown slice, Connections, Topic Pack contract, Profiles and reason-only Review runtime | Implemented on the default branch; no supported public release |
-| 8 | Native Tauri/macOS alpha and architecture-specific review bundles | Open and ready for review; Developer ID signing, notarisation, clean-Mac UAT, and supported distribution remain closed |
+| `main` | Governance, product and interaction specification, CLI/Markdown slice, Connections, Topic Pack contract, Profiles, reason-only Review runtime, and native Tauri desktop alpha | Implemented on the default branch; pre-alpha with no supported public release |
+| 8 | Native Tauri/macOS alpha and universal review bundles | Merged on 2026-07-18; Developer ID signing, notarisation, clean-Mac UAT, and supported distribution remain closed |
 | 20 | Localisation catalogues, pseudolocale, validation, and human-review gates | Open and ready for review; non-source catalogues are structural/draft fixtures, not approved translations |
 | 18 | Repository README, complete project context, agent entry points, and About metadata contract | Current documentation pull request |
 
