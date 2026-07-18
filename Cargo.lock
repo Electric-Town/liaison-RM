@@ -1746,7 +1746,7 @@ dependencies = [
 
 [[package]]
 name = "liaison-cli"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "assert_cmd",
  "clap",
@@ -1762,14 +1762,14 @@ dependencies = [
 
 [[package]]
 name = "liaison-connections"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "sha2",
 ]
 
 [[package]]
 name = "liaison-desktop"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "liaison-people",
  "liaison-vault-markdown",
@@ -1782,7 +1782,7 @@ dependencies = [
 
 [[package]]
 name = "liaison-object-store-local"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "liaison-connections",
  "liaison-provider-sdk",
@@ -1791,7 +1791,7 @@ dependencies = [
 
 [[package]]
 name = "liaison-people"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "chrono",
  "liaison-shared-kernel",
@@ -1801,7 +1801,7 @@ dependencies = [
 
 [[package]]
 name = "liaison-profiles"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "serde",
  "thiserror 2.0.18",
@@ -1809,21 +1809,21 @@ dependencies = [
 
 [[package]]
 name = "liaison-provider-registry-memory"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "liaison-connections",
 ]
 
 [[package]]
 name = "liaison-provider-sdk"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "liaison-connections",
 ]
 
 [[package]]
 name = "liaison-review-attention"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "chrono",
  "liaison-shared-kernel",
@@ -1833,7 +1833,7 @@ dependencies = [
 
 [[package]]
 name = "liaison-shared-kernel"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "serde",
  "thiserror 2.0.18",
@@ -1842,7 +1842,7 @@ dependencies = [
 
 [[package]]
 name = "liaison-vault-markdown"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "liaison-people",
  "liaison-shared-kernel",
@@ -1855,7 +1855,7 @@ dependencies = [
 
 [[package]]
 name = "liaison-workspace"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "liaison-shared-kernel",
  "serde",
