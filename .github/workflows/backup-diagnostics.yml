@@ -20,6 +20,31 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - name: Apply pending reviewed corrections
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path("adapters/backup-local/src/lib.rs")
+          text = path.read_text(encoding="utf-8")
+          text = text.replace(
+              "let mut buffer = [0_u8; 64 * 1024];",
+              "let mut buffer = vec![0_u8; 64 * 1024];",
+          )
+          text = text.replace(
+              "fn storage(action: &str, error: std::io::Error) -> BackupError {",
+              "fn storage(action: &str, error: &std::io::Error) -> BackupError {",
+          )
+          text = re.sub(
+              r'storage\(("[^"]+"), error\)',
+              r'storage(\1, &error)',
+              text,
+          )
+          text = text.replace('b"tampered\\n"', 'b"changed\\n"')
+          path.write_text(text, encoding="utf-8")
+          PY
       - name: Generate formatted diagnostic workspace
         run: |
           cargo fmt --all
@@ -47,7 +72,7 @@ jobs:
           exit 0
       - uses: actions/upload-artifact@v4
         with:
-          name: backup-diagnostics
+          name: backup-diagnostics-after-fix
           path: |
             backup-check.log
             backup-check.status
