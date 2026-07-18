@@ -25,6 +25,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - A version-controlled public About-description and repository-topic recommendation.
 - A project-context workflow that validates repository links/content policy and machine-readable product specifications together.
 - Versioned locale-catalog architecture with an `en-IE` source catalogue, `en-XA` expansion pseudolocale, draft Irish, Japanese, and Brazilian Portuguese fixtures, Unicode and placeholder validation, human-review gates, and release-evidence guidance.
+- Local workspace backup manifests, SHA-256 verification, isolated restore activation, and CLI backup workflows.
 
 ### Changed
 
@@ -49,3 +50,4 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Desktop alpha compiles no network client, uses a local-only CSP, and separates ad-hoc review artifacts from notarized release artifacts.
 - Agent handoff guidance prohibits private prompt history, personal data, credentials, and unsupported implementation or compliance claims in repository context.
 - Localization guidance prohibits private workspace data from entering public semantic metadata and does not treat machine-assisted text as human-approved language.
+- Local backup rejects symbolic links and nested destinations, never overwrites an existing path, and activates only a verified isolated restore.
