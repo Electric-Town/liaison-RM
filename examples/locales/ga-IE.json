@@ -1,0 +1,31 @@
+{
+  "schema": "liaison/locale-catalog@1",
+  "locale": "ga-IE",
+  "source_locale": "en-IE",
+  "catalog_version": 1,
+  "status": "human-review-required",
+  "review": {
+    "reviewer": null,
+    "reviewed_at": null,
+    "notes": "Sample navigation terms only. Full fluent Irish review is required before release."
+  },
+  "messages": {
+    "app.name": "Liaison RM",
+    "nav.today": "Inniu",
+    "nav.people": "Daoine",
+    "nav.events": "Imeachtaí",
+    "nav.network": "Network",
+    "nav.settings": "Socruithe",
+    "action.save": "Sábháil",
+    "action.cancel": "Cealaigh",
+    "action.search": "Cuardaigh",
+    "action.snooze": "Snooze",
+    "status.local_workspace": "Spás oibre áitiúil",
+    "review.why.open_commitment": "Open commitment with {person_name}",
+    "review.why.birthday": "Birthday in {day_count} days",
+    "review.no_strength_score": "Liaison does not calculate relationship strength.",
+    "profile.readiness.missing": "Missing for {purpose_name}: {field_list}",
+    "error.workspace_not_found.title": "Workspace not found",
+    "error.workspace_not_found.recovery": "Choose a Liaison workspace folder or create a new one."
+  }
+}
