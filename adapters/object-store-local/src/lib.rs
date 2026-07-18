@@ -22,7 +22,13 @@ impl LocalObjectStore {
         Self { root: root.into() }
     }
 
-    #[must_use]
+    /// Builds the provider descriptor published by the local-folder package.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when a checked-in provider identifier, version,
+    /// operation, safe mode, or configuration field violates the Connections
+    /// domain contract.
     pub fn descriptor() -> Result<ProviderDescriptor, liaison_connections::ProviderDomainError> {
         ProviderDescriptor::new(
             ProviderId::parse("org.electric-town.local-folder")?,
@@ -187,7 +193,7 @@ impl ObjectStore for LocalObjectStore {
                 ),
             ));
         }
-        fs::remove_file(&path).map_err(|error| map_io("delete object", error))
+        fs::remove_file(&path).map_err(|error| map_io("delete object", &error))
     }
 
     fn replace_manifest_if_revision(
@@ -259,16 +265,16 @@ fn reject_symlink_if_present(path: &Path) -> Result<(), ObjectStoreError> {
         )),
         Ok(_) => Ok(()),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(error) => Err(map_io("inspect path", error)),
+        Err(error) => Err(map_io("inspect path", &error)),
     }
 }
 
 fn read_bytes(path: &Path) -> Result<Vec<u8>, ObjectStoreError> {
     reject_symlink_if_present(path)?;
-    let mut file = File::open(path).map_err(|error| map_io("open object", error))?;
+    let mut file = File::open(path).map_err(|error| map_io("open object", &error))?;
     let mut content = Vec::new();
     file.read_to_end(&mut content)
-        .map_err(|error| map_io("read object", error))?;
+        .map_err(|error| map_io("read object", &error))?;
     Ok(content)
 }
 
@@ -286,11 +292,11 @@ fn collect_keys(
     directory: &Path,
     keys: &mut Vec<ObjectKey>,
 ) -> Result<(), ObjectStoreError> {
-    for entry in fs::read_dir(directory).map_err(|error| map_io("list objects", error))? {
-        let entry = entry.map_err(|error| map_io("read object entry", error))?;
+    for entry in fs::read_dir(directory).map_err(|error| map_io("list objects", &error))? {
+        let entry = entry.map_err(|error| map_io("read object entry", &error))?;
         let file_type = entry
             .file_type()
-            .map_err(|error| map_io("inspect object entry", error))?;
+            .map_err(|error| map_io("inspect object entry", &error))?;
         let path = entry.path();
         if file_type.is_symlink() {
             return Err(ObjectStoreError::new(
@@ -324,7 +330,7 @@ fn write_immutable(path: &Path, content: &[u8]) -> Result<(), ObjectStoreError> 
     let parent = path.parent().ok_or_else(|| {
         ObjectStoreError::new(ObjectStoreErrorKind::Io, "object path has no parent")
     })?;
-    fs::create_dir_all(parent).map_err(|error| map_io("create object directory", error))?;
+    fs::create_dir_all(parent).map_err(|error| map_io("create object directory", &error))?;
     let temporary = temporary_path(path, "new");
 
     let result = (|| {
@@ -332,16 +338,16 @@ fn write_immutable(path: &Path, content: &[u8]) -> Result<(), ObjectStoreError> 
             .write(true)
             .create_new(true)
             .open(&temporary)
-            .map_err(|error| map_io("create temporary object", error))?;
+            .map_err(|error| map_io("create temporary object", &error))?;
         file.write_all(content)
-            .map_err(|error| map_io("write temporary object", error))?;
+            .map_err(|error| map_io("write temporary object", &error))?;
         file.sync_all()
-            .map_err(|error| map_io("sync temporary object", error))?;
+            .map_err(|error| map_io("sync temporary object", &error))?;
         fs::hard_link(&temporary, path).map_err(|error| {
             if error.kind() == std::io::ErrorKind::AlreadyExists {
                 ObjectStoreError::new(ObjectStoreErrorKind::AlreadyExists, "object already exists")
             } else {
-                map_io("publish immutable object", error)
+                map_io("publish immutable object", &error)
             }
         })
     })();
@@ -354,7 +360,7 @@ fn replace_file_with_recovery(path: &Path, content: &[u8]) -> Result<(), ObjectS
     let parent = path.parent().ok_or_else(|| {
         ObjectStoreError::new(ObjectStoreErrorKind::Io, "manifest path has no parent")
     })?;
-    fs::create_dir_all(parent).map_err(|error| map_io("create manifest directory", error))?;
+    fs::create_dir_all(parent).map_err(|error| map_io("create manifest directory", &error))?;
 
     let temporary = temporary_path(path, "next");
     let backup = backup_path(path);
@@ -362,16 +368,16 @@ fn replace_file_with_recovery(path: &Path, content: &[u8]) -> Result<(), ObjectS
         .write(true)
         .create_new(true)
         .open(&temporary)
-        .map_err(|error| map_io("create temporary manifest", error))?;
+        .map_err(|error| map_io("create temporary manifest", &error))?;
     file.write_all(content)
-        .map_err(|error| map_io("write temporary manifest", error))?;
+        .map_err(|error| map_io("write temporary manifest", &error))?;
     file.sync_all()
-        .map_err(|error| map_io("sync temporary manifest", error))?;
+        .map_err(|error| map_io("sync temporary manifest", &error))?;
     drop(file);
 
     if path.exists() {
         let _ = fs::remove_file(&backup);
-        fs::rename(path, &backup).map_err(|error| map_io("stage current manifest", error))?;
+        fs::rename(path, &backup).map_err(|error| map_io("stage current manifest", &error))?;
     }
 
     if let Err(error) = fs::rename(&temporary, path) {
@@ -379,7 +385,7 @@ fn replace_file_with_recovery(path: &Path, content: &[u8]) -> Result<(), ObjectS
             let _ = fs::rename(&backup, path);
         }
         let _ = fs::remove_file(&temporary);
-        return Err(map_io("publish manifest", error));
+        return Err(map_io("publish manifest", &error));
     }
 
     let _ = fs::remove_file(&backup);
@@ -389,9 +395,9 @@ fn replace_file_with_recovery(path: &Path, content: &[u8]) -> Result<(), ObjectS
 fn recover_manifest(path: &Path) -> Result<(), ObjectStoreError> {
     let backup = backup_path(path);
     if !path.exists() && backup.exists() {
-        fs::rename(&backup, path).map_err(|error| map_io("recover manifest", error))?;
+        fs::rename(&backup, path).map_err(|error| map_io("recover manifest", &error))?;
     } else if path.exists() && backup.exists() {
-        fs::remove_file(&backup).map_err(|error| map_io("remove stale manifest backup", error))?;
+        fs::remove_file(&backup).map_err(|error| map_io("remove stale manifest backup", &error))?;
     }
     Ok(())
 }
@@ -423,7 +429,7 @@ impl ManifestLock {
         let parent = path.parent().ok_or_else(|| {
             ObjectStoreError::new(ObjectStoreErrorKind::Io, "lock path has no parent")
         })?;
-        fs::create_dir_all(parent).map_err(|error| map_io("create lock directory", error))?;
+        fs::create_dir_all(parent).map_err(|error| map_io("create lock directory", &error))?;
         OpenOptions::new()
             .write(true)
             .create_new(true)
@@ -435,7 +441,7 @@ impl ManifestLock {
                         "manifest is locked by another local writer",
                     )
                 } else {
-                    map_io("create manifest lock", error)
+                    map_io("create manifest lock", &error)
                 }
             })?;
         Ok(Self {
@@ -450,7 +456,7 @@ impl Drop for ManifestLock {
     }
 }
 
-fn map_io(action: &str, error: std::io::Error) -> ObjectStoreError {
+fn map_io(action: &str, error: &std::io::Error) -> ObjectStoreError {
     let kind = match error.kind() {
         std::io::ErrorKind::NotFound => ObjectStoreErrorKind::NotFound,
         std::io::ErrorKind::AlreadyExists => ObjectStoreErrorKind::AlreadyExists,
