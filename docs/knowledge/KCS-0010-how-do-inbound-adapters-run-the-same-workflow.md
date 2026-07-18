@@ -15,6 +15,8 @@ search_terms:
   - CLI desktop drift
   - structured application error
   - workspace session
+  - Tauri argument mismatch
+  - WebKit event currentTarget
 related_requirements:
   - LRM-AP-001
   - LRM-WS-011
@@ -38,6 +40,8 @@ The application result contains a contract version, command identifier, completi
 
 The CLI opens a session for the command lifetime. Tauri keeps one managed application instance and its session map in native state; the current disposable UI holds only the opaque active session identifier returned by that native application. Browser fixtures may fake the typed bridge for interaction testing, but they are not storage or domain implementations.
 
+Browser fixtures also cannot prove the native WebKit event lifecycle. Capture any form, button, or other event target that is needed after an `await` before yielding to the native command. A compiled P01 review exposed a false-failure path where the Person file was written successfully and WebKit then cleared `event.currentTarget`; the interface reported failure and made a dangerous retry look appropriate. The native request shape, success message, file result, and post-command UI state must be tested together.
+
 ## Why this works
 
 The composition root owns cross-context orchestration while each bounded context retains its invariants and ports. The same application method therefore determines initial revision, tolerant reads, validation findings, error codes, and recovery guidance for every inbound adapter. `spec/fixtures/application-parity.json` records the stable subset both adapter-boundary tests must satisfy.
@@ -54,6 +58,7 @@ cargo test -p liaison-cli --locked
 cargo test -p liaison-desktop --locked
 python3 scripts/test_desktop_ui.py
 python3 scripts/check_architecture.py
+cargo tauri build --bundles app
 ```
 
 Check that:
@@ -64,7 +69,12 @@ Check that:
 - semantic corruption and duplicate Person identities are findings rather than silently omitted data;
 - invalid validation returns a deterministic non-zero CLI exit after emitting the report;
 - human and JSON failures retain the same stable code, recovery action, safe details, and correlation identifier;
-- the rejected email or phone value is absent from errors and test output.
+- the rejected email or phone value is absent from errors and test output;
+- the exact compiled Tauri bundle accepts the same request DTO names exercised by adapter tests;
+- native Person creation shows success only after the readable file exists, updates the list/count, clears the form, and returns focus without exposing framework argument errors;
+- hidden precondition or warning content is absent from the native accessibility tree after its condition becomes false.
+
+Record the compiled artifact checksum, source commit, architecture, signature result, workflow steps, and remaining gates under `docs/evidence/macos/`. A Chromium fake-bridge pass is necessary interaction evidence, but it is not a substitute for compiled WebKit and filesystem proof.
 
 Keep this article in Draft until the P01 exact head passes the remote macOS, Windows, Linux, policy, architecture, and interface matrices. Local reproduction alone is not release evidence.
 
