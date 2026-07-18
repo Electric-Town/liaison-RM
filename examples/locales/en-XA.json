@@ -1,0 +1,33 @@
+{
+  "schema": "liaison/locale-catalog@1",
+  "locale": "en-XA",
+  "source_locale": "en-IE",
+  "source_revision": 1,
+  "status": "pseudolocale",
+  "reviewer": null,
+  "reviewed_on": null,
+  "notes": [
+    "Expansion fixture for clipping, wrapping, and hardcoded-string tests.",
+    "Text is deliberately lengthened; it is not a human language translation."
+  ],
+  "messages": {
+    "app.name": "[Ŀïåïšøñ ŘM — expanded]",
+    "app.local_only": "[Your private relationship information remains inside the local workspace directory that you explicitly select and control.]",
+    "workspace.create": "[Create a new local workspace directory]",
+    "workspace.open": "[Open an existing local workspace directory]",
+    "workspace.validate": "[Validate the selected local workspace and show recovery guidance]",
+    "workspace.validation_ok": "[No structural, schema, or required-directory problems were found in this workspace.]",
+    "people.title": "[People and personal relationship context]",
+    "people.add": "[Add another person to this local workspace]",
+    "people.name_label": "[Preferred or displayed name]",
+    "people.email_label": "[Email address, when the person has chosen to share one]",
+    "people.count": "[{count} people currently visible in this selected view]",
+    "review.why_now": "[Why this person is being offered for review now]",
+    "review.reason.commitment": "[One recorded commitment remains open and may need your attention.]",
+    "review.reason.upcoming_date": "[An important date connected to this person is approaching.]",
+    "review.reason.cadence": "[The contact cadence that you configured for this relationship is now due.]",
+    "review.action.snooze": "[Snooze this suggestion without changing the relationship]",
+    "review.action.pause": "[Pause this relationship until a date you choose]",
+    "error.recovery": "[Review the specific details below, correct the affected information, and try the action again.]"
+  }
+}
