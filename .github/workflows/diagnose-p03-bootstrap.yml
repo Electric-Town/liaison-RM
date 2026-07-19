@@ -1,0 +1,55 @@
+name: Diagnose P03 bootstrap
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    if: github.head_ref == 'feat/p03-recoverable-canonical-operations'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect chunks without exposing payload
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import base64, gzip, hashlib, json
+          from pathlib import Path
+
+          parts = sorted(Path('.bootstrap/p03').glob('part-*'))
+          report = {
+              'parts': [{'name': p.name, 'bytes': p.stat().st_size} for p in parts],
+              'part_count': len(parts),
+          }
+          encoded = ''.join(p.read_text(encoding='utf-8').split() for p in parts)
+          report['encoded_bytes'] = len(encoded)
+          report['encoded_sha256'] = hashlib.sha256(encoded.encode()).hexdigest()
+          try:
+              compressed = base64.b64decode(encoded, validate=True)
+              report['base64_valid'] = True
+              report['compressed_bytes'] = len(compressed)
+              report['compressed_sha256'] = hashlib.sha256(compressed).hexdigest()
+              try:
+                  patch = gzip.decompress(compressed)
+                  report['gzip_valid'] = True
+                  report['patch_bytes'] = len(patch)
+                  report['patch_sha256'] = hashlib.sha256(patch).hexdigest()
+              except Exception as error:
+                  report['gzip_valid'] = False
+                  report['gzip_error'] = str(error)
+          except Exception as error:
+              report['base64_valid'] = False
+              report['base64_error'] = str(error)
+          Path('p03-bootstrap-diagnostics.json').write_text(json.dumps(report, indent=2) + '\n')
+          print(json.dumps(report, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p03-bootstrap-diagnostics
+          path: p03-bootstrap-diagnostics.json
+          retention-days: 1
