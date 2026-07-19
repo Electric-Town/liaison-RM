@@ -194,7 +194,7 @@ impl WorkspaceStore for MarkdownVault {
                         let path = error
                             .path()
                             .and_then(|path| path.strip_prefix(root).ok())
-                            .map_or_else(|| "people".to_owned(), |path| path.display().to_string());
+                            .map_or_else(|| "people".to_owned(), portable_workspace_path);
                         findings.push(ValidationFinding {
                             code: "people.unreadable-entry".to_owned(),
                             severity: FindingSeverity::Error,
@@ -211,9 +211,7 @@ impl WorkspaceStore for MarkdownVault {
                 let relative = entry
                     .path()
                     .strip_prefix(root)
-                    .unwrap_or(entry.path())
-                    .display()
-                    .to_string();
+                    .map_or_else(|_| "people".to_owned(), portable_workspace_path);
                 if !entry.file_type().is_file() {
                     findings.push(ValidationFinding {
                         code: "people.invalid-record".to_owned(),
@@ -253,6 +251,13 @@ impl WorkspaceStore for MarkdownVault {
         }
         Ok(findings)
     }
+}
+
+fn portable_workspace_path(path: &Path) -> String {
+    path.iter()
+        .map(|component| component.to_string_lossy())
+        .collect::<Vec<_>>()
+        .join("/")
 }
 
 impl PersonRepository for MarkdownVault {
