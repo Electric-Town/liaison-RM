@@ -7,12 +7,21 @@ coordinates copied or synchronised paths. `.liaison/workspace-writer.json` is bo
 best-effort diagnostic metadata only; it is never used to grant, steal, or
 release authority.
 
-The per-user registry is rooted beneath the operating system's local-data
-directory at `io.github.electric-town.liaison-rm-writer-authority-v1`. Its
-entries contain no workspace path, person data, process identifier, or
-diagnostic. Missing local-data components beneath the owned home directory are
-created one component at a time through no-follow capability handles; a
-missing custom root outside that boundary fails closed.
+The per-user registry has one environment-independent location for ordinary,
+unconfined processes on an operating-system account. Linux and macOS resolve
+the effective account's home directory through the operating-system account
+database rather than `HOME`; Linux ignores `XDG_DATA_HOME` and uses
+`~/.local/share`, while macOS uses `~/Library/Application Support`. Windows
+uses the current account's `FOLDERID_LocalAppData` and `FOLDERID_Profile`
+Known Folder results rather than environment strings. The final directory is
+named `io.github.electric-town.liaison-rm-writer-authority-v1`.
+
+Registry entries contain no workspace path, person data, process identifier,
+or diagnostic. Missing local-data components beneath the owned account home
+are created one component at a time through no-follow capability handles. An
+inaccessible canonical location or a missing custom root outside that boundary
+returns a typed authority error; production does not select a fallback
+registry.
 
 The adapter opens the workspace, `.liaison`, registry, and lock files through
 retained capability handles and refuses symlink, reparse, replacement,
@@ -48,7 +57,7 @@ and machine, a copied workspace therefore cannot transfer a live writer lease.
 - The full dependency decision and lockfile checksums are recorded in
   `docs/evidence/dependencies/cap-std-4.0.2.md`.
 - Platform-local registry resolution, Unix identity checks, and Windows owner
-  and DACL inspection use pinned `dirs`, `rustix`, and target-only
+  and DACL inspection use pinned target-specific `dirs`, `uzers`, `rustix`, and
   `windows-permissions`; their decision and checksums are recorded in
   `docs/evidence/dependencies/workspace-identity-registry.md`.
 - The lock itself uses Rust's standard-library file-lock API; no PID or age
@@ -57,13 +66,29 @@ and machine, a copied workspace therefore cannot transfer a live writer lease.
 Focused tests cover same-path and copied-path contention, different identities,
 safe first use, hostile registry shapes, stale and malformed diagnostics,
 symlink and hard-link rejection, retained-directory replacement, and forced
-child-process termination. The Windows code and dependency compile under the
-pinned GNU cross-target locally; native owner/DACL, replacement, and process
-tests run in the pinned `windows-2022` workflow. Until that exact-head job
-passes, no Windows runtime result is claimed. Airgap artifact contents and
+child-process termination. Real child processes using production `bind`
+exercise divergent `HOME`/`XDG_DATA_HOME` values in both launch orders and
+prove release after process exit; the Windows variant also changes
+`USERPROFILE` and `LOCALAPPDATA`. The Windows code and dependency compile under
+the pinned GNU cross-target locally; native owner/DACL, replacement, and
+process tests run in the pinned `windows-2022` workflow. Until that exact-head
+job passes, no Windows runtime result is claimed. Airgap artifact contents and
 final binary-size impact remain release-qualification work.
 
-This authority coordinates current cooperating Liaison processes for one OS
-user on one machine. It does not stop older builds, hostile same-user writes,
-other user accounts, or other machines. P03 still owns final mutation
-preconditions, durable commit decisions, and recoverable operations.
+This is an unconfined-host authority contract, not a cross-container contract.
+Flatpak is rejected with typed `Unsupported` while `/.flatpak-info` is present;
+its XDG paths are app-private and it cannot coordinate with a host CLI until a
+shared authority broker or namespace exists. A macOS App Sandbox container and
+a host CLI likewise have no supported shared authority today. Windows
+AppContainer/MSIX redirection can make AppData package-private, so P02 supports
+the current unvirtualised full-trust/NSIS process model only. A future
+sandboxed GUI package must either use a reviewed host-shared broker/namespace
+or fail closed, with native packaging tests proving that boundary. No current
+source or packaging evidence claims host-CLI coordination across those
+sandboxes.
+
+This authority coordinates current cooperating, ordinary unconfined Liaison
+processes for one OS account on one machine. It does not stop older builds,
+hostile same-user writes, sandbox/host pairs, other user accounts, or other
+machines. P03 still owns final mutation preconditions, durable commit
+decisions, and recoverable operations.

@@ -23,6 +23,7 @@ use std::{
 
 const PRIVATE_DIRECTORY_MODE: u32 = 0o700;
 const PRIVATE_FILE_MODE: u32 = 0o600;
+const REGISTRY_DIRECTORY_NAME: &str = "io.github.electric-town.liaison-rm-writer-authority-v1";
 #[cfg(windows)]
 const WINDOWS_FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x0000_0400;
 
@@ -158,40 +159,119 @@ impl Drop for IdentityWriterAuthority {
 }
 
 pub(crate) fn default_registry_path() -> Result<PathBuf, WorkspaceSessionError> {
+    let (base, account_home) = platform_registry_base()?;
+    if !base.is_absolute() || !account_home.is_absolute() {
+        return Err(unsafe_path(
+            WorkspaceAuthorityPathIssue::IdentityRegistryRootMustBeAbsolute,
+        ));
+    }
+    prepare_default_data_root(&base, &account_home)?;
+    let base = fs::canonicalize(base).map_err(|error| {
+        authority_unavailable(WorkspaceAuthorityOperation::ResolveIdentityRegistry, error)
+    })?;
+    Ok(base.join(REGISTRY_DIRECTORY_NAME))
+}
+
+#[cfg(target_os = "linux")]
+fn platform_registry_base() -> Result<(PathBuf, PathBuf), WorkspaceSessionError> {
+    reject_flatpak_authority_namespace(Path::new("/.flatpak-info"))?;
+    let account_home = unix_account_home()?;
+    Ok((account_home.join(".local").join("share"), account_home))
+}
+
+#[cfg(target_os = "macos")]
+fn platform_registry_base() -> Result<(PathBuf, PathBuf), WorkspaceSessionError> {
+    let account_home = unix_account_home()?;
+    Ok((
+        account_home.join("Library").join("Application Support"),
+        account_home,
+    ))
+}
+
+#[cfg(all(unix, not(any(target_os = "linux", target_os = "macos"))))]
+fn platform_registry_base() -> Result<(PathBuf, PathBuf), WorkspaceSessionError> {
+    Err(authority_unavailable(
+        WorkspaceAuthorityOperation::ResolveIdentityRegistry,
+        io::Error::new(
+            io::ErrorKind::Unsupported,
+            "the canonical per-account writer-authority registry is implemented only for Linux and macOS Unix targets",
+        ),
+    ))
+}
+
+#[cfg(windows)]
+fn platform_registry_base() -> Result<(PathBuf, PathBuf), WorkspaceSessionError> {
     let base = dirs::data_local_dir().ok_or_else(|| {
         authority_unavailable(
             WorkspaceAuthorityOperation::ResolveIdentityRegistry,
             io::Error::new(
                 io::ErrorKind::NotFound,
-                "the operating system did not provide a per-user local-data directory",
+                "Windows did not provide the current account's LocalAppData known folder",
             ),
         )
     })?;
-
-    if !base.is_absolute() {
-        return Err(unsafe_path(
-            WorkspaceAuthorityPathIssue::IdentityRegistryRootMustBeAbsolute,
-        ));
-    }
-    ensure_default_data_root(&base)?;
-    let base = fs::canonicalize(base).map_err(|error| {
-        authority_unavailable(WorkspaceAuthorityOperation::ResolveIdentityRegistry, error)
-    })?;
-    let name = "io.github.electric-town.liaison-rm-writer-authority-v1";
-    Ok(base.join(name))
-}
-
-fn ensure_default_data_root(base: &Path) -> Result<(), WorkspaceSessionError> {
-    let home = dirs::home_dir().ok_or_else(|| {
+    let account_home = dirs::home_dir().ok_or_else(|| {
         authority_unavailable(
             WorkspaceAuthorityOperation::ResolveIdentityRegistry,
             io::Error::new(
                 io::ErrorKind::NotFound,
-                "the operating system did not provide a home directory",
+                "Windows did not provide the current account's Profile known folder",
             ),
         )
     })?;
-    ensure_data_root_from_home(base, &home)
+    Ok((base, account_home))
+}
+
+#[cfg(unix)]
+fn unix_account_home() -> Result<PathBuf, WorkspaceSessionError> {
+    use uzers::os::unix::UserExt;
+
+    let effective_uid = rustix::process::geteuid().as_raw();
+    let user = uzers::get_user_by_uid(effective_uid).ok_or_else(|| {
+        authority_unavailable(
+            WorkspaceAuthorityOperation::ResolveIdentityRegistry,
+            io::Error::new(
+                io::ErrorKind::NotFound,
+                "the operating-system account database has no entry for the effective user",
+            ),
+        )
+    })?;
+    let account_home = user.home_dir().to_path_buf();
+    if account_home.as_os_str().is_empty() || !account_home.is_absolute() {
+        return Err(authority_unavailable(
+            WorkspaceAuthorityOperation::ResolveIdentityRegistry,
+            io::Error::new(
+                io::ErrorKind::InvalidData,
+                "the operating-system account database returned an invalid home directory",
+            ),
+        ));
+    }
+    Ok(account_home)
+}
+
+#[cfg(target_os = "linux")]
+fn reject_flatpak_authority_namespace(marker: &Path) -> Result<(), WorkspaceSessionError> {
+    match fs::symlink_metadata(marker) {
+        Ok(_) => Err(authority_unavailable(
+            WorkspaceAuthorityOperation::ResolveIdentityRegistry,
+            io::Error::new(
+                io::ErrorKind::Unsupported,
+                "Flatpak writer authority requires a host-shared broker or authority namespace",
+            ),
+        )),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(authority_unavailable(
+            WorkspaceAuthorityOperation::ResolveIdentityRegistry,
+            error,
+        )),
+    }
+}
+
+fn prepare_default_data_root(
+    base: &Path,
+    account_home: &Path,
+) -> Result<(), WorkspaceSessionError> {
+    ensure_data_root_from_home(base, account_home)
 }
 
 fn ensure_data_root_from_home(base: &Path, home: &Path) -> Result<(), WorkspaceSessionError> {
@@ -771,7 +851,12 @@ fn authority_unavailable(
 
 #[cfg(test)]
 mod tests {
-    use super::ensure_data_root_from_home;
+    #[cfg(target_os = "linux")]
+    use super::reject_flatpak_authority_namespace;
+    use super::{ensure_data_root_from_home, prepare_default_data_root};
+    use liaison_workspace::{
+        WorkspaceAuthorityFailureKind, WorkspaceAuthorityOperation, WorkspaceSessionError,
+    };
     use std::error::Error;
     #[cfg(unix)]
     use std::fs;
@@ -817,6 +902,63 @@ mod tests {
                 .is_err()
         );
         assert!(!outside.path().join("data").exists());
+        Ok(())
+    }
+
+    #[test]
+    fn missing_canonical_account_home_fails_closed_with_a_typed_error() -> Result<(), Box<dyn Error>>
+    {
+        let parent = tempdir()?;
+        let missing_home = parent.path().join("missing-account-home");
+        let canonical_data_root = missing_home.join(".local").join("share");
+
+        assert!(matches!(
+            prepare_default_data_root(&canonical_data_root, &missing_home),
+            Err(WorkspaceSessionError::AuthorityUnavailable {
+                operation: WorkspaceAuthorityOperation::ResolveIdentityRegistry,
+                failure: WorkspaceAuthorityFailureKind::NotFound,
+                ..
+            })
+        ));
+        assert!(!missing_home.exists());
+        Ok(())
+    }
+
+    #[test]
+    fn missing_canonical_data_root_outside_account_home_is_never_replaced_by_a_fallback()
+    -> Result<(), Box<dyn Error>> {
+        let account_home = tempdir()?;
+        let outside = tempdir()?;
+        let missing_data_root = outside.path().join("missing-canonical-data-root");
+
+        assert!(matches!(
+            prepare_default_data_root(&missing_data_root, account_home.path()),
+            Err(WorkspaceSessionError::AuthorityUnavailable {
+                operation: WorkspaceAuthorityOperation::ResolveIdentityRegistry,
+                failure: WorkspaceAuthorityFailureKind::NotFound,
+                ..
+            })
+        ));
+        assert!(!missing_data_root.exists());
+        Ok(())
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn flatpak_namespace_is_explicitly_unsupported_until_authority_is_shared()
+    -> Result<(), Box<dyn Error>> {
+        let marker_parent = tempdir()?;
+        let marker = marker_parent.path().join(".flatpak-info");
+        fs::write(&marker, b"[Application]\nname=synthetic.test\n")?;
+
+        assert!(matches!(
+            reject_flatpak_authority_namespace(&marker),
+            Err(WorkspaceSessionError::AuthorityUnavailable {
+                operation: WorkspaceAuthorityOperation::ResolveIdentityRegistry,
+                failure: WorkspaceAuthorityFailureKind::Unsupported,
+                ..
+            })
+        ));
         Ok(())
     }
 }

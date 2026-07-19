@@ -12,8 +12,9 @@ The current P02 source state, built on the merged P00 and P01 foundation, contai
 - readable Workspace YAML and Person Markdown storage;
 - one `liaison-application` composition root used by the CLI and native Tauri alpha;
 - write-authoritative Workspace Sessions that own identity/schema, one retained
-  capability root, path-free repositories, composite path/identity operating-system writer authority,
-  quiescence, and explicit unavailable recovery/key/projection states;
+  capability root, path-free repositories, environment-independent composite
+  path/identity operating-system writer authority for ordinary unconfined
+  processes, quiescence, and explicit unavailable recovery/key/projection states;
 - lock-free one-shot Health for contended, malformed, and newer-schema
   workspaces, plus shared structured result/error envelopes;
 - workspace create/open/validate and Person create/list through both inbound adapters;
@@ -26,9 +27,12 @@ The installed macOS review application is version `0.1.0-alpha.1` and is an ad-h
 The P02 source state provides a write-authoritative Workspace Session with
 workspace-local and per-user `WorkspaceId` operating-system exclusion,
 retained capability roots, quiescence, and lock-free read-only Health. Current
-cooperating Liaison processes on one OS user account and machine reject copied
-workspaces with the same identity. `T-B0-P02` remains open pending exact-head
-native Linux, macOS, and Windows evidence.
+cooperating ordinary unconfined Liaison processes on one OS account and machine
+reject copied workspaces with the same identity even when `HOME`/XDG values
+differ. Flatpak, macOS App Sandbox, and Windows AppContainer host/GUI pairings
+remain explicitly unsupported until a shared authority broker/namespace exists
+and are not treated as valid fallback registries. `T-B0-P02` remains open
+pending exact-head native Linux, macOS, and Windows evidence.
 
 The application also does not yet provide a complete event workflow, encrypted recovery, recoverable multi-target writes, final mutation preconditions, pinned OKF People authoring or normalization, Directory projection, supported Airgap proof, or Personal Memory Alpha. Recovery, key, and projection capabilities remain explicitly unavailable until their owning phases land. Local P02 source-worktree evidence is recorded, but exact-head remote Linux, macOS, and Windows matrices and installed-artifact requalification remain pending. Documentation and prototypes describing later features are plans until exact-head implementation evidence exists.
 

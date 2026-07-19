@@ -80,16 +80,20 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Desktop alpha now compiles and lints cleanly across Linux, macOS, and Windows: Tauri command arguments acknowledge required ownership, the default workspace path uses `map_or_else`, and a deterministic Windows `icon.ico` resource is generated for `tauri-build`.
 - Health findings now expose portable `/`-separated workspace-relative paths across macOS, Linux, and Windows instead of leaking host-specific path separators into the shared application contract.
 - Default-workspace tests now compare the operating system's native Documents path composition instead of imposing Unix separators on Windows.
+- Workspace identity writer authority no longer forks when ordinary
+  same-account processes use different `HOME` or XDG values. Production
+  launch-order and process-exit tests now exercise the canonical locator, and
+  inaccessible or Flatpak-isolated authority fails closed without fallback.
 
 ### Security
 
 - Documented the prohibition on undeclared network requests, hidden telemetry, secret material in canonical files, and provider or plugin access without an explicit grant.
 - Defined separate Airgap and Connected-local build profiles and least-disclosure handling for sensitive relationship and workplace data.
 - Kept network, provider, SQL, Tauri, and secret-storage dependencies out of the initial Workspace and People domain crates.
-- Pinned and documented `dirs` 6.0.0, `rustix` 1.1.4, and target-only
-  `windows-permissions` 0.2.4 for fail-closed per-user identity-registry
-  resolution and ownership checks; registry entries contain no path, PID,
-  diagnostic, or relationship data.
+- Pinned and documented target-specific `uzers` 0.12.2, `dirs` 6.0.0,
+  `rustix` 1.1.4, and `windows-permissions` 0.2.4 for environment-independent,
+  fail-closed per-user identity-registry resolution and ownership checks;
+  registry entries contain no path, PID, diagnostic, or relationship data.
 - Provider registration remains inert without a purpose-bound grant, and the local adapter claims backup/single-writer modes only.
 - Private assessments and sensitive Topic Pack values require explicit classification, purpose, and sharing grants.
 - Sensitive and secret profile definitions require sealed values in the new domain contract.

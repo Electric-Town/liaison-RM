@@ -20,9 +20,12 @@ liaison --workspace PATH person list [--include-archived]
 Each process opens or initialises a write-authoritative application workspace
 session before executing inspection or People commands. The session owns a
 composite path-local and per-user `WorkspaceId` operating-system authority plus
-root-bound repositories for the command lifetime. A copied workspace with the
-same identity returns `workspace.identity-writer-already-active` while the
-original is open. `workspace validate` is different by design: it runs lock-free,
+root-bound repositories for the command lifetime. For ordinary unconfined
+same-account CLI/desktop processes, a copied workspace with the same identity
+returns `workspace.identity-writer-already-active` while the original is open,
+independently of `HOME`/XDG overrides. Sandboxed GUI/host-CLI coordination is
+not supported without a shared broker or authority namespace. `workspace
+validate` is different by design: it runs lock-free,
 one-shot read-only Health so a second process can inspect a contended,
 malformed, or newer-schema workspace without acquiring writer authority.
 Recoverable operations and final mutation preconditions remain later gates.

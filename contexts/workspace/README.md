@@ -20,11 +20,17 @@ Workspace owns the identity, authority, and lifecycle of a Liaison workspace. It
 - Validation does not silently delete or rewrite invalid records.
 - An open write session owns one composite operating-system authority: the
   workspace-local lock and the per-user lock keyed by stable Workspace ID.
-- For current cooperating Liaison processes on one OS user account and
-  machine, copying or renaming a workspace does not transfer or duplicate a
-  live writer lease; only explicit close or process-handle cleanup releases
-  that lease. Older builds, another user or machine, and hostile direct writes
-  remain outside this coordination boundary.
+- For current cooperating, ordinary unconfined Liaison processes on one OS
+  account and machine, copying or renaming a workspace does not transfer or
+  duplicate a live writer lease; only explicit close or process-handle cleanup
+  releases that lease. The canonical identity-authority namespace is
+  independent of process `HOME`/XDG overrides and never falls back when it is
+  inaccessible.
+- Cross-container coordination is unsupported until a reviewed shared broker
+  or authority namespace exists. Flatpak is denied by the local adapter;
+  macOS App Sandbox and Windows AppContainer GUI/host-CLI pairings are not
+  current authority claims. Older builds, another account or machine, and
+  hostile direct writes also remain outside this coordination boundary.
 - Diagnostic metadata cannot grant, steal, or release writer authority.
 - Authority and repositories derive from the same retained root capability.
 - New work is rejected once quiescence starts; issued work drains before the

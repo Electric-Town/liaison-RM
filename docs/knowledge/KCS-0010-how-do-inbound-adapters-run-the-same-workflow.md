@@ -61,12 +61,15 @@ The composition root owns cross-context orchestration while each bounded context
 
 The P02 slice binds workspace identity/schema, one retained root capability,
 path-free repository access, composite workspace-local and per-user
-`WorkspaceId` operating-system authority, and a quiescence barrier. The
+`WorkspaceId` operating-system authority for ordinary unconfined same-account
+processes, and a quiescence barrier. The identity registry ignores process
+`HOME`/XDG overrides and fails closed rather than selecting a fallback. The
 manifest is re-read under authority and the post-lock value becomes the
-session snapshot. Lock metadata is diagnostic only. Recovery, key, and
-projection states remain explicit unavailable values; recoverable operations,
-final mutation preconditions, Airgap isolation, and release readiness require
-their own implementation and evidence.
+session snapshot. Lock metadata is diagnostic only. Cross-container host/GUI
+coordination requires a future shared broker/namespace and is not a current
+claim. Recovery, key, and projection states remain explicit unavailable
+values; recoverable operations, final mutation preconditions, Airgap isolation,
+and release readiness require their own implementation and evidence.
 
 ## Verify
 
@@ -93,13 +96,17 @@ Check that:
   Health remains available and does not create lock artifacts;
 - a copied workspace with the same identity receives
   `workspace.identity-writer-already-active`, discloses neither path nor
-  identity, and opens only after explicit close or process exit;
+  identity, and opens only after explicit close or process exit in both
+  production launch orders despite divergent `HOME`/XDG values;
 - different workspace identities remain independently writable, while a
   stale empty identity entry neither grants nor steals authority;
 - forced process exit releases the operating-system lock without a PID or age
   heuristic;
 - registry first use and hostile owner, permission, symlink/reparse,
   replacement, data, and hard-link cases fail closed on the owning platforms;
+- inaccessible canonical authority returns a typed safe error without fallback,
+  Flatpak is explicitly unsupported, and no App Sandbox/AppContainer pairing
+  is claimed before installed packaging proves a shared authority seam;
 - opening and creating a replacement workspace close the previous session, and
   failed switching best-effort closes the replacement without changing the
   selected workspace;

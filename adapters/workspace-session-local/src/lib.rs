@@ -484,6 +484,7 @@ fn authority_unavailable(
 mod tests {
     use super::{
         DIAGNOSTIC_FILE_NAME, DIAGNOSTIC_MAX_BYTES, LOCK_FILE_NAME, LocalWorkspaceSessionAuthority,
+        identity_registry,
     };
     use chrono::{DateTime, Utc};
     use liaison_shared_kernel::WorkspaceSessionId;
@@ -507,7 +508,10 @@ mod tests {
     const CHILD_ROOT_ENV: &str = "LIAISON_TEST_CHILD_LOCK_ROOT";
     const CHILD_REGISTRY_ENV: &str = "LIAISON_TEST_CHILD_REGISTRY_ROOT";
     const CHILD_WORKSPACE_ID_ENV: &str = "LIAISON_TEST_CHILD_WORKSPACE_ID";
+    const CHILD_PRODUCTION_ACTION_ENV: &str = "LIAISON_TEST_CHILD_PRODUCTION_ACTION";
     const CHILD_READY: &str = "LIAISON_CHILD_WRITER_LOCKED";
+    const CHILD_PRODUCTION_ACQUIRED: &str = "LIAISON_CHILD_PRODUCTION_ACQUIRED";
+    const CHILD_PRODUCTION_CONTENDED: &str = "LIAISON_CHILD_PRODUCTION_CONTENDED";
 
     fn workspace() -> Result<TempDir, io::Error> {
         let directory = tempdir()?;
@@ -941,6 +945,15 @@ mod tests {
     struct ChildGuard(Option<Child>);
 
     impl ChildGuard {
+        fn finish(&mut self) -> Result<ExitStatus, io::Error> {
+            let mut child = self
+                .0
+                .take()
+                .ok_or_else(|| io::Error::other("child already reaped"))?;
+            drop(child.stdin.take());
+            child.wait()
+        }
+
         fn terminate(&mut self) -> Result<ExitStatus, io::Error> {
             let mut child = self
                 .0
@@ -1013,6 +1026,199 @@ mod tests {
         Ok(child)
     }
 
+    #[cfg(any(target_os = "linux", target_os = "macos", windows))]
+    fn apply_divergent_directory_environment(command: &mut Command, home: &Path, data_home: &Path) {
+        command.env("HOME", home).env("XDG_DATA_HOME", data_home);
+        #[cfg(windows)]
+        command
+            .env("USERPROFILE", home)
+            .env("LOCALAPPDATA", data_home);
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "macos", windows))]
+    fn production_child_command(
+        root: &Path,
+        identity: WorkspaceId,
+        action: &str,
+        home: &Path,
+        data_home: &Path,
+    ) -> Result<Command, Box<dyn Error>> {
+        let mut command = Command::new(std::env::current_exe()?);
+        command
+            .args([
+                "--exact",
+                "tests::production_child_lock_attempt",
+                "--ignored",
+                "--nocapture",
+                "--test-threads=1",
+            ])
+            .env(CHILD_ROOT_ENV, root)
+            .env(CHILD_WORKSPACE_ID_ENV, identity.to_string())
+            .env(CHILD_PRODUCTION_ACTION_ENV, action);
+        apply_divergent_directory_environment(&mut command, home, data_home);
+        Ok(command)
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "macos", windows))]
+    fn spawn_production_child_lock_holder(
+        root: &Path,
+        identity: WorkspaceId,
+        home: &Path,
+        data_home: &Path,
+    ) -> Result<ChildGuard, Box<dyn Error>> {
+        let child = production_child_command(root, identity, "hold", home, data_home)?
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()?;
+        let mut child = ChildGuard(Some(child));
+        let stdout = child
+            .0
+            .as_mut()
+            .and_then(|child| child.stdout.take())
+            .ok_or_else(|| io::Error::other("child stdout unavailable"))?;
+        let (sender, receiver) = mpsc::sync_channel(1);
+        let reader = thread::spawn(move || {
+            let mut reader = BufReader::new(stdout);
+            let mut line = String::new();
+            loop {
+                line.clear();
+                match reader.read_line(&mut line) {
+                    Ok(0) | Err(_) => {
+                        let _ = sender.send(false);
+                        break;
+                    }
+                    Ok(_) if line.contains(CHILD_READY) => {
+                        let _ = sender.send(true);
+                    }
+                    Ok(_) => {}
+                }
+            }
+        });
+        if !receiver.recv_timeout(Duration::from_secs(10))? {
+            return Err(io::Error::other("production child did not acquire authority").into());
+        }
+        drop(reader);
+        Ok(child)
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "macos", windows))]
+    fn run_production_child_attempt(
+        root: &Path,
+        identity: WorkspaceId,
+        home: &Path,
+        data_home: &Path,
+    ) -> Result<std::process::Output, Box<dyn Error>> {
+        Ok(production_child_command(root, identity, "attempt", home, data_home)?.output()?)
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "macos", windows))]
+    fn assert_child_marker(
+        output: &std::process::Output,
+        marker: &str,
+    ) -> Result<(), Box<dyn Error>> {
+        if output.status.success() && String::from_utf8_lossy(&output.stdout).contains(marker) {
+            Ok(())
+        } else {
+            Err(io::Error::other(format!(
+                "child did not report {marker}: status={:?}, stdout={}, stderr={}",
+                output.status,
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            ))
+            .into())
+        }
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "macos", windows))]
+    fn exercise_production_registry_environment_independence() -> Result<(), Box<dyn Error>> {
+        let first_workspace = workspace()?;
+        let copied_workspace = workspace()?;
+        let first_home = tempdir()?;
+        let first_data_home = tempdir()?;
+        let second_home = tempdir()?;
+        let second_data_home = tempdir()?;
+        let identity = WorkspaceId::new();
+
+        for (
+            holder_root,
+            holder_home,
+            holder_data,
+            contender_root,
+            contender_home,
+            contender_data,
+        ) in [
+            (
+                first_workspace.path(),
+                first_home.path(),
+                first_data_home.path(),
+                copied_workspace.path(),
+                second_home.path(),
+                second_data_home.path(),
+            ),
+            (
+                copied_workspace.path(),
+                second_home.path(),
+                second_data_home.path(),
+                first_workspace.path(),
+                first_home.path(),
+                first_data_home.path(),
+            ),
+        ] {
+            let mut holder = spawn_production_child_lock_holder(
+                holder_root,
+                identity,
+                holder_home,
+                holder_data,
+            )?;
+            let contended = run_production_child_attempt(
+                contender_root,
+                identity,
+                contender_home,
+                contender_data,
+            )?;
+            assert_child_marker(&contended, CHILD_PRODUCTION_CONTENDED)?;
+
+            assert!(holder.finish()?.success());
+            let released = run_production_child_attempt(
+                contender_root,
+                identity,
+                contender_home,
+                contender_data,
+            )?;
+            assert_child_marker(&released, CHILD_PRODUCTION_ACQUIRED)?;
+        }
+
+        let registry_entry =
+            identity_registry::default_registry_path()?.join(format!("workspace-{identity}.lock"));
+        match fs::remove_file(registry_entry) {
+            Ok(()) => {}
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+            Err(error) => return Err(error.into()),
+        }
+        Ok(())
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn linux_production_registry_ignores_home_and_xdg_in_both_launch_orders()
+    -> Result<(), Box<dyn Error>> {
+        exercise_production_registry_environment_independence()
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn macos_production_registry_ignores_home_and_xdg_in_both_launch_orders()
+    -> Result<(), Box<dyn Error>> {
+        exercise_production_registry_environment_independence()
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_production_registry_ignores_environment_overrides_in_both_launch_orders()
+    -> Result<(), Box<dyn Error>> {
+        exercise_production_registry_environment_independence()
+    }
+
     #[test]
     fn forced_process_exit_releases_operating_system_authority() -> Result<(), Box<dyn Error>> {
         let workspace = workspace()?;
@@ -1075,6 +1281,32 @@ mod tests {
         io::stdout().flush()?;
         let mut input = [0_u8; 1];
         let _ = io::stdin().read(&mut input)?;
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "spawned explicitly by the production-registry process tests"]
+    fn production_child_lock_attempt() -> Result<(), Box<dyn Error>> {
+        let Some(root) = std::env::var_os(CHILD_ROOT_ENV) else {
+            return Ok(());
+        };
+        let identity = std::env::var(CHILD_WORKSPACE_ID_ENV)?.parse::<WorkspaceId>()?;
+        let action = std::env::var(CHILD_PRODUCTION_ACTION_ENV)?;
+        let adapter = LocalWorkspaceSessionAuthority::bind(Path::new(&root))?;
+        match adapter.acquire_writer(identity, diagnostic(35)) {
+            Ok(_authority) if action == "hold" => {
+                println!("{CHILD_READY}");
+                io::stdout().flush()?;
+                let mut input = [0_u8; 1];
+                let _ = io::stdin().read(&mut input)?;
+            }
+            Ok(_) if action == "attempt" => println!("{CHILD_PRODUCTION_ACQUIRED}"),
+            Err(WorkspaceSessionError::IdentityWriterAlreadyActive) if action == "attempt" => {
+                println!("{CHILD_PRODUCTION_CONTENDED}");
+            }
+            Ok(_) => return Err(io::Error::other("unknown production child action").into()),
+            Err(error) => return Err(error.into()),
+        }
         Ok(())
     }
 
