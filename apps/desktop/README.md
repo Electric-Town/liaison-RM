@@ -18,6 +18,8 @@ workspace while keeping read-only Health available.
 - suggest a local Documents path;
 - create a local-authoritative workspace with no connection configured;
 - open an existing Liaison workspace;
+- run one-shot read-only Health for the selected path even when no writer
+  session can be opened;
 - create a basic person profile;
 - list current person records;
 - validate workspace layout and records without deleting files.

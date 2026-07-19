@@ -222,6 +222,40 @@ mod tests {
     }
 
     #[test]
+    fn desktop_request_types_deserialize_the_actual_camel_case_ipc_payloads()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let session = "00000000-0000-4000-8000-000000000123";
+        let create: CreatePersonRequest = serde_json::from_value(json!({
+            "sessionId": session,
+            "displayName": "Alex Murphy",
+            "email": "alex@example.test"
+        }))?;
+        assert_eq!(create.session_id.to_string(), session);
+        assert_eq!(create.display_name, "Alex Murphy");
+        assert_eq!(create.email.as_deref(), Some("alex@example.test"));
+
+        let workspace: WorkspaceSessionRequest = serde_json::from_value(json!({
+            "sessionId": session
+        }))?;
+        assert_eq!(workspace.session_id.to_string(), session);
+
+        let initialise: InitialiseWorkspaceRequest = serde_json::from_value(json!({
+            "path": "/tmp/liaison-review",
+            "name": "Review workspace",
+            "profile": "workplace"
+        }))?;
+        assert_eq!(initialise.profile, WorkspaceProfile::Workplace);
+
+        let wrong_case = serde_json::from_value::<CreatePersonRequest>(json!({
+            "session_id": session,
+            "display_name": "Alex Murphy",
+            "email": null
+        }));
+        assert!(wrong_case.is_err());
+        Ok(())
+    }
+
+    #[test]
     fn desktop_requests_use_the_application_session() -> Result<(), Box<dyn std::error::Error>> {
         let temporary = tempdir()?;
         let root = temporary.path().join("workspace");

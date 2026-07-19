@@ -16,6 +16,14 @@ Workspace owns the identity, authority, and lifecycle of a Liaison workspace. It
 - Workspace ID is stable.
 - Name and locale are non-empty.
 - Format and schema version are explicit.
+- New manifests explicitly list at least the `people` module. Version-one
+  readers tolerate a missing list only for review-build manifests created
+  before this field was published, applying the same `people` default without
+  rewriting the file.
+- Module identifiers are unique ASCII identifiers of at most 128 bytes. They
+  start with a lower-case letter and use lower-case letters, digits, dots, and
+  hyphens with no empty segment. The deliberately narrow grammar keeps the
+  Rust and published JSON Schema length and comparison rules identical.
 - Initialisation refuses an existing manifest.
 - Validation does not silently delete or rewrite invalid records.
 - An open write session owns one composite operating-system authority: the
@@ -36,6 +44,9 @@ Workspace owns the identity, authority, and lifecycle of a Liaison workspace. It
 - New work is rejected once quiescence starts; issued work drains before the
   authority handle is released.
 - Projections remain disposable.
+
+The published data-model contract for new manifests is
+[`schemas/workspace-manifest.schema.json`](../../schemas/workspace-manifest.schema.json).
 
 ## Application services
 

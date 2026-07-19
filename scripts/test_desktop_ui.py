@@ -77,6 +77,7 @@ BRIDGE = r"""
         profile,
         build_profile: "connected-local",
         locale: "en-IE",
+        enabled_modules: ["people"],
       },
       people: people.slice(),
       validation: null,
@@ -166,6 +167,9 @@ BRIDGE = r"""
           case "validate_workspace":
             requireSession(payload.request.sessionId);
             return result(validation());
+          case "inspect_workspace_health":
+            validationNeedsAttention = payload.path.includes("needs-attention");
+            return result(validation());
           default:
             throw new Error(`Unexpected command: ${command}`);
         }
@@ -229,6 +233,17 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     assert "private_diagnostic" not in error_status
     assert page.get_by_role("button", name="Open existing workspace").is_enabled()
 
+    page.get_by_label("Absolute folder path").fill("/Users/tester/Documents/health-only-needs-attention")
+    page.get_by_role("button", name="Run read-only Health").click()
+    page.get_by_role("heading", name="Validate the open-file workspace").wait_for()
+    page.get_by_text("Workspace needs attention", exact=True).wait_for()
+    assert page.locator("#validation-scope").inner_text() == (
+        "Read-only folder: /Users/tester/Documents/health-only-needs-attention"
+    )
+    assert "without changing files" in page.locator("#live-status").inner_text()
+    assert page.evaluate("window.__liaisonBridgeState.activeSessions().length") == 0
+    page.get_by_role("button", name="Workspace").click()
+
     page.get_by_label("Workspace name").fill("Family relationships")
     page.get_by_label("Workspace profile").select_option("family")
     page.get_by_role("button", name="Create local workspace").click()
@@ -251,6 +266,16 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
 
     page.get_by_role("button", name="Workspace").click()
     page.get_by_label("Absolute folder path").fill("/Users/tester/Documents/needs-attention")
+    page.get_by_role("button", name="Run read-only Health").click()
+    page.get_by_role("heading", name="Validate the open-file workspace").wait_for()
+    assert page.locator("#validation-scope").inner_text() == (
+        "Read-only folder: /Users/tester/Documents/needs-attention"
+    )
+    assert page.locator("#workspace-path-label").inner_text() == (
+        "/Users/tester/Documents/health-only-needs-attention"
+    )
+    assert page.evaluate("window.__liaisonBridgeState.activeSessions()") == [first_session]
+    page.get_by_role("button", name="Workspace").click()
     page.get_by_role("button", name="Open existing workspace").click()
     page.locator("#live-status").get_by_text("review Health before editing", exact=False).wait_for()
     assert page.get_by_role("button", name="Open existing workspace").is_enabled()
@@ -259,7 +284,7 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     assert page.evaluate("window.__liaisonBridgeState.activeSessions()") == [second_session]
     assert first_session in page.evaluate("window.__liaisonBridgeState.closedSessions()")
 
-    page.get_by_role("button", name="Health").click()
+    page.get_by_role("button", name="Health", exact=True).click()
     page.get_by_role("heading", name="Validate the open-file workspace").wait_for()
     page.get_by_role("button", name="Run validation").click()
     page.get_by_text("Workspace needs attention", exact=True).wait_for()
@@ -305,7 +330,7 @@ def test_mobile(browser, external_requests: list[str]) -> None:
     assert overflow is False
     assert page.get_by_role("button", name="Workspace").is_visible()
     assert page.get_by_role("button", name="People").is_visible()
-    assert page.get_by_role("button", name="Health").is_visible()
+    assert page.get_by_role("button", name="Health", exact=True).is_visible()
     SCREENSHOTS.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(SCREENSHOTS / "mobile-people.png"), full_page=True)
     page.close()

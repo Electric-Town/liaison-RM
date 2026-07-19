@@ -196,7 +196,7 @@
     state.workspace = opened.workspace;
     state.people = opened.people;
     byId("workspace-path").value = state.workspace.path;
-    showValidation(opened.validation);
+    showValidation(opened.validation, state.workspace.path, "active workspace");
     updateControls();
     renderPeople();
     renderWorkspace();
@@ -207,9 +207,10 @@
     return true;
   };
 
-  const showValidation = (report) => {
+  const showValidation = (report, inspectedPath, source) => {
     const summary = byId("validation-summary");
     const findings = byId("validation-findings");
+    byId("validation-scope").textContent = `${source}: ${inspectedPath}`;
     summary.classList.toggle("is-valid", report.valid);
     summary.classList.toggle("has-errors", !report.valid);
     summary.querySelector(".health-icon").textContent = report.valid ? "✓" : "!";
@@ -274,6 +275,24 @@
     });
   });
 
+  byId("inspect-workspace-health").addEventListener("click", async (event) => {
+    await withBusy(event.currentTarget, "Inspecting…", async () => {
+      try {
+        const inspectedPath = byId("workspace-path").value;
+        const report = await invokeValue("inspect_workspace_health", {
+          path: inspectedPath,
+        });
+        showValidation(report, inspectedPath, "Read-only folder");
+        navigate("health");
+        status(report.valid
+          ? "Read-only Workspace Health passed without acquiring writer authority."
+          : `Read-only Workspace Health reported ${report.findings.length} finding${report.findings.length === 1 ? "" : "s"} without changing files.`);
+      } catch (error) {
+        status(`Read-only Workspace Health did not complete: ${errorText(error)}`);
+      }
+    });
+  });
+
   byId("person-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!state.workspace) return;
@@ -319,7 +338,7 @@
         const report = await invokeValue("validate_workspace", {
           request: { sessionId: state.workspace.session_id },
         });
-        showValidation(report);
+        showValidation(report, state.workspace.path, "Active workspace");
         status(report.valid ? "Workspace validation passed." : "Workspace validation reported findings.");
       } catch (error) {
         status(`Validation did not complete: ${errorText(error)}`);

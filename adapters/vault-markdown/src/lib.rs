@@ -11,7 +11,7 @@ use cap_std::{
     ambient_authority,
     fs::{Dir, OpenOptions},
 };
-use liaison_people::{PeopleError, PersonProfile, PersonRepository};
+use liaison_people::{PeopleError, PersonProfile};
 use liaison_shared_kernel::{PersonId, Revision};
 use liaison_workspace::{
     BoundWorkspaceStore, FindingSeverity, ValidationFinding, WorkspaceError, WorkspaceManifest,
@@ -27,6 +27,10 @@ use std::{
 };
 use tempfile::NamedTempFile;
 use walkdir::WalkDir;
+
+mod session_people;
+
+pub use session_people::people_repository;
 
 const MANIFEST_PATH: &str = ".liaison/workspace.yaml";
 const PERSON_FORMAT: &str = "liaison-person";
@@ -315,25 +319,6 @@ impl BoundWorkspaceStore for BoundMarkdownVault {
 
     fn validate_layout(&self) -> Result<Vec<ValidationFinding>, WorkspaceError> {
         bound_validate_layout(&self.root)
-    }
-}
-
-impl PersonRepository for BoundMarkdownVault {
-    fn create(&self, person: &PersonProfile) -> Result<(), PeopleError> {
-        bound_create_person(&self.root, person)
-    }
-
-    fn list(&self, include_archived: bool) -> Result<Vec<PersonProfile>, PeopleError> {
-        bound_list_people(&self.root, include_archived)
-    }
-
-    fn find(&self, id: PersonId) -> Result<PersonProfile, PeopleError> {
-        let (_, parsed) = bound_find_person(&self.root, id)?;
-        parsed.document.into_domain()
-    }
-
-    fn save(&self, person: &PersonProfile, expected_revision: Revision) -> Result<(), PeopleError> {
-        bound_save_person(&self.root, person, expected_revision)
     }
 }
 
@@ -769,6 +754,13 @@ fn manifest_validation_finding(error: &WorkspaceError) -> ValidationFinding {
             recovery: "preserve the workspace and repair the manifest from a verified copy"
                 .to_owned(),
         },
+        WorkspaceError::InvalidField(_) => ValidationFinding {
+            code: "workspace.invalid-manifest".to_owned(),
+            severity: FindingSeverity::Error,
+            path: MANIFEST_PATH.to_owned(),
+            message: "workspace manifest contains an invalid value".to_owned(),
+            recovery: "preserve the workspace, compare the invalid value with the published schema, and repair it from a verified source".to_owned(),
+        },
         _ => ValidationFinding {
             code: "workspace.invalid-manifest".to_owned(),
             severity: FindingSeverity::Error,
@@ -867,20 +859,84 @@ fn storage_people(error: impl std::fmt::Display) -> PeopleError {
 
 #[cfg(test)]
 mod tests {
-    use super::{BoundMarkdownVault, MarkdownVault, slug};
+    use super::{BoundMarkdownVault, MANIFEST_PATH, MarkdownVault, people_repository, slug};
     use cap_std::{ambient_authority, fs::Dir};
+    use chrono::Utc;
     use liaison_people::{CreatePerson, ListPeople, PersonProfile, PersonRepository};
-    use liaison_shared_kernel::{PersonId, WorkspaceId};
+    use liaison_shared_kernel::{PersonId, WorkspaceId, WorkspaceSessionId};
     use liaison_workspace::{
-        BuildProfile, InitialiseWorkspace, ValidateWorkspace, WorkspaceError, WorkspaceProfile,
+        BoundWorkspaceSessionPort, BoundWorkspaceStore, BuildProfile, InitialiseWorkspace,
+        OpenWorkspaceSession, ValidateWorkspace, ValidationFinding, WorkspaceError,
+        WorkspaceManifest, WorkspaceProfile, WorkspaceSession, WorkspaceSessionError,
+        WorkspaceWriterAuthority, WorkspaceWriterAuthorityPort, WriterDiagnostic,
     };
     use std::{fs, path::Path};
     use tempfile::tempdir;
 
-    fn bound_vault(vault: &MarkdownVault, root: &Path) -> BoundMarkdownVault {
+    #[derive(Debug)]
+    struct TestBinding {
+        repositories: BoundMarkdownVault,
+    }
+
+    impl BoundWorkspaceStore for TestBinding {
+        fn load_manifest(&self) -> Result<WorkspaceManifest, WorkspaceError> {
+            self.repositories.load_manifest()
+        }
+
+        fn validate_layout(&self) -> Result<Vec<ValidationFinding>, WorkspaceError> {
+            self.repositories.validate_layout()
+        }
+    }
+
+    impl WorkspaceWriterAuthorityPort for TestBinding {
+        fn acquire_writer(
+            &self,
+            _workspace_id: WorkspaceId,
+            diagnostic: WriterDiagnostic,
+        ) -> Result<Box<dyn WorkspaceWriterAuthority>, WorkspaceSessionError> {
+            Ok(Box::new(TestWriterAuthority { diagnostic }))
+        }
+    }
+
+    impl BoundWorkspaceSessionPort for TestBinding {
+        type Repositories = BoundMarkdownVault;
+
+        fn into_repositories(self) -> Self::Repositories {
+            self.repositories
+        }
+    }
+
+    #[derive(Debug)]
+    struct TestWriterAuthority {
+        diagnostic: WriterDiagnostic,
+    }
+
+    impl WorkspaceWriterAuthority for TestWriterAuthority {
+        fn diagnostic(&self) -> &WriterDiagnostic {
+            &self.diagnostic
+        }
+
+        fn diagnostic_published(&self) -> bool {
+            true
+        }
+
+        fn verify_authority(&self) -> Result<(), WorkspaceSessionError> {
+            Ok(())
+        }
+    }
+
+    fn bound_session(vault: &MarkdownVault, root: &Path) -> WorkspaceSession<BoundMarkdownVault> {
         let directory = Dir::open_ambient_dir(root, ambient_authority())
             .unwrap_or_else(|error| unreachable!("test workspace must open: {error}"));
-        vault.bind_directory(directory)
+        OpenWorkspaceSession::new(TestBinding {
+            repositories: vault.bind_directory(directory),
+        })
+        .execute(WriterDiagnostic::new(
+            WorkspaceSessionId::new(),
+            std::process::id(),
+            Utc::now(),
+        ))
+        .unwrap_or_else(|error| unreachable!("test session must open: {error}"))
     }
 
     #[test]
@@ -900,8 +956,16 @@ mod tests {
                 "en-IE",
             );
             assert!(created.is_ok());
+            let manifest = fs::read_to_string(root.join(".liaison/workspace.yaml"));
+            assert!(
+                matches!(manifest, Ok(ref yaml) if yaml.contains("enabled_modules:\n- people"))
+            );
 
-            let bound = bound_vault(&vault, root);
+            let session = bound_session(&vault, root);
+            let work = session
+                .begin_work()
+                .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+            let bound = people_repository(&work);
             let create_person = CreatePerson::new(&bound);
             let person = create_person.execute(
                 PersonId::new(),
@@ -927,6 +991,48 @@ mod tests {
     }
 
     #[test]
+    fn legacy_manifest_without_modules_opens_with_people_without_rewriting_bytes() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        let Ok(directory) = directory else {
+            return;
+        };
+        let root = directory.path();
+        let vault = MarkdownVault::new();
+        assert!(
+            InitialiseWorkspace::new(vault.clone())
+                .execute(
+                    root,
+                    WorkspaceId::new(),
+                    "Temporary setup",
+                    WorkspaceProfile::Personal,
+                    BuildProfile::ConnectedLocal,
+                    "en-IE",
+                )
+                .is_ok()
+        );
+        let legacy = include_str!(
+            "../../../spec/fixtures/workspace-manifest-v1-legacy-without-modules.yaml"
+        );
+        let manifest_path = root.join(MANIFEST_PATH);
+        assert!(fs::write(&manifest_path, legacy).is_ok());
+
+        let session = bound_session(&vault, root);
+        assert_eq!(session.manifest().enabled_modules, vec!["people"]);
+        let work = session
+            .begin_work()
+            .unwrap_or_else(|error| unreachable!("legacy test work must begin: {error}"));
+        let repository = people_repository(&work);
+        assert!(
+            CreatePerson::new(&repository)
+                .execute(PersonId::new(), "Legacy Person", None)
+                .is_ok()
+        );
+        let preserved = fs::read_to_string(manifest_path);
+        assert!(matches!(preserved, Ok(ref bytes) if bytes == legacy));
+    }
+
+    #[test]
     fn preserves_unknown_front_matter_when_saving() {
         let directory = tempdir();
         assert!(directory.is_ok());
@@ -946,7 +1052,11 @@ mod tests {
                     )
                     .is_ok()
             );
-            let bound = bound_vault(&vault, root);
+            let session = bound_session(&vault, root);
+            let work = session
+                .begin_work()
+                .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+            let bound = people_repository(&work);
             let create = CreatePerson::new(&bound);
             let person = create.execute(PersonId::new(), "Alex Murphy", None);
             assert!(person.is_ok());
@@ -996,7 +1106,11 @@ mod tests {
                     )
                     .is_ok()
             );
-            let bound = bound_vault(&vault, root);
+            let session = bound_session(&vault, root);
+            let work = session
+                .begin_work()
+                .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+            let bound = people_repository(&work);
             let create = CreatePerson::new(&bound);
             assert!(
                 create
@@ -1039,7 +1153,11 @@ mod tests {
                     )
                     .is_ok()
             );
-            let bound = bound_vault(&vault, root);
+            let session = bound_session(&vault, root);
+            let work = session
+                .begin_work()
+                .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+            let bound = people_repository(&work);
             let created = CreatePerson::new(&bound).execute(
                 PersonId::new(),
                 "Alex Example",
@@ -1120,8 +1238,13 @@ mod tests {
                     )
                     .is_ok()
             );
+            let session = bound_session(&vault, root);
+            let work = session
+                .begin_work()
+                .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+            let bound = people_repository(&work);
             assert!(
-                CreatePerson::new(&bound_vault(&vault, root))
+                CreatePerson::new(&bound)
                     .execute(PersonId::new(), "Healthy Person", None)
                     .is_ok()
             );
@@ -1140,7 +1263,6 @@ mod tests {
                         && finding.message == "person record format or schema is invalid"
                 }));
             }
-            let bound = bound_vault(&vault, root);
             let listed = ListPeople::new(&bound).execute(false);
             assert!(listed.is_ok());
             if let Ok(listed) = listed {
@@ -1185,7 +1307,11 @@ mod tests {
                         && !finding.recovery.contains(private_input)
                 }));
             }
-            let bound = bound_vault(&vault, root);
+            let session = bound_session(&vault, root);
+            let work = session
+                .begin_work()
+                .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+            let bound = people_repository(&work);
             let listed = ListPeople::new(&bound).execute(false);
             assert!(matches!(listed, Ok(people) if people.is_empty()));
         }
@@ -1210,7 +1336,11 @@ mod tests {
                     )
                     .is_ok()
             );
-            let bound = bound_vault(&vault, root);
+            let session = bound_session(&vault, root);
+            let work = session
+                .begin_work()
+                .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+            let bound = people_repository(&work);
             let created =
                 CreatePerson::new(&bound).execute(PersonId::new(), "Duplicate Person", None);
             assert!(created.is_ok());
@@ -1271,8 +1401,13 @@ mod tests {
                     )
                     .is_ok()
             );
+            let session = bound_session(&vault, root);
+            let work = session
+                .begin_work()
+                .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+            let bound = people_repository(&work);
             assert!(
-                CreatePerson::new(&bound_vault(&vault, root))
+                CreatePerson::new(&bound)
                     .execute(PersonId::new(), "Healthy Person", None)
                     .is_ok()
             );
@@ -1287,7 +1422,6 @@ mod tests {
                         && finding.message == "person record is not a regular file"
                 }));
             }
-            let bound = bound_vault(&vault, root);
             let listed = ListPeople::new(&bound).execute(false);
             assert!(listed.is_ok());
             if let Ok(listed) = listed {
@@ -1361,7 +1495,11 @@ mod tests {
         let filename = format!("{}--{}.md", slug(&person.display_name), person.id);
         let final_path = root.join("people").join(filename);
         assert!(fs::write(&final_path, "external edit\n").is_ok());
-        let bound = bound_vault(&vault, root);
+        let session = bound_session(&vault, root);
+        let work = session
+            .begin_work()
+            .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+        let bound = people_repository(&work);
 
         assert!(matches!(
             bound.create(&person),

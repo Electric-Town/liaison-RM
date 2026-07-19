@@ -1,0 +1,36 @@
+name: Workspace contracts
+
+on:
+  pull_request:
+    paths:
+      - "contexts/workspace/**"
+      - "adapters/vault-markdown/**"
+      - "schemas/workspace-manifest.schema.json"
+      - "spec/fixtures/workspace-manifest*.yaml"
+      - "scripts/check_workspace_manifest.py"
+      - ".github/workflows/workspace-contracts.yml"
+  push:
+    branches: [main]
+    paths:
+      - "contexts/workspace/**"
+      - "adapters/vault-markdown/**"
+      - "schemas/workspace-manifest.schema.json"
+      - "spec/fixtures/workspace-manifest*.yaml"
+      - "scripts/check_workspace_manifest.py"
+      - ".github/workflows/workspace-contracts.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  workspace-manifest:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned schema validators
+        run: python -m pip install --disable-pip-version-check jsonschema==4.25.1 PyYAML==6.0.2
+      - name: Validate Workspace manifest contract
+        run: python scripts/check_workspace_manifest.py

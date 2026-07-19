@@ -87,8 +87,17 @@ broker/namespace or fails closed before opening a writer session.
   and lets issued work drain before `close` releases the lock.
 - Read-only Health does not acquire or materialise writer artifacts and remains
   available during contention, malformed records, and parseable newer schemas.
+  Desktop one-shot Health also labels its inspected folder independently of
+  the active writer session.
 - Person mutation/list ports are path-free and are reached only through a live
-  session work guard. Session identity and schema are revalidated before use.
+  session work guard. The public `BoundMarkdownVault` cannot implement
+  `PersonRepository`; an opaque guard-borrowed adapter is the only production
+  route, with compile-fail/pass fixtures covering the boundary. Session
+  identity and schema are revalidated before use.
+- New manifests explicitly publish the required `people` module and validate
+  against the committed version-one JSON Schema. A P01 manifest without the
+  later field opens with the same default, permits guarded People work, and is
+  not rewritten.
 - Replacing the ambient workspace path after open does not redirect repository
   operations away from the retained root capability.
 - Desktop open/create switching closes the previous native session before
@@ -134,6 +143,7 @@ python3 scripts/check_architecture.py
 python3 scripts/check_providers.py
 python3 scripts/check_wit_contract.py
 python3 scripts/check_desktop_shell.py
+python3 scripts/check_workspace_manifest.py
 python3 scripts/check_localization.py
 python3 scripts/check_relationship_model.py
 python3 scripts/check_public_site.py
@@ -179,6 +189,8 @@ The capability-filesystem dependency decision is recorded in
 [`../dependencies/cap-std-4.0.2.md`](../dependencies/cap-std-4.0.2.md). The
 identity registry dependency decision is recorded in
 [`../dependencies/workspace-identity-registry.md`](../dependencies/workspace-identity-registry.md).
+The development-only compile-boundary dependency is recorded in
+[`../dependencies/trybuild-1.0.118.md`](../dependencies/trybuild-1.0.118.md).
 The local host did not have `cargo-deny` or `cargo-audit`, so their licence and
 advisory gates were not reproduced locally; the repository does not yet
 provide those jobs, so this is an unimplemented release gate. No P02 installed

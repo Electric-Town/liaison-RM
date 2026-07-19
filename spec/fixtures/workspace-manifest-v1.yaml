@@ -1,0 +1,9 @@
+format: liaison-workspace
+schema_version: 1
+workspace_id: 00000000-0000-4000-8000-000000000001
+name: Workplace review
+profile: workplace
+build_profile: airgap
+default_locale: en-IE
+enabled_modules:
+  - people

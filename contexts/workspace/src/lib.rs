@@ -10,6 +10,7 @@ pub use liaison_shared_kernel::WorkspaceId;
 use liaison_shared_kernel::WorkspaceSessionId;
 use serde::{Deserialize, Serialize};
 use std::{
+    collections::BTreeSet,
     error::Error as StdError,
     fmt,
     path::Path,
@@ -21,6 +22,7 @@ pub const WORKSPACE_FORMAT: &str = "liaison-workspace";
 pub const CURRENT_SCHEMA_VERSION: u32 = 1;
 pub const WRITER_DIAGNOSTIC_FORMAT: &str = "liaison-workspace-writer-diagnostic";
 pub const WRITER_DIAGNOSTIC_SCHEMA_VERSION: u32 = 1;
+const DEFAULT_WORKSPACE_MODULE: &str = "people";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -47,6 +49,12 @@ pub struct WorkspaceManifest {
     pub profile: WorkspaceProfile,
     pub build_profile: BuildProfile,
     pub default_locale: String,
+    #[serde(default = "default_enabled_modules")]
+    pub enabled_modules: Vec<String>,
+}
+
+fn default_enabled_modules() -> Vec<String> {
+    vec![DEFAULT_WORKSPACE_MODULE.to_owned()]
 }
 
 impl WorkspaceManifest {
@@ -69,6 +77,7 @@ impl WorkspaceManifest {
             profile,
             build_profile,
             default_locale,
+            enabled_modules: default_enabled_modules(),
         })
     }
 
@@ -84,8 +93,39 @@ impl WorkspaceManifest {
         }
         normalise_required(&self.name, "workspace name")?;
         normalise_required(&self.default_locale, "default locale")?;
+        validate_enabled_modules(&self.enabled_modules)?;
         Ok(())
     }
+}
+
+fn validate_enabled_modules(modules: &[String]) -> Result<(), WorkspaceError> {
+    if modules.is_empty() {
+        return Err(WorkspaceError::RequiredField("enabled modules"));
+    }
+    let mut unique = BTreeSet::new();
+    for module in modules {
+        let normalized = module.trim();
+        let valid = normalized == module
+            && !normalized.is_empty()
+            && normalized.len() <= 128
+            && normalized
+                .chars()
+                .next()
+                .is_some_and(|character| character.is_ascii_lowercase())
+            && normalized.split(['.', '-']).all(|segment| {
+                !segment.is_empty()
+                    && segment.chars().all(|character| {
+                        character.is_ascii_lowercase() || character.is_ascii_digit()
+                    })
+            });
+        if !valid || !unique.insert(normalized) {
+            return Err(WorkspaceError::InvalidField("enabled modules"));
+        }
+    }
+    if !unique.contains(DEFAULT_WORKSPACE_MODULE) {
+        return Err(WorkspaceError::InvalidField("enabled modules"));
+    }
+    Ok(())
 }
 
 fn normalise_required(value: &str, field: &'static str) -> Result<String, WorkspaceError> {
@@ -101,6 +141,8 @@ fn normalise_required(value: &str, field: &'static str) -> Result<String, Worksp
 pub enum WorkspaceError {
     #[error("{0} is required")]
     RequiredField(&'static str),
+    #[error("{0} has an invalid value")]
+    InvalidField(&'static str),
     #[error("unexpected workspace format: {0}")]
     UnexpectedFormat(String),
     #[error("workspace schema {found} is not supported; this build supports {supported}")]
@@ -999,7 +1041,48 @@ mod tests {
         let manifest = result.unwrap_or_else(|error| unreachable!("unexpected error: {error}"));
         assert_eq!(manifest.format, "liaison-workspace");
         assert_eq!(manifest.schema_version, 1);
+        assert_eq!(manifest.enabled_modules, vec!["people"]);
         assert!(manifest.validate().is_ok());
+    }
+
+    #[test]
+    fn manifest_requires_stable_module_identifiers_and_people() {
+        let mut manifest = manifest();
+        manifest.enabled_modules = Vec::new();
+        assert_eq!(
+            manifest.validate(),
+            Err(WorkspaceError::RequiredField("enabled modules"))
+        );
+
+        manifest.enabled_modules = vec!["people".to_owned(), "people".to_owned()];
+        assert_eq!(
+            manifest.validate(),
+            Err(WorkspaceError::InvalidField("enabled modules"))
+        );
+
+        manifest.enabled_modules = vec!["people\nprivate".to_owned()];
+        assert_eq!(
+            manifest.validate(),
+            Err(WorkspaceError::InvalidField("enabled modules"))
+        );
+
+        manifest.enabled_modules = vec!["réseau".to_owned()];
+        assert_eq!(
+            manifest.validate(),
+            Err(WorkspaceError::InvalidField("enabled modules"))
+        );
+
+        manifest.enabled_modules = vec!["people..private".to_owned()];
+        assert_eq!(
+            manifest.validate(),
+            Err(WorkspaceError::InvalidField("enabled modules"))
+        );
+
+        manifest.enabled_modules = vec!["events".to_owned()];
+        assert_eq!(
+            manifest.validate(),
+            Err(WorkspaceError::InvalidField("enabled modules"))
+        );
     }
 
     #[test]

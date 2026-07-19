@@ -71,6 +71,20 @@ claim. Recovery, key, and projection states remain explicit unavailable
 values; recoverable operations, final mutation preconditions, Airgap isolation,
 and release readiness require their own implementation and evidence.
 
+`BoundMarkdownVault` deliberately does not implement `PersonRepository`.
+Application code must hold a live `WorkspaceWorkGuard` and obtain the opaque
+People repository with `people_repository(&work)`. Do not expose the private
+adapter type, accept an unrelated guard as a token, or add a second path-taking
+Person store. Compiler-boundary tests prove both the denied unguarded use and
+the allowed guarded use.
+
+New version-one manifests publish `enabled_modules` and currently require the
+`people` identifier. A P01 manifest without that later field is read as
+`people` without rewriting its bytes; it remains invalid for new-writer schema
+fixtures. One-shot Health may inspect a path without opening a writer session,
+but its result must visibly name the inspected folder separately from the
+active workspace.
+
 ## Verify
 
 Run:
@@ -79,6 +93,7 @@ Run:
 cargo test -p liaison-application --locked
 cargo test -p liaison-cli --locked
 cargo test -p liaison-desktop --locked
+python3 scripts/check_workspace_manifest.py
 python3 scripts/test_desktop_ui.py
 python3 scripts/check_architecture.py
 cargo tauri build --bundles app
@@ -100,6 +115,14 @@ Check that:
   production launch orders despite divergent `HOME`/XDG values;
 - different workspace identities remain independently writable, while a
   stale empty identity entry neither grants nor steals authority;
+- `BoundMarkdownVault` fails the external-crate `PersonRepository` trait
+  boundary, a repository cannot escape its work guard, and guarded use
+  compiles;
+- new manifests validate against the strict published schema, while the P01
+  missing-module fixture opens with `people` and its manifest bytes remain
+  unchanged;
+- one-shot Health shows the exact inspected folder while the footer retains a
+  different active workspace, and the inspection acquires no writer session;
 - forced process exit releases the operating-system lock without a PID or age
   heuristic;
 - registry first use and hostile owner, permission, symlink/reparse,

@@ -40,6 +40,7 @@ serde_yaml = "0.9"
 sha2 = "0.10"
 tempfile = "3.20"
 thiserror = "2.0"
+trybuild = "1.0.118"
 uuid = { version = "1.18", features = ["serde", "v7"] }
 uzers = { version = "0.12.2", default-features = false }
 walkdir = "2.5"

@@ -91,6 +91,7 @@
             <h2 id="open-heading">Open an existing workspace</h2>
             <p>Enter its absolute folder path above, then open and validate the existing manifest.</p>
             <button id="open-workspace" class="secondary-button full-width" type="button">Open existing workspace</button>
+            <button id="inspect-workspace-health" class="secondary-button full-width" type="button">Run read-only Health</button>
             <div class="divider" aria-hidden="true"></div>
             <h3>Current workspace</h3>
             <dl id="workspace-summary" class="summary-list">
@@ -154,6 +155,7 @@
 
         <section class="card health-card" aria-labelledby="validation-result-heading">
           <h2 id="validation-result-heading">Validation result</h2>
+          <p id="validation-scope" class="validation-scope">No workspace inspected.</p>
           <div id="validation-summary" class="health-summary">
             <span class="health-icon" aria-hidden="true">?</span>
             <div>

@@ -16,7 +16,7 @@ use liaison_people::{
 pub use liaison_shared_kernel::{
     CommandId, JobId, PersonId, Revision, WorkspaceId, WorkspaceSessionId,
 };
-use liaison_vault_markdown::{BoundMarkdownVault, MarkdownVault};
+use liaison_vault_markdown::{BoundMarkdownVault, MarkdownVault, people_repository};
 use liaison_workspace::{
     BoundWorkspaceSessionPort, BoundWorkspaceStore, FindingSeverity, InitialiseWorkspace,
     OpenWorkspaceSession, ValidationFinding, WorkspaceAuthorityFailureKind,
@@ -174,6 +174,7 @@ pub struct WorkspaceDto {
     pub profile: WorkspaceProfile,
     pub build_profile: BuildProfile,
     pub locale: String,
+    pub enabled_modules: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -406,7 +407,7 @@ impl LiaisonApplication {
                 command.build_profile,
                 command.locale,
             )
-            .map_err(|error| initialise_workspace_error(error, command_id))?;
+            .map_err(|error| initialise_workspace_error(&error, command_id))?;
         let value = self
             .opened_workspace(&root, command_id)
             .map_err(|error| workspace_initialised_open_error(error, command_id))?;
@@ -436,7 +437,7 @@ impl LiaisonApplication {
         let report = self
             .vault
             .inspect_health(&root)
-            .map_err(|error| workspace_error(error, command_id))?;
+            .map_err(|error| workspace_error(&error, command_id))?;
         Ok(self.complete(command_id, validation_dto(report)))
     }
 
@@ -451,7 +452,7 @@ impl LiaisonApplication {
             .map_err(|error| workspace_session_error(error, command_id))?;
         let report = work
             .validate_current_layout()
-            .map_err(|error| workspace_error(error, command_id))?;
+            .map_err(|error| workspace_error(&error, command_id))?;
         Ok(self.complete(command_id, validation_dto(report)))
     }
 
@@ -465,12 +466,13 @@ impl LiaisonApplication {
             .begin_work()
             .map_err(|error| workspace_session_error(error, command_id))?;
         work.verify_identity()
-            .map_err(|error| workspace_error(error, command_id))?;
+            .map_err(|error| workspace_error(&error, command_id))?;
         let email = command.email.and_then(|value| {
             let value = value.trim().to_owned();
             (!value.is_empty()).then_some(value)
         });
-        let person = CreatePerson::new(work.repositories())
+        let repository = people_repository(&work);
+        let person = CreatePerson::new(&repository)
             .execute(self.runtime.next_person_id(), command.display_name, email)
             .map_err(|error| people_error(&error, command_id))?;
         Ok(self.complete(command_id, person_dto(person)))
@@ -486,8 +488,9 @@ impl LiaisonApplication {
             .begin_work()
             .map_err(|error| workspace_session_error(error, command_id))?;
         work.verify_identity()
-            .map_err(|error| workspace_error(error, command_id))?;
-        let people = ListPeople::new(work.repositories())
+            .map_err(|error| workspace_error(&error, command_id))?;
+        let repository = people_repository(&work);
+        let people = ListPeople::new(&repository)
             .execute(query.include_archived)
             .map_err(|error| people_error(&error, command_id))?
             .into_iter()
@@ -559,14 +562,16 @@ impl LiaisonApplication {
             .map_err(|error| workspace_session_error(error, command_id))?;
         let report = work
             .validate_current_layout()
-            .map_err(|error| workspace_error(error, command_id))?;
-        let people = ListPeople::new(work.repositories())
+            .map_err(|error| workspace_error(&error, command_id))?;
+        let repository = people_repository(&work);
+        let people = ListPeople::new(&repository)
             .execute(false)
             .map_err(|error| people_error(&error, command_id))?
             .into_iter()
             .map(person_dto)
             .collect();
         let manifest = session.manifest().clone();
+        drop(repository);
         drop(work);
 
         let mut sessions = self
@@ -593,6 +598,7 @@ impl LiaisonApplication {
                 profile: manifest.profile,
                 build_profile: manifest.build_profile,
                 locale: manifest.default_locale,
+                enabled_modules: manifest.enabled_modules,
             },
             people,
             validation: validation_dto(report),
@@ -738,7 +744,7 @@ fn partial_date_dto(date: &PartialDate) -> PartialDateDto {
     }
 }
 
-fn workspace_error(error: WorkspaceError, correlation_id: CommandId) -> ApplicationError {
+fn workspace_error(error: &WorkspaceError, correlation_id: CommandId) -> ApplicationError {
     let message = error.to_string();
     match error {
         WorkspaceError::RequiredField(field) => application_error(
@@ -748,11 +754,18 @@ fn workspace_error(error: WorkspaceError, correlation_id: CommandId) -> Applicat
             details([("field", Value::String((*field).to_owned()))]),
             correlation_id,
         ),
-        WorkspaceError::UnexpectedFormat(found) => application_error(
-            "workspace.unexpected-format",
+        WorkspaceError::InvalidField(field) => application_error(
+            "workspace.invalid-field",
             message,
+            "correct the workspace manifest value from a verified source and retry",
+            details([("field", Value::String((*field).to_owned()))]),
+            correlation_id,
+        ),
+        WorkspaceError::UnexpectedFormat(_) => application_error(
+            "workspace.unexpected-format",
+            "the workspace manifest format is not supported",
             "choose a Liaison workspace or restore a verified copy of its manifest",
-            details([("found", Value::String(found))]),
+            BTreeMap::new(),
             correlation_id,
         ),
         WorkspaceError::UnsupportedSchema { found, supported } => application_error(
@@ -760,8 +773,8 @@ fn workspace_error(error: WorkspaceError, correlation_id: CommandId) -> Applicat
             message,
             "open the workspace with a compatible Liaison build; do not rewrite it manually",
             details([
-                ("found", Value::from(found)),
-                ("supported", Value::from(supported)),
+                ("found", Value::from(*found)),
+                ("supported", Value::from(*supported)),
             ]),
             correlation_id,
         ),
@@ -801,8 +814,8 @@ fn workspace_error(error: WorkspaceError, correlation_id: CommandId) -> Applicat
             "the workspace schema changed after this session was opened",
             "stop editing and open the workspace with a compatible Liaison build",
             details([
-                ("expected_schema_version", Value::from(expected)),
-                ("found_schema_version", Value::from(found)),
+                ("expected_schema_version", Value::from(*expected)),
+                ("found_schema_version", Value::from(*found)),
             ]),
             correlation_id,
         ),
@@ -821,7 +834,7 @@ fn workspace_session_error(
     correlation_id: CommandId,
 ) -> ApplicationError {
     match error {
-        WorkspaceSessionError::Workspace(error) => workspace_error(error, correlation_id),
+        WorkspaceSessionError::Workspace(error) => workspace_error(&error, correlation_id),
         WorkspaceSessionError::WriterAlreadyActive { .. } => application_error(
             "workspace.writer-already-active",
             "another Liaison writer is active for this workspace",
@@ -862,7 +875,7 @@ fn workspace_session_error(
             operation: WorkspaceAuthorityOperation::ResolveRoot,
             failure: WorkspaceAuthorityFailureKind::NotFound,
             ..
-        } => workspace_error(WorkspaceError::NotFound, correlation_id),
+        } => workspace_error(&WorkspaceError::NotFound, correlation_id),
         WorkspaceSessionError::AuthorityUnavailable {
             operation, failure, ..
         } if operation.is_identity_authority() => application_error(
@@ -1015,10 +1028,10 @@ fn people_error(error: &PeopleError, correlation_id: CommandId) -> ApplicationEr
 }
 
 fn initialise_workspace_error(
-    error: WorkspaceError,
+    error: &WorkspaceError,
     correlation_id: CommandId,
 ) -> ApplicationError {
-    if matches!(&error, WorkspaceError::Storage(_)) {
+    if matches!(error, WorkspaceError::Storage(_)) {
         return application_error(
             "workspace.initialise-incomplete",
             "workspace initialisation did not complete",
@@ -1898,6 +1911,64 @@ mod tests {
                 })
                 .is_ok()
         );
+    }
+
+    #[test]
+    fn unexpected_manifest_format_never_enters_the_application_error_envelope() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        let Ok(directory) = directory else {
+            return;
+        };
+        let root = directory.path().join("workspace");
+        let (application, _) = application();
+        let opened = application.initialise_workspace(InitialiseWorkspaceCommand {
+            path: root.to_string_lossy().into_owned(),
+            name: "Private format".to_owned(),
+            profile: WorkspaceProfile::Workplace,
+            build_profile: BuildProfile::ConnectedLocal,
+            locale: "en-IE".to_owned(),
+        });
+        assert!(opened.is_ok());
+        let Ok(opened) = opened else {
+            return;
+        };
+        assert!(
+            application
+                .close_workspace(WorkspaceSessionCommand {
+                    session_id: opened.value.workspace.session_id,
+                })
+                .is_ok()
+        );
+        let manifest_path = root.join(".liaison/workspace.yaml");
+        let manifest = fs::read_to_string(&manifest_path);
+        assert!(manifest.is_ok());
+        let Ok(manifest) = manifest else {
+            return;
+        };
+        let sentinel = "/Users/private/relationship-vault";
+        assert!(
+            fs::write(
+                &manifest_path,
+                manifest.replace("format: liaison-workspace", &format!("format: {sentinel}"))
+            )
+            .is_ok()
+        );
+
+        let result = application.open_workspace(OpenWorkspaceCommand {
+            path: root.to_string_lossy().into_owned(),
+        });
+        assert!(result.is_err());
+        let Err(error) = result else {
+            return;
+        };
+        assert_eq!(error.code, "workspace.unexpected-format");
+        let rendered = serde_json::to_string(&error);
+        assert!(rendered.is_ok());
+        if let Ok(rendered) = rendered {
+            assert!(!rendered.contains(sentinel));
+        }
+        assert!(error.details.is_empty());
     }
 
     #[cfg(unix)]

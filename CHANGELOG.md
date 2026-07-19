@@ -20,6 +20,15 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Safe desktop workspace switching that closes the previous session before
   accepting its replacement and best-effort closes the replacement if the
   previous session cannot close.
+- A published version-one Workspace manifest schema with explicit
+  `enabled_modules`, strict new-writer fixtures, lossless legacy reads for the
+  pre-field P01 manifest, and a pinned schema-validation workflow.
+- An opaque People repository borrowed from a live Workspace work guard, plus
+  compiler-boundary tests proving an unguarded Markdown vault cannot implement
+  or retain the production Person repository.
+- One-shot read-only Health from the selected folder even when no writer
+  session opens, with the inspected folder shown separately from the active
+  workspace.
 - One `liaison-application` composition root shared by the CLI and desktop, with typed command results, structured recoverable errors, deterministic runtime ports, and typed workspace session identifiers.
 - Shared-fixture CLI and Tauri parity for workspace initialise/open/validate and Person create/list, including versioned envelopes, tolerant malformed-sibling reads, and initial Person revision 1.
 - Semantic Person validation, duplicate-identity Health findings, safe workspace-path rejection, actionable human Health output, retryable desktop create/open actions, native-safe keyboard form submission, correct hidden-state rendering, and automated base/dark text-contrast gates.

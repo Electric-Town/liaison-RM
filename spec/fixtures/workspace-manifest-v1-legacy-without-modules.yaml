@@ -1,0 +1,7 @@
+format: liaison-workspace
+schema_version: 1
+workspace_id: 00000000-0000-4000-8000-000000000002
+name: Legacy review workspace
+profile: personal
+build_profile: connected-local
+default_locale: en-IE
