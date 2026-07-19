@@ -6,12 +6,16 @@ on:
     paths:
       - ".github/workflows/materialize-p03-once.yml"
       - ".bootstrap/p03/**"
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
 
 permissions:
   contents: write
 
 jobs:
   materialize:
+    if: github.event_name == 'push' || github.head_ref == 'feat/p03-recoverable-canonical-operations'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
