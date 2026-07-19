@@ -29,6 +29,7 @@ jobs:
           git apply /tmp/p03-source.patch
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           cargo = Path("adapters/vault-markdown/Cargo.toml")
           text = cargo.read_text(encoding="utf-8")
@@ -41,8 +42,8 @@ jobs:
           text = text.replace("\n[dev-dependencies]\nchrono.workspace = true\n", "\n[dev-dependencies]\n", 1)
           cargo.write_text(text, encoding="utf-8")
 
-          source = Path("adapters/vault-markdown/src/operations.rs")
-          text = source.read_text(encoding="utf-8")
+          operations = Path("adapters/vault-markdown/src/operations.rs")
+          text = operations.read_text(encoding="utf-8")
           text = text.replace(
               "        let bytes = read_file(&staged, &staged_name(target.ordinal)).map_err(|error| {",
               "        let staged_filename = staged_name(target.ordinal);\n"
@@ -50,7 +51,77 @@ jobs:
               1,
           )
           text = text.replace('            map_io("read staged target", error)\n', "            error\n", 1)
-          source.write_text(text, encoding="utf-8")
+          text = text.replace(
+              "pub(crate) fn execute_with_fault(\n",
+              "// The durability protocol stays linear so flush and decision ordering remains auditable.\n"
+              "#[allow(clippy::too_many_lines)]\n"
+              "pub(crate) fn execute_with_fault(\n",
+              1,
+          )
+          text = text.replace(
+              "fn map_io(action: &str, error: io::Error) -> RecoverableOperationError {",
+              "fn map_io(action: &str, error: &io::Error) -> RecoverableOperationError {",
+              1,
+          )
+          text = re.sub(
+              r'map_io\(("[^"]+"), (error|sync_error)\)',
+              r'map_io(\1, &\2)',
+              text,
+          )
+          operations.write_text(text, encoding="utf-8")
+
+          vault = Path("adapters/vault-markdown/src/lib.rs")
+          text = vault.read_text(encoding="utf-8")
+          text = text.replace(
+              '''                let current = bound_find_person(root, person.id)
+                    .ok()
+                    .map(|(_, parsed)| parsed.document.revision.get())
+                    .unwrap_or(expected_revision.get());''',
+              '''                let current = bound_find_person(root, person.id)
+                    .ok()
+                    .map_or(expected_revision.get(), |(_, parsed)| {
+                        parsed.document.revision.get()
+                    });''',
+              1,
+          )
+          text = text.replace(
+              '''                        let expected = person.revision;
+                        assert!(person.rename("Alex M. Murphy").is_ok());
+                        assert!(bound.save(&person, expected).is_ok());''',
+              '''                        let expected = person.revision;
+                        assert!(person.rename("Alex M. Murphy").is_ok());
+                        let save_repository =
+                            people_mutation_repository(&work, operation_context());
+                        assert!(save_repository.save(&person, expected).is_ok());''',
+              1,
+          )
+          old = '''            let bound = people_mutation_repository(&work, operation_context());
+            let create = CreatePerson::new(&bound);
+            assert!(
+                create
+                    .execute(PersonId::new(), "Zara Example", None)
+                    .is_ok()
+            );
+            assert!(
+                create
+                    .execute(PersonId::new(), "Alex Example", None)
+                    .is_ok()
+            );
+            let people = ListPeople::new(&bound).execute(false);'''
+          new = '''            let zara_repository = people_mutation_repository(&work, operation_context());
+            assert!(
+                CreatePerson::new(&zara_repository)
+                    .execute(PersonId::new(), "Zara Example", None)
+                    .is_ok()
+            );
+            let alex_repository = people_mutation_repository(&work, operation_context());
+            assert!(
+                CreatePerson::new(&alex_repository)
+                    .execute(PersonId::new(), "Alex Example", None)
+                    .is_ok()
+            );
+            let people = ListPeople::new(&alex_repository).execute(false);'''
+          vault.write_text(text.replace(old, new, 1), encoding="utf-8")
           PY
           cargo fmt --all
           cargo generate-lockfile
