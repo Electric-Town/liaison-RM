@@ -2,7 +2,7 @@
 
 - Status: verified
 - Audience: maintainers, product contributors, implementation agents
-- Last reviewed: 2026-07-18
+- Last reviewed: 2026-07-19
 - Applies to: requirements, personas, UAT, feature gates, implementation tasks, milestones, evidence, and branch dispositions
 
 ## Problem
@@ -39,6 +39,9 @@ Zero-orphan structure does not make contradictory product language safe. B0 must
 - a separate independent governance gate before any real workplace-data pilot.
 - pinned OKF v0.1 Draft strict People writes, tolerant reads, separate Liaison domain validity, and no sealed plaintext;
 - required OKF People normalization with exact preview/backup, journaled failure-atomic recovery, idempotent rerun, and exact rollback, while general and third-party migrations remain excluded from B0;
+- post-P06 guided invalid-record repair owns `UAT-040` under `FG-R1-002`, using P03 recoverable operations for exact backup, bounded receipt, failure atomicity, and exact rollback;
+- B0 appearance is limited to built-in theme choice and persistence; versioned settings transfer, `LRM-WS-013`, `LRM-WS-014`, and `UAT-050` belong to A0 `T-A0-P01` under `FG-A0-G2C`;
+- P02 owns `LRM-WS-002` and `LRM-WS-009`, not installed/offline round-trip proof; B0 acceptance owns `LRM-WS-001` and `UAT-001`, while final A0 acceptance closes `FG-R1-001` only after A0-owned `UAT-002` is also available;
 - no global person score, generic task engine, automatic exact/fuzzy merge, direct AI write, hidden sync, hidden refresh, or unreported egress.
 
 If a changed UAT, gate, task, requirement, README, or public page contradicts those assertions, reconcile the source rather than adding an exception in prose.

@@ -46,6 +46,8 @@ Exit evidence:
 - read-only Health/recovery works for locked, malformed, or newer-schema workspaces where safe;
 - checkpoint/import/mutation code cannot bypass the session authority.
 
+P02 owns the readable manifest contract and session authority only. Installed no-account/no-egress workspace creation, projection deletion/rebuild, and the complete canonical round trip remain acceptance evidence rather than P02 implementation claims.
+
 ## P03 — Recoverable canonical operations
 
 Outcome: every mutation uses a Workspace-owned multi-target operation with staged outputs, digest/revision preconditions, a durable commit decision, progress, roll-forward recovery, and projection-stale handling.
@@ -75,9 +77,9 @@ Exit evidence:
 - density, text-scale, user palette controls, and theme packages are not smuggled into B0/P04;
 - the web fixture uses a deterministic fake bridge and makes no product-authority claim.
 
-## P05 — B-domain contracts and atomic OKF authoring seam
+## P05 — G1 domain contracts and atomic OKF authoring seam
 
-Outcome: the G3 `T-B0-P05` defines revisioned People, Organisations, Groups, Locations, Memberships, Events, provenance, explicit field states, and event-local resolutions. The separate G1 `T-B0-P05-OKF`, after P03 and P04, owns the pinned OKF v0.1 Draft People schema, strict writer port, Liaison extension mapping, reserved paths, and sealed-plaintext denial under `FG-B0-001`. Sensitive types and policy are owned only by P07/P08 under `FG-B0-002`.
+Outcome: the G1 `T-B0-P05` defines revisioned People, Organisations, Groups, Locations, Memberships, Events, provenance, explicit field states, and event-local resolutions before P06/P07; G3 consumes those accepted contracts. The separate G1 `T-B0-P05-OKF`, after P03 and P04, owns the pinned OKF v0.1 Draft People schema, strict writer port, Liaison extension mapping, reserved paths, and sealed-plaintext denial under `FG-B0-001`. Sensitive types and policy are owned only by P07/P08 under `FG-B0-002`.
 
 Exit evidence:
 
@@ -100,6 +102,18 @@ Exit evidence:
 - deletion/rebuild reconciliation passes;
 - deterministic 10,000-person/50,000-membership budgets pass.
 - unknown OKF types, keys, links, sections and malformed siblings remain tolerable, while OKF-valid but Liaison-invalid facts are quarantined and cannot affect readiness.
+
+## P06-REPAIR — Guided canonical repair
+
+Outcome: after P03 provides recoverable operations and P06 can identify invalid canonical records without hiding healthy Directory entries, an administrator can preview and repair a duplicate Person ID and invalid birthday without silent deletion or partial mutation.
+
+Exit evidence:
+
+- validation identifies every affected source and proposed change before mutation;
+- an exact pre-repair backup and bounded operation receipt exist before canonical targets publish;
+- injected failures leave the pre-repair state or a recoverable committed operation;
+- exact rollback restores the original bytes;
+- `UAT-040`, the fault matrix, and the recovery knowledge article close `FG-R1-002`.
 
 ## P07 — Workspace Security and honest local policy
 
@@ -125,7 +139,7 @@ Exit evidence:
 
 ## P09 — Required OKF normalization, then Directory onboarding
 
-Outcome: `T-B0-P09-OKF` first normalizes legacy Liaison People files through exact preview/backup, journaled failure-atomic commit, restart recovery, idempotent rerun, curated-index preservation, and exact rollback after P03/P05-OKF/P06. The separate G3 P09 then lets a workplace operator maintain People and import Organisations, Groups, Locations, and effective Memberships through a streaming staged workflow.
+Outcome: `T-B0-P09-OKF` first normalizes legacy Liaison People files through exact preview/backup, journaled failure-atomic commit, restart recovery, idempotent rerun, curated-index preservation, and exact rollback after P03/P05-OKF/P06 and the guided repair gate, then closes `FG-B0-001`. The separate G3 P09 lets a workplace operator maintain People and import Organisations, Groups, Locations, and effective Memberships through a streaming staged workflow.
 
 Exit evidence:
 
@@ -152,24 +166,25 @@ Exit evidence:
 
 ## P11 — B0 desktop workflow
 
-Outcome: the installed application provides Overview, Directory, Events, Health, and Settings, with Event Details subviews for Cohort, Attendees, Readiness, and Brief.
+Outcome: the installed application provides Overview, Directory, Events, Health, and Settings, with Event Details subviews for Cohort, Attendees, Readiness, and Brief. B0 Settings contains built-in theme choice and persistence only and does not export or import settings bundles.
 
 Exit evidence:
 
 - keyboard, VoiceOver, 400% zoom/reflow, reduced motion, contrast, narrow-window, pseudolocale, and long-content tests pass;
 - interruption-safe drafts and explicit empty/loading/partial/stale/conflict/permission/error/success/undo/recovery states pass;
 - disclosure preview and artifact evidence show scope, grant, revisions, path, checksum, and staleness;
+- system, light, dark, and high-contrast built-in choice persists across relaunch without creating a settings-transfer surface;
 - relaunch, offline, readable-file, and native installed-app flows pass.
 
 ## B0 — Workplace Review Alpha
 
-B0 is independently complete when the installed universal Mac review artifact passes Directory import through verified cohort-to-brief delivery, crash/key/grant/leak matrices, clean-install encrypted restore, scale budgets, compiled design review, native QA, offline/egress proof, readable-file proof, and the deterministic contributor hello world.
+B0 is independently complete when the installed universal Mac review artifact creates, closes, reopens, and projection-rebuilds a local workspace without an account while network access is denied, then passes Directory import through verified cohort-to-brief delivery, guided canonical repair, crash/key/grant/leak matrices, clean-install encrypted restore, scale budgets, compiled design review, native QA, readable-file proof, and the deterministic contributor hello world. Built-in theme persistence is included; settings bundle transfer begins in A0.
 
 B0 is an internal review alpha. Missing Developer ID signing, notarisation, stapling, Gatekeeper, or clean-Mac distribution evidence must remain visible and blocks a supported public download.
 
 ## A0 — Personal Memory Alpha
 
-A0 starts only after B0 acceptance. It adds quick/full capture, a source-complete purpose-scoped profile, explicit fact states, stable custom-field layouts, user-organised profile tabs with stable IDs/order/visibility, lossless settings export/import, reversible identity review, a source- and range-labelled unified timeline, keyboard reordering, meaningful interactions, bounded commitments, distinct last-note and last-interaction views, and reason-only Review over the same session, security, recovery, Directory, OKF, and UI foundations. It does not add a generic task engine, global person score, or automatic exact/fuzzy merge. The complete B0 matrix, including `UAT-065`, remains a regression gate.
+A0 starts only after B0 acceptance. It adds quick/full capture, a source-complete purpose-scoped profile, explicit fact states, stable custom-field layouts, user-organised profile tabs with stable IDs/order/visibility, lossless settings export/import, reversible identity review, a source- and range-labelled unified timeline, keyboard reordering, meaningful interactions, bounded commitments, distinct last-note and last-interaction views, and reason-only Review over the same session, security, recovery, Directory, OKF, and UI foundations. Final A0 acceptance reuses B0-owned `UAT-001` with A0-owned `UAT-002` to close the complete canonical workspace round-trip gate. It does not add a generic task engine, global person score, or automatic exact/fuzzy merge. The complete B0 matrix, including `UAT-065`, remains a regression gate.
 
 ## After A0
 

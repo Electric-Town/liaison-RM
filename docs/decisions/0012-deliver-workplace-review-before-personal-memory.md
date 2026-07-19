@@ -22,6 +22,7 @@ Shared foundations land before B0. Personal Today/Review, mobile/PWA hosts, prov
 ## Consequences
 
 - Product navigation for B0 is Overview, Directory, Events, Health, and Settings.
+- B0 Settings owns built-in theme choice and persistence only. Versioned settings bundle export/import and clean-device transfer begin in A0.
 - Event Details uses Cohort, Attendees, Readiness, and Brief subviews.
 - Personal-first PRs #27 and #29 are superseded as delivery plans; their useful audit findings may be selectively ported.
 - B0 and A0 receive separate compiled design-review and native-QA evidence.

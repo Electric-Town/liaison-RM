@@ -65,6 +65,22 @@ def inline_edges(blocks: dict[str, str], field: str) -> dict[str, set[str]]:
     return result
 
 
+def transitive_dependencies(
+    dependency_map: dict[str, set[str]], identifier: str
+) -> set[str]:
+    """Return every dependency reachable from identifier without assuming a DAG."""
+
+    reachable: set[str] = set()
+    pending = list(dependency_map.get(identifier, set()))
+    while pending:
+        dependency = pending.pop()
+        if dependency in reachable:
+            continue
+        reachable.add(dependency)
+        pending.extend(dependency_map.get(dependency, set()))
+    return reachable
+
+
 def require_fragments(
     identifier: str, text: str, fragments: tuple[str, ...], errors: list[str]
 ) -> None:
@@ -76,6 +92,23 @@ def require_fragments(
             errors.append(
                 f"{identifier}: missing required semantic assertion {fragment!r}"
             )
+
+
+def require_ordered_fragments(
+    identifier: str, text: str, fragments: tuple[str, ...], errors: list[str]
+) -> None:
+    """Require critical delivery steps to appear in dependency order."""
+
+    lower = text.lower()
+    cursor = -1
+    for fragment in fragments:
+        position = lower.find(fragment.lower(), cursor + 1)
+        if position == -1:
+            errors.append(
+                f"{identifier}: missing ordered semantic assertion {fragment!r}"
+            )
+            return
+        cursor = position + len(fragment)
 
 
 def validate_b0_workplace_contract(
@@ -425,6 +458,475 @@ def validate_okf_and_comparator_contract(
         )
 
 
+def validate_corrected_phase_ownership(
+    requirements: list[dict],
+    cases: list[dict],
+    task_blocks: dict[str, str],
+    gate_blocks: dict[str, str],
+    errors: list[str],
+) -> None:
+    """Lock the reviewed P02/P03, repair, settings, and acceptance boundaries."""
+
+    try:
+        ownership = load_json("spec/traceability-ownership.json")
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.append(f"corrected phase ownership: {exc}")
+        return
+
+    requirement_by_id = {item["id"]: item for item in requirements}
+    case_by_id = {item["id"]: item for item in cases}
+    task_requirements = inline_edges(task_blocks, "requirements")
+    task_uat = inline_edges(task_blocks, "uat")
+    task_dependencies = inline_edges(task_blocks, "depends_on")
+    task_evidence = inline_edges(task_blocks, "evidence_dependencies")
+
+    expected_task_edges = {
+        "T-B0-P02": (
+            {"LRM-WS-002", "LRM-WS-009"},
+            set(),
+        ),
+        "T-B0-P03": (
+            {"LRM-WS-004", "LRM-WS-005", "LRM-WS-007", "LRM-WS-010"},
+            {"UAT-042"},
+        ),
+        "T-B0-P06-REPAIR": (set(), {"UAT-040"}),
+    }
+    for task, (expected_requirements, expected_uat) in expected_task_edges.items():
+        if task_requirements.get(task, set()) != expected_requirements:
+            errors.append(
+                f"{task}: corrected canonical requirements must be "
+                f"{sorted(expected_requirements)}"
+            )
+        if task_uat.get(task, set()) != expected_uat:
+            errors.append(
+                f"{task}: corrected canonical UAT must be {sorted(expected_uat)}"
+            )
+
+    repair_dependencies = task_dependencies.get("T-B0-P06-REPAIR", set())
+    if repair_dependencies != {"T-B0-P03", "T-B0-P06"}:
+        errors.append(
+            "T-B0-P06-REPAIR: dependencies must be exactly T-B0-P03 and T-B0-P06"
+        )
+    if "T-B0-P06-REPAIR" not in task_dependencies.get("T-B0-P09-OKF", set()):
+        errors.append(
+            "T-B0-P09-OKF: must depend on T-B0-P06-REPAIR before normalization"
+        )
+    require_fragments(
+        "T-B0-P06-REPAIR",
+        task_blocks.get("T-B0-P06-REPAIR", ""),
+        (
+            "guided-repair-preview",
+            "exact-pre-repair-backup",
+            "backup-first-failure-atomic-repair",
+            "exact-repair-receipt",
+            "exact-rollback",
+            "recovery-knowledge",
+        ),
+        errors,
+    )
+
+    b0_accept_requirements = task_requirements.get("T-B0-ACCEPT", set())
+    b0_accept_uat = task_uat.get("T-B0-ACCEPT", set())
+    if "LRM-WS-001" not in b0_accept_requirements:
+        errors.append("T-B0-ACCEPT: must own LRM-WS-001")
+    if "UAT-001" not in b0_accept_uat:
+        errors.append("T-B0-ACCEPT: must own UAT-001")
+    if not {"UAT-001", "UAT-002"} <= task_evidence.get("T-A0-001", set()):
+        errors.append(
+            "T-A0-001: must evidence UAT-001 and UAT-002 for FG-R1-001"
+        )
+
+    a0_settings_requirements = task_requirements.get("T-A0-P01", set())
+    a0_settings_uat = task_uat.get("T-A0-P01", set())
+    if not {"LRM-WS-013", "LRM-WS-014"} <= a0_settings_requirements:
+        errors.append("T-A0-P01: must own LRM-WS-013 and LRM-WS-014")
+    if "UAT-050" not in a0_settings_uat:
+        errors.append("T-A0-P01: must own UAT-050")
+    for task in ("T-B0-P03", "T-B0-P04", "T-B0-P11"):
+        if {"LRM-WS-013", "LRM-WS-014"} & task_requirements.get(task, set()):
+            errors.append(f"{task}: B0 must not own settings-transfer requirements")
+        if "UAT-050" in task_uat.get(task, set()):
+            errors.append(f"{task}: B0 must not own settings-transfer UAT-050")
+        if "settings-preview-diff-rollback" in task_blocks.get(task, "").lower():
+            errors.append(f"{task}: B0 must not expose settings transfer")
+    for gate in ("FG-B0-001", "FG-B0-003"):
+        if "UAT-050" in gate_blocks.get(gate, ""):
+            errors.append(f"{gate}: B0 must not require settings-transfer UAT-050")
+
+    expected_edges = (
+        (
+            "LRM-WS-001",
+            ownership.get("requirement_ownership", {}),
+            {
+                "owning_task": "T-B0-ACCEPT",
+                "owning_gate": "FG-B0-003",
+                "milestone": "B0",
+                "evidence_owner": "EO-EXPERIENCE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "LRM-WS-002",
+            ownership.get("requirement_ownership", {}),
+            {
+                "owning_task": "T-B0-P02",
+                "owning_gate": "FG-B0-001",
+                "milestone": "G1",
+                "evidence_owner": "EO-WORKSPACE",
+                "status": "current",
+            },
+        ),
+        (
+            "LRM-WS-009",
+            ownership.get("requirement_ownership", {}),
+            {
+                "owning_task": "T-B0-P02",
+                "owning_gate": "FG-B0-001",
+                "milestone": "G1",
+                "evidence_owner": "EO-WORKSPACE",
+                "status": "current",
+            },
+        ),
+        (
+            "LRM-WS-013",
+            ownership.get("requirement_ownership", {}),
+            {
+                "owning_task": "T-A0-P01",
+                "owning_gate": "FG-A0-G2C",
+                "milestone": "G2C",
+                "evidence_owner": "EO-EXPERIENCE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "LRM-WS-014",
+            ownership.get("requirement_ownership", {}),
+            {
+                "owning_task": "T-A0-P01",
+                "owning_gate": "FG-A0-G2C",
+                "milestone": "G2C",
+                "evidence_owner": "EO-EXPERIENCE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "UAT-001",
+            ownership.get("uat_ownership", {}),
+            {
+                "owning_task": "T-B0-ACCEPT",
+                "owning_gate": "FG-B0-003",
+                "milestone": "B0",
+                "evidence_owner": "EO-EXPERIENCE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "UAT-040",
+            ownership.get("uat_ownership", {}),
+            {
+                "owning_task": "T-B0-P06-REPAIR",
+                "owning_gate": "FG-R1-002",
+                "milestone": "G1",
+                "evidence_owner": "EO-WORKSPACE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "UAT-042",
+            ownership.get("uat_ownership", {}),
+            {
+                "owning_task": "T-B0-P03",
+                "owning_gate": "FG-B0-001",
+                "milestone": "G1",
+                "evidence_owner": "EO-WORKSPACE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "UAT-050",
+            ownership.get("uat_ownership", {}),
+            {
+                "owning_task": "T-A0-P01",
+                "owning_gate": "FG-A0-G2C",
+                "milestone": "G2C",
+                "evidence_owner": "EO-EXPERIENCE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "T-B0-P06-REPAIR",
+            ownership.get("task_ownership", {}),
+            {
+                "milestone": "G1",
+                "owning_gate": "FG-R1-002",
+                "evidence_owner": "EO-WORKSPACE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "T-B0-P05",
+            ownership.get("task_ownership", {}),
+            {
+                "milestone": "G1",
+                "owning_gate": "FG-R3-001",
+                "evidence_owner": "EO-EVENTS",
+                "status": "blocked",
+            },
+        ),
+        (
+            "T-B0-P01",
+            ownership.get("task_ownership", {}),
+            {
+                "milestone": "G1",
+                "owning_gate": "FG-B0-001",
+                "evidence_owner": "EO-WORKSPACE",
+                "status": "complete",
+            },
+        ),
+        (
+            "FG-R1-001",
+            ownership.get("gate_ownership", {}),
+            {
+                "acceptance_task": "T-A0-001",
+                "milestone": "A0",
+                "evidence_owner": "EO-EXPERIENCE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "FG-R1-002",
+            ownership.get("gate_ownership", {}),
+            {
+                "acceptance_task": "T-B0-P06-REPAIR",
+                "milestone": "G1",
+                "evidence_owner": "EO-WORKSPACE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "FG-R1-004",
+            ownership.get("gate_ownership", {}),
+            {
+                "acceptance_task": "T-B0-ACCEPT",
+                "milestone": "B0",
+                "evidence_owner": "EO-EXPERIENCE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "FG-R3-001",
+            ownership.get("gate_ownership", {}),
+            {
+                "acceptance_task": "T-B0-P05",
+                "milestone": "G1",
+                "evidence_owner": "EO-EVENTS",
+                "status": "blocked",
+            },
+        ),
+        (
+            "FG-B0-001",
+            ownership.get("gate_ownership", {}),
+            {
+                "acceptance_task": "T-B0-P09-OKF",
+                "milestone": "G1",
+                "evidence_owner": "EO-WORKSPACE",
+                "status": "blocked",
+            },
+        ),
+    )
+    for identifier, records, expected in expected_edges:
+        if records.get(identifier) != expected:
+            errors.append(
+                f"{identifier}: corrected ownership must be {expected}, "
+                f"not {records.get(identifier)}"
+            )
+
+    if requirement_by_id.get("LRM-WS-013", {}).get("release") != "A0":
+        errors.append("LRM-WS-013: repository release must be A0")
+    if requirement_by_id.get("LRM-WS-014", {}).get("release") != "A0":
+        errors.append("LRM-WS-014: repository release must be A0")
+    if case_by_id.get("UAT-050", {}).get("release") != "A0":
+        errors.append("UAT-050: repository release must be A0")
+
+    execution_status = {
+        "G0": (ownership.get("milestones", []), "complete"),
+        "G1": (ownership.get("milestones", []), "current"),
+        "T-R0-003": (ownership.get("task_ownership", {}), "complete"),
+        "T-B0-P00": (ownership.get("task_ownership", {}), "complete"),
+        "T-B0-P01": (ownership.get("task_ownership", {}), "complete"),
+        "T-B0-P02": (ownership.get("task_ownership", {}), "current"),
+        "LRM-PK-007": (ownership.get("requirement_ownership", {}), "complete"),
+        "LRM-PK-009": (ownership.get("requirement_ownership", {}), "complete"),
+        "LRM-AP-001": (ownership.get("requirement_ownership", {}), "complete"),
+        "LRM-WS-011": (ownership.get("requirement_ownership", {}), "complete"),
+        "LRM-WS-002": (ownership.get("requirement_ownership", {}), "current"),
+        "LRM-WS-009": (ownership.get("requirement_ownership", {}), "current"),
+        "FG-R0-002": (ownership.get("gate_ownership", {}), "complete"),
+    }
+    milestone_status = {
+        item.get("id"): item.get("status")
+        for item in ownership.get("milestones", [])
+    }
+    for identifier, (records, expected_status) in execution_status.items():
+        actual_status = (
+            milestone_status.get(identifier)
+            if isinstance(records, list)
+            else records.get(identifier, {}).get("status")
+        )
+        if actual_status != expected_status:
+            errors.append(
+                f"{identifier}: execution status must be {expected_status}, "
+                f"not {actual_status}"
+            )
+
+    workspace_requirement = requirement_by_id.get("LRM-WS-001", {})
+    workspace_case = case_by_id.get("UAT-001", {})
+    workspace_requirement_text = " ".join(
+        str(workspace_requirement.get(field, ""))
+        for field in ("statement", "acceptance")
+    )
+    workspace_case_text = " ".join(
+        str(workspace_case.get(field, ""))
+        for field in ("title", "given", "when", "then")
+    )
+    if "airgap" in workspace_requirement_text.lower():
+        errors.append("LRM-WS-001: installed review acceptance must not claim Airgap")
+    if "airgap" in workspace_case_text.lower():
+        errors.append("UAT-001: installed review acceptance must not claim Airgap")
+    require_fragments(
+        "LRM-WS-001",
+        workspace_requirement_text,
+        (
+            "installed local-authoritative review artifact",
+            "network access is denied",
+            "no account is used",
+        ),
+        errors,
+    )
+    require_fragments(
+        "UAT-001",
+        workspace_case_text,
+        (
+            "installed local-authoritative review artifact",
+            "network access denied",
+            "no account configured",
+            "no account or network operation occurs",
+        ),
+        errors,
+    )
+    airgap_case_text = " ".join(
+        str(case_by_id.get("UAT-024", {}).get(field, ""))
+        for field in ("title", "given", "when", "then")
+    )
+    require_fragments(
+        "UAT-024",
+        airgap_case_text,
+        ("Airgap artifact", "no enabled network provider or listener capability"),
+        errors,
+    )
+    require_fragments(
+        "FG-R2-005",
+        gate_blocks.get("FG-R2-005", ""),
+        ("Airgap artifact proven", "Network clients and listeners are absent", "UAT-024"),
+        errors,
+    )
+    uat_024_gates = {
+        identifier for identifier, block in gate_blocks.items() if "UAT-024" in block
+    }
+    if uat_024_gates != {"FG-R2-005"}:
+        errors.append(
+            "UAT-024: compiled-out Airgap proof must belong only to FG-R2-005, "
+            f"not {sorted(uat_024_gates)}"
+        )
+
+    mandatory_sources = {
+        "SPEC.md": ("**P06 —", "`T-B0-P06-REPAIR`", "`T-B0-P09-OKF`"),
+        "AI_BUILD_INSTRUCTIONS.md": (
+            "**P05/P05-OKF/P06",
+            "`T-B0-P06-REPAIR`",
+            "**P09-OKF/P09",
+        ),
+        "PROJECT_CONTEXT.md": (
+            "P05-OKF/P06/P06-REPAIR/P09-OKF",
+            "`T-B0-P06-REPAIR`",
+        ),
+        "docs/product/rice-prioritization.md": (
+            "| P06 Tolerant Directory projection",
+            "| P06-REPAIR Guided canonical repair",
+            "| P09-OKF required legacy-People normalization",
+        ),
+        "docs/product/roadmap.md": (
+            "## P06 — Scalable Directory reads",
+            "## P06-REPAIR — Guided canonical repair",
+            "## P09 — Required OKF normalization",
+        ),
+        "docs/product/working-state-delivery.md": (
+            "P05-OKF",
+            "P06-REPAIR",
+            "P09-OKF",
+        ),
+    }
+    for relative, ordered in mandatory_sources.items():
+        try:
+            source = (ROOT / relative).read_text(encoding="utf-8")
+        except OSError as exc:
+            errors.append(f"{relative}: cannot verify corrected delivery order: {exc}")
+            continue
+        require_ordered_fragments(relative, source, ordered, errors)
+
+    for relative, fragments in {
+        "SPEC.md": (
+            "built-in theme choice and persistence only",
+            "settings bundle transfer begins in A0",
+            "the G1 P05 task",
+            "closes `FG-B0-001`",
+        ),
+        "AI_BUILD_INSTRUCTIONS.md": (
+            "G0/P00 and P01 are complete",
+            "establish P05's Directory/Event/dietary contracts in G1",
+            "close `FG-B0-001`",
+        ),
+        "PROJECT_CONTEXT.md": (
+            "G0, P00, and P01 are complete",
+            "G1 is current and P02 Workspace Session authority is the active package",
+            "without a reverse milestone dependency",
+        ),
+        "docs/product/roadmap.md": (
+            "P02 owns the readable manifest contract and session authority only",
+            "the G1 `T-B0-P05`",
+            "closes `FG-B0-001`",
+        ),
+        "docs/product/working-state-delivery.md": (
+            "P02 owns the readable manifest and write-authoritative session boundary",
+            "G0, P00, and P01 are complete",
+            "Compiled-out Airgap proof remains exclusively `UAT-024` under `FG-R2-005`",
+        ),
+    }.items():
+        try:
+            source = (ROOT / relative).read_text(encoding="utf-8")
+        except OSError as exc:
+            errors.append(f"{relative}: cannot verify corrected boundary: {exc}")
+            continue
+        require_fragments(relative, source, fragments, errors)
+
+    try:
+        rice = (ROOT / "docs/product/rice-prioritization.md").read_text(
+            encoding="utf-8"
+        )
+    except OSError as exc:
+        errors.append(f"RICE: cannot verify P06-REPAIR evidence: {exc}")
+    else:
+        require_fragments(
+            "P06-REPAIR RICE",
+            rice,
+            (
+                "| P06-REPAIR Guided canonical repair | 7 | 3 | 0.85 | 3 | 5.95 |",
+                "three-engineer-week integrity slice",
+            ),
+            errors,
+        )
+
+
 def validate_traceability(
     requirement_ids: set[str],
     case_ids: set[str],
@@ -520,6 +1022,33 @@ def validate_traceability(
     milestone_order = {
         item.get("id"): index for index, item in enumerate(milestones)
     }
+    try:
+        implementation_plan_text = (
+            ROOT / "spec/implementation-plan.yaml"
+        ).read_text(encoding="utf-8")
+    except OSError as exc:
+        errors.append(f"traceability: cannot verify delivery sequence: {exc}")
+    else:
+        sequence_match = re.search(
+            r"^delivery_sequence:\s*\[([^]]*)\]",
+            implementation_plan_text,
+            flags=re.MULTILINE,
+        )
+        declared_sequence = (
+            [
+                item.strip()
+                for item in sequence_match.group(1).split(",")
+                if item.strip()
+            ]
+            if sequence_match
+            else []
+        )
+        expected_sequence = [item.get("id") for item in milestones]
+        if declared_sequence != expected_sequence:
+            errors.append(
+                "traceability: implementation delivery_sequence must match "
+                f"milestone order {expected_sequence}, not {declared_sequence}"
+            )
     for identifier, dependencies in dependency_map.items():
         for dependency in dependencies:
             if (
@@ -530,6 +1059,29 @@ def validate_traceability(
                 errors.append(
                     f"{identifier}: milestone dependency {dependency} must appear earlier"
                 )
+
+    milestone_by_id = {item.get("id"): item for item in milestones}
+    current_milestones = {
+        item.get("id") for item in milestones if item.get("status") == "current"
+    }
+    if len(current_milestones) != 1:
+        errors.append(
+            "traceability: exactly one milestone must be current, "
+            f"found {sorted(current_milestones)}"
+        )
+    for identifier, item in milestone_by_id.items():
+        if item.get("status") not in {"complete", "current"}:
+            continue
+        incomplete_dependencies = {
+            dependency
+            for dependency in transitive_dependencies(dependency_map, identifier)
+            if milestone_by_id.get(dependency, {}).get("status") != "complete"
+        }
+        if incomplete_dependencies:
+            errors.append(
+                f"{identifier}: active or complete milestone has incomplete "
+                f"dependencies {sorted(incomplete_dependencies)}"
+            )
 
     allowed_contract_status = {
         "complete",
@@ -565,6 +1117,29 @@ def validate_traceability(
 
     for identifier in task_blocks:
         visit_task(identifier)
+
+    # An executable task may depend only on work in its own milestone or a
+    # transitively required predecessor milestone. This rejects milestone
+    # plans that are acyclic on paper but cyclic through task ownership.
+    for identifier, dependencies in task_dependencies.items():
+        task_edge = task_ownership.get(identifier, {})
+        if task_edge.get("status") == "superseded":
+            continue
+        task_milestone = task_edge.get("milestone")
+        reachable_milestones = transitive_dependencies(
+            dependency_map, str(task_milestone)
+        )
+        for dependency in dependencies:
+            dependency_milestone = task_ownership.get(dependency, {}).get("milestone")
+            if (
+                dependency_milestone
+                and dependency_milestone != task_milestone
+                and dependency_milestone not in reachable_milestones
+            ):
+                errors.append(
+                    f"{identifier}: milestone {task_milestone} cannot depend on "
+                    f"{dependency} in unreachable milestone {dependency_milestone}"
+                )
 
     # Canonical task arrays express ownership. Reused regression or prerequisite
     # coverage must be explicit evidence_dependencies, never a duplicate-owner
@@ -647,6 +1222,18 @@ def validate_traceability(
                 )
             if edge.get("status") not in allowed_contract_status - {"superseded"}:
                 errors.append(f"{identifier}: invalid ownership status {edge.get('status')}")
+            owner_status = task_ownership.get(task, {}).get("status")
+            edge_status = edge.get("status")
+            if owner_status in {"complete", "current"} and edge_status != owner_status:
+                errors.append(
+                    f"{identifier}: status {edge_status} must match {task} "
+                    f"status {owner_status}"
+                )
+            if edge_status in {"complete", "current"} and owner_status != edge_status:
+                errors.append(
+                    f"{identifier}: status {edge_status} is ahead of {task} "
+                    f"status {owner_status}"
+                )
             if task in support and identifier not in support[task]:
                 errors.append(
                     f"{identifier}: owning task {task} does not name the {label}"
@@ -667,6 +1254,14 @@ def validate_traceability(
                     errors.append(
                         f"{identifier}: owning gate {gate} does not name the UAT as evidence"
                     )
+            if (
+                milestone_by_id.get(milestone, {}).get("status") == "complete"
+                and edge_status != "complete"
+            ):
+                errors.append(
+                    f"{identifier}: completed milestone {milestone} requires "
+                    "complete ownership status"
+                )
 
     for identifier, edge in gate_ownership.items():
         task = edge.get("acceptance_task")
@@ -692,6 +1287,40 @@ def validate_traceability(
                     f"{identifier}: evidence owner {evidence_owner} disagrees with "
                     f"acceptance task {task} owner {task_edge.get('evidence_owner')}"
                 )
+        assigned_owner_tasks = {
+            record.get("owning_task")
+            for records in (requirement_ownership, uat_ownership)
+            for record in records.values()
+            if record.get("owning_gate") == identifier
+        }
+        reachable_tasks = transitive_dependencies(task_dependencies, str(task)) | {task}
+        unreachable_owners = assigned_owner_tasks - reachable_tasks
+        if unreachable_owners:
+            errors.append(
+                f"{identifier}: acceptance task {task} does not transitively depend "
+                f"on assigned owner tasks {sorted(unreachable_owners)}"
+            )
+        if (
+            edge.get("status") == "complete"
+            and task_ownership.get(task, {}).get("status") != "complete"
+        ):
+            errors.append(
+                f"{identifier}: complete gate requires complete acceptance task {task}"
+            )
+        if (
+            task_ownership.get(task, {}).get("status") == "complete"
+            and edge.get("status") != "complete"
+        ):
+            errors.append(
+                f"{identifier}: complete acceptance task {task} requires complete gate"
+            )
+        if (
+            milestone_by_id.get(milestone, {}).get("status") == "complete"
+            and edge.get("status") != "complete"
+        ):
+            errors.append(
+                f"{identifier}: completed milestone {milestone} requires complete gate"
+            )
 
     owned_tasks = {
         edge.get("owning_task") for edge in requirement_ownership.values()
@@ -705,21 +1334,53 @@ def validate_traceability(
                 "requirement, UAT, or gate"
             )
 
-    # Only G0 work may be executable while G0 is current. This makes B0 -> A0
-    # -> later status a machine rule rather than prose or file ordering.
-    current_milestones = {
-        item.get("id") for item in milestones if item.get("status") == "current"
-    }
+    # Completed work remains valid after its milestone advances. Current work
+    # must belong to the one current milestone; future milestones cannot claim
+    # execution or completion early.
+    current_tasks: set[str] = set()
     for identifier, edge in task_ownership.items():
-        if edge.get("status") == "current" and edge.get("milestone") not in current_milestones:
+        status = edge.get("status")
+        milestone = edge.get("milestone")
+        milestone_status = milestone_by_id.get(milestone, {}).get("status")
+        if status == "current":
+            current_tasks.add(identifier)
+        if status == "current" and milestone not in current_milestones:
             errors.append(
                 f"{identifier}: current task belongs to non-current milestone "
-                f"{edge.get('milestone')}"
+                f"{milestone}"
             )
-        if edge.get("milestone") not in current_milestones and edge.get("status") == "complete":
+        if status == "complete" and milestone_status not in {"complete", "current"}:
             errors.append(
-                f"{identifier}: non-current milestone task cannot newly claim complete"
+                f"{identifier}: complete task belongs to {milestone_status} "
+                f"milestone {milestone}"
             )
+        if milestone_status == "complete" and status not in {"complete", "superseded"}:
+            errors.append(
+                f"{identifier}: completed milestone {milestone} contains "
+                f"non-complete task status {status}"
+            )
+        if milestone_status in {"blocked", "deferred"} and status in {
+            "complete",
+            "current",
+        }:
+            errors.append(
+                f"{identifier}: future milestone {milestone} cannot contain "
+                f"task status {status}"
+            )
+        if status in {"complete", "current"}:
+            incomplete_task_dependencies = {
+                dependency
+                for dependency in task_dependencies.get(identifier, set())
+                if task_ownership.get(dependency, {}).get("status")
+                not in {"complete", "superseded"}
+            }
+            if incomplete_task_dependencies:
+                errors.append(
+                    f"{identifier}: {status} task has incomplete dependencies "
+                    f"{sorted(incomplete_task_dependencies)}"
+                )
+    if not current_tasks:
+        errors.append("traceability: current milestone has no current task")
 
     expected_proposals = {
         *(f"LRM-WS-{value:03d}" for value in range(12, 18)),
@@ -932,6 +1593,9 @@ def main() -> int:
             requirements, cases, task_blocks, gate_blocks, errors
         )
         validate_okf_and_comparator_contract(
+            requirements, cases, task_blocks, gate_blocks, errors
+        )
+        validate_corrected_phase_ownership(
             requirements, cases, task_blocks, gate_blocks, errors
         )
         validate_traceability(

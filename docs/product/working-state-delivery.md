@@ -6,7 +6,7 @@ This document tells a contributor what the next product is and prevents roadmap 
 
 ## Verified implementation boundary
 
-The reviewed P01 branch, when applied on top of its P00 base, contains:
+The default branch, after the merged P00 and P01 changes, contains:
 
 - Workspace and People domain foundations;
 - readable Workspace YAML and Person Markdown storage;
@@ -21,7 +21,7 @@ The installed macOS review application is version `0.1.0-alpha.1` and is an ad-h
 
 The application does not yet provide a complete event workflow, encrypted recovery, a write-authoritative Workspace Session, recoverable multi-target writes, pinned OKF People authoring or normalization, Directory projection, supported Airgap proof, or Personal Memory Alpha. The P01 session binds identity and repository access only. Documentation and prototypes describing later features are plans until exact-head implementation evidence exists.
 
-The approved Claudia/PingCRM/OKF strategy overlay is integrated into the machine contracts at SHA-256 `795a6e6751cd29a995478e254323f491e68a53ef7c35fa729d8627b87cd37089`. It adopts specific person-record outcomes and rejects blanket parity or provider-count claims.
+The approved Claudia/PingCRM/OKF strategy overlay is integrated into the machine contracts at SHA-256 `795a6e6751cd29a995478e254323f491e68a53ef7c35fa729d8627b87cd37089`. It adopts specific person-record outcomes and rejects blanket parity or provider-count claims. G0, P00, and P01 are complete; G1 is current and P02 is the active package.
 
 ## Accepted order
 
@@ -32,16 +32,19 @@ Work-package scores and the rules for dependency and safety overrides are in [B0
 3. Route every canonical mutation through recoverable multi-target operations.
 4. After P03, run design consultation to create canonical `DESIGN.md`, then plan design review to approve an amended P04 direction. G0 does not create or pre-empt this artifact.
 5. Replace the disposable vanilla shell with a typed React/Tauri adapter and an evidence-tested semantic design system.
-6. After P04, add the pinned OKF People schema and strict writer in P05-OKF, tolerant Directory reading in P06, and required legacy-People normalization in P09-OKF; keep sensitive contracts exclusively in P07/P08 and event/dietary contracts in the G3 P05/P10 path.
-7. Implement Directory security/local policy, checkpoint and encrypted recovery, onboarding import, Events core, and B0 interface.
+6. Establish the P05 Directory/Event/dietary domain contracts in G1 before P06/P07; after P04, add the pinned OKF People schema and strict writer in P05-OKF, tolerant Directory reading in P06, guided backup-first repair in P06-REPAIR, and required legacy-People normalization in P09-OKF. Keep sensitive contracts exclusively in P07/P08, close `FG-B0-001` only at P09-OKF, and let G3 consume the P05 contracts in P09/P10.
+7. Implement Directory security/local policy, checkpoint and encrypted recovery, onboarding import, Events core, and the B0 interface with built-in theme choice and persistence only.
 8. Qualify B0 in the compiled installed Mac application.
 9. Implement and independently qualify A0.
+
+P02 owns the readable manifest and write-authoritative session boundary, including `enabled_modules`; it does not own installed-artifact/no-egress, projection-rebuild, or full workspace round-trip acceptance. P01 contributes its completed application contract to `FG-B0-001`; it does not prematurely close the broader R1 CLI gate. B0 acceptance owns local workspace creation and `UAT-001`, which prove an approved installed local-authoritative review artifact with network denied and no account, and is the first task able to close `FG-R1-004` with the complete CLI/UAT evidence. Compiled-out Airgap proof remains exclusively `UAT-024` under `FG-R2-005`. The complete `FG-R1-001` round trip remains blocked until final A0 acceptance can combine B0-owned `UAT-001` with A0-owned `UAT-002`.
 
 ## B0 Workplace Review Alpha
 
 B0 is complete only when an installed universal Mac build can:
 
 - create or open a workplace workspace;
+- close and reopen it, delete and rebuild its projection, and retain both canonical People while network access remains denied and no account is used;
 - import a deterministic synthetic directory with People, Organisations, Groups, Locations, and Memberships;
 - build and finalize an immutable event cohort;
 - place every attendee in exactly one explicit dietary outcome;
@@ -53,8 +56,9 @@ B0 is complete only when an installed universal Mac build can:
 - pass keyboard, VoiceOver, contrast, zoom/reflow, reduced-motion, narrow-window, offline, readable-file, and egress evidence.
 - write every non-reserved People record through the pinned OKF v0.1 Draft envelope while Liaison domain extensions remain authoritative and sealed facts never enter plaintext;
 - tolerate unknown OKF keys/types, body sections, links, curated indexes, and malformed siblings, and complete the required OKF People normalization with preview, exact backup, journaled recovery, idempotent rerun, and exact rollback.
+- identify a duplicate Person ID and invalid birthday through tolerant Directory validation, then complete guided preview, exact backup, failure-atomic repair, bounded receipt, and exact rollback without silently deleting either source.
 
-B0 assumes one trusted local workspace owner. It supports event-bounded preparation and gap resolution, but it has no generic task engine and cannot allocate, score, rank, weight, or assign relationship attention in a workplace workspace. Mobile clients, provider transports, AI, MCP, and Meitheal integration are later independent outcomes, not hidden B0 dependencies.
+B0 assumes one trusted local workspace owner. It supports event-bounded preparation and gap resolution, but it has no generic task engine and cannot allocate, score, rank, weight, or assign relationship attention in a workplace workspace. Its appearance scope is built-in theme choice and persistence; versioned settings export/import and clean-device settings transfer begin in A0. Mobile clients, provider transports, AI, MCP, and Meitheal integration are later independent outcomes, not hidden B0 dependencies.
 
 The required OKF People normalization is the only format-migration exception in B0. General and third-party migrations remain excluded, including Meerkat, Monica, CRM-in-Markdown, broad vCard conversion, provider sync, and arbitrary format adapters.
 
