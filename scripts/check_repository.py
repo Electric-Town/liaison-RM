@@ -44,6 +44,8 @@ def text_files() -> list[Path]:
     for path in ROOT.rglob("*"):
         if not path.is_file() or any(part in EXCLUDED_DIRS for part in path.parts):
             continue
+        if path.name.startswith("OFL-") or path.name.upper().startswith("LICENSE"):
+            continue
         if path.suffix.lower() in {".md", ".txt", ".rs", ".py", ".toml", ".yaml", ".yml", ".json", ".wit"}:
             paths.append(path)
     return paths
