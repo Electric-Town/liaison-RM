@@ -227,6 +227,11 @@ and HRESULT failures retain permission-denied and not-found recovery categories.
 Existing unsafe objects are not repaired. The next exact-head Windows runtime
 result remains required.
 
+Review-build checksum manifests use artifact-relative names and are verified
+inside the upload directory before publication. A downloaded artifact can
+therefore run its included checksum command without reconstructing the CI
+runner's `artifacts/...` path.
+
 ## Dependency and release limits
 
 The capability-filesystem dependency decision is recorded in

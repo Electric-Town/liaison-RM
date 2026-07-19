@@ -109,6 +109,8 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Desktop asset verification now compares rendered PNG and ICNS content across
   platforms while retaining byte-exact checks for the uncompressed Windows ICO,
   avoiding false drift failures from host-specific compression libraries.
+- Downloadable Mac and Windows review artifacts now carry checksum manifests
+  with artifact-relative paths and verify those manifests before upload.
 - Desktop alpha now compiles and lints cleanly across Linux, macOS, and Windows: Tauri command arguments acknowledge required ownership, the default workspace path uses `map_or_else`, and a deterministic Windows `icon.ico` resource is generated for `tauri-build`.
 - Health findings now expose portable `/`-separated workspace-relative paths across macOS, Linux, and Windows instead of leaking host-specific path separators into the shared application contract.
 - Default-workspace tests now compare the operating system's native Documents path composition instead of imposing Unix separators on Windows.

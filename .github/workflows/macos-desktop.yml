@@ -95,7 +95,11 @@ jobs:
           ditto -c -k --keepParent "$APP_PATH" artifacts/macos/Liaison-RM-universal-macos-app.zip
           hdiutil create -volname "Liaison RM" -srcfolder "$APP_PATH" -ov -format UDZO artifacts/macos/Liaison-RM-universal-macos.dmg
           hdiutil verify artifacts/macos/Liaison-RM-universal-macos.dmg
-          shasum -a 256 artifacts/macos/* > artifacts/macos/SHA256SUMS
+          (
+            cd artifacts/macos
+            shasum -a 256 Liaison-RM-universal-macos-app.zip Liaison-RM-universal-macos.dmg > SHA256SUMS
+            shasum -a 256 -c SHA256SUMS
+          )
       - uses: actions/upload-artifact@v4
         with:
           name: liaison-rm-universal-macos-review

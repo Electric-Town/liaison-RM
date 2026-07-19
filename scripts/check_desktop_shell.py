@@ -251,10 +251,22 @@ def main() -> int:
         "x86_64-apple-darwin",
         "codesign --verify",
         "hdiutil verify",
+        "cd artifacts/macos",
+        "shasum -a 256 -c SHA256SUMS",
         "actions/upload-artifact@v4",
     ]:
         if required not in mac_workflow:
             errors.append(f"macOS workflow is missing {required!r}")
+
+    windows_workflow = load_text(ROOT / ".github" / "workflows" / "windows-desktop.yml", errors)
+    for required in [
+        "cargo tauri build --bundles nsis",
+        "cd artifacts/windows",
+        "sha256sum -c SHA256SUMS",
+        "actions/upload-artifact@v4",
+    ]:
+        if required not in windows_workflow:
+            errors.append(f"Windows workflow is missing {required!r}")
 
     release_workflow = load_text(ROOT / ".github" / "workflows" / "macos-release.yml", errors)
     for required in [

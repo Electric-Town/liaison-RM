@@ -78,8 +78,11 @@ jobs:
           test -n "$INSTALLER" || { echo "NSIS installer not produced" >&2; exit 1; }
           mkdir -p artifacts/windows
           cp "$INSTALLER" artifacts/windows/
-          sha256sum artifacts/windows/* > artifacts/windows/SHA256SUMS
-          cat artifacts/windows/SHA256SUMS
+          (
+            cd artifacts/windows
+            sha256sum *-setup.exe > SHA256SUMS
+            sha256sum -c SHA256SUMS
+          )
       - uses: actions/upload-artifact@v4
         with:
           name: liaison-rm-windows-review
