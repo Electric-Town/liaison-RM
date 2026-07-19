@@ -57,6 +57,10 @@ Work-package scores and the rules for dependency and safety overrides are in [B0
 
 P02 owns the readable manifest and write-authoritative session boundary, including `enabled_modules`; it does not own installed-artifact/no-egress, projection-rebuild, or full workspace round-trip acceptance. P01 contributes its completed application contract to `FG-B0-001`; it does not prematurely close the broader R1 CLI gate. B0 acceptance owns local workspace creation and `UAT-001`, which prove an approved installed local-authoritative review artifact with network denied and no account, and is the first task able to close `FG-R1-004` with the complete CLI/UAT evidence. Compiled-out Airgap proof remains exclusively `UAT-024` under `FG-R2-005`. The complete `FG-R1-001` round trip remains blocked until final A0 acceptance can combine B0-owned `UAT-001` with A0-owned `UAT-002`.
 
+### Parallel preparation lane
+
+Under [decision 0014](../decisions/0014-allow-parallel-preparation-without-transferring-acceptance.md), parallel capacity may prepare unstarted later lanes — preferring the latest first — without moving acceptance: preparation stays on rebased draft pull requests until its owning milestone opens, is limited to contract-complete work that no preserved branch or active-phase owner already covers, labels every format provisional pending its owner's reconciliation, and leaves the machine contracts to the serialized chain unless the maintainer explicitly requests otherwise. The accepted order above is unaffected.
+
 ## B0 Workplace Review Alpha
 
 B0 is complete only when an installed universal Mac build can:

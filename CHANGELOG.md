@@ -70,6 +70,8 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - A static public project site with semantic metadata, local assets, a custom 404 page, a social card, responsive layouts, and a GitHub Pages deployment workflow.
 - A public-site validator covering metadata, local asset resolution, accessibility basics, structured data, language consistency, discovery files, and copy standards.
 
+- ADR-0014 sanctioning a parallel preparation lane: unstarted later lanes may mature as rebased draft pull requests with provisional formats and open-question discipline, while acceptance ordering, gate closure, and machine-contract authority remain exactly where ADR-0012 and the delivery rule place them.
+
 ### Changed
 
 - Windows first-use registry creation now uses a cross-process initialisation
