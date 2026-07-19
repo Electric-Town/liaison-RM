@@ -117,9 +117,9 @@
           Open or create a workspace before adding people.
         </div>
 
-        <div class="two-column people-layout">
-          <form id="person-form" class="card form-card">
-            <h2>Add a person</h2>
+        <form id="person-form" class="card form-card person-form">
+          <h2>Add a person</h2>
+          <div class="person-form-fields">
             <div class="field">
               <label for="person-name">Display name</label>
               <input id="person-name" name="displayName" type="text" maxlength="160" required disabled>
@@ -129,35 +129,74 @@
               <input id="person-email" name="email" type="email" autocomplete="email" disabled>
             </div>
             <button id="create-person" class="primary-button" type="submit" data-native-operation="session" disabled>Save Markdown profile</button>
-          </form>
+          </div>
+        </form>
 
-          <section class="card" aria-labelledby="people-list-heading">
-            <div class="card-heading">
-              <h2 id="people-list-heading">People in this workspace</h2>
-              <span id="people-count" class="count-badge">0</span>
-            </div>
-            <ul id="people-list" class="people-list">
-              <li class="empty-state">No people loaded.</li>
-            </ul>
-
-            <section id="person-detail" class="person-detail" aria-labelledby="person-detail-heading" hidden>
-              <div class="divider" aria-hidden="true"></div>
-              <div class="profile-header">
-                <span id="person-detail-avatar" class="profile-avatar" aria-hidden="true"></span>
-                <div class="profile-identity">
-                  <h3 id="person-detail-heading" tabindex="-1">Profile</h3>
-                  <p id="person-detail-subtitle" class="profile-subtitle"></p>
-                  <div id="person-detail-chips" class="chip-row"></div>
-                </div>
-                <dl id="person-detail-meta" class="profile-meta"></dl>
-                <button id="close-person-detail" class="secondary-button" type="button">Close profile</button>
-              </div>
-              <h4 class="fact-list-heading">At a glance</h4>
-              <dl id="person-detail-fields" class="fact-list"></dl>
-              <p class="field-help">Source, freshness and conflict labels arrive with the A0 source contract; this review build shows the stored record only.</p>
-            </section>
-          </section>
+        <div class="list-toolbar">
+          <div class="search-field">
+            <label class="visually-hidden" for="people-search">Search people by name or email</label>
+            <input id="people-search" type="search" placeholder="Search name or email" autocomplete="off" disabled>
+          </div>
+          <div class="toolbar-field">
+            <label class="visually-hidden" for="people-filter">Filter people</label>
+            <select id="people-filter" disabled>
+              <option value="active" selected>Active only</option>
+              <option value="all">Active and archived</option>
+              <option value="archived">Archived only</option>
+            </select>
+          </div>
+          <div class="toolbar-field">
+            <label class="visually-hidden" for="people-sort">Sort people</label>
+            <select id="people-sort" disabled>
+              <option value="name" selected>Sort: Name A–Z</option>
+              <option value="name-desc">Sort: Name Z–A</option>
+              <option value="revision">Sort: Most revised</option>
+            </select>
+          </div>
+          <details id="column-chooser" class="column-chooser">
+            <summary>Columns</summary>
+            <fieldset>
+              <legend class="visually-hidden">Choose which columns to show</legend>
+              <div id="column-options" class="column-options"></div>
+              <p id="column-pending-note" class="field-help"></p>
+            </fieldset>
+          </details>
         </div>
+
+        <section class="card people-card" aria-labelledby="people-list-heading">
+          <div class="card-heading">
+            <h2 id="people-list-heading">People in this workspace</h2>
+            <span id="people-count" class="count-badge">0</span>
+          </div>
+          <p id="people-reconciliation" class="reconciliation">No people loaded.</p>
+          <div class="table-scroll">
+            <table id="people-table" class="data-table">
+              <caption class="visually-hidden">People in this workspace, with the columns you have chosen</caption>
+              <thead><tr id="people-head"></tr></thead>
+              <tbody id="people-list"></tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <p id="people-range" class="field-help">No people loaded.</p>
+            <div id="people-pages" class="page-buttons"></div>
+          </div>
+        </section>
+
+          <section id="person-detail" class="person-detail" aria-labelledby="person-detail-heading" hidden>
+            <div class="profile-header">
+              <span id="person-detail-avatar" class="profile-avatar" aria-hidden="true"></span>
+              <div class="profile-identity">
+                <h3 id="person-detail-heading" tabindex="-1">Profile</h3>
+                <p id="person-detail-subtitle" class="profile-subtitle"></p>
+                <div id="person-detail-chips" class="chip-row"></div>
+              </div>
+              <dl id="person-detail-meta" class="profile-meta"></dl>
+              <button id="close-person-detail" class="secondary-button" type="button">Close profile</button>
+            </div>
+            <h4 class="fact-list-heading">At a glance</h4>
+            <dl id="person-detail-fields" class="fact-list"></dl>
+            <p class="field-help">Source, freshness and conflict labels arrive with the A0 source contract; this review build shows the stored record only.</p>
+          </section>
       </section>
 
       <section class="page" data-page="health" aria-labelledby="health-heading" hidden>

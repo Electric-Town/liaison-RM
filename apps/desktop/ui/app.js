@@ -5,7 +5,100 @@
     workspace: null,
     people: [],
     selectedPersonId: null,
+    query: "",
+    filter: "active",
+    sort: "name",
+    page: 1,
   };
+  const PAGE_SIZE = 8;
+  const COLUMN_PREFERENCE_KEY = "liaison.people.columns.v1";
+
+  /**
+   * The Directory column registry.
+   *
+   * One declarative entry per column keeps the table modular: presentation
+   * reads this list and never hard-codes a field. A column becomes live by
+   * supplying `value`; until its owning context lands it declares `pending`
+   * with the reason, so the gap is visible in the chooser instead of being
+   * quietly missing or filled with invented data.
+   */
+  const PEOPLE_COLUMNS = [
+    {
+      id: "person",
+      label: "Person",
+      required: true,
+      value: (person) => person.display_name,
+    },
+    {
+      id: "email",
+      label: "Email",
+      defaultVisible: true,
+      value: (person) => person.emails?.[0]?.value || "None recorded",
+    },
+    {
+      id: "phone",
+      label: "Phone",
+      defaultVisible: false,
+      value: (person) => person.phones?.[0]?.value || "None recorded",
+    },
+    {
+      id: "important-date",
+      label: "Important date",
+      defaultVisible: true,
+      value: (person) => birthdayText(person.birthday) || "None recorded",
+    },
+    {
+      id: "contact-points",
+      label: "Contact points",
+      defaultVisible: false,
+      numeric: true,
+      value: (person) => String((person.emails?.length || 0) + (person.phones?.length || 0)),
+    },
+    {
+      id: "status",
+      label: "Status",
+      defaultVisible: true,
+      value: (person) => (person.archived ? "Archived" : "Active"),
+    },
+    {
+      id: "revision",
+      label: "Revision",
+      defaultVisible: true,
+      numeric: true,
+      value: (person) => `Revision ${person.revision}`,
+    },
+    {
+      id: "record-id",
+      label: "Record identifier",
+      defaultVisible: false,
+      provenance: true,
+      value: (person) => person.id,
+    },
+    // Declared, not invented. Each becomes live by adding `value` when its
+    // owning context supplies the fact.
+    { id: "role", label: "Role and organisation", pending: "Organisations context" },
+    { id: "relationship", label: "Relationship type", pending: "Relationships context, A0" },
+    { id: "last-interaction", label: "Last interaction", pending: "Interactions context, A0" },
+    { id: "notes", label: "Notes", pending: "Notes context, A0" },
+  ];
+
+  const availableColumns = () => PEOPLE_COLUMNS.filter((column) => !column.pending);
+  const pendingColumns = () => PEOPLE_COLUMNS.filter((column) => column.pending);
+
+  // Column choice is per-session presentation state held in memory. Durable
+  // settings persistence is A0 G2c work (LRM-WS-013/LRM-WS-014); the desktop
+  // shell must not adopt browser storage as an authority, so the preference
+  // deliberately resets on relaunch rather than being written anywhere.
+  const defaultColumnPreference = () =>
+    availableColumns()
+      .filter((column) => column.required || column.defaultVisible)
+      .map((column) => column.id);
+
+  state.visibleColumns = defaultColumnPreference();
+  const visibleColumns = () =>
+    availableColumns().filter(
+      (column) => column.required || state.visibleColumns.includes(column.id),
+    );
   const nativeOperation = {
     generation: 0,
     active: null,
@@ -161,43 +254,164 @@
     .map((part) => part[0]?.toUpperCase() || "")
     .join("") || "?";
 
-  const renderPeople = () => {
-    const list = byId("people-list");
-    list.replaceChildren();
-    byId("people-count").textContent = String(state.people.length);
-    if (state.people.length === 0) {
-      const empty = document.createElement("li");
-      empty.className = "empty-state";
-      empty.textContent = state.workspace ? "No people yet. Add the first profile." : "No people loaded.";
-      list.append(empty);
-      return;
+  const matchesQuery = (person) => {
+    const query = state.query.trim().toLowerCase();
+    if (!query) return true;
+    const haystack = [
+      person.display_name,
+      ...(person.emails || []).map((email) => email.value),
+      ...(person.aliases || []),
+    ]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(query);
+  };
+
+  const matchesFilter = (person) => {
+    if (state.filter === "all") return true;
+    return state.filter === "archived" ? person.archived : !person.archived;
+  };
+
+  const sortedPeople = (people) => {
+    const byName = (left, right) => left.display_name.localeCompare(right.display_name);
+    if (state.sort === "name-desc") return people.slice().sort((l, r) => byName(r, l));
+    if (state.sort === "revision") {
+      return people.slice().sort((l, r) => r.revision - l.revision || byName(l, r));
     }
-    state.people.forEach((person) => {
-      const row = document.createElement("li");
-      row.className = "person-row";
+    return people.slice().sort(byName);
+  };
+
+  const visiblePeople = () => sortedPeople(state.people.filter((person) => matchesQuery(person) && matchesFilter(person)));
+
+  const renderColumnChooser = () => {
+    const options = byId("column-options");
+    options.replaceChildren();
+    availableColumns().forEach((column) => {
+      const label = document.createElement("label");
+      label.className = "column-option";
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = column.required || state.visibleColumns.includes(column.id);
+      input.disabled = Boolean(column.required);
+      input.dataset.columnId = column.id;
+      const text = document.createElement("span");
+      text.textContent = column.required ? `${column.label} (always shown)` : column.label;
+      label.append(input, text);
+      options.append(label);
+    });
+    const pending = pendingColumns();
+    byId("column-pending-note").textContent = pending.length
+      ? `Not available yet: ${pending.map((column) => `${column.label} (${column.pending})`).join("; ")}.`
+      : "";
+  };
+
+  const renderPeople = () => {
+    const head = byId("people-head");
+    const body = byId("people-list");
+    const columns = visibleColumns();
+    const matched = visiblePeople();
+    const pageCount = Math.max(1, Math.ceil(matched.length / PAGE_SIZE));
+    if (state.page > pageCount) state.page = pageCount;
+    const start = (state.page - 1) * PAGE_SIZE;
+    const pageRows = matched.slice(start, start + PAGE_SIZE);
+
+    byId("people-count").textContent = String(state.people.length);
+    head.replaceChildren(
+      ...columns.map((column) => {
+        const cell = document.createElement("th");
+        cell.scope = "col";
+        cell.textContent = column.label;
+        if (column.numeric) cell.className = "is-numeric";
+        return cell;
+      }),
+      (() => {
+        // The header stays in normal table flow; only its text is hidden.
+        // Classing the cell itself would take it out of flow and break the row.
+        const cell = document.createElement("th");
+        cell.scope = "col";
+        const label = document.createElement("span");
+        label.className = "visually-hidden";
+        label.textContent = "Actions";
+        cell.append(label);
+        return cell;
+      })(),
+    );
+
+    body.replaceChildren();
+    if (pageRows.length === 0) {
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.colSpan = columns.length + 1;
+      cell.className = "empty-state";
+      cell.textContent = !state.workspace
+        ? "No people loaded."
+        : state.people.length === 0
+          ? "No people yet. Add the first profile."
+          : "No people match this search and filter.";
+      row.append(cell);
+      body.append(row);
+    }
+    pageRows.forEach((person) => {
+      const row = document.createElement("tr");
+      if (state.selectedPersonId === person.id) row.classList.add("is-selected");
+      columns.forEach((column) => {
+        const cell = document.createElement("td");
+        if (column.id === "person") {
+          const identity = document.createElement("span");
+          identity.className = "cell-identity";
+          const avatar = document.createElement("span");
+          avatar.className = "person-avatar is-small";
+          avatar.setAttribute("aria-hidden", "true");
+          avatar.textContent = initials(person.display_name);
+          const name = document.createElement("strong");
+          name.textContent = person.display_name;
+          identity.append(avatar, name);
+          cell.append(identity);
+        } else {
+          cell.textContent = column.value(person);
+          if (column.provenance) cell.className = "is-provenance";
+          if (column.numeric) cell.className = "is-numeric";
+        }
+        row.append(cell);
+      });
+      const actions = document.createElement("td");
       const open = document.createElement("button");
       open.type = "button";
-      open.className = "person-open";
+      open.className = "secondary-button row-action";
       open.dataset.personId = person.id;
       open.setAttribute("aria-pressed", String(state.selectedPersonId === person.id));
-      const avatar = document.createElement("span");
-      avatar.className = "person-avatar";
-      avatar.setAttribute("aria-hidden", "true");
-      avatar.textContent = initials(person.display_name);
-      const details = document.createElement("span");
-      const name = document.createElement("strong");
-      name.textContent = person.display_name;
-      const email = document.createElement("small");
-      email.textContent = person.emails?.[0]?.value || "No email recorded";
-      details.append(name, email);
-      const revision = document.createElement("span");
-      revision.className = "revision";
-      revision.textContent = `Revision ${person.revision}`;
-      open.append(avatar, details, revision);
-      if (state.selectedPersonId === person.id) row.classList.add("is-selected");
-      row.append(open);
-      list.append(row);
+      open.textContent = "View profile";
+      actions.append(open);
+      row.append(actions);
+      body.append(row);
     });
+
+    // The reconciled sentence comes before the table and always accounts for
+    // every record: shown, filtered out, and archived.
+    const archived = state.people.filter((person) => person.archived).length;
+    byId("people-reconciliation").textContent = state.people.length === 0
+      ? "No people recorded yet."
+      : `${state.people.length} recorded · ${matched.length} match the current search and filter · ${archived} archived.`;
+    byId("people-range").textContent = matched.length === 0
+      ? "Showing none."
+      : `Showing ${start + 1}–${start + pageRows.length} of ${matched.length}.`;
+
+    const pages = byId("people-pages");
+    pages.replaceChildren();
+    if (pageCount > 1) {
+      for (let number = 1; number <= pageCount; number += 1) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "page-button";
+        button.textContent = String(number);
+        button.dataset.page = String(number);
+        if (number === state.page) {
+          button.classList.add("is-active");
+          button.setAttribute("aria-current", "page");
+        }
+        pages.append(button);
+      }
+    }
   };
 
   const factRow = (term, description, provenance = false) => {
@@ -299,7 +513,7 @@
       const needsSession = control.dataset.nativeOperation === "session";
       control.disabled = busy || (needsSession && !ready);
     });
-    ["person-name", "person-email"].forEach((id) => {
+    ["person-name", "person-email", "people-search", "people-filter", "people-sort"].forEach((id) => {
       byId(id).disabled = busy || !ready;
     });
     byId("people-workspace-warning").hidden = ready;
@@ -410,6 +624,42 @@
   byId("people-list").addEventListener("click", (event) => {
     const trigger = event.target.closest?.("[data-person-id]");
     if (trigger) selectPerson(trigger.dataset.personId);
+  });
+
+  byId("people-pages").addEventListener("click", (event) => {
+    const trigger = event.target.closest?.("[data-page]");
+    if (!trigger) return;
+    state.page = Number(trigger.dataset.page);
+    renderPeople();
+  });
+
+  byId("people-search").addEventListener("input", (event) => {
+    state.query = event.target.value;
+    state.page = 1;
+    renderPeople();
+  });
+
+  byId("people-filter").addEventListener("change", (event) => {
+    state.filter = event.target.value;
+    state.page = 1;
+    renderPeople();
+  });
+
+  byId("people-sort").addEventListener("change", (event) => {
+    state.sort = event.target.value;
+    state.page = 1;
+    renderPeople();
+  });
+
+  byId("column-options").addEventListener("change", (event) => {
+    const input = event.target.closest?.("[data-column-id]");
+    if (!input) return;
+    const id = input.dataset.columnId;
+    state.visibleColumns = input.checked
+      ? [...new Set([...state.visibleColumns, id])]
+      : state.visibleColumns.filter((column) => column !== id);
+    renderPeople();
+    status(`${input.checked ? "Showing" : "Hiding"} the ${id.replace(/-/g, " ")} column.`);
   });
 
   byId("close-person-detail").addEventListener("click", () => {
@@ -561,6 +811,7 @@
   const start = async () => {
     updateControls();
     renderWorkspace();
+    renderColumnChooser();
     renderPeople();
     await withNativeOperation(null, "", async (operation) => {
       let buildStatement = "";

@@ -262,6 +262,106 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
 .summary-list dt { color: var(--muted); }
 .summary-list dd { margin: 0; font-weight: 650; overflow-wrap: anywhere; }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Directory toolbar: search, filter, sort, and the column chooser. */
+.list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+.search-field { flex: 1 1 18rem; min-width: 0; }
+.toolbar-field { flex: 0 1 14rem; min-width: 0; }
+.person-form-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 1rem; align-items: end; }
+
+.column-chooser { position: relative; }
+.column-chooser > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-medium);
+  background: var(--surface);
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.column-chooser > summary::-webkit-details-marker { display: none; }
+.column-chooser > summary::after { content: " ▾"; }
+.column-chooser[open] > summary { background: var(--canvas); }
+.column-chooser fieldset {
+  position: absolute;
+  right: 0;
+  z-index: 10;
+  min-width: 18rem;
+  margin: 0.35rem 0 0;
+  padding: 0.85rem;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-large);
+  background: var(--surface);
+  box-shadow: var(--shadow-paper);
+}
+.column-options { display: grid; gap: 0.35rem; }
+.column-option { display: flex; align-items: center; gap: 0.55rem; padding: 0.2rem 0; }
+.column-option input { width: auto; min-height: 0; }
+
+/* Semantic table, not an avatar-card list. */
+.table-scroll { max-width: 100%; overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th, .data-table td {
+  /* Contains absolutely positioned visually-hidden labels so they cannot
+     extend the document's scroll width from inside a scrolling table. */
+  position: relative;
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.data-table thead th {
+  border-bottom: 2px solid var(--ink);
+  background: var(--canvas);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.data-table tbody tr:last-child td { border-bottom: 0; }
+.data-table tbody tr.is-selected { background: var(--accent-soft); }
+.data-table .is-numeric { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.data-table .is-provenance { font-family: var(--font-mono); font-size: 0.82rem; overflow-wrap: anywhere; }
+.cell-identity { display: inline-flex; align-items: center; gap: 0.6rem; }
+.row-action { min-height: 44px; padding: 0.4rem 0.7rem; white-space: nowrap; }
+.reconciliation { margin: 0 0 0.85rem; font-weight: 600; }
+
+.pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: 0.9rem; }
+.page-buttons { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.page-button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-medium);
+  background: var(--surface);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.page-button.is-active { background: var(--highlight); color: var(--content-on-highlight); font-weight: 700; }
+
 .people-list, .finding-list { list-style: none; margin: 0; padding: 0; }
 .people-list { display: grid; gap: 0.65rem; }
 .person-row { border: 1px solid var(--border); border-radius: var(--radius-medium); background: var(--surface); }
@@ -284,16 +384,28 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
 /* ProfileHeader: identity first, then the metadata grid. Overline labels use
    the metadata role from the type scale; the record identifier uses the
    provenance family. */
-.person-detail { margin-top: 0.4rem; }
+/* The profile is a full-width work surface, as the approved specimens show.
+   Identity claims the first row; the metadata grid wraps to its own row
+   rather than competing with the name for width. */
+.person-detail {
+  margin-top: 1.25rem;
+  padding: clamp(1rem, 2vw, 1.35rem);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-large);
+  background: var(--surface);
+  box-shadow: var(--shadow-paper);
+}
 .profile-header {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: start;
-  gap: 0.5rem 1rem;
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-large);
-  background: var(--surface);
+  gap: 0.75rem 1.25rem;
+}
+.profile-header > #close-person-detail { grid-column: 3; grid-row: 1; align-self: start; }
+@media (min-width: 900px) {
+  .profile-header { grid-template-columns: auto minmax(16rem, 1fr) auto auto; }
+  .profile-header > .profile-meta { grid-column: 3; grid-row: 1; }
+  .profile-header > #close-person-detail { grid-column: 4; }
 }
 .profile-avatar {
   display: inline-grid;
@@ -329,7 +441,7 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
   font-weight: 700;
 }
 .chip.is-muted { border-color: var(--border); background: var(--canvas); color: var(--muted); }
-.profile-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem 1.25rem; margin: 0; }
+.profile-meta { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(auto-fit, minmax(9rem, max-content)); gap: 0.6rem 1.75rem; margin: 0; }
 .profile-meta dt {
   font-size: 0.75rem;
   font-weight: 700;
@@ -354,6 +466,7 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
 .fact-list dt { color: var(--muted); }
 .fact-list dd { margin: 0; overflow-wrap: anywhere; }
 .fact-list dd.is-provenance { font-family: var(--font-mono); font-size: 0.85rem; }
+.person-avatar.is-small { width: 1.9rem; height: 1.9rem; font-size: 0.8rem; }
 .person-avatar { display: inline-grid; place-items: center; width: 2.4rem; height: 2.4rem; border: 1px solid var(--ink); border-radius: 50%; background: var(--accent-soft); color: var(--accent-text); font-weight: 700; }
 .person-row strong, .person-row small { display: block; }
 .person-row small { color: var(--muted); overflow-wrap: anywhere; }
@@ -397,6 +510,9 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
   .sidebar-note { display: none; }
   main { padding: 1rem; }
   .two-column, .people-layout { grid-template-columns: 1fr; }
+  .person-form-fields { grid-template-columns: 1fr; }
+  .list-toolbar { flex-direction: column; align-items: stretch; }
+  .column-chooser fieldset { position: static; min-width: 0; }
   .page-heading { display: grid; }
   .page-heading .secondary-button, .page-heading .primary-button { width: 100%; }
   .input-with-action { grid-template-columns: 1fr; }

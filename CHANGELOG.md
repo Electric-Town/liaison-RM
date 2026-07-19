@@ -78,6 +78,8 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 - A stored person profile is now reachable from the desktop People list: selecting a row opens a read-only profile panel with the display name, typed contact points, birthday, archive state, revision, and record identifier, using pressed-state row semantics, focus into the panel heading, and focus return to the originating row on close.
 
+- A modular Directory table for People driven by a declarative column registry: search over names, aliases and emails, an active/archived filter, name and revision sorting, a keyboard-operable Columns chooser, a reconciled sentence accounting for every record, and pagination. Columns whose owning contexts have not landed — role and organisation, relationship type, last interaction, and notes — are declared in the chooser with the reason rather than rendered as empty or invented data, and become live by supplying an accessor.
+
 ### Changed
 
 - The desktop shell reopens an existing workspace at the default folder on launch instead of requiring the operator to re-select it. Opening never creates: when no workspace exists there, the typed not-found result leaves the create form ready and keeps the release-evidence disclosure visible.

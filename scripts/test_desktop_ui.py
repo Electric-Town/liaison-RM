@@ -317,6 +317,12 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     assert page.locator("#person-detail").is_hidden()
     person_open = page.locator("[data-person-id]").first
     assert person_open.get_attribute("aria-pressed") == "false"
+    # The Directory renders a semantic table driven by the column registry.
+    headers = [h.strip().lower() for h in page.locator("#people-head th").all_inner_texts() if h.strip()]
+    assert "person" in headers and "email" in headers
+    assert "last interaction" not in headers, "pending columns must not render as data"
+    assert "Showing 1" in page.locator("#people-range").inner_text()
+    assert "1 recorded" in page.locator("#people-reconciliation").inner_text()
     person_open.click()
     page.get_by_role("heading", name="Alex Murphy", exact=True).wait_for()
     assert page.locator("#person-detail").is_visible()
@@ -334,6 +340,21 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     page.get_by_role("button", name="Close profile").click()
     assert page.locator("#person-detail").is_hidden()
     assert page.locator("[data-person-id]").first.evaluate("el => el === document.activeElement")
+
+    # Columns are user-controlled and pending ones are declared, not hidden.
+    page.locator("#column-chooser summary").click()
+    pending_note = page.locator("#column-pending-note").inner_text()
+    assert "Last interaction" in pending_note and "A0" in pending_note
+    page.locator("[data-column-id='email']").uncheck()
+    assert "email" not in page.locator("#people-head").inner_text().lower()
+    page.locator("[data-column-id='email']").check()
+    assert "email" in page.locator("#people-head").inner_text().lower()
+    page.locator("#column-chooser summary").click()
+
+    # Search narrows the reconciled sentence without altering the record count.
+    page.locator("#people-search").fill("zzz-no-match")
+    assert "0 match" in page.locator("#people-reconciliation").inner_text()
+    page.locator("#people-search").fill("")
 
     # Destinations carry letter markers as the approved specimens show, never
     # step numbers implying a required order, and the profile select is
