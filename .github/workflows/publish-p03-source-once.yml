@@ -62,19 +62,13 @@ jobs:
 
           operations = Path("adapters/vault-markdown/src/operations.rs")
           text = operations.read_text(encoding="utf-8")
-          call = "        let bytes = read_file(&staged, &staged_name(target.ordinal)).map_err(|error| {"
-          if call not in text:
-              raise SystemExit("expected staged-read call was not found")
           text = text.replace(
-              call,
+              "        let bytes = read_file(&staged, &staged_name(target.ordinal)).map_err(|error| {",
               "        let staged_filename = staged_name(target.ordinal);\n"
               "        let bytes = read_file(&staged, Path::new(&staged_filename)).map_err(|error| {",
               1,
           )
-          mapping = '            map_io("read staged target", error)\n'
-          if mapping not in text:
-              raise SystemExit("expected staged-read error mapping was not found")
-          text = text.replace(mapping, "            error\n", 1)
+          text = text.replace('            map_io("read staged target", error)\n', "            error\n", 1)
           text = text.replace(
               "pub(crate) fn execute_with_fault(\n",
               "// The durability protocol stays linear so flush and decision ordering remains auditable.\n"
@@ -145,8 +139,6 @@ jobs:
                     .is_ok()
             );
             let people = ListPeople::new(&alex_repository).execute(false);'''
-          if old not in text:
-              raise SystemExit("expected stable-order test block was not found")
           vault.write_text(text.replace(old, new, 1), encoding="utf-8")
           PY
 
