@@ -1,0 +1,190 @@
+ Vec<CanonicalWrite>,
++    ) -> Result<CanonicalOperationPlan, WorkspaceOperationError> {
++        CanonicalOperationPlan::new(
++            OperationId::new(),
++            workspace_id,
++            DateTime::UNIX_EPOCH,
++            CanonicalMutationKind::Other,
++            targets,
++        )
++    }
++
++    #[test]
++    fn multi_target_commit_publishes_and_marks_projection_stale() -> Result<(), Box<dyn Error>> {
++        let (directory, root, workspace_id) = fixture()?;
++        let first = CanonicalWrite::create("notes/one.md", b"one".to_vec())?;
++        let second = CanonicalWrite::create("notes/two.md", b"two".to_vec())?;
++        let receipt = commit_operation_with_fault(
++            &root,
++            plan(workspace_id, vec![first, second])?,
++            FaultPoint::None,
++        )?;
++        assert_eq!(receipt.target_count, 2);
++        assert_eq!(fs::read(directory.path().join("notes/one.md"))?, b"one");
++        assert_eq!(fs::read(directory.path().join("notes/two.md"))?, b"two");
++        assert!(directory.path().join(".liaison/projections/stale.json").is_file());
++        let operation = directory
++            .path()
++            .join(".liaison/operations")
++            .join(receipt.operation_id.to_string());
++        assert!(!operation.join("staged").exists());
++        assert!(!operation.join("replacing").exists());
++        assert!(operation.join("COMPLETE").is_file());
++        Ok(())
++    }
++
++    #[test]
++    fn crash_before_commit_is_discarded_without_publication() -> Result<(), Box<dyn Error>> {
++        let (directory, root, workspace_id) = fixture()?;
++        let write = CanonicalWrite::create("notes/uncommitted.md", b"private".to_vec())?;
++        let result = commit_operation_with_fault(
++            &root,
++            plan(workspace_id, vec![write])?,
++            FaultPoint::AfterStaging,
++        );
++        assert!(matches!(result, Err(WorkspaceOperationError::FaultInjected(_))));
++        let recovery = recover_operations(&root, workspace_id)?;
++        assert!(!directory.path().join("notes/uncommitted.md").exists());
++        assert_eq!(recovery.discarded_uncommitted.len(), 1);
++        Ok(())
++    }
++
++    #[test]
++    fn crash_after_commit_rolls_forward_all_targets() -> Result<(), Box<dyn Error>> {
++        let (directory, root, workspace_id) = fixture()?;
++        let first = CanonicalWrite::create("notes/first.md", b"first".to_vec())?;
++        let second = CanonicalWrite::create("notes/second.md", b"second".to_vec())?;
++        let result = commit_operation_with_fault(
++            &root,
++            plan(workspace_id, vec![first, second])?,
++            FaultPoint::AfterPublish(0),
++        );
++        assert!(matches!(result, Err(WorkspaceOperationError::FaultInjected(_))));
++        let recovery = recover_operations(&root, workspace_id)?;
++        assert_eq!(fs::read(directory.path().join("notes/first.md"))?, b"first");
++        assert_eq!(fs::read(directory.path().join("notes/second.md"))?, b"second");
++        assert_eq!(recovery.rolled_forward.len(), 1);
++        let operations = directory.path().join(".liaison/operations");
++        let entries = fs::read_dir(operations)?.collect::<Result<Vec<_>, _>>()?;
++        assert_eq!(entries.len(), 1);
++        assert!(!entries[0].path().join("staged").exists());
++        assert!(entries[0].path().join("COMPLETE").is_file());
++        Ok(())
++    }
++
++    #[test]
++    fn external_edit_after_commit_stops_recovery_without_overwrite() -> Result<(), Box<dyn Error>> {
++        let (directory, root, workspace_id) = fixture()?;
++        let target = directory.path().join("notes/existing.md");
++        let old = b"---\nrevision: 1\n---\nold\n";
++        fs::write(&target, old)?;
++        let expected = CanonicalPrecondition::revisioned(
++            CanonicalDigest::sha256(old),
++            Revision::INITIAL,
++            CanonicalRevisionFormat::MarkdownYamlFrontMatter,
++        );
++        let write = CanonicalWrite::replace(
++            "notes/existing.md",
++            expected,
++            b"---\nrevision: 2\n---\nnew\n".to_vec(),
++        )?;
++        let result = commit_operation_with_fault(
++            &root,
++            plan(workspace_id, vec![write])?,
++            FaultPoint::AfterCommitDecision,
++        );
++        assert!(matches!(result, Err(WorkspaceOperationError::FaultInjected(_))));
++        fs::write(&target, "external edit\n")?;
++        let recovery = recover_operations(&root, workspace_id);
++        assert!(matches!(
++            recovery,
++            Err(WorkspaceOperationError::RecoveryConflict { .. })
++        ));
++        assert_eq!(fs::read_to_string(target)?, "external edit\n");
++        Ok(())
++    }
++
++    #[test]
++    fn operation_manifest_does_not_contain_staged_payload() -> Result<(), Box<dyn Error>> {
++        let (directory, root, workspace_id) = fixture()?;
++        let write = CanonicalWrite::create("notes/private.md", b"private marker".to_vec())?;
++        let result = commit_operation_with_fault(
++            &root,
++            plan(workspace_id, vec![write])?,
++            FaultPoint::AfterStaging,
++        );
++        assert!(result.is_err());
++        let operations = root.open_dir_nofollow(".liaison/operations")?;
++        for entry in operations.entries()?.flatten() {
++            let manifest = fs::read_to_string(
++                directory
++                    .path()
++                    .join(".liaison/operations")
++                    .join(entry.file_name())
++                    .join("manifest.json"),
++            )?;
++            assert!(!manifest.contains("private marker"));
++            assert!(manifest.contains("new_digest"));
++        }
++        Ok(())
++    }
++}
+diff --git a/adapters/vault-markdown/src/session_people.rs b/adapters/vault-markdown/src/session_people.rs
+index 156cf6c36ed03f8743cf7c8b16b95f8db33f72bc..3760a43f66b6de2c922b516d641063389ed5416c 100644
+--- a/adapters/vault-markdown/src/session_people.rs
++++ b/adapters/vault-markdown/src/session_people.rs
+@@ -4,7 +4,7 @@ use super::{
+ };
+ use liaison_people::{PeopleError, PersonProfile, PersonRepository};
+ use liaison_shared_kernel::{PersonId, Revision};
+-use liaison_workspace::WorkspaceWorkGuard;
++use liaison_workspace::{CanonicalOperationContext, WorkspaceWorkGuard};
+ 
+ /// A People repository that exists only while one session work guard is live.
+ ///
+@@ -15,8 +15,14 @@ use liaison_workspace::WorkspaceWorkGuard;
+ #[derive(Debug)]
+ struct SessionPeopleRepository<'work, 'session> {
+     work: &'work WorkspaceWorkGuard<'session, BoundMarkdownVault>,
++    operation: Option<CanonicalOperationContext>,
+ }
+ 
++/// Builds a read-only People repository for one live work guard.
++///
++/// Mutating methods fail closed because a caller that has not supplied an
++/// application-generated operation identity and timestamp must not create
++/// hidden nondeterminism in the persistence adapter.
+ #[must_use]
+ pub fn people_repository<'work, 'session>(
+     work: &'work WorkspaceWorkGuard<'session, BoundMarkdownVault>,
+@@ -24,12 +30,32 @@ pub fn people_repository<'work, 'session>(
+ where
+     'session: 'work,
+ {
+-    SessionPeopleRepository { work }
++    SessionPeopleRepository {
++        work,
++        operation: None,
++    }
++}
++
++/// Builds a People repository that may perform one canonical mutation using
++/// the operation context supplied by the application runtime.
++#[must_use]
++pub fn people_repository_for_operation<'work, 'session>(
++    work: &'work WorkspaceWorkGuard<'session, BoundMarkdownVault>,
++    operation: CanonicalOperationContext,
++) -> impl PersonRepository + 'work
++where
++    'session: 'work,
++{
++    SessionPeopleRepository {
++        work,
++        operation: Some(operation),
++    }
+ }
+ 
+ impl PersonRepository for SessionPeopleRepository<'_, '_> {
+     fn create(&self, person: &PersonProfile) -> Result<(), PeopleError> {
+-        bound_create_person(&self.work.repositories().root, person)
++        let operation = self.operation.ok_or_else
