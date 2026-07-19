@@ -108,7 +108,9 @@ broker/namespace or fails closed before opening a writer session.
   accepting the replacement. If that close fails, the interface keeps the
   previous selection and best-effort closes the replacement. Rust tests prove
   each close releases the corresponding real lock; browser tests prove both
-  switching paths and the rollback orchestration.
+  switching paths and the rollback orchestration. If both closes fail, the
+  interface preserves restart-required recovery and disables every further
+  native operation until process exit instead of hiding the cleanup failure.
 - The desktop admits one native operation at a time, disables every native
   action and its request fields synchronously, and validates the captured
   operation generation and session before applying a result. Delayed overlap

@@ -28,6 +28,7 @@ BRIDGE = r"""
   let maxInFlightCommands = 0;
   let nextSessionNumber = 101;
   let failNextCloseFor = null;
+  let failNextCloseCount = 0;
   let commandNumber = 1;
   let initialiseAttempts = 0;
   let validationNeedsAttention = false;
@@ -108,6 +109,7 @@ BRIDGE = r"""
     closedSessions: () => closedSessions.slice(),
     currentSession: () => workspace?.workspace.session_id || null,
     failNextClose: (sessionId) => { failNextCloseFor = sessionId; },
+    failNextCloses: (count) => { failNextCloseCount = count; },
     delayNext: (command) => delayedCommands.add(command),
     release: (command) => {
       const resolve = delayResolvers.get(command);
@@ -170,7 +172,8 @@ BRIDGE = r"""
           case "close_workspace": {
             const sessionId = payload.request.sessionId;
             requireSession(sessionId);
-            if (failNextCloseFor === sessionId) {
+            if (failNextCloseFor === sessionId || failNextCloseCount > 0) {
+              if (failNextCloseCount > 0) failNextCloseCount -= 1;
               failNextCloseFor = null;
               throw applicationError(
                 "workspace.authority-unavailable",
@@ -347,6 +350,33 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     page.locator("#live-status").get_by_text("Workspace switch did not complete", exact=False).wait_for()
     assert page.locator("#workspace-path-label").inner_text() == "/Users/tester/Documents/created-replacement"
     assert page.evaluate("window.__liaisonBridgeState.activeSessions()") == [third_session]
+
+    page.evaluate(
+        "window.__liaisonBridgeState.resetOperationMetrics(); "
+        "window.__liaisonBridgeState.failNextCloses(2);"
+    )
+    page.get_by_label("Absolute folder path").fill(
+        "/Users/tester/Documents/restart-required-replacement"
+    )
+    page.get_by_role("button", name="Open existing workspace").click()
+    page.locator("#live-status").get_by_text(
+        "Restart Liaison RM before retrying", exact=False
+    ).wait_for()
+    restart_status = page.locator("#live-status").inner_text()
+    assert "may still hold writer authority" in restart_status
+    assert page.locator("#workspace-path-label").inner_text() == (
+        "/Users/tester/Documents/created-replacement"
+    )
+    active_after_cleanup_failure = page.evaluate(
+        "window.__liaisonBridgeState.activeSessions()"
+    )
+    assert third_session in active_after_cleanup_failure
+    assert len(active_after_cleanup_failure) == 2
+    assert page.locator("[data-native-operation]:not(:disabled)").count() == 0
+    page.locator("#open-workspace").dispatch_event("click")
+    assert page.evaluate(
+        'window.__liaisonBridgeState.invocationCount("open_workspace")'
+    ) == 1
 
     SCREENSHOTS.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(SCREENSHOTS / "desktop-workspace-health.png"), full_page=True)
@@ -581,7 +611,7 @@ def main() -> int:
 
     REPORT.parent.mkdir(parents=True, exist_ok=True)
     REPORT.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
-    print("Desktop UI tests passed: globally serialized native operations, workspace switching/rollback, stale-person isolation, validation, focus recovery, mobile reflow, dark mode, and zero external requests")
+    print("Desktop UI tests passed: globally serialized native operations, workspace switching/rollback, dual-close restart recovery, stale-person isolation, validation, focus recovery, mobile reflow, dark mode, and zero external requests")
     return 0
 
 

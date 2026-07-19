@@ -8,6 +8,7 @@
   const nativeOperation = {
     generation: 0,
     active: null,
+    restartRequired: false,
   };
   const APPLICATION_CONTRACT_VERSION = 1;
 
@@ -70,7 +71,7 @@
   );
 
   const withNativeOperation = async (button, busyLabel, work) => {
-    if (nativeOperation.active) return undefined;
+    if (nativeOperation.active || nativeOperation.restartRequired) return undefined;
 
     const operation = Object.freeze({
       generation: ++nativeOperation.generation,
@@ -193,7 +194,7 @@
 
   const updateControls = () => {
     const ready = Boolean(state.workspace);
-    const busy = Boolean(nativeOperation.active);
+    const busy = Boolean(nativeOperation.active) || nativeOperation.restartRequired;
     document.querySelectorAll("[data-native-operation]").forEach((control) => {
       const needsSession = control.dataset.nativeOperation === "session";
       control.disabled = busy || (needsSession && !ready);
@@ -216,23 +217,32 @@
     return true;
   };
 
-  const closeSupersededWorkspace = async (opened, operation) => {
+  const closeSupersededWorkspace = async (opened) => {
     const replacementSessionId = opened?.workspace?.session_id;
-    if (!replacementSessionId || replacementSessionId === currentSessionId()) return;
+    if (!replacementSessionId || replacementSessionId === currentSessionId()) {
+      return { closed: true, error: null };
+    }
     try {
       await invokeValue("close_workspace", {
         request: { sessionId: replacementSessionId },
       });
+      return { closed: true, error: null };
     } catch (error) {
-      if (isCurrentOperation(operation)) {
-        status(`Superseded workspace cleanup did not complete: ${errorText(error)}`);
-      }
+      return { closed: false, error };
     }
   };
 
+  const replacementCleanupText = (cleanup) => cleanup.closed
+    ? ""
+    : ` The unopened replacement workspace may still hold writer authority. ${errorText(cleanup.error)} Restart Liaison RM before retrying the switch; exiting releases the hidden local session.`;
+
   const acceptWorkspace = async (opened, action, operation) => {
     if (!operationOwnsCurrentSession(operation)) {
-      await closeSupersededWorkspace(opened, operation);
+      const cleanup = await closeSupersededWorkspace(opened);
+      if (!cleanup.closed && isCurrentOperation(operation)) {
+        nativeOperation.restartRequired = true;
+        status(`Workspace replacement was superseded.${replacementCleanupText(cleanup)}`);
+      }
       return false;
     }
     const previous = state.workspace;
@@ -242,13 +252,18 @@
           request: { sessionId: previous.session_id },
         });
       } catch (error) {
-        await closeSupersededWorkspace(opened, operation);
-        status(`Workspace switch did not complete: ${errorText(error)}`);
+        const cleanup = await closeSupersededWorkspace(opened);
+        if (!cleanup.closed) nativeOperation.restartRequired = true;
+        status(`Workspace switch did not complete: ${errorText(error)}${replacementCleanupText(cleanup)}`);
         return false;
       }
     }
     if (!operationOwnsCurrentSession(operation)) {
-      await closeSupersededWorkspace(opened, operation);
+      const cleanup = await closeSupersededWorkspace(opened);
+      if (!cleanup.closed && isCurrentOperation(operation)) {
+        nativeOperation.restartRequired = true;
+        status(`Workspace replacement was superseded.${replacementCleanupText(cleanup)}`);
+      }
       return false;
     }
     state.workspace = opened.workspace;

@@ -89,7 +89,9 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Desktop native operations now share one synchronous busy boundary with
   generation/session checks, stale-result rejection, and explicit cleanup of
   superseded workspace sessions, preventing overlapping switches or Person
-  results from leaking authority or state across workspaces.
+  results from leaking authority or state across workspaces. If both the old
+  session close and replacement cleanup fail, the interface retains explicit
+  restart recovery and disables further native operations until exit.
 - Capability-bound manifest and Person reads now preflight and post-validate
   regular files around a nonblocking no-follow open, so FIFOs and other special
   files cannot wedge one-shot Health or normal workspace access.

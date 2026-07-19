@@ -59,6 +59,13 @@ closes an opened replacement that became superseded. Browser fixtures may fake
 the typed bridge for interaction testing, but they are not storage or domain
 implementations.
 
+If closing the previous session fails, the desktop keeps that workspace
+selected and attempts to close the unopened replacement. If both closes fail,
+the replacement can retain invisible writer authority until process exit. The
+interface must preserve that cleanup failure, tell the user to restart Liaison,
+and disable further native operations rather than overwrite the recovery with
+the ordinary switch error or create more hidden sessions.
+
 Browser fixtures also cannot prove the native WebKit event lifecycle. Capture any form, button, or other event target that is needed after an `await` before yielding to the native command. A compiled P01 review exposed a false-failure path where the Person file was written successfully and WebKit then cleared `event.currentTarget`; the interface reported failure and made a dangerous retry look appropriate. The native request shape, success message, file result, and post-command UI state must be tested together.
 
 ## Why this works
@@ -148,6 +155,9 @@ Check that:
 - delayed or programmatic overlapping desktop operations result in at most one
   native command, one visible active session, no hidden replacement lock, no
   cross-workspace Person result, and restored controls/focus;
+- if both old-session close and replacement cleanup fail, the prior selection
+  remains visible, restart recovery remains announced, and every further native
+  operation stays disabled until the process exits;
 - manifest and `people/*.md` FIFOs or other special files return a typed result
   within the bounded regression timeout; healthy People remain listable and a
   Person special file becomes a Health finding;
