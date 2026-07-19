@@ -12,15 +12,16 @@ unconfined processes on an operating-system account. Linux and macOS resolve
 the effective account's home directory through the operating-system account
 database rather than `HOME`; Linux ignores `XDG_DATA_HOME` and uses
 `~/.local/share`, while macOS uses `~/Library/Application Support`. Windows
-uses the current account's `FOLDERID_LocalAppData` and `FOLDERID_Profile`
-Known Folder results rather than environment strings. The final directory is
-named `io.github.electric-town.liaison-rm-writer-authority-v1`.
+resolves `FOLDERID_LocalAppData` with an explicitly opened current-process user
+token rather than `USERPROFILE` or `LOCALAPPDATA`; Profile is not a second
+prerequisite. The final directory is named
+`io.github.electric-town.liaison-rm-writer-authority-v1`.
 
 Registry entries contain no workspace path, person data, process identifier,
 or diagnostic. Missing Unix local-data components beneath the owned account
 home are created one component at a time through no-follow capability handles.
-Windows LocalAppData must already exist as an operating-system Known Folder;
-its retained ancestors are traversal infrastructure, while the child Liaison
+Windows LocalAppData must already exist as the account's Known Folder; its
+retained ancestors are traversal infrastructure, while the child Liaison
 registry and locks are the private security boundary. An inaccessible
 canonical location or a missing custom root returns a typed authority error;
 production does not select a fallback registry.
@@ -62,8 +63,8 @@ and machine, a copied workspace therefore cannot transfer a live writer lease.
 - The full dependency decision and lockfile checksums are recorded in
   `docs/evidence/dependencies/cap-std-4.0.2.md`.
 - Platform-local registry resolution, Unix identity checks, and Windows owner
-  and DACL inspection use pinned target-specific `dirs`, `uzers`, `rustix`, and
-  `windows-permissions`; their decision and checksums are recorded in
+  and DACL inspection use pinned target-specific `winsafe`, `uzers`, `rustix`,
+  and `windows-permissions`; their decision and checksums are recorded in
   `docs/evidence/dependencies/workspace-identity-registry.md`.
 - The lock itself uses Rust's standard-library file-lock API; no PID or age
   heuristic participates in authority.

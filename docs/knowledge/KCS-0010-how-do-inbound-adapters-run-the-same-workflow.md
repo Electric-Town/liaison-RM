@@ -106,9 +106,11 @@ checks.
 
 Windows LocalAppData is operating-system traversal infrastructure, not a
 Liaison-owned private object; Profile is not a second locator prerequisite.
-Retain and identity-check LocalAppData without following reparse points. On
-creation only, normalise the child Liaison registry and zero-byte locks to
-TokenUser ownership and the protected user/System/Administrators ACL, then
+Resolve `FOLDERID_LocalAppData` with an explicitly opened current-process user
+token rather than process `USERPROFILE` or `LOCALAPPDATA`, then retain and
+identity-check it without following reparse points. On creation only, normalise
+the child Liaison registry and zero-byte locks to TokenUser ownership and the
+protected user/System/Administrators ACL, then
 require that exact shape on every use. Never auto-repair a pre-existing
 noncanonical registry or lock, and preserve the typed `cause_issue` through an
 initialisation wrapper so native failures remain diagnosable without

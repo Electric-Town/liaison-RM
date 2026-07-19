@@ -98,13 +98,14 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Windows identity-registry security inspection now queries file and directory
   handles as Win32 `SE_FILE_OBJECT` values instead of using the dependency's
   generic unknown-object helper, allowing owner/DACL checks to run natively.
-- Windows now resolves the LocalAppData Known Folder without making Profile a
-  second authority prerequisite, and treats that retained, no-reparse parent as
+- Windows now resolves `FOLDERID_LocalAppData` with an explicit current-process
+  user token, without making Profile or mutable process environment a second
+  authority prerequisite, and treats that retained, no-reparse Known Folder as
   traversal infrastructure rather than a Liaison-owned private object. Newly
   created Liaison registry directories and lock files are normalised to the
   token user with one protected user/System/Administrators ACL; any existing
-  noncanonical registry or lock still fails closed. Initialisation errors retain
-  the typed authority issue without exposing a host path.
+  noncanonical registry or lock still fails closed. Initialisation and Windows
+  API errors retain their typed recovery category without exposing a host path.
 - Desktop asset verification now compares rendered PNG and ICNS content across
   platforms while retaining byte-exact checks for the uncompressed Windows ICO,
   avoiding false drift failures from host-specific compression libraries.
@@ -121,7 +122,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Documented the prohibition on undeclared network requests, hidden telemetry, secret material in canonical files, and provider or plugin access without an explicit grant.
 - Defined separate Airgap and Connected-local build profiles and least-disclosure handling for sensitive relationship and workplace data.
 - Kept network, provider, SQL, Tauri, and secret-storage dependencies out of the initial Workspace and People domain crates.
-- Pinned and documented target-specific `uzers` 0.12.2, `dirs` 6.0.0,
+- Pinned and documented target-specific `uzers` 0.12.2, `winsafe` 0.0.28,
   `rustix` 1.1.4, and `windows-permissions` 0.2.4 for environment-independent,
   fail-closed per-user identity-registry resolution and ownership checks;
   registry entries contain no path, PID, diagnostic, or relationship data.

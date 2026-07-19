@@ -17,8 +17,8 @@ rustix.workspace = true
 uzers.workspace = true
 
 [target.'cfg(windows)'.dependencies]
-dirs.workspace = true
 windows-permissions.workspace = true
+winsafe.workspace = true
 
 [dev-dependencies]
 chrono.workspace = true

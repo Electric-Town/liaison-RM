@@ -69,8 +69,9 @@ broker/namespace or fails closed before opening a writer session.
   after the holder exits. The Windows native variant additionally varies
   `USERPROFILE` and `LOCALAPPDATA`.
 - Linux/macOS derive the unconfined account home from the operating-system
-  account database; Windows uses Known Folder APIs. An inaccessible canonical
-  authority returns a typed safe error and no alternate registry is created.
+  account database; Windows resolves `FOLDERID_LocalAppData` with an explicit
+  current-process user token. An inaccessible canonical authority returns a
+  typed safe error and no alternate registry is created.
 - A synthetic Flatpak marker produces typed `Unsupported`; native Flatpak
   packaging remains a future broker/fail-closed gate rather than a current
   authority claim.
@@ -217,10 +218,12 @@ The replacement run then reached the real descriptor but rejected
 runner-managed Profile/LocalAppData ancestry as though those operating-system
 directories were Liaison-owned private objects. Windows may also apply the
 token's default owner, rather than TokenUser, to new objects in an elevated
-process. The adapter now removes Profile from the locator prerequisite, treats
-the LocalAppData Known Folder as retained no-reparse traversal, never creates a
-missing Known Folder, and applies a protected canonical ACL and TokenUser owner
-only to newly created Liaison registry/lock objects before strict verification.
+process. The adapter now removes Profile from the locator prerequisite, calls
+the LocalAppData Known Folder API with an explicit current-process user token,
+treats that directory as retained no-reparse traversal, never creates a missing
+Known Folder, and applies a protected canonical ACL and TokenUser owner only to
+newly created Liaison registry/lock objects before strict verification. Win32
+and HRESULT failures retain permission-denied and not-found recovery categories.
 Existing unsafe objects are not repaired. The next exact-head Windows runtime
 result remains required.
 

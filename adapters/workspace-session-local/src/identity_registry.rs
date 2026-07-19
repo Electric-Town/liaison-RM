@@ -250,7 +250,91 @@ fn platform_registry_base() -> Result<(PathBuf, Option<PathBuf>), WorkspaceSessi
 
 #[cfg(windows)]
 fn platform_registry_base() -> Result<(PathBuf, Option<PathBuf>), WorkspaceSessionError> {
-    windows_registry_base(dirs::data_local_dir())
+    windows_registry_base(Some(windows_current_account_local_app_data()?))
+}
+
+#[cfg(windows)]
+fn windows_current_account_local_app_data() -> Result<PathBuf, WorkspaceSessionError> {
+    use winsafe::{self as w, co};
+
+    // Passing the current process token makes the account explicit. A null
+    // token lets the shell resolve the current user through process state,
+    // which can be redirected by inherited USERPROFILE values and fork the
+    // cross-process writer-authority registry. Microsoft requires QUERY and
+    // IMPERSONATE access for a non-null token passed to SHGetKnownFolderPath.
+    let token = w::HPROCESS::GetCurrentProcess()
+        .OpenProcessToken(co::TOKEN::QUERY | co::TOKEN::IMPERSONATE)
+        .map_err(|error| {
+            authority_unavailable(
+                WorkspaceAuthorityOperation::ResolveIdentityRegistry,
+                windows_system_error(error),
+            )
+        })?;
+    let value = w::SHGetKnownFolderPath(
+        &co::KNOWNFOLDERID::LocalAppData,
+        co::KF::DEFAULT,
+        Some(&token),
+    )
+    .map_err(|error| {
+        authority_unavailable(
+            WorkspaceAuthorityOperation::ResolveIdentityRegistry,
+            windows_hresult_error(error),
+        )
+    })?;
+    let path = PathBuf::from(value);
+    if path.as_os_str().is_empty() || !path.is_absolute() {
+        return Err(authority_unavailable(
+            WorkspaceAuthorityOperation::ResolveIdentityRegistry,
+            io::Error::new(
+                io::ErrorKind::InvalidData,
+                "the Windows LocalAppData Known Folder returned an invalid directory",
+            ),
+        ));
+    }
+    Ok(path)
+}
+
+#[cfg(windows)]
+fn windows_system_error(error: winsafe::co::ERROR) -> io::Error {
+    classified_windows_error(error.raw(), error)
+}
+
+#[cfg(windows)]
+fn windows_hresult_error(error: winsafe::co::HRESULT) -> io::Error {
+    const HRESULT_FACILITY_MASK: u32 = 0xffff_0000;
+    const HRESULT_FROM_WIN32_PREFIX: u32 = 0x8007_0000;
+
+    let raw = error.raw();
+    if raw & HRESULT_FACILITY_MASK == HRESULT_FROM_WIN32_PREFIX {
+        return classified_windows_error(raw & 0x0000_ffff, error);
+    }
+    io::Error::other(error)
+}
+
+#[cfg(windows)]
+fn classified_windows_error<E>(code: u32, error: E) -> io::Error
+where
+    E: std::error::Error + Send + Sync + 'static,
+{
+    use winsafe::co::ERROR;
+
+    let kind = if code == ERROR::FILE_NOT_FOUND.raw()
+        || code == ERROR::PATH_NOT_FOUND.raw()
+        || code == ERROR::PROFILE_NOT_FOUND.raw()
+    {
+        Some(io::ErrorKind::NotFound)
+    } else if code == ERROR::ACCESS_DENIED.raw() {
+        Some(io::ErrorKind::PermissionDenied)
+    } else {
+        None
+    };
+    if let Some(kind) = kind {
+        return io::Error::new(kind, error);
+    }
+    match i32::try_from(code) {
+        Ok(code) => io::Error::from_raw_os_error(code),
+        Err(_) => io::Error::other(error),
+    }
 }
 
 #[cfg(windows)]
@@ -262,7 +346,7 @@ fn windows_registry_base(
             WorkspaceAuthorityOperation::ResolveIdentityRegistry,
             io::Error::new(
                 io::ErrorKind::NotFound,
-                "Windows did not provide the current account's LocalAppData known folder",
+                "Windows did not provide the current account's LocalAppData Known Folder",
             ),
         )
     })?;
@@ -320,10 +404,10 @@ fn prepare_default_data_root(
 ) -> Result<(), WorkspaceSessionError> {
     #[cfg(windows)]
     {
-        // LocalAppData is an operating-system Known Folder. It is traversal
+        // LocalAppData is operating-system Known Folder traversal
         // infrastructure, not a Liaison-owned security boundary, and may be
         // owned by SYSTEM or Administrators on an elevated account. Liaison
-        // never creates a missing Windows Known Folder; it verifies the bound
+        // never creates a missing Known Folder; it verifies the bound
         // directory and applies a private ACL only to its own registry below.
         let _ = account_home;
         verify_existing_default_data_root(base)
@@ -1149,7 +1233,8 @@ mod tests {
     #[cfg(windows)]
     use super::{
         IdentityRegistry, identity_lock_name, open_identity_lock_handle,
-        open_windows_directory_security_handle, verify_windows_security, windows_registry_base,
+        open_windows_directory_security_handle, verify_windows_security, windows_hresult_error,
+        windows_registry_base, windows_system_error,
     };
     use super::{ensure_data_root_from_home, prepare_default_data_root};
     use liaison_workspace::{
@@ -1393,6 +1478,25 @@ mod tests {
         assert_eq!(base, local_app_data.path());
         assert!(account_home.is_none());
         Ok(())
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_locator_errors_preserve_recovery_categories() {
+        use winsafe::co;
+
+        assert_eq!(
+            windows_system_error(co::ERROR::ACCESS_DENIED).kind(),
+            std::io::ErrorKind::PermissionDenied
+        );
+        assert_eq!(
+            windows_hresult_error(co::ERROR::PATH_NOT_FOUND.to_hresult()).kind(),
+            std::io::ErrorKind::NotFound
+        );
+        assert_eq!(
+            windows_hresult_error(co::ERROR::PROFILE_NOT_FOUND.to_hresult()).kind(),
+            std::io::ErrorKind::NotFound
+        );
     }
 
     #[cfg(windows)]

@@ -15,8 +15,11 @@ claim false.
 - `uzers` 0.12.2 safely queries the Unix account database with `getpwuid_r` for
   the effective UID. Default cache, mock, and logging features are disabled;
   its only normal dependency is `libc`.
-- `dirs` 6.0.0 is now Windows-only and resolves the current account's
-  `FOLDERID_LocalAppData` and `FOLDERID_Profile` Known Folders.
+- `winsafe` 0.0.28 supplies safe wrappers for opening the current process token
+  and resolving `FOLDERID_LocalAppData` with that explicit token. Only the
+  `advapi` and `shell` features are enabled; Profile is not a second locator
+  prerequisite. The crate is MIT-licensed, has Rust 1.87 as its minimum
+  supported version, and adds no third-party dependency of its own.
 - `rustix` 1.1.4 supplies the effective Unix user identity used for owner
   checks. It is a Unix-only direct edge.
 - `windows-permissions` 0.2.4 supplies safe wrappers for owner SID, DACL, and
@@ -31,28 +34,39 @@ handle-backed file identities.
 | Crate | Licence | Upstream | `Cargo.lock` checksum |
 |---|---|---|---|
 | `uzers` 0.12.2 | MIT | <https://github.com/rustadopt/uzers-rs> | `0b8275fb1afee25b4111d2dc8b5c505dbbc4afd0b990cb96deb2d88bff8be18d` |
-| `dirs` 6.0.0 | MIT OR Apache-2.0 | <https://github.com/soc/dirs-rs> | `c3e8aa94d75141228480295a7d0e7feb620b1a5ad9f12bc40be62411e38cce4e` |
+| `winsafe` 0.0.28 | MIT | <https://github.com/rodrigocfd/winsafe> | `7d3922ac07e168376bc6799e7896fc737ddb9538be7533ca44bc3463091db1ad` |
 | `rustix` 1.1.4 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | <https://github.com/bytecodealliance/rustix> | `b6fe4565b9518b83ef4f91bb47ce29620ca828bd32cb7e408f0062e9930ba190` |
 | `windows-permissions` 0.2.4 | MIT | <https://github.com/danieldulaney/windows-permissions-rs> | `9e2ccdc3c6bf4d4a094e031b63fadd08d8e42abd259940eb8aa5fdc09d4bf9be` |
 
 The exact versions and checksums are pinned by `Cargo.lock`. Any change needs a
 new licence, provenance, platform, security, and Airgap review.
 
+`winsafe` remains a `0.0.x` single-maintainer wrapper. Its known-folder helper
+returns a UTF-8 `String`; invalid UTF-16 becomes a diagnostic string, which the
+adapter's absolute-path and existing-directory checks reject. The helper frees
+the returned Shell allocation on success but not on an HRESULT failure with a
+non-null output. Microsoft assigns that allocation to the caller in either
+case. Native qualification must exercise the locator; the residual dependency
+issue remains bounded to one call and should be raised upstream rather than
+worked around with repository-local unsafe code.
+
 ## Security boundary
 
 On Linux and macOS, Liaison obtains the effective account's home from the OS
 account database and ignores `HOME`; Linux also ignores `XDG_DATA_HOME`.
-Windows resolves only the LocalAppData Known Folder and does not use the tested
+Windows passes an explicitly opened current-process user token to
+`SHGetKnownFolderPath(FOLDERID_LocalAppData)` and does not use the tested
 `HOME`, `XDG_DATA_HOME`, `USERPROFILE`, or `LOCALAPPDATA` overrides as
 authority. On Unix, Liaison
 safely creates only missing components beneath the owned account home, one
 component at a time with no-follow capability handles. On Windows,
-`FOLDERID_LocalAppData` is operating-system traversal infrastructure: it must
-already exist, is opened without following a reparse point, and is retained by
-file identity. Profile is not a second locator prerequisite. Liaison does not
-require an elevated account's LocalAppData owner to equal its token-user SID
-and does not manufacture a missing Known Folder. A missing or inaccessible
-canonical location fails closed with a typed error; there is no fallback.
+the returned LocalAppData Known Folder is operating-system traversal
+infrastructure: it must already exist, is opened without following a reparse
+point, and is retained by file identity. Profile is not a second locator
+prerequisite. Liaison does not require an elevated account's LocalAppData owner
+to equal its token-user SID and does not manufacture a missing Known Folder. A
+missing or inaccessible canonical location fails closed with a typed error;
+there is no fallback.
 
 On Unix, registry ownership must match the effective UID, the registry mode is
 exactly `0700`, and every zero-byte lock entry is owned, mode `0600`, and has
