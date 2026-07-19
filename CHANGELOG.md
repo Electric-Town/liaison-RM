@@ -6,6 +6,19 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Added
 
+- Accepted working-state decisions for one application composition root, Workspace Session authority, recoverable multi-target commits, workspace key hierarchy and local policy, disposable Directory projection, structurally least-disclosure event readiness, checkpoint/recovery separation, and B0-before-A0 delivery.
+- A repository-hosted working-state delivery contract with current implementation truth, B0/A0 acceptance boundaries, active-branch disposition, and evidence-safe claim language.
+- An evidence-qualified RICE model for B0/A0 work packages, a KCS article explaining dependency and safety overrides, and mandatory PR fields for priority assumptions and decision rationale.
+- A bounded review of maintainer-supplied machine-signal and localization guidance, adopting observable editorial checks while rejecting detector evasion and unsupported authorship classification.
+- Exact, deterministic ownership for every requirement, UAT case, feature gate, and implementation task, with milestone, status, evidence owner, zero-orphan validation, and generated human- and machine-readable reports.
+- A post-P03 design gate that runs design consultation to create `DESIGN.md`, then plan design review before P04 begins; G0 records the gate without pre-empting the design artifact.
+- Explicit B0 event-readiness contracts for ordered outcomes, attendee corrections and denominator reconciliation, real-pilot privacy approval, one trusted owner, and byte-identical least-disclosure recipient briefs.
+- KCS guidance for changing product contracts without creating traceability orphans.
+- ADR 0013 and KCS-0009 pinning the immutable OKF v0.1 Draft People authoring source, Liaison domain-extension authority, strict-write/tolerant-read behavior, sealed-plaintext denial, and required recoverable B0 People normalization.
+- Atomic P05-OKF, P06, and P09-OKF ownership under `FG-B0-001`, with sensitive work removed from G3 P05 and retained exclusively under `FG-B0-002`.
+- A0 source-complete purpose-scoped profile, fact-state, reversible identity-review, and source/range timeline contracts plus later provider-operation, staged-enrichment, and privacy-bounded spatial contracts.
+- Semantic specification checks and negative mutation coverage for the B0 migration exception, global-score/task-engine/auto-merge/direct-write/hidden-sync prohibitions, and canonical task ownership versus explicit evidence dependencies.
+
 - Repository governance, contribution, knowledge, content-quality, architecture, and user-experience review standards.
 - Pull-request evidence requirements and repository policy checks.
 - Product, domain, security, platform, sharing, provider-neutral connection, and release specifications.
@@ -37,6 +50,8 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Review queues preserve factual reasons and do not expose a relationship-strength score.
 - The R2 roadmap now includes locale-catalog, expansion, Unicode, accessible-name, formatting, and named human-review evidence gates.
 - The README and GitHub About contract now lead with the product outcome, state the pre-alpha boundary plainly, and route readers to current evidence, contribution guidance, and the public site.
+- Public site, README, project context, roadmap, and agent guidance now put B0 before A0, distinguish the tested CLI from the broken installed desktop Person-create path, and use 400% reflow as the accessibility evidence target.
+- Requirements and UAT task arrays now contain only atomically owned contracts; reused prerequisite or regression coverage is labelled `evidence_dependencies` rather than implying a second owner.
 
 ### Fixed
 

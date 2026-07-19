@@ -52,6 +52,16 @@ extensions: {}
 
 Context schemas add typed properties. The Markdown body holds named human-authored sections. Unknown front-matter keys, extension namespaces, and unrecognised body sections survive read-modify-write cycles.
 
+## Pinned People compatibility profile
+
+ADR 0013 pins B0 People authoring to OKF v0.1 Draft at immutable source commit `ee67a5ca27044ebe7c38385f5b6cffc2305a9c1a` and raw specification SHA-256 `b9655e607346dbbdc6de21190e9a953313eda6a7eba68d4d272a65975940ad6e`.
+
+Every Liaison-authored non-reserved People Markdown file has a non-empty `type: person` and mapped OKF title, description, tags, and timestamp fields. The Liaison envelope above remains a versioned, namespaced domain extension and is authoritative for identity, purpose, revision, provenance, information state, classification, disclosure, and operational meaning.
+
+OKF-valid does not mean Liaison-valid. The reader tolerates missing optional fields, unknown types/keys, ordinary broken links, unknown body sections, and malformed siblings. Unsupported or invalid domain facts remain inert or quarantined and cannot affect event readiness. Sealed sensitive values never enter plaintext frontmatter, body text, generated indexes, projections, logs, errors, or evidence to satisfy OKF.
+
+Read-modify-write preserves controlled-field meaning while retaining unknown safe keys and sections, original body bytes outside controlled regions, stable IDs, ordinary links, reserved names, and curated index content. Generated indexes never overwrite curated bodies.
+
 ## File naming
 
 Files use a readable slug plus a stable ID suffix when collision is possible:
@@ -87,7 +97,7 @@ The watcher treats external files as untrusted input.
 - Duplicate IDs, revision regressions, invalid dates, broken signatures, and cross-context invariant failures are reported.
 - Invalid files remain on disk and appear in `liaison workspace validate`; they are not discarded.
 - Concurrent changes create a conflict record with base, local, and incoming revisions.
-- Automatic merge is limited to contract-defined independent fields or append-only sections.
+- People and identity candidates never merge automatically, including exact shared identifiers or fuzzy matches. Contract-defined independent file fields or append-only sections may be combined only after an inspectable preview and explicit confirmation.
 - The user can inspect and resolve conflicts without opening SQLite.
 
 ## High-volume streams
@@ -143,6 +153,8 @@ A migration:
 - records each changed file and resulting hash;
 - validates the complete workspace before activation;
 - provides rollback or states why reversal is impossible.
+
+The required B0 OKF People normalization is stricter: it requires an exact backup, journaled staging, final preconditions, one durable commit decision, injected failure at every write boundary, restart recovery, idempotent rerun, and exact rollback with no partial profile/index state. It is the only B0 migration exception. General and third-party migrations remain outside B0.
 
 The application refuses a workspace whose schema is newer than it supports unless opened in an explicit read-only recovery mode.
 

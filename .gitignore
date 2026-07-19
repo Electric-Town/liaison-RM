@@ -1,6 +1,8 @@
 /target/
 /node_modules/
 /dist/
+__pycache__/
+*.py[cod]
 /.idea/
 /.vscode/
 .DS_Store
@@ -14,3 +16,7 @@ Thumbs.db
 # Local Liaison workspaces and projections created during development
 /.liaison-dev/
 /test-workspaces/
+/.gstack/
+
+# Tauri regenerates capability schemas during local builds.
+/apps/desktop/src-tauri/gen/

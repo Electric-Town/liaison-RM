@@ -1,5 +1,5 @@
 schema_version: 1
-status: draft
+status: active
 
 gates:
   - id: FG-R0-001
@@ -21,12 +21,16 @@ gates:
     blocks: [R1]
     criteria:
       - Normative specification, context map, ubiquitous language, threat model, requirements, UAT, gates, and implementation plan exist.
-      - Every R1 task names requirements and UAT.
+      - Every requirement and UAT has exactly one owning task, gate, milestone, status, and evidence owner; every task and gate has an explicit disposition.
+      - The deterministic JSON and Markdown traceability reports are byte-current and contain no orphan, duplicate owner, unknown edge, cross-milestone false claim, or undispositioned founder-plan proposal.
       - Architecture decisions cover Rust/Tauri, canonical files, provider contracts, and build profiles.
     evidence:
       - SPEC.md
       - spec/requirements.json
       - spec/uat-cases.json
+      - spec/traceability-ownership.json
+      - spec/traceability-report.json
+      - docs/product/traceability.md
       - docs/decisions/
 
   - id: FG-R1-001
@@ -89,9 +93,9 @@ gates:
     blocks: [R2-release]
     criteria:
       - Core UAT is keyboard-completable with visible focus.
-      - Screen-reader, 200 percent zoom, reflow, reduced motion, and status-message evidence exists.
+      - Named screen-reader, contrast, keyboard, 200 and 400 percent zoom, reflow, target-size, reduced-motion, localisation, and status-message evidence runs in CI and is sampled manually on the shipped surface.
       - Critical and serious applicable defects are resolved or release is blocked.
-    evidence_required: [accessibility report, UAT-022]
+    evidence_required: [accessibility CI report, manual accessibility report, human language-review record, UAT-021, UAT-022, UAT-062, UAT-LOC-001, UAT-LOC-002]
 
   - id: FG-R2-002
     release: R2
@@ -136,9 +140,9 @@ gates:
     name: Dietary model complete
     blocks: [R3-release]
     criteria:
-      - Required kinds and coverage states are modelled as typed values.
+      - Required kinds plus orthogonal availability, freshness, conflict, and disclosure axes are modelled as typed values.
       - Empty is never interpreted as verified none.
-      - Operational instruction and detailed note use separate disclosure controls.
+      - Operational instruction and detailed note use separate disclosure controls and no B0 catering-role grant exists.
     evidence_required: [domain tests, schema tests, UAT-009, UAT-010]
 
   - id: FG-R3-002
@@ -149,27 +153,28 @@ gates:
       - Organisation, location, department, team, cost centre, role, group, and attendance filters are supported.
       - Active filters are visible and keyboard removable.
       - Saved cohorts retain predicate definitions and revision context.
-    evidence_required: [UAT-012, filter contract tests]
+    evidence_required: [UAT-008, UAT-012, filter contract tests]
 
   - id: FG-R3-003
     release: R3
     name: Readiness reconciles all attendees
     blocks: [R3-release]
     criteria:
-      - Every selected attendee appears in exactly one outcome.
-      - Unknown identities are explicit.
-      - Counts reconcile to cohort total.
-    evidence_required: [property tests, UAT-009]
+      - Every active attendee appears in exactly one ordered, versioned readiness outcome derived from orthogonal source facts.
+      - Invalid combinations and unresolved identities block readiness explicitly.
+      - Duplicates, cancellations, removals, walk-ins, attendance, no-shows, corrections, and event cancellation reconcile to the exact active denominator.
+    evidence_required: [decision-table property tests, attendee-transition matrix, UAT-009, UAT-041]
 
   - id: FG-R3-004
     release: R3
     name: Catering export is least disclosure
     blocks: [R3-release]
     criteria:
-      - Export contains only authorised operational fields.
+      - Preview bytes and emitted bytes match and contain only policy-authorised operational fields for the named purpose and recipient.
+      - Names are absent by default; an opaque attendee identifier is permitted only when the approved policy explicitly requires it.
       - Source revisions and stale-state detection are present.
-      - Restricted diagnostic detail and private overlays are absent.
-    evidence_required: [disclosure fixture, UAT-010, UAT-011]
+      - Restricted diagnostic detail, private overlays, hidden-row counts, workspace access, and catering-role grants are structurally absent.
+    evidence_required: [byte-equality disclosure fixture, negative-disclosure fixture, UAT-010, UAT-011, UAT-041]
 
   - id: FG-R3-005
     release: R3
@@ -179,7 +184,7 @@ gates:
       - Representative receptionist or event users complete cohort-to-brief flow without guidance.
       - Interruptions, errors, missing information, and recovery are recorded.
       - Findings update requirements, UAT, and knowledge.
-    evidence_required: [redacted observation report, issue links]
+    evidence_required: [redacted observation report, issue links, UAT-008, UAT-012]
 
   - id: FG-R4-001
     release: R4
@@ -189,7 +194,7 @@ gates:
       - Descriptor declares contracts, destinations, secrets, limits, consistency, and safe modes.
       - Conformance suite passes supported claims.
       - Evidence version and expiry are recorded.
-    evidence_required: [provider report, descriptor validation]
+    evidence_required: [provider report, descriptor validation, UAT-034]
 
   - id: FG-R4-002
     release: R4
@@ -237,7 +242,7 @@ gates:
     blocks: [sharing-release]
     criteria:
       - Unauthorised materialisation, search, export, provider, AI, count, error, and existence channels reveal no overlay.
-    evidence_required: [non-interference tests, UAT-007]
+    evidence_required: [non-interference tests, UAT-007, UAT-018]
 
   - id: FG-R4-007
     release: R4
@@ -275,7 +280,7 @@ gates:
       - Default grant retrieves no body or attachment.
       - Counts show source, time range, and completeness limitation.
       - Incremental refresh is idempotent.
-    evidence_required: [UAT-005, network payload fixtures]
+    evidence_required: [UAT-005, UAT-006, UAT-013, network payload fixtures]
 
   - id: FG-R5-004
     release: R5
@@ -289,13 +294,27 @@ gates:
 
   - id: FG-R5-005
     release: R5
-    name: Legacy migration reconciled
+    name: Legacy migration and operation history reconciled
     blocks: [migration-release]
     criteria:
-      - Meerkat and Monica imports report mapped, transformed, unresolved, and unsupported data.
+      - Meerkat, Monica, and CRM-in-Markdown imports report mapped, transformed, unresolved, and unsupported data.
       - Source provenance remains.
-      - Re-import is idempotent.
-    evidence_required: [UAT-038, synthetic fixtures]
+      - Preview, rollback, and idempotent re-import pass for every supported source.
+      - Each provider or import operation exposes connector and version, grant, requested and covered source range, attempt and success times, created, updated, skipped and quarantined counts, conflicts, errors, retry, revoke, retention, and history.
+      - Hidden refresh, unreported egress, and relationship-reminder pollution are structurally denied.
+      - Local voice and OCR are claimed only after their independent denied-network, preview, provenance, and confirmation evidence passes.
+    evidence_required: [UAT-038, UAT-059, UAT-060, UAT-070, synthetic fixtures, operation-receipt and hidden-egress fixtures]
+
+  - id: FG-R5-006
+    release: R5
+    name: Spatial discovery remains optional and privacy bounded
+    blocks: [spatial-discovery-release]
+    criteria:
+      - Provider-denied and explicitly granted paths expose the exact geocoding egress, grant, coarse or precise mode, and revocation state.
+      - Coordinate correction and deletion persist without hidden refresh or retained ranking material.
+      - Workplace schemas, files, CLI, UI, settings, exports, and adapters deny spatial discovery structurally.
+      - An equivalent semantic list or table exists and neither view ranks People by a global person or relationship score.
+    evidence_required: [UAT-072, denied-network and egress fixtures, coordinate deletion, Workplace structural denial, semantic parity]
 
   - id: FG-R6-001
     release: R6
@@ -304,7 +323,7 @@ gates:
     criteria:
       - Loopback default, scoped expiring tokens, operation denial, and audit pass.
       - No raw database or workspace path API exists.
-    evidence_required: [UAT-029]
+    evidence_required: [UAT-029, UAT-030, UAT-058]
 
   - id: FG-R6-002
     release: R6
@@ -333,7 +352,7 @@ gates:
       - Grant and preview name provider, endpoint, purpose, records, fields, operation, retention, and expiry.
       - Preview fixture equals actual outbound payload.
       - Expired grant cannot be reused.
-    evidence_required: [UAT-039]
+    evidence_required: [UAT-031, UAT-039, UAT-057]
 
   - id: FG-R6-005
     release: R6
@@ -343,7 +362,27 @@ gates:
       - WIT contract and manifest version validate.
       - Undeclared filesystem, network, secret, and record access fail.
       - Plugin receives no raw database handle.
-    evidence_required: [UAT-035, resource-limit tests]
+    evidence_required: [UAT-035, UAT-036, UAT-LOC-003, resource-limit tests]
+
+  - id: FG-R6-006
+    release: R6
+    name: Relationship handoff remains bounded
+    blocks: [relationship-handoff-release]
+    criteria:
+      - A scoped relationship-follow-up envelope can be handed to an approved execution system and revoked.
+      - Only permitted read-only external status is mirrored.
+      - Liaison exposes no general task assignment, dependency, routine, project, workload, or execution surface.
+    evidence_required: [UAT-061, negative task-surface fixture]
+
+  - id: FG-R6-007
+    release: R6
+    name: Enrichment remains a source-backed staged proposal
+    blocks: [enrichment-release]
+    criteria:
+      - Every life-change, biography, or enrichment proposal contains old and new values, source, confidence, egress context, and explicit review.
+      - AI, MCP, plugins, providers, and import adapters cannot directly write a confirmed fact.
+      - Reject, correct, and accept use application commands and cannot silently change assessment, freshness, cadence, disclosure, or operational readiness.
+    evidence_required: [UAT-071, direct-write denial, assessment-freshness-cadence negative fixture]
 
   - id: FG-REL-001
     release: all
@@ -354,3 +393,114 @@ gates:
       - Artifacts have checksums and provenance linked to source commit.
       - Claims match test evidence and unresolved risks are disclosed.
     evidence_required: [release checklist, signed checksums, knowledge validation]
+
+  - id: FG-B0-001
+    release: B0
+    name: Workspace authority and recoverable writes proven
+    blocks: [B0]
+    criteria:
+      - CLI and Tauri use one application composition root and structured error contract.
+      - Workspace Session owns the operating-system writer lock and read-only Health remains available.
+      - Every canonical mutation uses per-file identity and digest preconditions, flushed staging, final recheck, one durable commit decision, and evidenced roll-forward recovery.
+      - Malformed records do not hide healthy Directory records.
+      - Every Liaison-authored non-reserved People document uses the pinned OKF v0.1 Draft envelope through one strict writer while Liaison domain extensions remain authoritative and sealed sensitive values never enter plaintext.
+      - Tolerant reads preserve unknown types, keys, extensions, body bytes, links and curated indexes; OKF-valid but domain-invalid facts remain inert or quarantined and cannot affect event readiness.
+      - The required OKF People normalization is previewable, exact-backup-first, journaled, failure-atomic, idempotent, restart-recoverable and exactly reversible with no partial profile or index state.
+      - Settings-only import and export is previewable, rollback-safe, and contains no records, secrets, device paths, or provider-backup claim.
+    evidence_required: [UAT-001, UAT-040, UAT-042, UAT-050, UAT-065, UAT-066, fault-injection matrix, rename and file-sync matrix, OKF conformance and sealed-leak fixtures, CLI-Tauri parity tests]
+
+  - id: FG-B0-DESIGN-001
+    release: B0
+    name: Canonical desktop design direction reviewed before P04
+    blocks: [T-B0-P04]
+    criteria:
+      - The gate runs only after P03 stabilises typed command, state, error, and recoverable-operation contracts.
+      - Design consultation creates canonical DESIGN.md with concrete directions and one selected accessible semantic system.
+      - Plan design review checks the P04 plan against DESIGN.md, the complete B0 journey, localisation, accessibility, recovery, and theme requirements before implementation starts.
+      - G0 records this future gate but does not create DESIGN.md or preselect the visual direction.
+    evidence_required: [DESIGN.md, design-consultation record, plan-design-review report, amended P04 plan]
+
+  - id: FG-B0-002
+    release: B0
+    name: Sensitive data and clean recovery proven
+    blocks: [B0]
+    criteria:
+      - Sensitive persistable types cannot encode plaintext values.
+      - Purpose grants fail closed before decryption or projection.
+      - An encrypted recovery package restores without the original Keychain state.
+      - Local checkpoints are never described as encrypted recovery.
+      - Purged sensitive data cannot reactivate through an older checkpoint, recovery package, compaction, or backup retention window.
+    evidence_required: [UAT-025, UAT-043, UAT-055, cryptographic vectors, leak scan, clean-install restore, deletion-replay matrix]
+
+  - id: FG-B0-003
+    release: B0
+    name: Installed Workplace Review Alpha accepted
+    blocks: [A0]
+    criteria:
+      - The installed universal Mac application completes Event Details, Cohort, Attendees, Readiness, and Brief after Directory import.
+      - The ordered decision table and attendee transition matrix reconcile every active attendee and invalid combination; only bounded EventReadinessFollowUp exists.
+      - Immutable preview and emitted brief bytes match; names are absent by default and opaque identifiers require explicit approved policy; diagnostic detail, private notes, hidden-row metadata, catering-role grants, generic tasks, relationship allocation, cadence, ranking, scoring, and attention weights are structurally absent.
+      - System, light, dark, and high_contrast built-ins use one semantic contract and preserve meaning across the complete keyboard, VoiceOver, contrast, 400 percent zoom and reflow, target, reduced-motion, localisation, interruption, offline, egress, relaunch, and readable-file matrix.
+      - Missing signing or notarisation is disclosed as an internal review-alpha limitation.
+    evidence_required: [UAT-009, UAT-010, UAT-011, UAT-041, UAT-050, UAT-062, decision-table and attendee-lifecycle property tests, byte-equality and negative-disclosure fixtures, compiled design review, native QA report, Mac provenance]
+
+  - id: FG-B0-PILOT-001
+    release: B0
+    name: Real workplace-data pilot governance approved
+    blocks: [real-workplace-data]
+    criteria:
+      - Synthetic UAT may run before this gate, but real employee dietary, accessibility, email, facilities, or Working With Me data is denied.
+      - Data controller, purpose and legal basis, special-category condition, DPIA decision, notice, retention, rights, incident response, and accountable operators are recorded.
+      - Independent legal and privacy review is dated, scoped, and unresolved conditions block the pilot.
+    evidence_required: [governance checklist, DPIA decision record, participant notice, retention schedule, independent review]
+
+  - id: FG-A0-001
+    release: A0
+    name: Personal Memory Alpha accepted after B0
+    blocks: [A0-release]
+    depends_on: [FG-A0-G2A, FG-A0-G2B, FG-A0-G2C, FG-B0-003]
+    criteria:
+      - The G2A, G2B, and G2C capability gates pass in one installed Personal Memory Alpha artifact.
+      - Quick and full capture, the source-complete purpose-scoped profile, stable configurable tabs, explicit fact states, reversible identity review, and the unified source and range-labelled timeline pass as one installed workflow.
+      - Last note and last interaction remain distinct; conflicts and external edits never silently choose a winner or change disclosure or operational readiness.
+      - Exact and fuzzy identity candidates never merge automatically, and timeline counts never become a global person score.
+      - Personal workflows recover after interruption and remain open-file or properly sealed.
+      - Every B0 gate and regression remains green.
+    evidence_required: [UAT-044, UAT-067, UAT-068, UAT-069, B0 regression including UAT-065, compiled design review, native QA report]
+
+  - id: FG-A0-G2A
+    release: A0
+    name: People and interaction memory accepted
+    blocks: [FG-A0-001]
+    criteria:
+      - Notes, interactions, important dates, last-interaction context, timeline, search, and saved views complete through files, CLI, and installed desktop.
+      - Corrections, deletion, external edits, interruption, grant filtering, and settings round trip preserve provenance and canonical data.
+    evidence_required: [UAT-003, UAT-017, UAT-047, UAT-048, UAT-049]
+
+  - id: FG-A0-G2B
+    release: A0
+    name: Relationship reminders and attention accepted
+    blocks: [FG-A0-001]
+    criteria:
+      - Relationship assessment, derived freshness, bounded reminders, suppressions, and source-linked reason-only Review remain separate and explainable.
+      - Workplace purpose denies assessment, allocation, cadence, ranking, scoring, and every generic task or project field.
+    evidence_required: [UAT-004, UAT-023, UAT-051, UAT-052]
+
+  - id: FG-A0-G2C
+    release: A0
+    name: Working With Me and configuration accepted
+    blocks: [FG-A0-001]
+    criteria:
+      - Purpose boundaries, Working With Me provenance, typed custom fields, stable tabs, safe rehoming, merge or split, and opaque identity bridges preserve data and consent semantics.
+      - Density, text scale, motion, validated palettes, and settings round trip work by keyboard and screen reader without record or semantic leakage.
+    evidence_required: [UAT-002, UAT-020, UAT-021, UAT-045, UAT-046, UAT-050, UAT-053, UAT-054, UAT-056, UAT-063]
+
+  - id: FG-UX-THEME-001
+    release: POST-A0
+    name: Declarative theme packages safe to activate
+    blocks: [theme-package-release]
+    criteria:
+      - Theme manifests declare version, checksum, author, licence, schema range, semantic tokens, and bundled or explicitly approved local-font provenance.
+      - Arbitrary CSS, scripts, executable code, remote assets, filesystem access, network capability, and activation before validation are rejected.
+      - Preview, conformance label, activation, failure isolation, and rollback to a last known-good built-in are evidenced.
+    evidence_required: [UAT-064, schema and checksum fixtures, malicious-package denial, accessibility conformance suite, rollback test]

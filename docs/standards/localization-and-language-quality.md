@@ -34,7 +34,7 @@ Interfaces must tolerate at least 45% expansion for ordinary labels and substant
 The layout test suite covers:
 
 - 320 and 390 CSS-pixel widths;
-- 200% zoom and text-only zoom where supported;
+- 400% zoom and reflow, plus text-only zoom where supported;
 - long names and organization titles;
 - right-to-left readiness even before an RTL locale is released;
 - Japanese line-breaking rules;

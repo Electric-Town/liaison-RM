@@ -1,0 +1,5617 @@
+{
+  "schema_version": 1,
+  "status": "active",
+  "source_sha256": "b7f527e303051caa5a8e5471f556deaacc317a1ca6d81336b3ee2ebf97034567",
+  "delivery_boundary": "B0 Workplace Review Alpha before A0 Personal Memory Alpha; provider, mobile, AI, MCP, and theme packages remain later.",
+  "design_sequence": "After T-B0-P03, T-B0-P03D runs design consultation to create DESIGN.md and plan design review; T-B0-P04 cannot start before that gate. G0 does not create DESIGN.md.",
+  "approved_strategy": {
+    "title": "Liaison RM product strategy and Claudia/PingCRM/OKF reconciliation",
+    "status": "integrated-by-g0-contract-reconciliation",
+    "approved_sha256": "795a6e6751cd29a995478e254323f491e68a53ef7c35fa729d8627b87cd37089",
+    "scope": "Pins OKF v0.1 Draft People authoring, preserves B0 before A0, includes the required OKF People normalization in B0, and excludes general or third-party migrations from B0."
+  },
+  "counts": {
+    "requirements": 156,
+    "personas": 15,
+    "uat_cases": 75,
+    "feature_gates": 48,
+    "implementation_tasks": 77,
+    "evidence_owners": 9,
+    "proposal_dispositions": 76
+  },
+  "milestones": [
+    {
+      "id": "G0",
+      "name": "One source of product truth",
+      "depends_on": [],
+      "status": "current"
+    },
+    {
+      "id": "G1",
+      "name": "Trusted local workspace foundation",
+      "depends_on": [
+        "G0"
+      ],
+      "status": "blocked"
+    },
+    {
+      "id": "G3",
+      "name": "Workplace event-readiness implementation",
+      "depends_on": [
+        "G1"
+      ],
+      "status": "blocked"
+    },
+    {
+      "id": "B0",
+      "name": "Workplace Review Alpha qualification",
+      "depends_on": [
+        "G0",
+        "G1",
+        "G3"
+      ],
+      "status": "blocked"
+    },
+    {
+      "id": "G2A",
+      "name": "People and interaction memory",
+      "depends_on": [
+        "B0"
+      ],
+      "status": "blocked"
+    },
+    {
+      "id": "G2B",
+      "name": "Relationship reminders and attention",
+      "depends_on": [
+        "B0"
+      ],
+      "status": "blocked"
+    },
+    {
+      "id": "G2C",
+      "name": "Working With Me and configuration",
+      "depends_on": [
+        "B0"
+      ],
+      "status": "blocked"
+    },
+    {
+      "id": "A0",
+      "name": "Personal Memory Alpha qualification",
+      "depends_on": [
+        "G2A",
+        "G2B",
+        "G2C",
+        "B0"
+      ],
+      "status": "blocked"
+    },
+    {
+      "id": "POST-A0",
+      "name": "Post-A0 visual extension points",
+      "depends_on": [
+        "A0"
+      ],
+      "status": "deferred"
+    },
+    {
+      "id": "G4",
+      "name": "Provider and sharing trust foundation",
+      "depends_on": [
+        "A0"
+      ],
+      "status": "deferred"
+    },
+    {
+      "id": "G5",
+      "name": "Contact portability and governed signals",
+      "depends_on": [
+        "A0"
+      ],
+      "status": "deferred"
+    },
+    {
+      "id": "G6",
+      "name": "Safe automation and ecosystem",
+      "depends_on": [
+        "A0"
+      ],
+      "status": "deferred"
+    },
+    {
+      "id": "G7",
+      "name": "Public open-source release evidence",
+      "depends_on": [
+        "B0"
+      ],
+      "status": "blocked"
+    }
+  ],
+  "evidence_owners": [
+    {
+      "id": "EO-GOVERNANCE",
+      "role": "Product and architecture owner",
+      "accountable": "Ryan until delegated"
+    },
+    {
+      "id": "EO-WORKSPACE",
+      "role": "Workspace integrity owner",
+      "accountable": "Ryan until delegated"
+    },
+    {
+      "id": "EO-EXPERIENCE",
+      "role": "Experience and accessibility owner",
+      "accountable": "Ryan until delegated"
+    },
+    {
+      "id": "EO-PROFILES",
+      "role": "People and profile owner",
+      "accountable": "Ryan until delegated"
+    },
+    {
+      "id": "EO-EVENTS",
+      "role": "Events and Directory owner",
+      "accountable": "Ryan until delegated"
+    },
+    {
+      "id": "EO-SECURITY",
+      "role": "Security, privacy, and recovery owner",
+      "accountable": "Ryan until delegated"
+    },
+    {
+      "id": "EO-CONNECTIONS",
+      "role": "Connections and sharing owner",
+      "accountable": "Ryan until delegated"
+    },
+    {
+      "id": "EO-AUTOMATION",
+      "role": "Automation and plugin owner",
+      "accountable": "Ryan until delegated"
+    },
+    {
+      "id": "EO-RELEASE",
+      "role": "Packaging and release owner",
+      "accountable": "Ryan until delegated"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "LRM-WS-001",
+      "repository_release": "R1",
+      "context": "workspace",
+      "priority": "must",
+      "statement": "The application shall create a workspace in a user-selected local directory without requiring an account or network connection.",
+      "owning_task": "T-B0-P02",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P02",
+        "T-R1-002",
+        "T-R1-008"
+      ]
+    },
+    {
+      "id": "LRM-WS-002",
+      "repository_release": "R1",
+      "context": "workspace",
+      "priority": "must",
+      "statement": "The workspace shall declare a stable workspace ID, schema version, enabled modules, locale, and profile in a readable manifest.",
+      "owning_task": "T-B0-P02",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P02",
+        "T-R1-002"
+      ]
+    },
+    {
+      "id": "LRM-WS-003",
+      "repository_release": "R1",
+      "context": "workspace",
+      "priority": "must",
+      "statement": "Canonical Markdown, YAML, and JSONL shall remain sufficient to rebuild every disposable projection.",
+      "owning_task": "T-B0-P06",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P06",
+        "T-R1-005",
+        "T-R1-006"
+      ]
+    },
+    {
+      "id": "LRM-WS-004",
+      "repository_release": "R1",
+      "context": "workspace",
+      "priority": "must",
+      "statement": "Canonical writes shall use revision preconditions and a crash-recoverable journal.",
+      "owning_task": "T-B0-P03",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P03",
+        "T-R1-003"
+      ]
+    },
+    {
+      "id": "LRM-WS-005",
+      "repository_release": "R1",
+      "context": "workspace",
+      "priority": "must",
+      "statement": "Unknown extension fields and body sections shall survive a read-modify-write cycle.",
+      "owning_task": "T-B0-P03",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P03",
+        "T-R1-005"
+      ]
+    },
+    {
+      "id": "LRM-WS-006",
+      "repository_release": "R1",
+      "context": "workspace",
+      "priority": "must",
+      "statement": "The application shall detect duplicate record IDs, invalid schemas, revision regressions, and unsafe paths.",
+      "owning_task": "T-B0-P06",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P06",
+        "T-R1-003",
+        "T-R1-006",
+        "T-R1-008"
+      ]
+    },
+    {
+      "id": "LRM-WS-007",
+      "repository_release": "R1",
+      "context": "workspace",
+      "priority": "must",
+      "statement": "Migrations shall support dry-run, pre-migration backup, deterministic execution, validation, and rollback or an explicit irreversibility statement.",
+      "owning_task": "T-B0-P03",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P03"
+      ]
+    },
+    {
+      "id": "LRM-WS-008",
+      "repository_release": "R2",
+      "context": "workspace",
+      "priority": "must",
+      "statement": "The desktop application shall display the active workspace, build profile, save state, projection state, and validation state.",
+      "owning_task": "T-B0-P11",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P11",
+        "T-R2-001"
+      ]
+    },
+    {
+      "id": "LRM-PE-001",
+      "repository_release": "R1",
+      "context": "people",
+      "priority": "must",
+      "statement": "A person shall have a stable ID independent of filename, display name, contact address, or provider UID.",
+      "owning_task": "T-B0-P05",
+      "owning_gate": "FG-R3-001",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01",
+        "T-B0-P05",
+        "T-R1-004",
+        "T-R1-009"
+      ]
+    },
+    {
+      "id": "LRM-PE-002",
+      "repository_release": "R1",
+      "context": "people",
+      "priority": "must",
+      "statement": "A profile shall support structured names, aliases, pronouns, multiple typed contact points, addresses, URLs, and messaging handles.",
+      "owning_task": "T-B0-P05",
+      "owning_gate": "FG-R3-001",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01",
+        "T-B0-P05",
+        "T-R1-004",
+        "T-R1-009"
+      ]
+    },
+    {
+      "id": "LRM-PE-003",
+      "repository_release": "R1",
+      "context": "people",
+      "priority": "must",
+      "statement": "A profile shall support birthdays with an unknown year, anniversaries, and user-defined important dates.",
+      "owning_task": "T-A0-P02",
+      "owning_gate": "FG-A0-G2A",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01",
+        "T-A0-P02",
+        "T-R1-004",
+        "T-R1-009"
+      ]
+    },
+    {
+      "id": "LRM-PE-004",
+      "repository_release": "R1",
+      "context": "people",
+      "priority": "must",
+      "statement": "Custom profile fields shall use stable field IDs, declared types, validation, classification, and display policy.",
+      "owning_task": "T-B0-P05",
+      "owning_gate": "FG-R3-001",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01",
+        "T-B0-P05",
+        "T-R1-004"
+      ]
+    },
+    {
+      "id": "LRM-PE-005",
+      "repository_release": "R1",
+      "context": "people",
+      "priority": "must",
+      "statement": "Sensitive profile fields shall record provenance, verification date, visibility, and last-updated information.",
+      "owning_task": "T-B0-P05",
+      "owning_gate": "FG-R3-001",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01",
+        "T-B0-P05",
+        "T-R1-004"
+      ]
+    },
+    {
+      "id": "LRM-PE-006",
+      "repository_release": "R1",
+      "context": "people",
+      "priority": "must",
+      "statement": "Archive shall remove a person from active workflows without deleting the canonical record or history.",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01",
+        "T-R1-004",
+        "T-R1-009"
+      ]
+    },
+    {
+      "id": "LRM-PE-007",
+      "repository_release": "A0",
+      "context": "people",
+      "priority": "must",
+      "statement": "Users shall create, archive, safely rehome, reorder, and change visibility of typed custom fields and tabs through stable IDs without changing canonical field meaning or hiding canonical content from non-visual access.",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01"
+      ]
+    },
+    {
+      "id": "LRM-PE-008",
+      "repository_release": "R3",
+      "context": "people",
+      "priority": "must",
+      "statement": "Dietary information shall distinguish allergy, intolerance, medical restriction, religious restriction, ethical preference, dislike, positive preference, and other.",
+      "owning_task": "T-B0-P05",
+      "owning_gate": "FG-R3-001",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P05",
+        "T-R3-002"
+      ]
+    },
+    {
+      "id": "LRM-PE-009",
+      "repository_release": "R3",
+      "context": "people",
+      "priority": "must",
+      "statement": "Dietary source facts shall store availability, freshness, conflict, and disclosure as four orthogonal axes; legacy mutually exclusive coverage values are migration inputs only.",
+      "owning_task": "T-B0-P05",
+      "owning_gate": "FG-R3-001",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P05",
+        "T-R3-002"
+      ]
+    },
+    {
+      "id": "LRM-PE-010",
+      "repository_release": "R3",
+      "context": "people",
+      "priority": "must",
+      "statement": "Dietary operational instructions and detailed notes shall use separate classifications and disclosure policies; B0 recipients receive immutable least-disclosure brief bytes and never receive workspace access or a catering-role grant.",
+      "owning_task": "T-B0-P05",
+      "owning_gate": "FG-R3-001",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P05",
+        "T-R3-002"
+      ]
+    },
+    {
+      "id": "LRM-OR-001",
+      "repository_release": "R3",
+      "context": "organisations",
+      "priority": "must",
+      "statement": "The product shall model organisations, locations, departments, teams, cost centres, and roles as stable records.",
+      "owning_task": "T-B0-P09",
+      "owning_gate": "FG-R3-002",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P09",
+        "T-R3-001"
+      ]
+    },
+    {
+      "id": "LRM-OR-002",
+      "repository_release": "R3",
+      "context": "organisations",
+      "priority": "must",
+      "statement": "Memberships shall record effective dates and provenance.",
+      "owning_task": "T-B0-P09",
+      "owning_gate": "FG-R3-002",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P09",
+        "T-R3-001"
+      ]
+    },
+    {
+      "id": "LRM-OR-003",
+      "repository_release": "R3",
+      "context": "organisations",
+      "priority": "should",
+      "statement": "Saved cohorts shall combine organisation, location, department, team, cost centre, role, group, and profile predicates.",
+      "owning_task": "T-B0-P09",
+      "owning_gate": "FG-R3-002",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P09",
+        "T-R3-003"
+      ]
+    },
+    {
+      "id": "LRM-OR-004",
+      "repository_release": "R3",
+      "context": "organisations",
+      "priority": "must",
+      "statement": "Bulk employee import shall provide mapping, validation, duplicate detection, preview, idempotency, and rollback evidence.",
+      "owning_task": "T-B0-P09",
+      "owning_gate": "FG-R3-002",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P09",
+        "T-R3-004"
+      ]
+    },
+    {
+      "id": "LRM-RE-001",
+      "repository_release": "R2",
+      "context": "relationships",
+      "priority": "must",
+      "statement": "Relationships shall support typed person-person and person-organisation links with direction, status, priority, cadence, and provenance.",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P03",
+        "T-R2-004"
+      ]
+    },
+    {
+      "id": "LRM-RE-002",
+      "repository_release": "R2",
+      "context": "relationships",
+      "priority": "must",
+      "statement": "Relationship status shall support at least VIP, maintain, watch, deprioritised, ignored, and archived through configurable vocabulary.",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P03",
+        "T-R2-004"
+      ]
+    },
+    {
+      "id": "LRM-RE-003",
+      "repository_release": "R2",
+      "context": "relationships",
+      "priority": "must",
+      "statement": "The product shall display last interaction, last meaningful note, next action, and due cadence for a relationship.",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P03",
+        "T-R2-004"
+      ]
+    },
+    {
+      "id": "LRM-RE-004",
+      "repository_release": "R2",
+      "context": "relationships",
+      "priority": "must",
+      "statement": "The graph shall not be the only relationship interface.",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P03",
+        "T-R2-005"
+      ]
+    },
+    {
+      "id": "LRM-RE-005",
+      "repository_release": "R2",
+      "context": "relationships",
+      "priority": "should",
+      "statement": "Graph layout shall support bounded neighbourhoods, clustering, filtering, and progressive loading.",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P03",
+        "T-R2-005"
+      ]
+    },
+    {
+      "id": "LRM-IN-001",
+      "repository_release": "R2",
+      "context": "interactions",
+      "priority": "must",
+      "statement": "The unified timeline shall include source-linked notes, interactions, meetings, and events with direction, channel, participants, time, kind, source and date filters, expandable content, correction history, and explicit imported coverage or range; factual counts shall never become a global person score.",
+      "owning_task": "T-A0-P04",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P04"
+      ]
+    },
+    {
+      "id": "LRM-IN-002",
+      "repository_release": "R5",
+      "context": "interactions",
+      "priority": "must",
+      "statement": "Imported calendar and email metadata shall retain provider identities and support idempotent refresh.",
+      "owning_task": "T-R5-003",
+      "owning_gate": "FG-R5-003",
+      "milestone": "G5",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-002",
+        "T-R5-003"
+      ]
+    },
+    {
+      "id": "LRM-IN-003",
+      "repository_release": "R5",
+      "context": "interactions",
+      "priority": "must",
+      "statement": "Email bodies and attachments shall not be imported under the default email-metadata grant.",
+      "owning_task": "T-R5-003",
+      "owning_gate": "FG-R5-003",
+      "milestone": "G5",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-003"
+      ]
+    },
+    {
+      "id": "LRM-IN-004",
+      "repository_release": "R5",
+      "context": "interactions",
+      "priority": "must",
+      "statement": "Communication counts and last-interaction summaries shall identify their source, time range, and completeness limits.",
+      "owning_task": "T-R5-003",
+      "owning_gate": "FG-R5-003",
+      "milestone": "G5",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-003"
+      ]
+    },
+    {
+      "id": "LRM-IN-005",
+      "repository_release": "R5",
+      "context": "interactions",
+      "priority": "should",
+      "statement": "The product shall support source-linked meeting preparation views for authorised executive assistants.",
+      "owning_task": "T-R5-007",
+      "owning_gate": "FG-R5-003",
+      "milestone": "G5",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-007"
+      ]
+    },
+    {
+      "id": "LRM-EV-001",
+      "repository_release": "R3",
+      "context": "events",
+      "priority": "must",
+      "statement": "Users shall create events and add attendees directly, by import, or by saved cohort.",
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-003",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P10",
+        "T-R3-005"
+      ]
+    },
+    {
+      "id": "LRM-EV-002",
+      "repository_release": "R3",
+      "context": "events",
+      "priority": "must",
+      "statement": "Attendance shall distinguish invited, confirmed, attended, declined, cancelled, no-show, and unknown.",
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-003",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P10",
+        "T-R3-005"
+      ]
+    },
+    {
+      "id": "LRM-EV-003",
+      "repository_release": "R3",
+      "context": "events",
+      "priority": "must",
+      "statement": "Dietary readiness shall account for every selected attendee and each defined coverage state.",
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-003",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P10",
+        "T-R3-006"
+      ]
+    },
+    {
+      "id": "LRM-EV-004",
+      "repository_release": "R3",
+      "context": "events",
+      "priority": "must",
+      "statement": "A catering brief shall be an immutable purpose-bound least-disclosure snapshot for a named recipient or recipient class; names shall be absent by default and an opaque attendee identifier shall appear only when the approved policy explicitly requires one.",
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-004",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P10",
+        "T-R3-006"
+      ]
+    },
+    {
+      "id": "LRM-EV-005",
+      "repository_release": "R3",
+      "context": "events",
+      "priority": "must",
+      "statement": "A brief shall record the profile revisions used and become stale when relevant source information changes.",
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-004",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P10",
+        "T-R3-006"
+      ]
+    },
+    {
+      "id": "LRM-EV-006",
+      "repository_release": "R5",
+      "context": "events",
+      "priority": "must",
+      "statement": "The product shall report recorded event participation counts per person, group, organisation, and time range.",
+      "owning_task": "T-R5-007",
+      "owning_gate": "FG-R5-003",
+      "milestone": "G5",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-007"
+      ]
+    },
+    {
+      "id": "LRM-FA-001",
+      "repository_release": "R5",
+      "context": "facilities",
+      "priority": "must",
+      "statement": "Access-log import shall provide source-specific column mapping, sample preview, validation, idempotency, and result evidence.",
+      "owning_task": "T-R5-004",
+      "owning_gate": "FG-R5-004",
+      "milestone": "G5",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-004"
+      ]
+    },
+    {
+      "id": "LRM-FA-002",
+      "repository_release": "R5",
+      "context": "facilities",
+      "priority": "must",
+      "statement": "Unknown badge identities shall remain unresolved until an authorised operator confirms a mapping.",
+      "owning_task": "T-R5-004",
+      "owning_gate": "FG-R5-004",
+      "milestone": "G5",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-004"
+      ]
+    },
+    {
+      "id": "LRM-FA-003",
+      "repository_release": "R5",
+      "context": "facilities",
+      "priority": "must",
+      "statement": "Access events shall support retention, deletion, and legal-hold policy by workspace and source.",
+      "owning_task": "T-R5-004",
+      "owning_gate": "FG-R5-004",
+      "milestone": "G5",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-004"
+      ]
+    },
+    {
+      "id": "LRM-FA-004",
+      "repository_release": "R5",
+      "context": "facilities",
+      "priority": "must",
+      "statement": "The core product shall not calculate productivity, performance, attendance-compliance, or employee-risk scores from access data.",
+      "owning_task": "T-R5-004",
+      "owning_gate": "FG-R5-004",
+      "milestone": "G5",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-004"
+      ]
+    },
+    {
+      "id": "LRM-FA-005",
+      "repository_release": "R5",
+      "context": "facilities",
+      "priority": "should",
+      "statement": "Facilities summaries shall use bounded aggregates with minimum-group and role controls.",
+      "owning_task": "T-R5-004",
+      "owning_gate": "FG-R5-004",
+      "milestone": "G5",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-004"
+      ]
+    },
+    {
+      "id": "LRM-RM-001",
+      "repository_release": "A0",
+      "context": "reminders",
+      "priority": "must",
+      "statement": "Users shall create one-time or policy-bounded recurring relationship reminders from an allowed relationship context, source, and reason; B0 event follow-up remains an Events-owned type.",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P03",
+        "T-R2-004"
+      ]
+    },
+    {
+      "id": "LRM-RM-002",
+      "repository_release": "A0",
+      "context": "reminders",
+      "priority": "must",
+      "statement": "A relationship reminder shall explain why contact is due and provide a source-linked next action without claiming relationship quality.",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P03",
+        "T-R2-004"
+      ]
+    },
+    {
+      "id": "LRM-RM-003",
+      "repository_release": "A0",
+      "context": "reminders",
+      "priority": "should",
+      "statement": "Users shall snooze, complete, skip, or change an allowed relationship cadence with undo where practical and with explicit source and context.",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P03",
+        "T-R2-004"
+      ]
+    },
+    {
+      "id": "LRM-CO-001",
+      "repository_release": "R4",
+      "context": "connections",
+      "priority": "must",
+      "statement": "A provider shall implement a versioned capability contract and publish a descriptor before registration.",
+      "owning_task": "T-R4-001",
+      "owning_gate": "FG-R4-001",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-001",
+        "T-R4-003"
+      ]
+    },
+    {
+      "id": "LRM-CO-002",
+      "repository_release": "R4",
+      "context": "connections",
+      "priority": "must",
+      "statement": "A connection shall be unable to access data until an active purpose-bound grant is approved.",
+      "owning_task": "T-R4-001",
+      "owning_gate": "FG-R4-001",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-001"
+      ]
+    },
+    {
+      "id": "LRM-CO-003",
+      "repository_release": "R4",
+      "context": "connections",
+      "priority": "must",
+      "statement": "A grant shall constrain provider, endpoint, operations, data classes or fields, record scope, schedule, retention, expiry, and approver.",
+      "owning_task": "T-R4-001",
+      "owning_gate": "FG-R4-001",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-001"
+      ]
+    },
+    {
+      "id": "LRM-CO-004",
+      "repository_release": "R4",
+      "context": "connections",
+      "priority": "must",
+      "statement": "Every connection job shall be idempotent or explicitly report why the provider cannot guarantee idempotency.",
+      "owning_task": "T-R4-003",
+      "owning_gate": "FG-R4-001",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-003"
+      ]
+    },
+    {
+      "id": "LRM-CO-005",
+      "repository_release": "R4",
+      "context": "connections",
+      "priority": "must",
+      "statement": "Provider UI and CLI labels shall distinguish backup, single-writer publication, transport, and multi-writer synchronisation.",
+      "owning_task": "T-R4-001",
+      "owning_gate": "FG-R4-001",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-001",
+        "T-R4-003"
+      ]
+    },
+    {
+      "id": "LRM-CO-006",
+      "repository_release": "R4",
+      "context": "connections",
+      "priority": "must",
+      "statement": "Secrets shall be stored as opaque secret-store references and resolved only for an approved operation.",
+      "owning_task": "T-R4-001",
+      "owning_gate": "FG-R4-001",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-001",
+        "T-R4-002"
+      ]
+    },
+    {
+      "id": "LRM-CO-007",
+      "repository_release": "R4",
+      "context": "connections",
+      "priority": "must",
+      "statement": "Connected-local egress shall reject undeclared destinations, redirects, operations, data scopes, and expired grants.",
+      "owning_task": "T-R4-002",
+      "owning_gate": "FG-R4-002",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-002"
+      ]
+    },
+    {
+      "id": "LRM-CO-008",
+      "repository_release": "R4",
+      "context": "connections",
+      "priority": "must",
+      "statement": "Backups shall be encrypted and validated locally before provider upload.",
+      "owning_task": "T-R4-004",
+      "owning_gate": "FG-R4-003",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-004"
+      ]
+    },
+    {
+      "id": "LRM-CO-009",
+      "repository_release": "R4",
+      "context": "connections",
+      "priority": "must",
+      "statement": "Backup success shall require an isolated restore verification, not upload completion alone.",
+      "owning_task": "T-R4-004",
+      "owning_gate": "FG-R4-003",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-004"
+      ]
+    },
+    {
+      "id": "LRM-CO-010",
+      "repository_release": "R5",
+      "context": "connections",
+      "priority": "must",
+      "statement": "Liaison shall act as an outbound CardDAV client to a user-chosen existing provider, synchronise only granted views or groups, and preserve unknown vCard properties; the first topology shall not expose a Liaison LAN CardDAV server.",
+      "owning_task": "T-R5-001",
+      "owning_gate": "FG-R5-001",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-001"
+      ]
+    },
+    {
+      "id": "LRM-CO-011",
+      "repository_release": "R5",
+      "context": "connections",
+      "priority": "must",
+      "statement": "Calendar import shall preserve UID, recurrence identity, source revision, attendee mapping, and deletion policy.",
+      "owning_task": "T-R5-002",
+      "owning_gate": "FG-R5-002",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-002"
+      ]
+    },
+    {
+      "id": "LRM-CO-012",
+      "repository_release": "R5",
+      "context": "connections",
+      "priority": "must",
+      "statement": "Google Drive, WebDAV, S3-compatible, and local-folder adapters shall reuse provider-neutral object-store and backup contracts.",
+      "owning_task": "T-R4-008",
+      "owning_gate": "FG-R4-001",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-003",
+        "T-R4-008"
+      ]
+    },
+    {
+      "id": "LRM-SH-001",
+      "repository_release": "R4",
+      "context": "sharing",
+      "priority": "must",
+      "statement": "Remote transports shall exchange encrypted immutable operations and manifests rather than concurrently editing shared plaintext canonical files.",
+      "owning_task": "T-R4-005",
+      "owning_gate": "FG-R4-004",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-005",
+        "T-R4-008"
+      ]
+    },
+    {
+      "id": "LRM-SH-002",
+      "repository_release": "R4",
+      "context": "sharing",
+      "priority": "must",
+      "statement": "Shared operations shall verify workspace, actor, device, signature, chain, schema, authorisation, and base revision before materialisation.",
+      "owning_task": "T-R4-005",
+      "owning_gate": "FG-R4-004",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-005"
+      ]
+    },
+    {
+      "id": "LRM-SH-003",
+      "repository_release": "R4",
+      "context": "sharing",
+      "priority": "must",
+      "statement": "Conflicts affecting the same invariant shall require an inspectable resolution rather than latest-timestamp wins.",
+      "owning_task": "T-R4-006",
+      "owning_gate": "FG-R4-005",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-006"
+      ]
+    },
+    {
+      "id": "LRM-SH-004",
+      "repository_release": "R4",
+      "context": "sharing",
+      "priority": "must",
+      "statement": "Private overlays shall be excluded from unauthorised materialisation, search, export, provider jobs, AI context, and existence disclosure.",
+      "owning_task": "T-R4-006",
+      "owning_gate": "FG-R4-005",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-006"
+      ]
+    },
+    {
+      "id": "LRM-SH-005",
+      "repository_release": "R4",
+      "context": "sharing",
+      "priority": "must",
+      "statement": "A self-service request shall identify requester, purpose, exact requested fields, expiry, disclosure policy, and response key.",
+      "owning_task": "T-R4-007",
+      "owning_gate": "FG-R4-006",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-007"
+      ]
+    },
+    {
+      "id": "LRM-SH-006",
+      "repository_release": "R4",
+      "context": "sharing",
+      "priority": "should",
+      "statement": "A Liaison Card shall contain only selected signed claims and an explicit update/revocation policy.",
+      "owning_task": "T-R4-007",
+      "owning_gate": "FG-R4-006",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-007"
+      ]
+    },
+    {
+      "id": "LRM-SH-007",
+      "repository_release": "R4",
+      "context": "sharing",
+      "priority": "must",
+      "statement": "Member and device revocation shall prevent future authorised operations and trigger applicable key rotation.",
+      "owning_task": "T-R4-005",
+      "owning_gate": "FG-R4-004",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-005"
+      ]
+    },
+    {
+      "id": "LRM-AU-001",
+      "repository_release": "R6",
+      "context": "automation",
+      "priority": "must",
+      "statement": "The local API shall bind to loopback by default and require scoped, expiring, revocable credentials.",
+      "owning_task": "T-R6-001",
+      "owning_gate": "FG-R6-001",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-001"
+      ]
+    },
+    {
+      "id": "LRM-AU-002",
+      "repository_release": "R6",
+      "context": "automation",
+      "priority": "must",
+      "statement": "Webhooks shall use destination grants, signatures, replay protection, idempotency keys, bounded retry, and delivery evidence.",
+      "owning_task": "T-R6-002",
+      "owning_gate": "FG-R6-001",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-002"
+      ]
+    },
+    {
+      "id": "LRM-AU-003",
+      "repository_release": "R6",
+      "context": "automation",
+      "priority": "must",
+      "statement": "MCP read tools shall return source references and effective grant information.",
+      "owning_task": "T-R6-003",
+      "owning_gate": "FG-R6-002",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-003"
+      ]
+    },
+    {
+      "id": "LRM-AU-004",
+      "repository_release": "R6",
+      "context": "automation",
+      "priority": "must",
+      "statement": "MCP and AI write tools shall create staged proposals by default.",
+      "owning_task": "T-R6-003",
+      "owning_gate": "FG-R6-002",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-003"
+      ]
+    },
+    {
+      "id": "LRM-AU-005",
+      "repository_release": "R6",
+      "context": "automation",
+      "priority": "must",
+      "statement": "AI output shall pass normal domain validation and revision checks.",
+      "owning_task": "T-R6-003",
+      "owning_gate": "FG-R6-002",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-003"
+      ]
+    },
+    {
+      "id": "LRM-AU-006",
+      "repository_release": "R6",
+      "context": "automation",
+      "priority": "must",
+      "statement": "Liaison RM shall support an Ollama-compatible local inference path without a remote account.",
+      "owning_task": "T-R6-004",
+      "owning_gate": "FG-R6-004",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-004"
+      ]
+    },
+    {
+      "id": "LRM-AU-007",
+      "repository_release": "R6",
+      "context": "automation",
+      "priority": "must",
+      "statement": "Remote AI disclosure shall require a named provider, endpoint, purpose, fields, records, operation, retention, and expiry grant.",
+      "owning_task": "T-R6-004",
+      "owning_gate": "FG-R6-004",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-004"
+      ]
+    },
+    {
+      "id": "LRM-AU-008",
+      "repository_release": "R6",
+      "context": "automation",
+      "priority": "must",
+      "statement": "Plugins shall use versioned WIT contracts and denied-by-default capabilities.",
+      "owning_task": "T-R6-005",
+      "owning_gate": "FG-R6-005",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-005"
+      ]
+    },
+    {
+      "id": "LRM-AU-009",
+      "repository_release": "R6",
+      "context": "automation",
+      "priority": "must",
+      "statement": "Plugins shall not receive a raw database handle or unrestricted canonical workspace path.",
+      "owning_task": "T-R6-005",
+      "owning_gate": "FG-R6-005",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-005"
+      ]
+    },
+    {
+      "id": "LRM-UX-001",
+      "repository_release": "R2",
+      "context": "experience",
+      "priority": "must",
+      "statement": "Every supported task shall be completable by keyboard with visible focus and logical focus restoration.",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P04",
+        "T-R2-002"
+      ]
+    },
+    {
+      "id": "LRM-UX-002",
+      "repository_release": "R2",
+      "context": "experience",
+      "priority": "must",
+      "statement": "User-facing controls, state, errors, and status messages shall expose appropriate screen-reader semantics.",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P04",
+        "T-R2-002"
+      ]
+    },
+    {
+      "id": "LRM-UX-003",
+      "repository_release": "R2",
+      "context": "experience",
+      "priority": "must",
+      "statement": "The interface shall support 400 percent zoom and reflow without loss of information or action on each declared supported desktop webview.",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P04",
+        "T-R2-002"
+      ]
+    },
+    {
+      "id": "LRM-UX-004",
+      "repository_release": "R2",
+      "context": "experience",
+      "priority": "must",
+      "statement": "The interface shall honour reduced-motion preferences and avoid motion required to understand state.",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P04",
+        "T-R2-002"
+      ]
+    },
+    {
+      "id": "LRM-UX-005",
+      "repository_release": "R2",
+      "context": "experience",
+      "priority": "must",
+      "statement": "Long workflows shall preserve drafts and expose a clear resume point after interruption or restart.",
+      "owning_task": "T-B0-P11",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P11",
+        "T-R2-003"
+      ]
+    },
+    {
+      "id": "LRM-UX-006",
+      "repository_release": "R2",
+      "context": "experience",
+      "priority": "must",
+      "statement": "Every user-facing capability shall define empty, loading, partial, stale, conflict, permission, error, success, undo, and recovery states as applicable.",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P04",
+        "T-R2-002"
+      ]
+    },
+    {
+      "id": "LRM-UX-007",
+      "repository_release": "R2",
+      "context": "experience",
+      "priority": "must",
+      "statement": "Dashboard configuration and reordering shall have direct keyboard alternatives and restore-default behaviour.",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01",
+        "T-R2-006"
+      ]
+    },
+    {
+      "id": "LRM-UX-008",
+      "repository_release": "R2",
+      "context": "experience",
+      "priority": "must",
+      "statement": "The product shall target WCAG 2.2 Level AA and applicable EN 301 549 requirements with recorded evidence.",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P04"
+      ]
+    },
+    {
+      "id": "LRM-PK-001",
+      "repository_release": "R2",
+      "context": "packaging",
+      "priority": "must",
+      "statement": "The project shall publish installable Ubuntu/Flatpak, macOS, and Windows artifacts from reviewed source.",
+      "owning_task": "T-R2-007",
+      "owning_gate": "FG-R2-004",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R2-001",
+        "T-R2-007"
+      ]
+    },
+    {
+      "id": "LRM-PK-002",
+      "repository_release": "R2",
+      "context": "packaging",
+      "priority": "must",
+      "statement": "Airgap and Connected-local artifacts shall be distinguishable in filename, application metadata, About screen, CLI version output, and provenance.",
+      "owning_task": "T-R2-007",
+      "owning_gate": "FG-R2-004",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R2-007"
+      ]
+    },
+    {
+      "id": "LRM-PK-003",
+      "repository_release": "R2",
+      "context": "packaging",
+      "priority": "must",
+      "statement": "The Airgap Flatpak shall not request network permission.",
+      "owning_task": "T-R2-007",
+      "owning_gate": "FG-R2-004",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R2-007"
+      ]
+    },
+    {
+      "id": "LRM-PK-004",
+      "repository_release": "R2",
+      "context": "packaging",
+      "priority": "must",
+      "statement": "Release artifacts shall include checksums, provenance, changelog, migration notes, known issues, and recovery knowledge.",
+      "owning_task": "T-R2-007",
+      "owning_gate": "FG-R2-004",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R2-007"
+      ]
+    },
+    {
+      "id": "LRM-PK-005",
+      "repository_release": "R2",
+      "context": "packaging",
+      "priority": "must",
+      "statement": "Uninstall shall not silently delete a user-selected workspace.",
+      "owning_task": "T-R2-007",
+      "owning_gate": "FG-R2-004",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R2-007"
+      ]
+    },
+    {
+      "id": "LRM-AP-001",
+      "repository_release": "B0",
+      "context": "application",
+      "priority": "must",
+      "statement": "CLI, desktop, imports, automation, and tests shall call one Rust application composition root with typed commands, results, and errors.",
+      "owning_task": "T-B0-P01",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P01"
+      ]
+    },
+    {
+      "id": "LRM-WS-009",
+      "repository_release": "B0",
+      "context": "workspace",
+      "priority": "must",
+      "statement": "An open workspace shall be represented by one session that owns the operating-system writer lock, repositories, recovery state, key state, projection state, and read-only degradation; file synchronisation or rename shall not transfer writer authority implicitly.",
+      "owning_task": "T-B0-P02",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P02"
+      ]
+    },
+    {
+      "id": "LRM-WS-010",
+      "repository_release": "B0",
+      "context": "workspace",
+      "priority": "must",
+      "statement": "Every canonical mutation shall use a recoverable multi-target operation that stages and flushes every target, records original revision and digest preconditions, rechecks final per-file identity and digest, persists one durable commit decision, then rolls forward committed targets with progress evidence.",
+      "owning_task": "T-B0-P03",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P03"
+      ]
+    },
+    {
+      "id": "LRM-WS-011",
+      "repository_release": "B0",
+      "context": "workspace",
+      "priority": "must",
+      "statement": "Command failures and Health findings shall use versioned structured envelopes with stable codes, recovery guidance, and correlation identifiers.",
+      "owning_task": "T-B0-P01",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P01"
+      ]
+    },
+    {
+      "id": "LRM-SEC-001",
+      "repository_release": "B0",
+      "context": "workspace-security",
+      "priority": "must",
+      "statement": "Sensitive persistable values shall use authenticated sealed envelopes under a recoverable workspace key hierarchy and shall have no plaintext marker representation.",
+      "owning_task": "T-B0-P07",
+      "owning_gate": "FG-B0-002",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P07"
+      ]
+    },
+    {
+      "id": "LRM-SEC-002",
+      "repository_release": "B0",
+      "context": "workspace-security",
+      "priority": "must",
+      "statement": "The local policy boundary shall identify one trusted workspace owner and device and enforce purpose-bound grants before sensitive access.",
+      "owning_task": "T-B0-P07",
+      "owning_gate": "FG-B0-002",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P07"
+      ]
+    },
+    {
+      "id": "LRM-DI-001",
+      "repository_release": "B0",
+      "context": "directory",
+      "priority": "must",
+      "statement": "Directory reads shall tolerate malformed canonical siblings and expose bounded findings while healthy records remain searchable.",
+      "owning_task": "T-B0-P06",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P06",
+        "T-B0-P09"
+      ]
+    },
+    {
+      "id": "LRM-DI-002",
+      "repository_release": "B0",
+      "context": "directory",
+      "priority": "must",
+      "statement": "Directory search and filtering shall use a disposable projection that revalidates canonical revisions before cohort finalization.",
+      "owning_task": "T-B0-P06",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P06",
+        "T-B0-P09"
+      ]
+    },
+    {
+      "id": "LRM-EV-007",
+      "repository_release": "B0",
+      "context": "events",
+      "priority": "must",
+      "statement": "B0 dietary records shall contain only a constrained category and operational catering instruction and shall not collect diagnostic or medical narrative.",
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-003",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P05",
+        "T-B0-P10"
+      ]
+    },
+    {
+      "id": "LRM-EV-008",
+      "repository_release": "B0",
+      "context": "events",
+      "priority": "must",
+      "statement": "Internal catering brief generation and external file delivery shall be separate evidenced operations.",
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-004",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P10"
+      ]
+    },
+    {
+      "id": "LRM-EV-009",
+      "repository_release": "B0",
+      "context": "events",
+      "priority": "must",
+      "statement": "Workplace Review shall support only EventReadinessFollowUp records bounded to an event, attendee, source gap, allowed resolution state, owner, due/expiry time, provenance, and completion evidence; it shall not implement a generic task engine, relationship allocation, cadence, or attention weighting.",
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-003",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P10"
+      ]
+    },
+    {
+      "id": "LRM-RC-001",
+      "repository_release": "B0",
+      "context": "recovery",
+      "priority": "must",
+      "statement": "The product shall distinguish quiescent local checkpoints from user-portable encrypted recovery packages.",
+      "owning_task": "T-B0-P08",
+      "owning_gate": "FG-B0-002",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P08"
+      ]
+    },
+    {
+      "id": "LRM-RC-002",
+      "repository_release": "B0",
+      "context": "recovery",
+      "priority": "must",
+      "statement": "An encrypted recovery package shall restore a B0 workspace on a clean installation without the original operating-system key cache.",
+      "owning_task": "T-B0-P08",
+      "owning_gate": "FG-B0-002",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P08"
+      ]
+    },
+    {
+      "id": "LRM-UX-009",
+      "repository_release": "B0",
+      "context": "experience",
+      "priority": "must",
+      "statement": "The B0 desktop shall implement Overview, Directory, Events, Health, Settings, and the Event Details state machine through one semantic component and token system.",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P04",
+        "T-B0-P11"
+      ]
+    },
+    {
+      "id": "LRM-PK-006",
+      "repository_release": "B0",
+      "context": "packaging",
+      "priority": "must",
+      "statement": "B0 acceptance shall be run against a freshly built and installed universal macOS review application.",
+      "owning_task": "T-B0-ACCEPT",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-ACCEPT",
+        "T-B0-P11"
+      ]
+    },
+    {
+      "id": "LRM-A0-001",
+      "repository_release": "A0",
+      "context": "product",
+      "priority": "must",
+      "statement": "Personal Memory Alpha shall begin only after B0 acceptance and shall preserve the complete B0 regression matrix.",
+      "owning_task": "T-A0-001",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-001"
+      ]
+    },
+    {
+      "id": "LRM-WS-012",
+      "repository_release": "A0",
+      "context": "workspace",
+      "priority": "must",
+      "statement": "Workspace-local people shall support multiple effective-dated relationship contexts within one purpose boundary; Personal, Family, Professional, Networking, and Workplace workspaces shall never silently share facts.",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01"
+      ]
+    },
+    {
+      "id": "LRM-WS-013",
+      "repository_release": "B0",
+      "context": "workspace",
+      "priority": "must",
+      "statement": "The product shall export a versioned settings-only bundle containing layouts, fields, packs, templates, views, appearance, and policies but no records, secrets, tokens, caches, or device paths.",
+      "owning_task": "T-B0-P03",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P03",
+        "T-B0-P11"
+      ]
+    },
+    {
+      "id": "LRM-WS-014",
+      "repository_release": "B0",
+      "context": "workspace",
+      "priority": "must",
+      "statement": "Settings import shall provide validation, migration and diff preview, conflict choices, dry-run, rollback, and unknown-safe-field preservation.",
+      "owning_task": "T-B0-P03",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P03",
+        "T-B0-P11"
+      ]
+    },
+    {
+      "id": "LRM-WS-015",
+      "repository_release": "A0",
+      "context": "workspace",
+      "priority": "must",
+      "statement": "An optional cross-workspace identity bridge shall contain opaque references only, copy no facts, grant no access, remain excluded from ordinary export, and be safely removable.",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01"
+      ]
+    },
+    {
+      "id": "LRM-WS-016",
+      "repository_release": "B0",
+      "context": "workspace",
+      "priority": "must",
+      "statement": "Deletion shall propagate through canonical history, backup expiry, purge or compaction, and restore-time deletion replay so verified restore cannot silently resurrect purged sensitive data.",
+      "owning_task": "T-B0-P08",
+      "owning_gate": "FG-B0-002",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P08"
+      ]
+    },
+    {
+      "id": "LRM-WS-017",
+      "repository_release": "B0",
+      "context": "workspace",
+      "priority": "must",
+      "statement": "One typed People authoring adapter shall own strict writes to the pinned OKF v0.1 Draft profile and tolerant reads. Legacy normalization shall be previewable, backup-first, journaled, failure-atomic, idempotent, exactly reversible, and preserve body bytes, unknown extensions, links, malformed siblings, and manually authored reserved or index content.",
+      "owning_task": "T-B0-P09-OKF",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P09-OKF"
+      ]
+    },
+    {
+      "id": "LRM-PE-011",
+      "repository_release": "A0",
+      "context": "people",
+      "priority": "must",
+      "statement": "A person shall support optional purpose-scoped Working With Me sections and clearly separate Shared Guide from Private Interaction Notes.",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01"
+      ]
+    },
+    {
+      "id": "LRM-PE-012",
+      "repository_release": "A0",
+      "context": "people",
+      "priority": "must",
+      "statement": "Working With Me sections shall carry authorship, approval hash, consent, source, freshness, sharing scope, sensitivity, expiry, correction, withdrawal, and purge behaviour.",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01"
+      ]
+    },
+    {
+      "id": "LRM-PE-013",
+      "repository_release": "A0",
+      "context": "people",
+      "priority": "must",
+      "statement": "Users shall reorder, rename, pin, hide, and conditionally promote profile tabs and sections without changing stable IDs or hiding canonical content from non-visual access and export.",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01"
+      ]
+    },
+    {
+      "id": "LRM-PE-014",
+      "repository_release": "A0",
+      "context": "people",
+      "priority": "should",
+      "statement": "Profile photos shall be local assets with provenance, accessible presentation, export, correction, and deletion.",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01"
+      ]
+    },
+    {
+      "id": "LRM-PE-015",
+      "repository_release": "A0",
+      "context": "people",
+      "priority": "must",
+      "statement": "Working With Me shall distinguish owner observation, subject-supplied, locally recorded subject confirmation, and signature-verified self-authorship without overstating identity proof.",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01"
+      ]
+    },
+    {
+      "id": "LRM-PE-016",
+      "repository_release": "B0",
+      "context": "people",
+      "priority": "must",
+      "statement": "Every Liaison-authored non-reserved People Markdown document shall conform to the pinned OKF v0.1 Draft envelope on write with a non-empty `type: person` and mapped core fields; Liaison's versioned domain fields remain the schema authority through namespaced extensions and sealed sensitive values shall never enter plaintext for OKF conformance.",
+      "owning_task": "T-B0-P05-OKF",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P05-OKF"
+      ]
+    },
+    {
+      "id": "LRM-PE-017",
+      "repository_release": "B0",
+      "context": "people",
+      "priority": "must",
+      "statement": "OKF conformance shall not imply Liaison domain validity: unsupported or invalid domain facts remain inert or quarantined and cannot affect event readiness; tolerant reads preserve unknown types, keys, links, and sections without blocking healthy People.",
+      "owning_task": "T-B0-P06",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P06"
+      ]
+    },
+    {
+      "id": "LRM-PE-018",
+      "repository_release": "A0",
+      "context": "people",
+      "priority": "must",
+      "statement": "A source-complete purpose-scoped profile shall compose identity and contact context, effective memberships, dates, Working With Me, distinct last-interaction and last-note summaries, manual assessment, derived freshness, timeline, related People, and unresolved source or identity warnings into an accessible overview and stable configurable tabs; no global person score shall exist.",
+      "owning_task": "T-A0-P04",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P04"
+      ]
+    },
+    {
+      "id": "LRM-PE-019",
+      "repository_release": "A0",
+      "context": "people",
+      "priority": "must",
+      "statement": "Every profile claim shall expose canonical source, authorship, recorded and confirmed dates, information state, purpose, disclosure or sensitivity, and correction history without implying that missing provider coverage means no interaction.",
+      "owning_task": "T-A0-P04",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P04"
+      ]
+    },
+    {
+      "id": "LRM-PE-020",
+      "repository_release": "A0",
+      "context": "people",
+      "priority": "must",
+      "statement": "Conflicting, stale, withheld, and imported-proposal facts shall remain distinct prominent profile states; Liaison shall never silently select a winner or convert an observation into subject-authored content.",
+      "owning_task": "T-A0-P04",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P04"
+      ]
+    },
+    {
+      "id": "LRM-PE-021",
+      "repository_release": "A0",
+      "context": "people",
+      "priority": "must",
+      "statement": "External edits to controlled profile facts shall produce stable-ID field diffs or staged proposals with explicit accept, reject, or correct actions; unknown safe material shall survive and no external edit shall silently change disclosure or operational readiness.",
+      "owning_task": "T-A0-P04",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P04"
+      ]
+    },
+    {
+      "id": "LRM-RE-006",
+      "repository_release": "A0",
+      "context": "relationships",
+      "priority": "must",
+      "statement": "Relationship assessment and contact freshness shall remain independent; assessment is user-authored while freshness is reproducibly derived from visible cadence and qualifying interactions.",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P03"
+      ]
+    },
+    {
+      "id": "LRM-RE-007",
+      "repository_release": "A0",
+      "context": "relationships",
+      "priority": "must",
+      "statement": "In self-owned non-Workplace workspaces only, versioned relationship-context allocation policies shall be transparent, previewable, suppression-aware, and prohibited from human-worth or employee-performance use; Workplace schemas and surfaces shall deny them and no global person weight shall exist.",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P03"
+      ]
+    },
+    {
+      "id": "LRM-RE-008",
+      "repository_release": "A0",
+      "context": "relationships",
+      "priority": "must",
+      "statement": "Every attention reason shall expose inputs, source record IDs, units or formula, policy or rule version, plain-language explanation, and corrective, dismiss, or snooze actions.",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P03"
+      ]
+    },
+    {
+      "id": "LRM-IN-006",
+      "repository_release": "A0",
+      "context": "interactions",
+      "priority": "must",
+      "statement": "Notes and general journal entries shall be first-class canonical records with Markdown round trip, links, timeline presentation, and pin or promotion metadata without copied content.",
+      "owning_task": "T-A0-P02",
+      "owning_gate": "FG-A0-G2A",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P02"
+      ]
+    },
+    {
+      "id": "LRM-IN-007",
+      "repository_release": "A0",
+      "context": "interactions",
+      "priority": "should",
+      "statement": "Configurable relationship-review and message templates shall remain local and user-triggered and shall not create mass outreach without a separate explicit grant.",
+      "owning_task": "T-A0-P02",
+      "owning_gate": "FG-A0-G2A",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P02"
+      ]
+    },
+    {
+      "id": "LRM-IN-008",
+      "repository_release": "R5",
+      "context": "interactions",
+      "priority": "should",
+      "statement": "On-device voice capture shall create a source-preserving staged interaction proposal and work with networking denied.",
+      "owning_task": "T-R5-006",
+      "owning_gate": "FG-R5-005",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-006"
+      ]
+    },
+    {
+      "id": "LRM-RM-004",
+      "repository_release": "A0",
+      "context": "reminders",
+      "priority": "must",
+      "statement": "A0 relationship reminders shall require a relationship context or source and allowed reason, use the bounded state machine, restrict recurrence, and expose no general task or project fields; B0 uses EventReadinessFollowUp instead.",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P03"
+      ]
+    },
+    {
+      "id": "LRM-RM-005",
+      "repository_release": "A0",
+      "context": "reminders",
+      "priority": "must",
+      "statement": "The connector-neutral relationship-follow-up handoff envelope and read-only external-status rules shall be specified in A0; concrete Meitheal or calendar connectors remain R6.",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P03"
+      ]
+    },
+    {
+      "id": "LRM-UX-010",
+      "repository_release": "A0",
+      "context": "experience",
+      "priority": "must",
+      "statement": "Fast search, filters, and saved views shall expose predicates, respect grants, round-trip through settings, and support complete keyboard and screen-reader operation.",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01",
+        "T-A0-P02"
+      ]
+    },
+    {
+      "id": "LRM-UX-011",
+      "repository_release": "B0",
+      "context": "experience",
+      "priority": "must",
+      "statement": "Each released UI shall name its supported operating-system, browser-webview, and assistive-technology matrix and scope accessibility claims to those shipped surfaces.",
+      "owning_task": "T-B0-P11",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P11"
+      ]
+    },
+    {
+      "id": "LRM-UX-012",
+      "repository_release": "B0",
+      "context": "experience",
+      "priority": "must",
+      "statement": "One versioned semantic-token and component contract shall power system, light, dark, and high_contrast built-ins; every built-in shall preserve meaning and pass the complete B0 accessibility matrix before B0 acceptance.",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P03D",
+        "T-B0-P04"
+      ]
+    },
+    {
+      "id": "LRM-UX-013",
+      "repository_release": "A0",
+      "context": "experience",
+      "priority": "must",
+      "statement": "Appearance settings shall provide previewable density, text scale, motion, and validated palette choices with reset, persistence, keyboard and screen-reader operation, and classified settings export or import without record data.",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01"
+      ]
+    },
+    {
+      "id": "LRM-UX-014",
+      "repository_release": "POST-A0",
+      "context": "experience",
+      "priority": "should",
+      "statement": "Declarative theme packages shall use a versioned, checksummed, licence-aware manifest and semantic tokens only; executable code, arbitrary CSS, remote assets, filesystem or network capability, and activation without validation or rollback shall be rejected.",
+      "owning_task": "T-UX-THEME-001",
+      "owning_gate": "FG-UX-THEME-001",
+      "milestone": "POST-A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-UX-THEME-001"
+      ]
+    },
+    {
+      "id": "LRM-UX-015",
+      "repository_release": "R5",
+      "context": "experience",
+      "priority": "should",
+      "statement": "Optional spatial discovery shall provide coarse-location controls, explicit geocoding egress preview and grant, local or no-network behaviour, coordinate correction and deletion, structural Workplace denial, and an equivalent semantic list or table; it shall never rank People by a relationship score.",
+      "owning_task": "T-R5-009",
+      "owning_gate": "FG-R5-006",
+      "milestone": "G5",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-009"
+      ]
+    },
+    {
+      "id": "LRM-EV-010",
+      "repository_release": "B0",
+      "context": "events",
+      "priority": "must",
+      "statement": "Event readiness shall store availability, freshness, conflict, and disclosure separately and derive exactly one outcome through an ordered, versioned, fail-closed decision table.",
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-003",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P10"
+      ]
+    },
+    {
+      "id": "LRM-EV-011",
+      "repository_release": "B0",
+      "context": "events",
+      "priority": "must",
+      "statement": "The attendee lifecycle shall handle duplicate, unresolved identity, invitation, confirmation, cancellation, removal, walk-in, attendance, no-show, and event cancellation with exact denominator reconciliation and superseding corrections.",
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-003",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P10"
+      ]
+    },
+    {
+      "id": "LRM-EV-012",
+      "repository_release": "B0",
+      "context": "events",
+      "priority": "must",
+      "statement": "Real workplace-data pilots shall be blocked until data-controller, purpose and legal-basis, sensitive-data condition, DPIA decision, notice, retention, rights, incident, and independent legal-review responsibilities are recorded.",
+      "owning_task": "T-B0-PILOT",
+      "owning_gate": "FG-B0-PILOT-001",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-PILOT"
+      ]
+    },
+    {
+      "id": "LRM-EV-013",
+      "repository_release": "B0",
+      "context": "events",
+      "priority": "must",
+      "statement": "B0 shall have one trusted workspace owner; recipients shall never access the workspace and shall receive only immutable, purpose-bound, expiring, audited least-disclosure brief snapshots whose emitted bytes match preview.",
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-004",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P10"
+      ]
+    },
+    {
+      "id": "LRM-CO-013",
+      "repository_release": "R5",
+      "context": "connections",
+      "priority": "must",
+      "statement": "Meerkat, Monica, and CRM-in-Markdown migrations shall provide preview, identity reconciliation, provenance, unsupported-data reporting, rollback, and idempotent re-import.",
+      "owning_task": "T-R5-005",
+      "owning_gate": "FG-R5-005",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-005"
+      ]
+    },
+    {
+      "id": "LRM-CO-014",
+      "repository_release": "R5",
+      "context": "connections",
+      "priority": "should",
+      "statement": "Local and Airgap-safe business-card OCR shall preserve source imagery, preview mapping and duplicates, and require confirmation before persistence.",
+      "owning_task": "T-R5-006",
+      "owning_gate": "FG-R5-005",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-006"
+      ]
+    },
+    {
+      "id": "LRM-CO-015",
+      "repository_release": "R5",
+      "context": "connections",
+      "priority": "must",
+      "statement": "Every provider or import operation shall expose connector and version, grant, requested source and range, last attempt and success, created, updated, skipped and quarantined counts, conflicts and errors, retry, revoke, retention, and history in an operations feed separate from relationship reminders; hidden refresh and unreported egress are prohibited.",
+      "owning_task": "T-R5-008",
+      "owning_gate": "FG-R5-005",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-008"
+      ]
+    },
+    {
+      "id": "LRM-AU-010",
+      "repository_release": "R6",
+      "context": "automation",
+      "priority": "should",
+      "statement": "Goal-based network discovery shall be source-linked and grant-scoped and shall not infer closeness, quality, loyalty, employee value, or likelihood.",
+      "owning_task": "T-R6-004",
+      "owning_gate": "FG-R6-004",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-004"
+      ]
+    },
+    {
+      "id": "LRM-AU-011",
+      "repository_release": "R6",
+      "context": "automation",
+      "priority": "must",
+      "statement": "Packaged n8n examples shall use only versioned scoped API and webhook contracts and include allow, deny, revoke, retry, and idempotence evidence.",
+      "owning_task": "T-R6-002",
+      "owning_gate": "FG-R6-001",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-002"
+      ]
+    },
+    {
+      "id": "LRM-AU-012",
+      "repository_release": "R6",
+      "context": "automation",
+      "priority": "must",
+      "statement": "Relationship follow-ups may be handed to Meitheal or another execution system through a grant; Liaison shall not implement general task assignment, dependencies, routines, or execution.",
+      "owning_task": "T-R6-006",
+      "owning_gate": "FG-R6-006",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-006"
+      ]
+    },
+    {
+      "id": "LRM-AU-013",
+      "repository_release": "R6",
+      "context": "automation",
+      "priority": "should",
+      "statement": "Life-change, biography, and enrichment detection shall create only a source-backed staged proposal containing old and new values, source, confidence, egress context, and explicit review; it shall never directly overwrite a confirmed fact or automatically change assessment, freshness, or cadence.",
+      "owning_task": "T-R6-007",
+      "owning_gate": "FG-R6-007",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-007"
+      ]
+    },
+    {
+      "id": "LRM-PK-007",
+      "repository_release": "R0",
+      "context": "packaging",
+      "priority": "must",
+      "statement": "Public documentation shall label each material capability shipped, beta, planned, marketed externally, or out and link every shipped claim to release evidence.",
+      "owning_task": "T-B0-P00",
+      "owning_gate": "FG-R0-002",
+      "milestone": "G0",
+      "evidence_owner": "EO-GOVERNANCE",
+      "status": "current",
+      "supporting_tasks": [
+        "T-B0-P00"
+      ]
+    },
+    {
+      "id": "LRM-PK-008",
+      "repository_release": "R1",
+      "context": "packaging",
+      "priority": "must",
+      "statement": "Public releases shall include install, recovery, migration, accessibility, privacy and security, support, and contribution paths suitable for non-developer evaluation.",
+      "owning_task": "T-REL-001",
+      "owning_gate": "FG-REL-001",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-ACCEPT",
+        "T-REL-001"
+      ]
+    },
+    {
+      "id": "LRM-PK-009",
+      "repository_release": "R0",
+      "context": "governance",
+      "priority": "must",
+      "statement": "A generated normative appendix shall trace every requirement and UAT case to exactly one owning gate, implementation task, evidence owner, milestone, and current status without orphan or cross-release false claim.",
+      "owning_task": "T-R0-003",
+      "owning_gate": "FG-R0-002",
+      "milestone": "G0",
+      "evidence_owner": "EO-GOVERNANCE",
+      "status": "current",
+      "supporting_tasks": [
+        "T-B0-P00",
+        "T-R0-003"
+      ]
+    },
+    {
+      "id": "LRM-L10N-001",
+      "repository_release": "R2",
+      "context": "localization",
+      "priority": "must",
+      "statement": "Every user-facing natural-language string shall use a stable semantic locale key rather than being assembled from untranslated fragments.",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P04"
+      ]
+    },
+    {
+      "id": "LRM-L10N-002",
+      "repository_release": "R2",
+      "context": "localization",
+      "priority": "must",
+      "statement": "Locale catalogs shall be UTF-8, NFC-normalized, schema-valid, and complete relative to the en-IE source catalog.",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P04"
+      ]
+    },
+    {
+      "id": "LRM-L10N-003",
+      "repository_release": "R2",
+      "context": "localization",
+      "priority": "must",
+      "statement": "The interface shall tolerate pseudolocalized expansion, reflow, and language-specific line breaking without clipping, inaccessible focus, or horizontal overflow.",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P04"
+      ]
+    },
+    {
+      "id": "LRM-L10N-004",
+      "repository_release": "R2",
+      "context": "localization",
+      "priority": "must",
+      "statement": "A non-source locale shall not be marked release-ready without named, dated, locale-appropriate human review and accessibility sampling.",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P04"
+      ]
+    },
+    {
+      "id": "LRM-L10N-005",
+      "repository_release": "R2",
+      "context": "localization",
+      "priority": "must",
+      "statement": "Localized accessibility names, descriptions, live messages, errors, and recovery actions shall communicate the same action and state as visible text.",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P04"
+      ]
+    },
+    {
+      "id": "LRM-L10N-006",
+      "repository_release": "R2",
+      "context": "localization",
+      "priority": "should",
+      "statement": "Dates, times, names, numbers, lists, units, and currencies shall use locale-aware formatting rather than string concatenation.",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P04"
+      ]
+    },
+    {
+      "id": "LRM-L10N-007",
+      "repository_release": "R6",
+      "context": "localization",
+      "priority": "must",
+      "statement": "Plugin locale catalogs shall be namespaced and shall not replace core locale keys without an explicit compatible extension contract.",
+      "owning_task": "T-R6-005",
+      "owning_gate": "FG-R6-005",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-005"
+      ]
+    },
+    {
+      "id": "LRM-L10N-008",
+      "repository_release": "R2",
+      "context": "localization",
+      "priority": "must",
+      "statement": "Public localized metadata shall agree with the visible page language, while local relationship records shall not receive marketing metadata.",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P04"
+      ]
+    }
+  ],
+  "uat_cases": [
+    {
+      "id": "UAT-001",
+      "repository_release": "R1",
+      "persona": "P-INDIVIDUAL",
+      "title": "Create and recover a local workspace",
+      "owning_task": "T-B0-P02",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P02",
+        "T-R1-002",
+        "T-R1-005",
+        "T-R1-006",
+        "T-R1-008",
+        "T-R1-009"
+      ],
+      "supporting_gates": [
+        "FG-B0-001",
+        "FG-R1-001",
+        "FG-R1-004"
+      ]
+    },
+    {
+      "id": "UAT-002",
+      "repository_release": "R1",
+      "persona": "P-INDIVIDUAL",
+      "title": "Edit a profile in Obsidian and reopen Liaison",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01",
+        "T-R1-004",
+        "T-R1-005",
+        "T-R1-009"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2C",
+        "FG-R1-001"
+      ]
+    },
+    {
+      "id": "UAT-003",
+      "repository_release": "R2",
+      "persona": "P-INDIVIDUAL",
+      "title": "Resume after interruption",
+      "owning_task": "T-A0-P02",
+      "owning_gate": "FG-A0-G2A",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P02",
+        "T-R2-003"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2A",
+        "FG-R2-003"
+      ]
+    },
+    {
+      "id": "UAT-004",
+      "repository_release": "R2",
+      "persona": "P-NETWORKER",
+      "title": "Prioritise a relationship",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P03",
+        "T-R2-004"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2B"
+      ]
+    },
+    {
+      "id": "UAT-005",
+      "repository_release": "R5",
+      "persona": "P-NETWORKER",
+      "title": "Inspect communication coverage",
+      "owning_task": "T-R5-003",
+      "owning_gate": "FG-R5-003",
+      "milestone": "G5",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-003"
+      ],
+      "supporting_gates": [
+        "FG-R5-003"
+      ]
+    },
+    {
+      "id": "UAT-006",
+      "repository_release": "R5",
+      "persona": "P-EA",
+      "title": "Prepare a meeting briefing",
+      "owning_task": "T-R5-007",
+      "owning_gate": "FG-R5-003",
+      "milestone": "G5",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-007"
+      ],
+      "supporting_gates": [
+        "FG-R5-003"
+      ]
+    },
+    {
+      "id": "UAT-007",
+      "repository_release": "R4",
+      "persona": "P-EA",
+      "title": "Share operational context without private notes",
+      "owning_task": "T-R4-006",
+      "owning_gate": "FG-R4-006",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-006"
+      ],
+      "supporting_gates": [
+        "FG-R4-006"
+      ]
+    },
+    {
+      "id": "UAT-008",
+      "repository_release": "R3",
+      "persona": "P-RECEPTION",
+      "title": "Import employee cohort",
+      "owning_task": "T-B0-P09",
+      "owning_gate": "FG-R3-002",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P09",
+        "T-R3-001",
+        "T-R3-004",
+        "T-R3-007"
+      ],
+      "supporting_gates": [
+        "FG-R3-002",
+        "FG-R3-005"
+      ]
+    },
+    {
+      "id": "UAT-009",
+      "repository_release": "R3",
+      "persona": "P-RECEPTION",
+      "title": "Find every dietary gap before an event",
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-003",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P05",
+        "T-B0-P10",
+        "T-R3-002",
+        "T-R3-006",
+        "T-R3-007"
+      ],
+      "supporting_gates": [
+        "FG-B0-003",
+        "FG-R3-001",
+        "FG-R3-003"
+      ]
+    },
+    {
+      "id": "UAT-010",
+      "repository_release": "R3",
+      "persona": "P-RECEPTION",
+      "title": "Produce least-disclosure catering brief",
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-004",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P05",
+        "T-B0-P10",
+        "T-R3-002",
+        "T-R3-006",
+        "T-R3-007"
+      ],
+      "supporting_gates": [
+        "FG-B0-003",
+        "FG-R3-001",
+        "FG-R3-004"
+      ]
+    },
+    {
+      "id": "UAT-011",
+      "repository_release": "R3",
+      "persona": "P-RECEPTION",
+      "title": "Detect stale brief",
+      "owning_task": "T-B0-P10",
+      "owning_gate": "FG-R3-004",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P10",
+        "T-R3-006",
+        "T-R3-007"
+      ],
+      "supporting_gates": [
+        "FG-B0-003",
+        "FG-R3-004"
+      ]
+    },
+    {
+      "id": "UAT-012",
+      "repository_release": "R3",
+      "persona": "P-EVENTS",
+      "title": "Build attendee list from filters",
+      "owning_task": "T-B0-P09",
+      "owning_gate": "FG-R3-002",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P09",
+        "T-B0-P10",
+        "T-R3-003",
+        "T-R3-005",
+        "T-R3-007"
+      ],
+      "supporting_gates": [
+        "FG-R3-002",
+        "FG-R3-005"
+      ]
+    },
+    {
+      "id": "UAT-013",
+      "repository_release": "R5",
+      "persona": "P-EVENTS",
+      "title": "Count recorded participation",
+      "owning_task": "T-R5-007",
+      "owning_gate": "FG-R5-003",
+      "milestone": "G5",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-007"
+      ],
+      "supporting_gates": [
+        "FG-R5-003"
+      ]
+    },
+    {
+      "id": "UAT-014",
+      "repository_release": "R5",
+      "persona": "P-FACILITIES",
+      "title": "Import access events safely",
+      "owning_task": "T-R5-004",
+      "owning_gate": "FG-R5-004",
+      "milestone": "G5",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-004"
+      ],
+      "supporting_gates": [
+        "FG-R5-004"
+      ]
+    },
+    {
+      "id": "UAT-015",
+      "repository_release": "R5",
+      "persona": "P-FACILITIES",
+      "title": "Resolve badge identity",
+      "owning_task": "T-R5-004",
+      "owning_gate": "FG-R5-004",
+      "milestone": "G5",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-004"
+      ],
+      "supporting_gates": [
+        "FG-R5-004"
+      ]
+    },
+    {
+      "id": "UAT-016",
+      "repository_release": "R5",
+      "persona": "P-FACILITIES",
+      "title": "Apply retention without performance scoring",
+      "owning_task": "T-R5-004",
+      "owning_gate": "FG-R5-004",
+      "milestone": "G5",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-004"
+      ],
+      "supporting_gates": [
+        "FG-R5-004"
+      ]
+    },
+    {
+      "id": "UAT-017",
+      "repository_release": "R2",
+      "persona": "P-FAMILY",
+      "title": "See important dates",
+      "owning_task": "T-A0-P02",
+      "owning_gate": "FG-A0-G2A",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P02"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2A"
+      ]
+    },
+    {
+      "id": "UAT-018",
+      "repository_release": "R4",
+      "persona": "P-FAMILY",
+      "title": "Respond to a self-service information request",
+      "owning_task": "T-R4-007",
+      "owning_gate": "FG-R4-006",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-007"
+      ],
+      "supporting_gates": [
+        "FG-R4-006"
+      ]
+    },
+    {
+      "id": "UAT-019",
+      "repository_release": "R4",
+      "persona": "P-FAMILY",
+      "title": "Exchange updates through removable media",
+      "owning_task": "T-R4-005",
+      "owning_gate": "FG-R4-004",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-005",
+        "T-R4-006",
+        "T-R4-008"
+      ],
+      "supporting_gates": [
+        "FG-R4-004",
+        "FG-R4-005"
+      ]
+    },
+    {
+      "id": "UAT-020",
+      "repository_release": "A0",
+      "persona": "P-CRM",
+      "title": "Configure profile fields and tabs without changing data semantics",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2C"
+      ]
+    },
+    {
+      "id": "UAT-021",
+      "repository_release": "R2",
+      "persona": "P-CRM",
+      "title": "Configure dashboard by keyboard",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01",
+        "T-R2-006"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2C",
+        "FG-R2-001"
+      ]
+    },
+    {
+      "id": "UAT-022",
+      "repository_release": "R2",
+      "persona": "P-ELDER",
+      "title": "Complete the core workflow at 400 percent zoom",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P04",
+        "T-R2-001",
+        "T-R2-002",
+        "T-R2-003"
+      ],
+      "supporting_gates": [
+        "FG-R2-001"
+      ]
+    },
+    {
+      "id": "UAT-023",
+      "repository_release": "R2",
+      "persona": "P-ELDER",
+      "title": "Use graph functionality without graph interaction",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P03",
+        "T-R2-005"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2B",
+        "FG-R2-002"
+      ]
+    },
+    {
+      "id": "UAT-024",
+      "repository_release": "R2",
+      "persona": "P-AIRGAP",
+      "title": "Prove Airgap network absence",
+      "owning_task": "T-R2-007",
+      "owning_gate": "FG-R2-005",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R2-007"
+      ],
+      "supporting_gates": [
+        "FG-R2-005"
+      ]
+    },
+    {
+      "id": "UAT-025",
+      "repository_release": "R1",
+      "persona": "P-AIRGAP",
+      "title": "Back up and restore offline",
+      "owning_task": "T-B0-P08",
+      "owning_gate": "FG-B0-002",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P08",
+        "T-R1-007"
+      ],
+      "supporting_gates": [
+        "FG-B0-002",
+        "FG-R1-004",
+        "FG-R1-005"
+      ]
+    },
+    {
+      "id": "UAT-026",
+      "repository_release": "R4",
+      "persona": "P-PRIVACY",
+      "title": "Approve and revoke a provider grant",
+      "owning_task": "T-R4-002",
+      "owning_gate": "FG-R4-002",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-001",
+        "T-R4-002",
+        "T-R4-004",
+        "T-R4-008"
+      ],
+      "supporting_gates": [
+        "FG-R4-002"
+      ]
+    },
+    {
+      "id": "UAT-027",
+      "repository_release": "R4",
+      "persona": "P-PRIVACY",
+      "title": "Reject misleading sync capability",
+      "owning_task": "T-R4-001",
+      "owning_gate": "FG-R4-007",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-001",
+        "T-R4-003",
+        "T-R4-008"
+      ],
+      "supporting_gates": [
+        "FG-R4-007"
+      ]
+    },
+    {
+      "id": "UAT-028",
+      "repository_release": "R4",
+      "persona": "P-PRIVACY",
+      "title": "Detect corrupted remote backup",
+      "owning_task": "T-R4-004",
+      "owning_gate": "FG-R4-003",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-004"
+      ],
+      "supporting_gates": [
+        "FG-R4-003"
+      ]
+    },
+    {
+      "id": "UAT-029",
+      "repository_release": "R6",
+      "persona": "P-AUTOMATION",
+      "title": "Use local API with narrow token",
+      "owning_task": "T-R6-001",
+      "owning_gate": "FG-R6-001",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-001"
+      ],
+      "supporting_gates": [
+        "FG-R6-001"
+      ]
+    },
+    {
+      "id": "UAT-030",
+      "repository_release": "R6",
+      "persona": "P-AUTOMATION",
+      "title": "Deliver signed webhook idempotently",
+      "owning_task": "T-R6-002",
+      "owning_gate": "FG-R6-001",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-002"
+      ],
+      "supporting_gates": [
+        "FG-R6-001"
+      ]
+    },
+    {
+      "id": "UAT-031",
+      "repository_release": "R6",
+      "persona": "P-AI",
+      "title": "Summarise locally with Ollama-compatible model",
+      "owning_task": "T-R6-004",
+      "owning_gate": "FG-R6-004",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-004"
+      ],
+      "supporting_gates": [
+        "FG-R6-003",
+        "FG-R6-004"
+      ]
+    },
+    {
+      "id": "UAT-032",
+      "repository_release": "R6",
+      "persona": "P-AI",
+      "title": "Review AI write proposal",
+      "owning_task": "T-R6-003",
+      "owning_gate": "FG-R6-002",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-003"
+      ],
+      "supporting_gates": [
+        "FG-R6-002"
+      ]
+    },
+    {
+      "id": "UAT-033",
+      "repository_release": "R6",
+      "persona": "P-AI",
+      "title": "Reject out-of-scope AI change",
+      "owning_task": "T-R6-003",
+      "owning_gate": "FG-R6-002",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-003"
+      ],
+      "supporting_gates": [
+        "FG-R6-002"
+      ]
+    },
+    {
+      "id": "UAT-034",
+      "repository_release": "R4",
+      "persona": "P-DEVELOPER",
+      "title": "Implement provider without domain changes",
+      "owning_task": "T-R4-003",
+      "owning_gate": "FG-R4-001",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R4-001",
+        "T-R4-003"
+      ],
+      "supporting_gates": [
+        "FG-R4-001"
+      ]
+    },
+    {
+      "id": "UAT-035",
+      "repository_release": "R6",
+      "persona": "P-DEVELOPER",
+      "title": "Deny undeclared plugin capability",
+      "owning_task": "T-R6-005",
+      "owning_gate": "FG-R6-005",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-005"
+      ],
+      "supporting_gates": [
+        "FG-R6-005"
+      ]
+    },
+    {
+      "id": "UAT-036",
+      "repository_release": "R6",
+      "persona": "P-DEVELOPER",
+      "title": "Maintain plugin contract compatibility",
+      "owning_task": "T-R6-005",
+      "owning_gate": "FG-R6-005",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-005"
+      ],
+      "supporting_gates": [
+        "FG-R6-005"
+      ]
+    },
+    {
+      "id": "UAT-037",
+      "repository_release": "R5",
+      "persona": "P-INDIVIDUAL",
+      "title": "Synchronise selected phone contacts",
+      "owning_task": "T-R5-001",
+      "owning_gate": "FG-R5-001",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-001"
+      ],
+      "supporting_gates": [
+        "FG-R5-001"
+      ]
+    },
+    {
+      "id": "UAT-038",
+      "repository_release": "R5",
+      "persona": "P-INDIVIDUAL",
+      "title": "Migrate from Meerkat, Monica, or CRM-in-Markdown",
+      "owning_task": "T-R5-005",
+      "owning_gate": "FG-R5-005",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-005"
+      ],
+      "supporting_gates": [
+        "FG-R5-005"
+      ]
+    },
+    {
+      "id": "UAT-039",
+      "repository_release": "R6",
+      "persona": "P-PRIVACY",
+      "title": "Preview remote AI disclosure",
+      "owning_task": "T-R6-004",
+      "owning_gate": "FG-R6-004",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-004"
+      ],
+      "supporting_gates": [
+        "FG-R6-004"
+      ]
+    },
+    {
+      "id": "UAT-040",
+      "repository_release": "R1",
+      "persona": "P-CRM",
+      "title": "Repair invalid external edit",
+      "owning_task": "T-B0-P03",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P03",
+        "T-R1-003",
+        "T-R1-006",
+        "T-R1-008"
+      ],
+      "supporting_gates": [
+        "FG-B0-001",
+        "FG-R1-002"
+      ]
+    },
+    {
+      "id": "UAT-041",
+      "repository_release": "B0",
+      "persona": "P-RECEPTION",
+      "title": "Complete Workplace Review Alpha in the installed Mac app",
+      "owning_task": "T-B0-ACCEPT",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-ACCEPT",
+        "T-B0-P04",
+        "T-B0-P06",
+        "T-B0-P09",
+        "T-B0-P10",
+        "T-B0-P11"
+      ],
+      "supporting_gates": [
+        "FG-B0-003",
+        "FG-R3-003",
+        "FG-R3-004"
+      ]
+    },
+    {
+      "id": "UAT-042",
+      "repository_release": "B0",
+      "persona": "P-CRM",
+      "title": "Recover authority and healthy records around failures",
+      "owning_task": "T-B0-P03",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-ACCEPT",
+        "T-B0-P01",
+        "T-B0-P02",
+        "T-B0-P03",
+        "T-B0-P06",
+        "T-B0-P11"
+      ],
+      "supporting_gates": [
+        "FG-B0-001"
+      ]
+    },
+    {
+      "id": "UAT-043",
+      "repository_release": "B0",
+      "persona": "P-PRIVACY",
+      "title": "Restore encrypted B0 recovery on a clean installation",
+      "owning_task": "T-B0-P08",
+      "owning_gate": "FG-B0-002",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-ACCEPT",
+        "T-B0-P07",
+        "T-B0-P08",
+        "T-B0-P11"
+      ],
+      "supporting_gates": [
+        "FG-B0-002"
+      ]
+    },
+    {
+      "id": "UAT-044",
+      "repository_release": "A0",
+      "persona": "P-INDIVIDUAL",
+      "title": "Complete Personal Memory Alpha without regressing B0",
+      "owning_task": "T-A0-001",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-001"
+      ],
+      "supporting_gates": [
+        "FG-A0-001"
+      ]
+    },
+    {
+      "id": "UAT-045",
+      "repository_release": "A0",
+      "persona": "P-PROFESSIONAL",
+      "title": "Keep relationship contexts purpose-bound",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2C"
+      ]
+    },
+    {
+      "id": "UAT-046",
+      "repository_release": "A0",
+      "persona": "P-INDIVIDUAL",
+      "title": "Manage a consent-aware Working With Me guide",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2C"
+      ]
+    },
+    {
+      "id": "UAT-047",
+      "repository_release": "A0",
+      "persona": "P-PROFESSIONAL",
+      "title": "Update interaction-derived context deterministically",
+      "owning_task": "T-A0-P02",
+      "owning_gate": "FG-A0-G2A",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P02"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2A"
+      ]
+    },
+    {
+      "id": "UAT-048",
+      "repository_release": "A0",
+      "persona": "P-INDIVIDUAL",
+      "title": "Round-trip a promoted Markdown note",
+      "owning_task": "T-A0-P02",
+      "owning_gate": "FG-A0-G2A",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P02"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2A"
+      ]
+    },
+    {
+      "id": "UAT-049",
+      "repository_release": "A0",
+      "persona": "P-PROFESSIONAL",
+      "title": "Save and transfer a grant-filtered professional view",
+      "owning_task": "T-A0-P02",
+      "owning_gate": "FG-A0-G2A",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P02"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2A"
+      ]
+    },
+    {
+      "id": "UAT-050",
+      "repository_release": "B0",
+      "persona": "P-CRM",
+      "title": "Transfer settings without transferring records or secrets",
+      "owning_task": "T-B0-P11",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01",
+        "T-B0-ACCEPT",
+        "T-B0-P11"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2C",
+        "FG-B0-001",
+        "FG-B0-003"
+      ]
+    },
+    {
+      "id": "UAT-051",
+      "repository_release": "A0",
+      "persona": "P-NETWORKER",
+      "title": "Use transparent personal allocation without workplace scoring",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P03"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2B"
+      ]
+    },
+    {
+      "id": "UAT-052",
+      "repository_release": "A0",
+      "persona": "P-NETWORKER",
+      "title": "Keep relationship reminders bounded",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P03"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2B"
+      ]
+    },
+    {
+      "id": "UAT-053",
+      "repository_release": "A0",
+      "persona": "P-CRM",
+      "title": "Merge and split duplicate people without loss",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2C"
+      ]
+    },
+    {
+      "id": "UAT-054",
+      "repository_release": "A0",
+      "persona": "P-PRIVACY",
+      "title": "Remove a cross-workspace identity bridge without leakage",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2C"
+      ]
+    },
+    {
+      "id": "UAT-055",
+      "repository_release": "B0",
+      "persona": "P-PRIVACY",
+      "title": "Prevent deleted sensitive data from returning after restore",
+      "owning_task": "T-B0-P08",
+      "owning_gate": "FG-B0-002",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-ACCEPT",
+        "T-B0-P08"
+      ],
+      "supporting_gates": [
+        "FG-B0-002"
+      ]
+    },
+    {
+      "id": "UAT-056",
+      "repository_release": "A0",
+      "persona": "P-INDIVIDUAL",
+      "title": "Label Working With Me authorship accurately",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2C"
+      ]
+    },
+    {
+      "id": "UAT-057",
+      "repository_release": "R6",
+      "persona": "P-AI",
+      "title": "Discover source-linked network context without scoring",
+      "owning_task": "T-R6-004",
+      "owning_gate": "FG-R6-004",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-004"
+      ],
+      "supporting_gates": [
+        "FG-R6-004"
+      ]
+    },
+    {
+      "id": "UAT-058",
+      "repository_release": "R6",
+      "persona": "P-AUTOMATION",
+      "title": "Run governed n8n examples",
+      "owning_task": "T-R6-002",
+      "owning_gate": "FG-R6-001",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-002"
+      ],
+      "supporting_gates": [
+        "FG-R6-001"
+      ]
+    },
+    {
+      "id": "UAT-059",
+      "repository_release": "R5",
+      "persona": "P-PROFESSIONAL",
+      "title": "Capture an interaction by local voice",
+      "owning_task": "T-R5-006",
+      "owning_gate": "FG-R5-005",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-006"
+      ],
+      "supporting_gates": [
+        "FG-R5-005"
+      ]
+    },
+    {
+      "id": "UAT-060",
+      "repository_release": "R5",
+      "persona": "P-PROFESSIONAL",
+      "title": "Capture a business card by local OCR",
+      "owning_task": "T-R5-006",
+      "owning_gate": "FG-R5-005",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-006"
+      ],
+      "supporting_gates": [
+        "FG-R5-005"
+      ]
+    },
+    {
+      "id": "UAT-061",
+      "repository_release": "R6",
+      "persona": "P-AUTOMATION",
+      "title": "Hand off follow-up without creating a task platform",
+      "owning_task": "T-R6-006",
+      "owning_gate": "FG-R6-006",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-006"
+      ],
+      "supporting_gates": [
+        "FG-R6-006"
+      ]
+    },
+    {
+      "id": "UAT-062",
+      "repository_release": "B0",
+      "persona": "P-ELDER",
+      "title": "Use every accessible built-in theme through the B0 journey",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-ACCEPT",
+        "T-B0-P03D",
+        "T-B0-P04",
+        "T-B0-P11"
+      ],
+      "supporting_gates": [
+        "FG-B0-003",
+        "FG-R2-001"
+      ]
+    },
+    {
+      "id": "UAT-063",
+      "repository_release": "A0",
+      "persona": "P-ELDER",
+      "title": "Round-trip accessible appearance settings",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P01"
+      ],
+      "supporting_gates": [
+        "FG-A0-G2C"
+      ]
+    },
+    {
+      "id": "UAT-064",
+      "repository_release": "POST-A0",
+      "persona": "P-DEVELOPER",
+      "title": "Reject unsafe declarative theme packages",
+      "owning_task": "T-UX-THEME-001",
+      "owning_gate": "FG-UX-THEME-001",
+      "milestone": "POST-A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-UX-THEME-001"
+      ],
+      "supporting_gates": [
+        "FG-UX-THEME-001"
+      ]
+    },
+    {
+      "id": "UAT-065",
+      "repository_release": "B0",
+      "persona": "P-CRM",
+      "title": "Author and round-trip the pinned OKF People profile",
+      "owning_task": "T-B0-P05-OKF",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P05-OKF"
+      ],
+      "supporting_gates": [
+        "FG-A0-001",
+        "FG-B0-001"
+      ]
+    },
+    {
+      "id": "UAT-066",
+      "repository_release": "B0",
+      "persona": "P-CRM",
+      "title": "Normalize and exactly roll back legacy People files",
+      "owning_task": "T-B0-P09-OKF",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P09-OKF"
+      ],
+      "supporting_gates": [
+        "FG-B0-001"
+      ]
+    },
+    {
+      "id": "UAT-067",
+      "repository_release": "A0",
+      "persona": "P-INDIVIDUAL",
+      "title": "Use the source-complete purpose-scoped profile end to end",
+      "owning_task": "T-A0-P04",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P04"
+      ],
+      "supporting_gates": [
+        "FG-A0-001"
+      ]
+    },
+    {
+      "id": "UAT-068",
+      "repository_release": "A0",
+      "persona": "P-CRM",
+      "title": "Review identity candidates without automatic merge",
+      "owning_task": "T-A0-P04",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P04"
+      ],
+      "supporting_gates": [
+        "FG-A0-001"
+      ]
+    },
+    {
+      "id": "UAT-069",
+      "repository_release": "A0",
+      "persona": "P-INDIVIDUAL",
+      "title": "Inspect a source- and range-labelled unified timeline",
+      "owning_task": "T-A0-P04",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-A0-P04"
+      ],
+      "supporting_gates": [
+        "FG-A0-001"
+      ]
+    },
+    {
+      "id": "UAT-070",
+      "repository_release": "R5",
+      "persona": "P-AUTOMATION",
+      "title": "Inspect and revoke a provider or import operation",
+      "owning_task": "T-R5-008",
+      "owning_gate": "FG-R5-005",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-008"
+      ],
+      "supporting_gates": [
+        "FG-R5-005"
+      ]
+    },
+    {
+      "id": "UAT-071",
+      "repository_release": "R6",
+      "persona": "P-AI",
+      "title": "Review a source-backed enrichment proposal",
+      "owning_task": "T-R6-007",
+      "owning_gate": "FG-R6-007",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-007"
+      ],
+      "supporting_gates": [
+        "FG-R6-007"
+      ]
+    },
+    {
+      "id": "UAT-072",
+      "repository_release": "R5",
+      "persona": "P-NETWORKER",
+      "title": "Use optional spatial discovery without hidden geocoding",
+      "owning_task": "T-R5-009",
+      "owning_gate": "FG-R5-006",
+      "milestone": "G5",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R5-009"
+      ],
+      "supporting_gates": [
+        "FG-R5-006"
+      ]
+    },
+    {
+      "id": "UAT-LOC-001",
+      "repository_release": "R2",
+      "persona": "P-ELDER",
+      "title": "Use a pseudolocalized workflow without layout loss",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P04"
+      ],
+      "supporting_gates": [
+        "FG-R2-001"
+      ]
+    },
+    {
+      "id": "UAT-LOC-002",
+      "repository_release": "R2",
+      "persona": "P-INDIVIDUAL",
+      "title": "Reject an unreviewed locale release claim",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-R2-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P04"
+      ],
+      "supporting_gates": [
+        "FG-R2-001"
+      ]
+    },
+    {
+      "id": "UAT-LOC-003",
+      "repository_release": "R6",
+      "persona": "P-DEVELOPER",
+      "title": "Keep plugin locale keys within their namespace",
+      "owning_task": "T-R6-005",
+      "owning_gate": "FG-R6-005",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred",
+      "supporting_tasks": [
+        "T-R6-005"
+      ],
+      "supporting_gates": [
+        "FG-R6-005"
+      ]
+    }
+  ],
+  "feature_gates": [
+    {
+      "id": "FG-R0-001",
+      "repository_release": "R0",
+      "name": "Repository governance active",
+      "acceptance_task": "T-R0-001",
+      "milestone": "G0",
+      "evidence_owner": "EO-GOVERNANCE",
+      "status": "complete"
+    },
+    {
+      "id": "FG-R0-002",
+      "repository_release": "R0",
+      "name": "Product specification traceable",
+      "acceptance_task": "T-B0-P00",
+      "milestone": "G0",
+      "evidence_owner": "EO-GOVERNANCE",
+      "status": "current"
+    },
+    {
+      "id": "FG-R1-001",
+      "repository_release": "R1",
+      "name": "Canonical workspace round trip",
+      "acceptance_task": "T-B0-P02",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-R1-002",
+      "repository_release": "R1",
+      "name": "Crash-safe writes and repair",
+      "acceptance_task": "T-B0-P03",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-R1-003",
+      "repository_release": "R1",
+      "name": "Projection rebuild complete",
+      "acceptance_task": "T-B0-P06",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-R1-004",
+      "repository_release": "R1",
+      "name": "CLI contract stable for R1",
+      "acceptance_task": "T-B0-P01",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-R1-005",
+      "repository_release": "R1",
+      "name": "Offline backup recoverable",
+      "acceptance_task": "T-B0-P08",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-R2-001",
+      "repository_release": "R2",
+      "name": "Accessible desktop core",
+      "acceptance_task": "T-B0-P04",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-R2-002",
+      "repository_release": "R2",
+      "name": "Graph has semantic parity",
+      "acceptance_task": "T-A0-P03",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-R2-003",
+      "repository_release": "R2",
+      "name": "Interruption recovery",
+      "acceptance_task": "T-A0-P02",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-R2-004",
+      "repository_release": "R2",
+      "name": "Cross-platform packages smoke tested",
+      "acceptance_task": "T-R2-007",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R2-005",
+      "repository_release": "R2",
+      "name": "Airgap artifact proven",
+      "acceptance_task": "T-R2-007",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R3-001",
+      "repository_release": "R3",
+      "name": "Dietary model complete",
+      "acceptance_task": "T-B0-P05",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-R3-002",
+      "repository_release": "R3",
+      "name": "Cohort selection reproducible",
+      "acceptance_task": "T-B0-P09",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-R3-003",
+      "repository_release": "R3",
+      "name": "Readiness reconciles all attendees",
+      "acceptance_task": "T-B0-P10",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-R3-004",
+      "repository_release": "R3",
+      "name": "Catering export is least disclosure",
+      "acceptance_task": "T-B0-P10",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-R3-005",
+      "repository_release": "R3",
+      "name": "Workplace workflow observed",
+      "acceptance_task": "T-B0-ACCEPT",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-R4-001",
+      "repository_release": "R4",
+      "name": "Provider registration conforms",
+      "acceptance_task": "T-R4-003",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R4-002",
+      "repository_release": "R4",
+      "name": "Grant and egress enforcement",
+      "acceptance_task": "T-R4-002",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R4-003",
+      "repository_release": "R4",
+      "name": "Backup verified by restore",
+      "acceptance_task": "T-R4-004",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R4-004",
+      "repository_release": "R4",
+      "name": "Shared operations authenticated",
+      "acceptance_task": "T-R4-005",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R4-005",
+      "repository_release": "R4",
+      "name": "Conflict semantics safe",
+      "acceptance_task": "T-R4-006",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R4-006",
+      "repository_release": "R4",
+      "name": "Private overlays non-disclosing",
+      "acceptance_task": "T-R4-006",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R4-007",
+      "repository_release": "R4",
+      "name": "Provider mode labels honest",
+      "acceptance_task": "T-R4-001",
+      "milestone": "G4",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R5-001",
+      "repository_release": "R5",
+      "name": "Contact sync selected and lossless",
+      "acceptance_task": "T-R5-001",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R5-002",
+      "repository_release": "R5",
+      "name": "Calendar recurrence identity correct",
+      "acceptance_task": "T-R5-002",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R5-003",
+      "repository_release": "R5",
+      "name": "Email default is metadata only",
+      "acceptance_task": "T-R5-003",
+      "milestone": "G5",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R5-004",
+      "repository_release": "R5",
+      "name": "Facilities purpose bounded",
+      "acceptance_task": "T-R5-004",
+      "milestone": "G5",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R5-005",
+      "repository_release": "R5",
+      "name": "Legacy migration and operation history reconciled",
+      "acceptance_task": "T-R5-008",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R5-006",
+      "repository_release": "R5",
+      "name": "Spatial discovery remains optional and privacy bounded",
+      "acceptance_task": "T-R5-009",
+      "milestone": "G5",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R6-001",
+      "repository_release": "R6",
+      "name": "Local API least privilege",
+      "acceptance_task": "T-R6-002",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R6-002",
+      "repository_release": "R6",
+      "name": "MCP source linked and write staged",
+      "acceptance_task": "T-R6-003",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R6-003",
+      "repository_release": "R6",
+      "name": "Local model path independent",
+      "acceptance_task": "T-R6-004",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R6-004",
+      "repository_release": "R6",
+      "name": "Remote AI disclosure exact",
+      "acceptance_task": "T-R6-004",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R6-005",
+      "repository_release": "R6",
+      "name": "Plugin sandbox denied by default",
+      "acceptance_task": "T-R6-005",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R6-006",
+      "repository_release": "R6",
+      "name": "Relationship handoff remains bounded",
+      "acceptance_task": "T-R6-006",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-R6-007",
+      "repository_release": "R6",
+      "name": "Enrichment remains a source-backed staged proposal",
+      "acceptance_task": "T-R6-007",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    {
+      "id": "FG-REL-001",
+      "repository_release": "all",
+      "name": "Release evidence complete",
+      "acceptance_task": "T-REL-001",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-B0-001",
+      "repository_release": "B0",
+      "name": "Workspace authority and recoverable writes proven",
+      "acceptance_task": "T-B0-P03",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-B0-DESIGN-001",
+      "repository_release": "B0",
+      "name": "Canonical desktop design direction reviewed before P04",
+      "acceptance_task": "T-B0-P03D",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-B0-002",
+      "repository_release": "B0",
+      "name": "Sensitive data and clean recovery proven",
+      "acceptance_task": "T-B0-P08",
+      "milestone": "G1",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-B0-003",
+      "repository_release": "B0",
+      "name": "Installed Workplace Review Alpha accepted",
+      "acceptance_task": "T-B0-ACCEPT",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-B0-PILOT-001",
+      "repository_release": "B0",
+      "name": "Real workplace-data pilot governance approved",
+      "acceptance_task": "T-B0-PILOT",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-A0-001",
+      "repository_release": "A0",
+      "name": "Personal Memory Alpha accepted after B0",
+      "acceptance_task": "T-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-A0-G2A",
+      "repository_release": "A0",
+      "name": "People and interaction memory accepted",
+      "acceptance_task": "T-A0-P02",
+      "milestone": "G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-A0-G2B",
+      "repository_release": "A0",
+      "name": "Relationship reminders and attention accepted",
+      "acceptance_task": "T-A0-P03",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-A0-G2C",
+      "repository_release": "A0",
+      "name": "Working With Me and configuration accepted",
+      "acceptance_task": "T-A0-P01",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-UX-THEME-001",
+      "repository_release": "POST-A0",
+      "name": "Declarative theme packages safe to activate",
+      "acceptance_task": "T-UX-THEME-001",
+      "milestone": "POST-A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "deferred"
+    }
+  ],
+  "implementation_tasks": [
+    {
+      "id": "T-R0-001",
+      "repository_release": "R0",
+      "title": "Establish repository governance and policy checks",
+      "milestone": "G0",
+      "owning_gate": "FG-R0-001",
+      "evidence_owner": "EO-GOVERNANCE",
+      "status": "complete"
+    },
+    {
+      "id": "T-R0-002",
+      "repository_release": "R0",
+      "title": "Publish product language, context map, and architecture decisions",
+      "milestone": "G0",
+      "owning_gate": "FG-R0-002",
+      "evidence_owner": "EO-GOVERNANCE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P00",
+      "disposition": "The broad publication task is preserved as history; P00 owns current product-truth reconciliation and claim disposition."
+    },
+    {
+      "id": "T-R0-003",
+      "repository_release": "R0",
+      "title": "Validate machine-readable specifications",
+      "milestone": "G0",
+      "owning_gate": "FG-R0-002",
+      "evidence_owner": "EO-GOVERNANCE",
+      "status": "current"
+    },
+    {
+      "id": "T-R1-001",
+      "repository_release": "R1",
+      "title": "Create Rust workspace and shared kernel",
+      "milestone": "G1",
+      "owning_gate": "FG-R1-004",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P01",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R1-002",
+      "repository_release": "R1",
+      "title": "Implement workspace manifest and lifecycle domain",
+      "milestone": "G1",
+      "owning_gate": "FG-R1-001",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P02",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R1-003",
+      "repository_release": "R1",
+      "title": "Implement safe path and canonical write service",
+      "milestone": "G1",
+      "owning_gate": "FG-R1-002",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P03",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R1-004",
+      "repository_release": "R1",
+      "title": "Implement person profile aggregate",
+      "milestone": "G1",
+      "owning_gate": "FG-R1-001",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P05",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R1-005",
+      "repository_release": "R1",
+      "title": "Implement Markdown person repository",
+      "milestone": "G1",
+      "owning_gate": "FG-R1-001",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P03",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R1-006",
+      "repository_release": "R1",
+      "title": "Implement validation, repair, and projection rebuild",
+      "milestone": "G1",
+      "owning_gate": "FG-R1-003",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P06",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R1-007",
+      "repository_release": "R1",
+      "title": "Implement content-addressed attachments",
+      "milestone": "G1",
+      "owning_gate": "FG-R1-005",
+      "evidence_owner": "EO-SECURITY",
+      "status": "superseded",
+      "superseded_by": "T-B0-P08",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R1-008",
+      "repository_release": "R1",
+      "title": "Implement CLI framework and workspace commands",
+      "milestone": "G1",
+      "owning_gate": "FG-R1-004",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P01",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R1-009",
+      "repository_release": "R1",
+      "title": "Expose person commands through CLI",
+      "milestone": "G1",
+      "owning_gate": "FG-R1-004",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P09",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R1-010",
+      "repository_release": "R1",
+      "title": "Implement CSV and vCard import/export foundations",
+      "milestone": "G1",
+      "owning_gate": "FG-R1-004",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P09",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R1-011",
+      "repository_release": "R1",
+      "title": "Implement encrypted local backup and isolated restore",
+      "milestone": "G1",
+      "owning_gate": "FG-R1-005",
+      "evidence_owner": "EO-SECURITY",
+      "status": "superseded",
+      "superseded_by": "T-B0-P08",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R1-012",
+      "repository_release": "R1",
+      "title": "Prove Airgap core",
+      "milestone": "G7",
+      "owning_gate": "FG-R2-005",
+      "evidence_owner": "EO-RELEASE",
+      "status": "superseded",
+      "superseded_by": "T-B0-ACCEPT",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R2-001",
+      "repository_release": "R2",
+      "title": "Create Tauri desktop shell and typed command bridge",
+      "milestone": "G1",
+      "owning_gate": "FG-R2-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P04",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R2-002",
+      "repository_release": "R2",
+      "title": "Build accessible application navigation and workspace status",
+      "milestone": "G1",
+      "owning_gate": "FG-R2-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "superseded",
+      "superseded_by": "T-B0-P04",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R2-003",
+      "repository_release": "R2",
+      "title": "Build person list, search, profile, and interruption-safe editor",
+      "milestone": "G2A",
+      "owning_gate": "FG-R2-003",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "superseded",
+      "superseded_by": "T-A0-P01",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R2-004",
+      "repository_release": "R2",
+      "title": "Implement relationships and reminders domains",
+      "milestone": "A0",
+      "owning_gate": "FG-A0-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "superseded",
+      "superseded_by": "T-A0-P03",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R2-005",
+      "repository_release": "R2",
+      "title": "Build relationship table, tree, and graph",
+      "milestone": "G2B",
+      "owning_gate": "FG-R2-002",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "superseded",
+      "superseded_by": "T-A0-P03",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R2-006",
+      "repository_release": "R2",
+      "title": "Build configurable dashboard framework",
+      "milestone": "A0",
+      "owning_gate": "FG-A0-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "superseded",
+      "superseded_by": "T-A0-P01",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R2-007",
+      "repository_release": "R2",
+      "title": "Establish desktop packaging matrix",
+      "milestone": "G7",
+      "owning_gate": "FG-R2-004",
+      "evidence_owner": "EO-RELEASE",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R3-001",
+      "repository_release": "R3",
+      "title": "Implement organisations and effective memberships",
+      "milestone": "G3",
+      "owning_gate": "FG-R3-002",
+      "evidence_owner": "EO-EVENTS",
+      "status": "superseded",
+      "superseded_by": "T-B0-P09",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R3-002",
+      "repository_release": "R3",
+      "title": "Implement structured dietary requirements",
+      "milestone": "G3",
+      "owning_gate": "FG-R3-001",
+      "evidence_owner": "EO-EVENTS",
+      "status": "superseded",
+      "superseded_by": "T-B0-P05",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R3-003",
+      "repository_release": "R3",
+      "title": "Implement saved cohort query language",
+      "milestone": "G3",
+      "owning_gate": "FG-R3-002",
+      "evidence_owner": "EO-EVENTS",
+      "status": "superseded",
+      "superseded_by": "T-B0-P09",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R3-004",
+      "repository_release": "R3",
+      "title": "Implement bulk employee import",
+      "milestone": "G3",
+      "owning_gate": "FG-R3-005",
+      "evidence_owner": "EO-EVENTS",
+      "status": "superseded",
+      "superseded_by": "T-B0-P09",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R3-005",
+      "repository_release": "R3",
+      "title": "Implement events, attendance, and cohort snapshots",
+      "milestone": "G3",
+      "owning_gate": "FG-R3-003",
+      "evidence_owner": "EO-EVENTS",
+      "status": "superseded",
+      "superseded_by": "T-B0-P10",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R3-006",
+      "repository_release": "R3",
+      "title": "Implement dietary readiness and catering brief",
+      "milestone": "G3",
+      "owning_gate": "FG-R3-004",
+      "evidence_owner": "EO-EVENTS",
+      "status": "superseded",
+      "superseded_by": "T-B0-P10",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R3-007",
+      "repository_release": "R3",
+      "title": "Observe workplace event workflow",
+      "milestone": "B0",
+      "owning_gate": "FG-R3-005",
+      "evidence_owner": "EO-EVENTS",
+      "status": "superseded",
+      "superseded_by": "T-B0-ACCEPT",
+      "disposition": "Historical broad task is non-executable; its accepted scope is re-owned by the named B0 or A0 task."
+    },
+    {
+      "id": "T-R4-001",
+      "repository_release": "R4",
+      "title": "Implement Connections domain and provider registry",
+      "milestone": "G4",
+      "owning_gate": "FG-R4-007",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R4-002",
+      "repository_release": "R4",
+      "title": "Implement egress controller and secret-store port",
+      "milestone": "G4",
+      "owning_gate": "FG-R4-002",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R4-003",
+      "repository_release": "R4",
+      "title": "Publish provider SDK and object-store contract",
+      "milestone": "G4",
+      "owning_gate": "FG-R4-001",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R4-004",
+      "repository_release": "R4",
+      "title": "Implement provider-neutral backup service",
+      "milestone": "G4",
+      "owning_gate": "FG-R4-003",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R4-005",
+      "repository_release": "R4",
+      "title": "Implement Sharing identities and signed operations",
+      "milestone": "G4",
+      "owning_gate": "FG-R4-004",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R4-006",
+      "repository_release": "R4",
+      "title": "Implement conflict resolution and private overlays",
+      "milestone": "G4",
+      "owning_gate": "FG-R4-005",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R4-007",
+      "repository_release": "R4",
+      "title": "Implement self-service requests and Liaison Cards",
+      "milestone": "G4",
+      "owning_gate": "FG-R4-006",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R4-008",
+      "repository_release": "R4",
+      "title": "Implement local, WebDAV, and S3-compatible transports",
+      "milestone": "G4",
+      "owning_gate": "FG-R4-001",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R5-001",
+      "repository_release": "R5",
+      "title": "Implement CardDAV selected-view sync",
+      "milestone": "G5",
+      "owning_gate": "FG-R5-001",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R5-002",
+      "repository_release": "R5",
+      "title": "Implement calendar contract and initial CalDAV/iCalendar adapter",
+      "milestone": "G5",
+      "owning_gate": "FG-R5-002",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R5-003",
+      "repository_release": "R5",
+      "title": "Implement interactions import and email-metadata contract",
+      "milestone": "G5",
+      "owning_gate": "FG-R5-003",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R5-004",
+      "repository_release": "R5",
+      "title": "Implement facilities access import and retention",
+      "milestone": "G5",
+      "owning_gate": "FG-R5-004",
+      "evidence_owner": "EO-SECURITY",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R5-005",
+      "repository_release": "R5",
+      "title": "Implement Meerkat, Monica, and CRM-in-Markdown migration adapters",
+      "milestone": "G5",
+      "owning_gate": "FG-R5-005",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R6-001",
+      "repository_release": "R6",
+      "title": "Implement local OpenAPI and scoped tokens",
+      "milestone": "G6",
+      "owning_gate": "FG-R6-001",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R6-002",
+      "repository_release": "R6",
+      "title": "Implement signed webhooks and n8n examples",
+      "milestone": "G6",
+      "owning_gate": "FG-R6-001",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R6-003",
+      "repository_release": "R6",
+      "title": "Implement MCP reads and staged writes",
+      "milestone": "G6",
+      "owning_gate": "FG-R6-002",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R6-004",
+      "repository_release": "R6",
+      "title": "Implement local and remote model adapters",
+      "milestone": "G6",
+      "owning_gate": "FG-R6-003",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R6-005",
+      "repository_release": "R6",
+      "title": "Implement WASI plugin host and SDK",
+      "milestone": "G6",
+      "owning_gate": "FG-R6-005",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    {
+      "id": "T-B0-P00",
+      "repository_release": "B0",
+      "title": "Reconcile current contracts, decisions, versions, commands, claims, and branch dispositions",
+      "milestone": "G0",
+      "owning_gate": "FG-R0-002",
+      "evidence_owner": "EO-GOVERNANCE",
+      "status": "current"
+    },
+    {
+      "id": "T-B0-P01",
+      "repository_release": "B0",
+      "title": "Add the application composition root and typed result contract",
+      "milestone": "G1",
+      "owning_gate": "FG-R1-004",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    {
+      "id": "T-B0-P02",
+      "repository_release": "B0",
+      "title": "Establish Workspace Session authority and read-only Health",
+      "milestone": "G1",
+      "owning_gate": "FG-B0-001",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    {
+      "id": "T-B0-P03",
+      "repository_release": "B0",
+      "title": "Route canonical mutations through recoverable multi-target operations",
+      "milestone": "G1",
+      "owning_gate": "FG-B0-001",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    {
+      "id": "T-B0-P03D",
+      "repository_release": "B0",
+      "title": "Run design consultation and plan design review before desktop implementation",
+      "milestone": "G1",
+      "owning_gate": "FG-B0-DESIGN-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    {
+      "id": "T-B0-P04",
+      "repository_release": "B0",
+      "title": "Migrate the desktop to typed React and the semantic design system",
+      "milestone": "G1",
+      "owning_gate": "FG-R2-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    {
+      "id": "T-B0-P05",
+      "repository_release": "B0",
+      "title": "Define revisioned Directory profile and Event contracts",
+      "milestone": "G3",
+      "owning_gate": "FG-R3-001",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    {
+      "id": "T-B0-P05-OKF",
+      "repository_release": "B0",
+      "title": "Define the pinned OKF People authoring schema and typed port",
+      "milestone": "G1",
+      "owning_gate": "FG-B0-001",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    {
+      "id": "T-B0-P06",
+      "repository_release": "B0",
+      "title": "Add tolerant scalable Directory reads and disposable projection",
+      "milestone": "G1",
+      "owning_gate": "FG-R1-003",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    {
+      "id": "T-B0-P07",
+      "repository_release": "B0",
+      "title": "Add Workspace Security, key recovery, purpose grants, and minimal audit",
+      "milestone": "G1",
+      "owning_gate": "FG-B0-002",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked"
+    },
+    {
+      "id": "T-B0-P08",
+      "repository_release": "B0",
+      "title": "Add local checkpoints and encrypted recovery packages",
+      "milestone": "G1",
+      "owning_gate": "FG-B0-002",
+      "evidence_owner": "EO-SECURITY",
+      "status": "blocked"
+    },
+    {
+      "id": "T-B0-P09-OKF",
+      "repository_release": "B0",
+      "title": "Normalize legacy People files to the pinned OKF profile",
+      "milestone": "G1",
+      "owning_gate": "FG-B0-001",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    {
+      "id": "T-B0-P09",
+      "repository_release": "B0",
+      "title": "Complete Directory onboarding and staged idempotent import",
+      "milestone": "G3",
+      "owning_gate": "FG-R3-002",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    {
+      "id": "T-B0-P10",
+      "repository_release": "B0",
+      "title": "Implement immutable cohorts, exact readiness, internal briefs, and verified delivery",
+      "milestone": "G3",
+      "owning_gate": "FG-R3-003",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    {
+      "id": "T-B0-P11",
+      "repository_release": "B0",
+      "title": "Implement the B0 desktop workflow and interruption states",
+      "milestone": "B0",
+      "owning_gate": "FG-B0-003",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    {
+      "id": "T-B0-PILOT",
+      "repository_release": "B0",
+      "title": "Authorise a real workplace-data pilot independently of synthetic B0 UAT",
+      "milestone": "G3",
+      "owning_gate": "FG-B0-PILOT-001",
+      "evidence_owner": "EO-EVENTS",
+      "status": "blocked"
+    },
+    {
+      "id": "T-B0-ACCEPT",
+      "repository_release": "B0",
+      "title": "Qualify Workplace Review Alpha in the installed universal Mac application",
+      "milestone": "B0",
+      "owning_gate": "FG-B0-003",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    {
+      "id": "T-A0-P01",
+      "repository_release": "A0",
+      "title": "Implement purpose-bound People, Working With Me, custom fields, tabs, and settings",
+      "milestone": "G2C",
+      "owning_gate": "FG-A0-G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    {
+      "id": "T-A0-P02",
+      "repository_release": "A0",
+      "title": "Implement notes, interactions, important dates, search, and saved views",
+      "milestone": "G2A",
+      "owning_gate": "FG-A0-G2A",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    {
+      "id": "T-A0-P03",
+      "repository_release": "A0",
+      "title": "Implement relationship contexts, bounded reminders, reason-only Review, and handoff envelope",
+      "milestone": "G2B",
+      "owning_gate": "FG-A0-G2B",
+      "evidence_owner": "EO-PROFILES",
+      "status": "blocked"
+    },
+    {
+      "id": "T-A0-P04",
+      "repository_release": "A0",
+      "title": "Compose and qualify the source-complete purpose-scoped profile, identity review, and unified timeline",
+      "milestone": "A0",
+      "owning_gate": "FG-A0-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    {
+      "id": "T-A0-001",
+      "repository_release": "A0",
+      "title": "Implement and qualify Personal Memory Alpha after B0 acceptance",
+      "milestone": "A0",
+      "owning_gate": "FG-A0-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    {
+      "id": "T-R5-006",
+      "repository_release": "R5",
+      "title": "Implement denied-network local voice and business-card capture",
+      "milestone": "G5",
+      "owning_gate": "FG-R5-005",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R5-007",
+      "repository_release": "R5",
+      "title": "Implement source-linked meeting briefings and bounded participation metrics",
+      "milestone": "G5",
+      "owning_gate": "FG-R5-003",
+      "evidence_owner": "EO-PROFILES",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R5-008",
+      "repository_release": "R5",
+      "title": "Add provider and import operation receipts, history, retry, and revoke",
+      "milestone": "G5",
+      "owning_gate": "FG-R5-005",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R5-009",
+      "repository_release": "R5",
+      "title": "Add optional privacy-bounded spatial discovery",
+      "milestone": "G5",
+      "owning_gate": "FG-R5-006",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R6-006",
+      "repository_release": "R6",
+      "title": "Implement connector-neutral relationship follow-up handoff",
+      "milestone": "G6",
+      "owning_gate": "FG-R6-006",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    {
+      "id": "T-R6-007",
+      "repository_release": "R6",
+      "title": "Add source-backed life-change and enrichment proposals",
+      "milestone": "G6",
+      "owning_gate": "FG-R6-007",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    {
+      "id": "T-UX-THEME-001",
+      "repository_release": "POST-A0",
+      "title": "Implement sandboxed declarative theme packages after A0",
+      "milestone": "POST-A0",
+      "owning_gate": "FG-UX-THEME-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "deferred"
+    },
+    {
+      "id": "T-REL-001",
+      "repository_release": "R1",
+      "title": "Prepare milestone-scoped public release evidence and support paths",
+      "milestone": "G7",
+      "owning_gate": "FG-REL-001",
+      "evidence_owner": "EO-RELEASE",
+      "status": "blocked"
+    }
+  ],
+  "proposal_dispositions": [
+    {
+      "proposal_id": "LRM-WS-012",
+      "disposition": "adopted",
+      "canonical_id": "LRM-WS-012",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-WS-013",
+      "disposition": "adopted",
+      "canonical_id": "LRM-WS-013",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-WS-014",
+      "disposition": "adopted",
+      "canonical_id": "LRM-WS-014",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-WS-015",
+      "disposition": "adopted",
+      "canonical_id": "LRM-WS-015",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-WS-016",
+      "disposition": "adopted",
+      "canonical_id": "LRM-WS-016",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-PE-011",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-011",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-PE-012",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-012",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-PE-013",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-013",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-PE-014",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-014",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-PE-015",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-015",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-RE-006",
+      "disposition": "adopted",
+      "canonical_id": "LRM-RE-006",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-RE-007",
+      "disposition": "adopted",
+      "canonical_id": "LRM-RE-007",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-RE-008",
+      "disposition": "adopted",
+      "canonical_id": "LRM-RE-008",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-IN-006",
+      "disposition": "adopted",
+      "canonical_id": "LRM-IN-006",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-IN-007",
+      "disposition": "adopted",
+      "canonical_id": "LRM-IN-007",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-IN-008",
+      "disposition": "adopted",
+      "canonical_id": "LRM-IN-008",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-RM-004",
+      "disposition": "adopted",
+      "canonical_id": "LRM-RM-004",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-RM-005",
+      "disposition": "adopted",
+      "canonical_id": "LRM-RM-005",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-UX-010",
+      "disposition": "adopted",
+      "canonical_id": "LRM-UX-010",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-UX-011",
+      "disposition": "adopted",
+      "canonical_id": "LRM-UX-011",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-UX-012",
+      "disposition": "adopted",
+      "canonical_id": "LRM-UX-012",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-UX-013",
+      "disposition": "adopted",
+      "canonical_id": "LRM-UX-013",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-UX-014",
+      "disposition": "adopted",
+      "canonical_id": "LRM-UX-014",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-EV-010",
+      "disposition": "adopted",
+      "canonical_id": "LRM-EV-010",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-EV-011",
+      "disposition": "adopted",
+      "canonical_id": "LRM-EV-011",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-EV-012",
+      "disposition": "adopted",
+      "canonical_id": "LRM-EV-012",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-EV-013",
+      "disposition": "adopted",
+      "canonical_id": "LRM-EV-013",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-CO-013",
+      "disposition": "adopted",
+      "canonical_id": "LRM-CO-013",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-CO-014",
+      "disposition": "adopted",
+      "canonical_id": "LRM-CO-014",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-AU-010",
+      "disposition": "adopted",
+      "canonical_id": "LRM-AU-010",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-AU-011",
+      "disposition": "adopted",
+      "canonical_id": "LRM-AU-011",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-AU-012",
+      "disposition": "adopted",
+      "canonical_id": "LRM-AU-012",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-PK-007",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PK-007",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-PK-008",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PK-008",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-PK-009",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PK-009",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-045",
+      "disposition": "adopted",
+      "canonical_id": "UAT-045",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-046",
+      "disposition": "adopted",
+      "canonical_id": "UAT-046",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-047",
+      "disposition": "adopted",
+      "canonical_id": "UAT-047",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-048",
+      "disposition": "adopted",
+      "canonical_id": "UAT-048",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-049",
+      "disposition": "adopted",
+      "canonical_id": "UAT-049",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-050",
+      "disposition": "adopted",
+      "canonical_id": "UAT-050",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-051",
+      "disposition": "adopted",
+      "canonical_id": "UAT-051",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-052",
+      "disposition": "adopted",
+      "canonical_id": "UAT-052",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-053",
+      "disposition": "adopted",
+      "canonical_id": "UAT-053",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-054",
+      "disposition": "adopted",
+      "canonical_id": "UAT-054",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-055",
+      "disposition": "adopted",
+      "canonical_id": "UAT-055",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-056",
+      "disposition": "adopted",
+      "canonical_id": "UAT-056",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-057",
+      "disposition": "adopted",
+      "canonical_id": "UAT-057",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-058",
+      "disposition": "adopted",
+      "canonical_id": "UAT-058",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-059",
+      "disposition": "adopted",
+      "canonical_id": "UAT-059",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-060",
+      "disposition": "adopted",
+      "canonical_id": "UAT-060",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-061",
+      "disposition": "adopted",
+      "canonical_id": "UAT-061",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-062",
+      "disposition": "adopted",
+      "canonical_id": "UAT-062",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-063",
+      "disposition": "adopted",
+      "canonical_id": "UAT-063",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "UAT-064",
+      "disposition": "adopted",
+      "canonical_id": "UAT-064",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-WS-017",
+      "disposition": "adopted",
+      "canonical_id": "LRM-WS-017",
+      "rationale": "Adopted as the B0-required OKF People normalization contract; general and third-party migrations remain outside B0."
+    },
+    {
+      "proposal_id": "LRM-PE-016",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-016",
+      "rationale": "Adopted as the pinned strict-write OKF People envelope while Liaison remains domain authority and sealed values remain non-plaintext."
+    },
+    {
+      "proposal_id": "LRM-PE-017",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-017",
+      "rationale": "Adopted as the tolerant-read and separate domain-validity contract for B0 Directory projection."
+    },
+    {
+      "proposal_id": "LRM-PE-018",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-018",
+      "rationale": "Adopted for the A0 source-complete purpose-scoped profile under the final A0 acceptance gate."
+    },
+    {
+      "proposal_id": "LRM-PE-019",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-019",
+      "rationale": "Adopted for A0 claim provenance, coverage, freshness, disclosure, and correction inspection."
+    },
+    {
+      "proposal_id": "LRM-PE-020",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-020",
+      "rationale": "Adopted for explicit conflicting, stale, withheld, and proposed profile states without a silent winner."
+    },
+    {
+      "proposal_id": "LRM-PE-021",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-021",
+      "rationale": "Adopted for staged external-edit diffs with no silent disclosure or readiness change."
+    },
+    {
+      "proposal_id": "LRM-IN-001",
+      "disposition": "adopted",
+      "canonical_id": "LRM-IN-001",
+      "rationale": "The existing identifier is amended under FG-A0-001 to own the source- and range-labelled unified timeline and no-score invariant."
+    },
+    {
+      "proposal_id": "LRM-CO-015",
+      "disposition": "adopted",
+      "canonical_id": "LRM-CO-015",
+      "rationale": "Adopted for R5 provider and import operation receipts, retry, revoke, retention, history, and hidden-egress denial."
+    },
+    {
+      "proposal_id": "LRM-AU-013",
+      "disposition": "adopted",
+      "canonical_id": "LRM-AU-013",
+      "rationale": "Adopted for R6 source-backed staged enrichment proposals with direct-write and relationship-state denial."
+    },
+    {
+      "proposal_id": "LRM-UX-015",
+      "disposition": "adopted",
+      "canonical_id": "LRM-UX-015",
+      "rationale": "Adopted as a separately gated post-A0 R5 spatial capability with explicit egress, Workplace denial, deletion, and semantic parity."
+    },
+    {
+      "proposal_id": "UAT-065",
+      "disposition": "adopted",
+      "canonical_id": "UAT-065",
+      "rationale": "Adopted as atomic P05-OKF strict-writer and sealed-data evidence under FG-B0-001."
+    },
+    {
+      "proposal_id": "UAT-066",
+      "disposition": "adopted",
+      "canonical_id": "UAT-066",
+      "rationale": "Adopted as atomic P09-OKF normalization, recovery, and exact-rollback evidence under FG-B0-001."
+    },
+    {
+      "proposal_id": "UAT-067",
+      "disposition": "adopted",
+      "canonical_id": "UAT-067",
+      "rationale": "Adopted for the installed A0 source-complete purpose-scoped profile and accessibility workflow."
+    },
+    {
+      "proposal_id": "UAT-068",
+      "disposition": "adopted",
+      "canonical_id": "UAT-068",
+      "rationale": "Adopted for explicit reversible identity review and automatic-merge denial."
+    },
+    {
+      "proposal_id": "UAT-069",
+      "disposition": "adopted",
+      "canonical_id": "UAT-069",
+      "rationale": "Adopted for the source- and range-labelled unified timeline with no person score."
+    },
+    {
+      "proposal_id": "UAT-070",
+      "disposition": "adopted",
+      "canonical_id": "UAT-070",
+      "rationale": "Adopted for R5 operation receipt, retry, revoke, hidden refresh, egress, and reminder-isolation evidence."
+    },
+    {
+      "proposal_id": "UAT-071",
+      "disposition": "adopted",
+      "canonical_id": "UAT-071",
+      "rationale": "Adopted for R6 enrichment proposal review and direct-write denial."
+    },
+    {
+      "proposal_id": "UAT-072",
+      "disposition": "adopted",
+      "canonical_id": "UAT-072",
+      "rationale": "Adopted for separately gated spatial egress, deletion, Workplace denial, and semantic parity evidence."
+    },
+    {
+      "proposal_id": "FG-UX-THEME-001",
+      "disposition": "adopted",
+      "canonical_id": "FG-UX-THEME-001",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "P-PROFESSIONAL",
+      "disposition": "adopted",
+      "canonical_id": "P-PROFESSIONAL",
+      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    }
+  ],
+  "review_branch_dispositions": [
+    {
+      "reference": "PR #31",
+      "status": "closed-branch-preserved",
+      "execution_status": "deferred",
+      "milestone": "G1",
+      "condition": "May be reviewed only as design source after P03, design consultation, canonical DESIGN.md, and plan design review; it is not current P04 authority."
+    },
+    {
+      "reference": "PR #32",
+      "status": "closed-branch-preserved",
+      "execution_status": "blocked",
+      "milestone": "G2B",
+      "condition": "A0 relationship intent and cadence work cannot execute or merge before B0 acceptance."
+    },
+    {
+      "reference": "PR #33",
+      "status": "closed-branch-preserved",
+      "execution_status": "blocked",
+      "milestone": "G2B",
+      "condition": "A0 YAML and CLI relationship intent work cannot execute or merge before B0 acceptance."
+    }
+  ]
+}

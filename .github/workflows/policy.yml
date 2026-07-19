@@ -35,6 +35,7 @@ jobs:
           required = [
               "## Problem",
               "## Change",
+              "## Priority and RICE",
               "## Domain and architecture",
               "## Knowledge",
               "## User evidence",

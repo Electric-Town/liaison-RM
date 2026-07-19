@@ -36,3 +36,15 @@ Template:
 ```
 
 A decision record explains why a durable choice was made. It does not duplicate implementation detail that belongs in code or an operational article.
+
+## Accepted working-state decisions
+
+- `0001`–`0005` establish the shared Rust/Tauri core, open canonical files, provider-neutral contracts, separate build profiles, and honest relationship/readiness language.
+- `0006` establishes one application composition root and `WorkspaceSession`.
+- `0007` defines recoverable multi-target canonical commits.
+- `0008` defines the workspace key hierarchy and honest local authorization boundary.
+- `0009` defines the disposable Directory projection.
+- `0010` defines event dietary readiness and structural least disclosure.
+- `0011` separates local checkpoints from encrypted recovery packages.
+- `0012` fixes the delivery order as B0 Workplace Review before A0 Personal Memory.
+- `0013` pins the OKF v0.1 Draft People authoring profile, strict-write/tolerant-read boundary, sealed-data rule, and recoverable B0 normalization seam.

@@ -1,6 +1,6 @@
 # Relationship runtime evidence
 
-Status: pending exact-head CI.
+Status: implementation is present on `main`; this document does not open B0, A0, persistence, or user-interface gates.
 
 ## Scope
 
@@ -13,12 +13,17 @@ Status: pending exact-head CI.
 - capacity-bounded deterministic queue output;
 - no relationship-strength output.
 
-## Evidence required
+## Implemented boundary
 
-- formatting, compilation, Clippy, and tests on Ubuntu, macOS, and Windows;
-- architecture, repository, and product-specification checks;
-- exact successful commit SHA;
-- confirmation that PR #9 is accepted or reconciled before merge.
+The checked-in crates contain the pure profile-readiness and reason-only Review foundations listed above. Accepted ADR 0005 defines their separation from relationship intent and evidence. A successful local or CI test of these crates would prove only that bounded domain behavior, not persistence, event readiness, recovery, or a complete personal product.
+
+## Evidence still required for a release claim
+
+- an exact source commit and successful cross-platform formatting, compilation, Clippy, and test runs;
+- architecture, repository, and product-specification checks on that same commit;
+- versioned persistence and migration evidence where these types become canonical;
+- B0 event-specific readiness, local-policy, sealing, recovery, and installed-app evidence;
+- after B0, A0 interaction/commitment inputs and installed personal-workflow evidence.
 
 ## Deliberately excluded
 
@@ -30,3 +35,5 @@ Status: pending exact-head CI.
 - interruption recovery;
 - weighted Review Priority;
 - desktop UI.
+
+The previous pull-request dependency has been reconciled and merged; it is no longer an active gate. Current delivery order is B0 Workplace Review before A0 Personal Memory, so reason-only personal Review must not become a B0 prerequisite.

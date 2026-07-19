@@ -6,6 +6,8 @@ Repository text must help a specific reader make a decision, complete a task, un
 
 The project does not use AI detectors as an authorship gate. Statistical classifiers are too unreliable for individual attribution and encourage cosmetic evasion rather than better work.
 
+The maintainer-supplied forensic and localization guidance was reviewed and bounded in [`docs/evidence/content/editorial-source-review-2026-07-18.md`](../evidence/content/editorial-source-review-2026-07-18.md). Observable editorial defects are useful review inputs. Statistical authorship claims, phonological manipulation, deliberate errors, and detector evasion are not.
+
 ## Required qualities
 
 Good repository content is:
@@ -18,6 +20,8 @@ Good repository content is:
 - structured for scanning without reducing every thought to fragments;
 - free of fabricated quotes, benchmarks, users, tests, citations, or compliance claims;
 - edited by an accountable contributor.
+- written in direct language that names the responsible actor and safe next action;
+- reviewed in the rendered product when it is user-facing, including pseudolocale and long-content states.
 
 ## Common failure patterns
 
@@ -36,6 +40,8 @@ Review and rewrite:
 - comments that paraphrase the next line of code;
 - citations that do not support the claim made;
 - warnings so vague that a user cannot recover.
+- unsupported percentages or research claims copied from a secondary editorial source;
+- language changed to satisfy an authorship classifier instead of the reader's task.
 
 ## Technical writing test
 
