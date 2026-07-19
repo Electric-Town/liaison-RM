@@ -90,56 +90,73 @@ jobs:
 
           vault = Path("adapters/vault-markdown/src/lib.rs")
           text = vault.read_text(encoding="utf-8")
-          text = text.replace(
-              '''                let current = bound_find_person(root, person.id)
-                    .ok()
-                    .map(|(_, parsed)| parsed.document.revision.get())
-                    .unwrap_or(expected_revision.get());''',
-              '''                let current = bound_find_person(root, person.id)
-                    .ok()
-                    .map_or(expected_revision.get(), |(_, parsed)| {
-                        parsed.document.revision.get()
-                    });''',
-              1,
+
+          current_pattern = re.compile(
+              r'(?m)^(?P<i>[ \t]*)let current = bound_find_person\(root, person\.id\)\n'
+              r'(?P=i)    \.ok\(\)\n'
+              r'(?P=i)    \.map\(\|\(_, parsed\)\| parsed\.document\.revision\.get\(\)\)\n'
+              r'(?P=i)    \.unwrap_or\(expected_revision\.get\(\)\);'
           )
-          text = text.replace(
-              '''                        let expected = person.revision;
-                        assert!(person.rename("Alex M. Murphy").is_ok());
-                        assert!(bound.save(&person, expected).is_ok());''',
-              '''                        let expected = person.revision;
-                        assert!(person.rename("Alex M. Murphy").is_ok());
-                        let save_repository =
-                            people_mutation_repository(&work, operation_context());
-                        assert!(save_repository.save(&person, expected).is_ok());''',
-              1,
+          def replace_current(match: re.Match[str]) -> str:
+              indent = match.group("i")
+              return (
+                  f"{indent}let current = bound_find_person(root, person.id)\n"
+                  f"{indent}    .ok()\n"
+                  f"{indent}    .map_or(expected_revision.get(), |(_, parsed)| {{\n"
+                  f"{indent}        parsed.document.revision.get()\n"
+                  f"{indent}    }});"
+              )
+          text, current_count = current_pattern.subn(replace_current, text, count=1)
+          if current_count != 1:
+              raise SystemExit(f"expected one revision fallback replacement, found {current_count}")
+
+          save_pattern = re.compile(
+              r'(?m)^(?P<i>[ \t]*)let expected = person\.revision;\n'
+              r'(?P=i)assert!\(person\.rename\("Alex M\. Murphy"\)\.is_ok\(\)\);\n'
+              r'(?P=i)assert!\(bound\.save\(&person, expected\)\.is_ok\(\)\);'
           )
-          old = '''            let bound = people_mutation_repository(&work, operation_context());
-            let create = CreatePerson::new(&bound);
-            assert!(
-                create
-                    .execute(PersonId::new(), "Zara Example", None)
-                    .is_ok()
-            );
-            assert!(
-                create
-                    .execute(PersonId::new(), "Alex Example", None)
-                    .is_ok()
-            );
-            let people = ListPeople::new(&bound).execute(false);'''
-          new = '''            let zara_repository = people_mutation_repository(&work, operation_context());
-            assert!(
-                CreatePerson::new(&zara_repository)
-                    .execute(PersonId::new(), "Zara Example", None)
-                    .is_ok()
-            );
-            let alex_repository = people_mutation_repository(&work, operation_context());
-            assert!(
-                CreatePerson::new(&alex_repository)
-                    .execute(PersonId::new(), "Alex Example", None)
-                    .is_ok()
-            );
-            let people = ListPeople::new(&alex_repository).execute(false);'''
-          vault.write_text(text.replace(old, new, 1), encoding="utf-8")
+          def replace_save(match: re.Match[str]) -> str:
+              indent = match.group("i")
+              return (
+                  f"{indent}let expected = person.revision;\n"
+                  f"{indent}assert!(person.rename(\"Alex M. Murphy\").is_ok());\n"
+                  f"{indent}let save_repository =\n"
+                  f"{indent}    people_mutation_repository(&work, operation_context());\n"
+                  f"{indent}assert!(save_repository.save(&person, expected).is_ok());"
+              )
+          text, save_count = save_pattern.subn(replace_save, text, count=1)
+          if save_count != 1:
+              raise SystemExit(f"expected one save-context replacement, found {save_count}")
+
+          order_pattern = re.compile(
+              r'(?ms)^(?P<i>[ \t]*)let bound = people_mutation_repository\(&work, operation_context\(\)\);\n'
+              r'(?P=i)let create = CreatePerson::new\(&bound\);\n'
+              r'(?P=i)assert!\(\s*create\s*\.execute\(PersonId::new\(\), "Zara Example", None\)\s*\.is_ok\(\)\s*\);\n'
+              r'(?P=i)assert!\(\s*create\s*\.execute\(PersonId::new\(\), "Alex Example", None\)\s*\.is_ok\(\)\s*\);\n'
+              r'(?P=i)let people = ListPeople::new\(&bound\)\.execute\(false\);'
+          )
+          def replace_order(match: re.Match[str]) -> str:
+              indent = match.group("i")
+              return (
+                  f"{indent}let zara_repository = people_mutation_repository(&work, operation_context());\n"
+                  f"{indent}assert!(\n"
+                  f"{indent}    CreatePerson::new(&zara_repository)\n"
+                  f"{indent}        .execute(PersonId::new(), \"Zara Example\", None)\n"
+                  f"{indent}        .is_ok()\n"
+                  f"{indent});\n"
+                  f"{indent}let alex_repository = people_mutation_repository(&work, operation_context());\n"
+                  f"{indent}assert!(\n"
+                  f"{indent}    CreatePerson::new(&alex_repository)\n"
+                  f"{indent}        .execute(PersonId::new(), \"Alex Example\", None)\n"
+                  f"{indent}        .is_ok()\n"
+                  f"{indent});\n"
+                  f"{indent}let people = ListPeople::new(&alex_repository).execute(false);"
+              )
+          text, order_count = order_pattern.subn(replace_order, text, count=1)
+          if order_count != 1:
+              raise SystemExit(f"expected one stable-order context replacement, found {order_count}")
+
+          vault.write_text(text, encoding="utf-8")
           PY
 
       - name: Format, resolve, and validate the affected source
