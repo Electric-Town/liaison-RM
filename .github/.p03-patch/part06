@@ -1,0 +1,225 @@
+   format: "liaison-projection-stale".to_owned(),
++        schema_version: 1,
++        operation_id: operation.operation_id,
++        workspace_id: operation.workspace_id,
++        mutation_kind: operation.mutation_kind,
++    };
++    let bytes = serde_json::to_vec_pretty(&marker).map_err(storage)?;
++    replace_file(&projections, PROJECTION_STALE_FILE, &bytes)?;
++    sync_directory(&projections)
++}
++
++fn open_parent(
++    root: &Dir,
++    path: &CanonicalPath,
++) -> Result<(Dir, String), WorkspaceOperationError> {
++    let path = Path::new(path.as_str());
++    let file_name = path
++        .file_name()
++        .and_then(|value| value.to_str())
++        .ok_or_else(|| WorkspaceOperationError::UnsafePath(path.display().to_string()))?
++        .to_owned();
++    let mut directory = root.try_clone().map_err(storage)?;
++    if let Some(parent) = path.parent() {
++        for component in parent.components() {
++            let Component::Normal(segment) = component else {
++                return Err(WorkspaceOperationError::UnsafePath(
++                    path.display().to_string(),
++                ));
++            };
++            directory = directory.open_dir_nofollow(segment).map_err(storage)?;
++        }
++    }
++    Ok((directory, file_name))
++}
++
++fn open_or_create_directory(
++    root: &Dir,
++    path: &Path,
++) -> Result<Dir, WorkspaceOperationError> {
++    let mut directory = root.try_clone().map_err(storage)?;
++    for component in path.components() {
++        let Component::Normal(segment) = component else {
++            return Err(WorkspaceOperationError::UnsafePath(
++                path.display().to_string(),
++            ));
++        };
++        match directory.open_dir_nofollow(segment) {
++            Ok(next) => directory = next,
++            Err(error) if error.kind() == io::ErrorKind::NotFound => {
++                directory.create_dir(segment).map_err(storage)?;
++                sync_directory(&directory)?;
++                directory = directory.open_dir_nofollow(segment).map_err(storage)?;
++            }
++            Err(error) => return Err(storage(error)),
++        }
++    }
++    Ok(directory)
++}
++
++fn create_directory(parent: &Dir, path: &Path) -> Result<(), WorkspaceOperationError> {
++    parent.create_dir(path).map_err(|error| {
++        if error.kind() == io::ErrorKind::AlreadyExists {
++            WorkspaceOperationError::InvalidOperationRecord(format!(
++                "operation directory already exists: {}",
++                path.display()
++            ))
++        } else {
++            storage(error)
++        }
++    })?;
++    sync_directory(parent)
++}
++
++fn write_new_file(
++    directory: &Dir,
++    name: &str,
++    bytes: &[u8],
++) -> Result<(), WorkspaceOperationError> {
++    let mut options = OpenOptions::new();
++    options
++        .write(true)
++        .create_new(true)
++        .follow(FollowSymlinks::No)
++        .sync(true);
++    let mut file = directory.open_with(name, &options).map_err(storage)?;
++    file.write_all(bytes).map_err(storage)?;
++    file.sync_all().map_err(storage)
++}
++
++fn replace_file(
++    directory: &Dir,
++    name: &str,
++    bytes: &[u8],
++) -> Result<(), WorkspaceOperationError> {
++    let temporary = format!(".{name}.next");
++    remove_file_if_exists(directory, &temporary)?;
++    write_new_file(directory, &temporary, bytes)?;
++    match directory.rename(&temporary, directory, name) {
++        Ok(()) => {}
++        Err(error)
++            if matches!(
++                error.kind(),
++                io::ErrorKind::AlreadyExists | io::ErrorKind::PermissionDenied
++            ) =>
++        {
++            remove_file_if_exists(directory, name)?;
++            directory
++                .rename(&temporary, directory, name)
++                .map_err(storage)?;
++        }
++        Err(error) => return Err(storage(error)),
++    }
++    sync_directory(directory)
++}
++
++fn read_regular_file(directory: &Dir, name: &str) -> Result<Vec<u8>, WorkspaceOperationError> {
++    let metadata = directory.symlink_metadata(name).map_err(storage)?;
++    if metadata.file_type().is_symlink() || !metadata.is_file() {
++        return Err(WorkspaceOperationError::InvalidOperationRecord(format!(
++            "operation file is not a regular non-symlink file: {name}"
++        )));
++    }
++    let mut options = OpenOptions::new();
++    options.read(true).follow(FollowSymlinks::No).nonblock(true);
++    let mut file = directory.open_with(name, &options).map_err(storage)?;
++    let mut bytes = Vec::new();
++    file.read_to_end(&mut bytes).map_err(storage)?;
++    Ok(bytes)
++}
++
++fn control_marker_exists(
++    directory: &Dir,
++    name: &str,
++    expected: &[u8],
++) -> Result<bool, WorkspaceOperationError> {
++    if !regular_file_exists(directory, name)? {
++        return Ok(false);
++    }
++    let bytes = read_regular_file(directory, name)?;
++    if bytes != expected {
++        return Err(WorkspaceOperationError::InvalidOperationRecord(format!(
++            "operation control marker has unexpected content: {name}"
++        )));
++    }
++    Ok(true)
++}
++
++fn cleanup_completed_operation(operation: &Dir) -> Result<(), WorkspaceOperationError> {
++    for directory in [STAGED_DIRECTORY, REPLACING_DIRECTORY] {
++        match operation.remove_dir_all(directory) {
++            Ok(()) => sync_directory(operation)?,
++            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
++            Err(error) => return Err(storage(error)),
++        }
++    }
++    Ok(())
++}
++
++fn regular_file_exists(directory: &Dir, name: &str) -> Result<bool, WorkspaceOperationError> {
++    match directory.symlink_metadata(name) {
++        Ok(metadata) => {
++            if metadata.file_type().is_symlink() || !metadata.is_file() {
++                return Err(WorkspaceOperationError::InvalidOperationRecord(format!(
++                    "operation marker is not a regular non-symlink file: {name}"
++                )));
++            }
++            Ok(true)
++        }
++        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(false),
++        Err(error) => Err(storage(error)),
++    }
++}
++
++fn remove_file_if_exists(directory: &Dir, name: &str) -> Result<(), WorkspaceOperationError> {
++    match directory.remove_file(name) {
++        Ok(()) => Ok(()),
++        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(()),
++        Err(error) => Err(storage(error)),
++    }
++}
++
++fn sync_directory(directory: &Dir) -> Result<(), WorkspaceOperationError> {
++    directory
++        .try_clone()
++        .and_then(|directory| directory.into_std_file().sync_all())
++        .map_err(storage)
++}
++
++fn storage(error: impl fmt::Display) -> WorkspaceOperationError {
++    WorkspaceOperationError::Storage(error.to_string())
++}
++
++#[cfg(test)]
++mod tests {
++    use super::{FaultPoint, commit_operation_with_fault, recover_operations};
++    use crate::MarkdownVault;
++    use cap_std::{ambient_authority, fs::Dir};
++    use chrono::DateTime;
++    use liaison_shared_kernel::{OperationId, Revision, WorkspaceId};
++    use liaison_workspace::{
++        BuildProfile, CanonicalDigest, CanonicalMutationKind, CanonicalOperationPlan,
++        CanonicalPrecondition, CanonicalRevisionFormat, CanonicalWrite, InitialiseWorkspace,
++        WorkspaceOperationError, WorkspaceProfile,
++    };
++    use std::{error::Error, fs};
++    use tempfile::tempdir;
++
++    fn fixture() -> Result<(tempfile::TempDir, Dir, WorkspaceId), Box<dyn Error>> {
++        let directory = tempdir()?;
++        let workspace_id = WorkspaceId::new();
++        InitialiseWorkspace::new(MarkdownVault::new()).execute(
++            directory.path(),
++            workspace_id,
++            "Operation fixture",
++            WorkspaceProfile::Personal,
++            BuildProfile::Airgap,
++            "en-IE",
++        )?;
++        let root = Dir::open_ambient_dir(directory.path(), ambient_authority())?;
++        Ok((directory, root, workspace_id))
++    }
++
++    fn plan(
++        workspace_id: WorkspaceId,
++        targets:
