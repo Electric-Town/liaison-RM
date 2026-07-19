@@ -41,6 +41,43 @@ jobs:
           git apply --check /tmp/p03-source.patch
           git apply /tmp/p03-source.patch
 
+      - name: Apply reviewed compile corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          cargo = Path("adapters/vault-markdown/Cargo.toml")
+          text = cargo.read_text(encoding="utf-8")
+          text = text.replace(
+              "[dependencies]\ncap-fs-ext.workspace = true\n",
+              "[dependencies]\ncap-fs-ext.workspace = true\nchrono.workspace = true\n",
+              1,
+          )
+          text = text.replace("\n[dev-dependencies]\nchrono.workspace = true\n", "\n[dev-dependencies]\n", 1)
+          cargo.write_text(text, encoding="utf-8")
+
+          source = Path("adapters/vault-markdown/src/operations.rs")
+          text = source.read_text(encoding="utf-8")
+          old = '''        let bytes = read_file(&staged, &staged_name(target.ordinal)).map_err(|error| {
+              map_io("read staged target", error)
+                  .with_operation(manifest.operation_id)
+                  .with_path(target.path.clone())
+          })?;
+          '''
+          new = '''        let staged_filename = staged_name(target.ordinal);
+          let bytes = read_file(&staged, Path::new(&staged_filename)).map_err(|error| {
+              error
+                  .with_operation(manifest.operation_id)
+                  .with_path(target.path.clone())
+          })?;
+          '''
+          if old not in text:
+              raise SystemExit("expected staged-read source block was not found")
+          source.write_text(text.replace(old, new, 1), encoding="utf-8")
+          PY
+
       - name: Format, resolve, and validate the affected source
         shell: bash
         run: |
