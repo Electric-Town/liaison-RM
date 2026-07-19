@@ -1,0 +1,77 @@
+(mutation_context_required)?;
++        bound_create_person(self.work.repositories(), person, operation)
+     }
+ 
+     fn list(&self, include_archived: bool) -> Result<Vec<PersonProfile>, PeopleError> {
+@@ -42,6 +68,18 @@ impl PersonRepository for SessionPeopleRepository<'_, '_> {
+     }
+ 
+     fn save(&self, person: &PersonProfile, expected_revision: Revision) -> Result<(), PeopleError> {
+-        bound_save_person(&self.work.repositories().root, person, expected_revision)
++        let operation = self.operation.ok_or_else(mutation_context_required)?;
++        bound_save_person(
++            self.work.repositories(),
++            person,
++            expected_revision,
++            operation,
++        )
+     }
+ }
++
++fn mutation_context_required() -> PeopleError {
++    PeopleError::Storage(
++        "person mutation requires an application-supplied canonical operation context".to_owned(),
++    )
++}
+diff --git a/contexts/workspace/Cargo.toml b/contexts/workspace/Cargo.toml
+index 889ccd1bc554e91f56c7033f6d6e93f4f6694fc3..2b577c1d36fd218c5e158066c7ea383e03e65d69 100644
+--- a/contexts/workspace/Cargo.toml
++++ b/contexts/workspace/Cargo.toml
+@@ -10,9 +10,11 @@ rust-version.workspace = true
+ chrono.workspace = true
+ liaison-shared-kernel = { path = "../../crates/liaison-shared-kernel" }
+ serde.workspace = true
++sha2.workspace = true
+ thiserror.workspace = true
+ 
+ [dev-dependencies]
++serde_json.workspace = true
+ uuid.workspace = true
+ 
+ [lints]
+diff --git a/contexts/workspace/README.md b/contexts/workspace/README.md
+index 7b394c6113d37d05aeb8f338ad87fdce5a34ca9f..5fe488c90f432a9eeba12ff73b8d30bbbf9167ee 100644
+--- a/contexts/workspace/README.md
++++ b/contexts/workspace/README.md
+@@ -10,6 +10,10 @@ Workspace owns the identity, authority, and lifecycle of a Liaison workspace. It
+ - **Manifest** — the readable declaration of workspace identity, schema, profile, locale, and modules.
+ - **Validation finding** — a non-destructive description of a defect, severity, path, and recovery action.
+ - **Build profile** — evidence that the last writer was Airgap or Connected-local; it does not change binary capability.
++- **Canonical operation** — one failure-atomic set of open-file writes with explicit final preconditions.
++- **Commit decision** — the durable point after which recovery must roll the operation forward.
++- **Recovery conflict** — an external edit that matches neither the expected prior bytes nor the committed result.
++- **Migration dry run** — a deterministic preview that checks operation preconditions without writing a commit decision.
+ 
+ ## Invariants
+ 
+@@ -43,7 +47,12 @@ Workspace owns the identity, authority, and lifecycle of a Liaison workspace. It
+ - Authority and repositories derive from the same retained root capability.
+ - New work is rejected once quiescence starts; issued work drains before the
+   authority handle is released.
+-- Projections remain disposable.
++- Every canonical mutation passes through the recoverable operation engine.
++- Operation manifests contain hashes and metadata, not duplicated plaintext payloads.
++- Pre-commit operations may be discarded; post-commit operations roll forward.
++- External edits after a commit decision stop recovery and are never overwritten automatically.
++- Completed operations mark projections stale; projections remain disposable.
++- Schema migrations require dry-run preview, a pre-migration backup receipt, post-migration validation, and rollback or an explicit irreversibility statement.
+ 
+ The published data-model contract for new manifests is
+ [`schemas/workspace-manifest.schema.json`](../../schemas/workspace-manifest.schema.json).
+@@ -55,18 +64,22 @@ The published data-model contract for new manifests is
+ - `ValidateWorkspace`
+ 
+ `WorkspaceSession` is an `Arc`-owned, non-`Clone` capability aggregate. Its
+-work guard is the only public route to session-bound repositories. Recovery,
+-key, and projection state are explicit unavailable variants until their owning
+-phas
