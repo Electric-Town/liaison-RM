@@ -1,6 +1,10 @@
 name: Apply P03 validation fixes once
 
 on:
+  push:
+    branches: [feat/p03-recoverable-canonical-operations]
+    paths:
+      - ".github/workflows/apply-p03-validation-fixes.yml"
   pull_request:
     types: [opened, synchronize, reopened]
     branches: [main]
@@ -14,7 +18,7 @@ concurrency:
 
 jobs:
   apply:
-    if: github.head_ref == 'feat/p03-recoverable-canonical-operations'
+    if: github.event_name == 'push' || github.head_ref == 'feat/p03-recoverable-canonical-operations'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
