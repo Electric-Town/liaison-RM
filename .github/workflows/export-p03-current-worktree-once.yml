@@ -1,0 +1,24 @@
+name: Export P03 current worktree once
+
+on:
+  push:
+    branches: [agent/p03-current-worktree-20260719]
+    paths:
+      - ".github/workflows/export-p03-current-worktree-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: liaison-p03-current-worktree
+          include-hidden-files: true
+          retention-days: 1
+          path: |
+            .
+            !.git/**
