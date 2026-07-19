@@ -318,22 +318,29 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     person_open = page.locator("[data-person-id]").first
     assert person_open.get_attribute("aria-pressed") == "false"
     person_open.click()
-    page.get_by_role("heading", name="Profile: Alex Murphy").wait_for()
+    page.get_by_role("heading", name="Alex Murphy", exact=True).wait_for()
     assert page.locator("#person-detail").is_visible()
     assert page.locator("[data-person-id]").first.get_attribute("aria-pressed") == "true"
     detail = page.locator("#person-detail-fields").inner_text()
     assert "alex@example.test" in detail
-    assert "Display name" in detail and "Revision" in detail
-    assert page.get_by_role("heading", name="Profile: Alex Murphy").evaluate(
+    assert "Display name" in detail and "Record identifier" in detail
+    chips = page.locator("#person-detail-chips").inner_text()
+    assert "Revision 1" in chips and "Active" in chips
+    meta = page.locator("#person-detail-meta").inner_text()
+    assert "IMPORTANT DATE" in meta.upper()
+    assert page.get_by_role("heading", name="Alex Murphy", exact=True).evaluate(
         "el => el === document.activeElement"
     )
     page.get_by_role("button", name="Close profile").click()
     assert page.locator("#person-detail").is_hidden()
     assert page.locator("[data-person-id]").first.evaluate("el => el === document.activeElement")
 
-    # The destination menu carries labels rather than wizard step numbers, and
-    # the profile select is token-styled instead of native system chrome.
-    assert page.locator(".nav-button span[aria-hidden='true']").count() == 0
+    # Destinations carry letter markers as the approved specimens show, never
+    # step numbers implying a required order, and the profile select is
+    # token-styled instead of native system chrome.
+    markers = page.locator(".nav-button .nav-marker").all_inner_texts()
+    assert markers == ["W", "P", "H"]
+    assert not any(marker.strip().isdigit() for marker in markers)
     select_appearance = page.locator("#workspace-profile").evaluate(
         "el => getComputedStyle(el).appearance"
     )

@@ -56,6 +56,20 @@
   --health-error-text: #a53543;
   --focus: #0067c5;
   --paper-dot: rgb(32 38 34 / 0.07);
+  /* Shape and depth scale from the approved direction: routine cards carry
+     borders only; paper shadow marks a primary work surface; control shadow
+     marks an important action. */
+  --radius-small: 2px;
+  --radius-medium: 4px;
+  --radius-large: 6px;
+  --shadow-paper: 7px 7px 0 rgb(32 38 34 / 15%);
+  --shadow-control: 2px 2px 0 currentColor;
+  /* The navigation rail stays dark in both schemes, as the approved
+     specimens show. */
+  --rail-background: #16231e;
+  --rail-content: #f4f1e8;
+  --rail-muted: #b7c4bd;
+  --rail-active-background: #22312b;
   background: var(--canvas);
   color: var(--ink);
 }
@@ -82,7 +96,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, [tabindex="-1"]
   top: 0.5rem;
   padding: 0.65rem 1rem;
   border: 1px solid var(--ink);
-  border-radius: 0.35rem;
+  border-radius: var(--radius-medium);
   background: var(--ink);
   color: var(--surface);
   transform: translateY(-180%);
@@ -91,7 +105,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, [tabindex="-1"]
 
 .app-shell {
   display: grid;
-  grid-template-columns: 230px minmax(0, 1fr);
+  grid-template-columns: 244px minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
   min-height: 100vh;
 }
@@ -115,7 +129,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, [tabindex="-1"]
   width: 42px;
   height: 42px;
   border: 2px solid var(--ink);
-  border-radius: 0.35rem;
+  border-radius: var(--radius-medium);
   background: var(--highlight);
   color: var(--content-on-highlight);
   font-weight: 700;
@@ -130,44 +144,46 @@ button:focus-visible, input:focus-visible, select:focus-visible, [tabindex="-1"]
   justify-content: space-between;
   gap: 2rem;
   padding: 1rem;
-  border-right: 1px solid var(--border);
-  background: var(--sidebar-background);
-  color: var(--sidebar-text);
+  background: var(--rail-background);
+  color: var(--rail-content);
 }
-.sidebar nav { display: grid; gap: 0.5rem; }
+.sidebar nav { display: grid; gap: 0.35rem; }
 .nav-button {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.7rem;
   width: 100%;
-  padding: 0.7rem 0.8rem;
+  padding: 0.6rem 0.75rem;
   border: 1px solid transparent;
-  border-radius: 0.35rem;
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-medium);
   background: transparent;
-  color: var(--sidebar-text);
+  color: var(--rail-content);
   text-align: left;
   cursor: pointer;
 }
-/* Destinations are sections, not wizard steps: a ledger rule marks the
-   current one instead of a numbered circle implying a required order. */
-.nav-button::before {
-  content: "";
+/* The rail marks its current destination with the warm highlight rule and a
+   raised surface, never with the rule alone. */
+.nav-marker {
+  display: inline-grid;
+  place-items: center;
   flex: none;
-  width: 3px;
-  align-self: stretch;
-  border-radius: 2px;
-  background: transparent;
-}
-.nav-button:hover { background: var(--surface); border-color: var(--border); }
-.nav-button.is-active {
-  background: var(--highlight);
-  border-color: var(--ink);
-  color: var(--content-on-highlight);
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--rail-muted);
+  border-radius: 50%;
+  font-size: 0.8rem;
   font-weight: 700;
 }
-.nav-button.is-active::before { background: var(--ink); }
-.sidebar-note { padding: 0.85rem; border: 1px solid var(--border); border-radius: 0.35rem; background: var(--surface); }
-.sidebar-note p { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.88rem; }
+.nav-button:hover { background: var(--rail-active-background); }
+.nav-button.is-active {
+  background: var(--rail-active-background);
+  border-left-color: var(--highlight);
+  font-weight: 700;
+}
+.nav-button.is-active .nav-marker { border-color: var(--highlight); color: var(--highlight); }
+.sidebar-note { padding: 0.8rem; border: 1px solid var(--rail-muted); border-radius: var(--radius-medium); background: transparent; }
+.sidebar-note p { margin: 0.35rem 0 0; color: var(--rail-muted); font-size: 0.85rem; }
 
 main { grid-row: 2; min-width: 0; padding: clamp(1rem, 3vw, 2rem); overflow: auto; }
 .page { max-width: 1120px; margin: 0 auto; }
@@ -183,15 +199,15 @@ main { grid-row: 2; min-width: 0; padding: clamp(1rem, 3vw, 2rem); overflow: aut
 .eyebrow { color: var(--accent-text) !important; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .alpha-badge, .count-badge { padding: 0.3rem 0.65rem; border: 1px solid var(--ink); border-radius: 999px; background: var(--highlight); color: var(--content-on-highlight); font-weight: 700; white-space: nowrap; }
 
-.notice { display: flex; flex-wrap: wrap; gap: 0.4rem 0.7rem; margin-bottom: 1rem; padding: 0.85rem 1rem; border: 1px solid var(--accent-text); border-radius: 0.35rem; background: var(--accent-soft); }
+.notice { display: flex; flex-wrap: wrap; gap: 0.4rem 0.7rem; margin-bottom: 1rem; padding: 0.85rem 1rem; border: 1px solid var(--accent-text); border-radius: var(--radius-medium); background: var(--accent-soft); }
 .notice.warning { border-color: var(--warning); background: var(--warning-soft); color: var(--warning); }
 
 .two-column { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(280px, 0.88fr); gap: 1.25rem; align-items: start; }
 .people-layout { grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.22fr); }
-.card { padding: clamp(1rem, 2vw, 1.35rem); border: 1px solid var(--border); border-radius: 0.35rem; background: var(--surface); }
+.card { padding: clamp(1rem, 2vw, 1.35rem); border: 1px solid var(--border); border-radius: var(--radius-large); background: var(--surface); }
 .form-card, .health-card {
   border: 2px solid var(--ink);
-  box-shadow: 5px 5px 0 var(--ink);
+  box-shadow: var(--shadow-paper);
 }
 .card h2 { margin: 0 0 1rem; font-size: 1.2rem; }
 .card h3 { margin-bottom: 0.6rem; }
@@ -206,7 +222,7 @@ input, select {
   min-height: 48px;
   padding: 0.62rem 0.72rem;
   border: 1px solid var(--ink);
-  border-radius: 0.35rem;
+  border-radius: var(--radius-medium);
   background: var(--surface);
   color: var(--ink);
 }
@@ -225,7 +241,7 @@ input:disabled { background: var(--canvas); color: var(--muted); border-color: v
 .input-with-action { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.5rem; }
 
 .primary-button, .secondary-button {
-  border-radius: 0.35rem;
+  border-radius: var(--radius-medium);
   padding: 0.65rem 0.9rem;
   font-weight: 700;
   cursor: pointer;
@@ -248,8 +264,8 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
 
 .people-list, .finding-list { list-style: none; margin: 0; padding: 0; }
 .people-list { display: grid; gap: 0.65rem; }
-.person-row { border: 1px solid var(--border); border-radius: 0.35rem; background: var(--surface); }
-.person-row.is-selected { border-color: var(--ink); box-shadow: 3px 3px 0 var(--ink); }
+.person-row { border: 1px solid var(--border); border-radius: var(--radius-medium); background: var(--surface); }
+.person-row.is-selected { border-color: var(--ink); box-shadow: var(--shadow-paper); }
 .person-open {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -258,29 +274,100 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
   width: 100%;
   padding: 0.75rem;
   border: 0;
-  border-radius: 0.35rem;
+  border-radius: var(--radius-medium);
   background: transparent;
   color: inherit;
   text-align: left;
   cursor: pointer;
 }
 .person-open:hover { background: var(--canvas); }
+/* ProfileHeader: identity first, then the metadata grid. Overline labels use
+   the metadata role from the type scale; the record identifier uses the
+   provenance family. */
 .person-detail { margin-top: 0.4rem; }
-.person-detail h3 { margin: 0; font-size: 1.05rem; }
+.profile-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.5rem 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-large);
+  background: var(--surface);
+}
+.profile-avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border: 1px solid var(--ink);
+  border-radius: 50%;
+  background: var(--highlight);
+  color: var(--content-on-highlight);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+.profile-identity h3 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+.profile-subtitle { margin: 0.15rem 0 0; color: var(--muted); }
+.chip-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.55rem; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--accent-text);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.chip.is-muted { border-color: var(--border); background: var(--canvas); color: var(--muted); }
+.profile-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem 1.25rem; margin: 0; }
+.profile-meta dt {
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.profile-meta dd { margin: 0.1rem 0 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* FactList: label, value, and room for the source column A0 will add. */
+.fact-list-heading { margin: 1.1rem 0 0.3rem; font-size: 1.05rem; }
+.fact-list { margin: 0; }
+.fact-list > div {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.4fr) minmax(0, 1fr);
+  gap: 0.4rem 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.fact-list > div:last-of-type { border-bottom: 0; }
+.fact-list dt { color: var(--muted); }
+.fact-list dd { margin: 0; overflow-wrap: anywhere; }
+.fact-list dd.is-provenance { font-family: var(--font-mono); font-size: 0.85rem; }
 .person-avatar { display: inline-grid; place-items: center; width: 2.4rem; height: 2.4rem; border: 1px solid var(--ink); border-radius: 50%; background: var(--accent-soft); color: var(--accent-text); font-weight: 700; }
 .person-row strong, .person-row small { display: block; }
 .person-row small { color: var(--muted); overflow-wrap: anywhere; }
 .revision { color: var(--muted); font-family: var(--font-mono); font-size: 0.78rem; }
-.empty-state { padding: 1.2rem; border: 1px dashed var(--ink); border-radius: 0.35rem; color: var(--muted); text-align: center; background: var(--surface); }
+.empty-state { padding: 1.2rem; border: 1px dashed var(--ink); border-radius: var(--radius-medium); color: var(--muted); text-align: center; background: var(--surface); }
 
 .health-card { display: grid; gap: 1rem; }
-.health-summary { display: flex; align-items: center; gap: 0.85rem; padding: 1rem; border: 1px solid var(--border); border-radius: 0.35rem; background: var(--canvas); }
+.health-summary { display: flex; align-items: center; gap: 0.85rem; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius-medium); background: var(--canvas); }
 .health-summary.is-valid { background: var(--success-soft); border-color: var(--health-valid-text); color: var(--health-valid-text); }
 .health-summary.has-errors { background: var(--danger-soft); border-color: var(--health-error-text); color: var(--health-error-text); }
 .health-summary p { margin: 0.25rem 0 0; }
 .health-icon { display: inline-grid; place-items: center; width: 2.2rem; height: 2.2rem; border: 2px solid currentColor; border-radius: 50%; font-weight: 700; }
 .finding-list { display: grid; gap: 0.6rem; }
-.finding-list li { padding: 0.8rem; border: 1px solid var(--danger); border-left-width: 4px; border-radius: 0.35rem; background: var(--danger-soft); }
+.finding-list li { padding: 0.8rem; border: 1px solid var(--danger); border-left-width: 4px; border-radius: var(--radius-medium); background: var(--danger-soft); }
 .finding-list strong, .finding-list span { display: block; }
 .finding-list strong { color: var(--health-error-text); }
 .finding-list span { color: var(--muted); overflow-wrap: anywhere; }

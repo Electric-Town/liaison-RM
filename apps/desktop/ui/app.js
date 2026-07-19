@@ -200,35 +200,85 @@
     });
   };
 
-  const detailRow = (term, description) => summaryRow(term, description);
+  const factRow = (term, description, provenance = false) => {
+    const row = document.createElement("div");
+    const dt = document.createElement("dt");
+    const dd = document.createElement("dd");
+    dt.textContent = term;
+    dd.textContent = description;
+    if (provenance) dd.className = "is-provenance";
+    row.append(dt, dd);
+    return row;
+  };
+
+  const chip = (label, muted = false) => {
+    const element = document.createElement("span");
+    element.className = muted ? "chip is-muted" : "chip";
+    element.textContent = label;
+    return element;
+  };
+
+  const birthdayText = (birthday) => {
+    if (!birthday) return null;
+    if (birthday.date) return birthday.date;
+    if (birthday.month && birthday.day) {
+      const month = String(birthday.month).padStart(2, "0");
+      const day = String(birthday.day).padStart(2, "0");
+      return `${month}-${day} · year not recorded`;
+    }
+    return null;
+  };
 
   const renderPersonDetail = () => {
     const panel = byId("person-detail");
     const fields = byId("person-detail-fields");
+    const meta = byId("person-detail-meta");
+    const chips = byId("person-detail-chips");
     const person = state.people.find((item) => item.id === state.selectedPersonId);
     if (!person) {
       panel.hidden = true;
       fields.replaceChildren();
+      meta.replaceChildren();
+      chips.replaceChildren();
       return;
     }
-    const emails = person.emails?.length
-      ? person.emails.map((email) => `${email.value} (${email.label})`).join(", ")
-      : "None recorded";
-    const phones = person.phones?.length
-      ? person.phones.map((phone) => `${phone.value} (${phone.label})`).join(", ")
-      : "None recorded";
-    const birthday = person.birthday?.date
-      || (person.birthday ? `${person.birthday.month}-${person.birthday.day} (year unknown)` : "None recorded");
-    fields.replaceChildren(
-      detailRow("Display name", person.display_name),
-      detailRow("Email", emails),
-      detailRow("Phone", phones),
-      detailRow("Birthday", birthday),
-      detailRow("Archived", person.archived ? "Yes" : "No"),
-      detailRow("Revision", String(person.revision)),
-      detailRow("Record ID", person.id),
+    const emails = person.emails || [];
+    const phones = person.phones || [];
+    const birthday = birthdayText(person.birthday);
+    const primaryEmail = emails[0]?.value;
+
+    byId("person-detail-heading").textContent = person.display_name;
+    byId("person-detail-avatar").textContent = initials(person.display_name);
+    // Only facts the record actually holds are stated. Role, organisation and
+    // time zone belong to later contracts and are not implied by empty slots.
+    byId("person-detail-subtitle").textContent = primaryEmail
+      ? `Preferred contact: ${primaryEmail}`
+      : "No contact point recorded yet";
+
+    chips.replaceChildren(
+      chip(person.archived ? "Archived" : "Active", person.archived),
+      chip(`Revision ${person.revision}`, true),
     );
-    byId("person-detail-heading").textContent = `Profile: ${person.display_name}`;
+
+    // The metadata grid carries only dated or counted facts, never a score.
+    meta.replaceChildren(
+      summaryRow("Important date", birthday || "None recorded"),
+      summaryRow("Contact points", String(emails.length + phones.length)),
+    );
+
+    fields.replaceChildren(
+      factRow("Display name", person.display_name),
+      factRow(
+        "Email",
+        emails.length ? emails.map((email) => `${email.value} · ${email.label}`).join("\n") : "None recorded",
+      ),
+      factRow(
+        "Phone",
+        phones.length ? phones.map((phone) => `${phone.value} · ${phone.label}`).join("\n") : "None recorded",
+      ),
+      factRow("Birthday", birthday || "None recorded"),
+      factRow("Record identifier", person.id, true),
+    );
     panel.hidden = false;
   };
 
