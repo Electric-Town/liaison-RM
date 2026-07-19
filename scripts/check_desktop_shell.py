@@ -81,8 +81,8 @@ def check_text_contrast(css: str, errors: list[str]) -> None:
     light = variables(blocks[0])
     dark = light | variables(blocks[1])
     pairs = [
-        ("action", "literal-white", "action button"),
-        ("action-hover", "literal-white", "action button hover"),
+        ("action-content", "action", "action button"),
+        ("action-content", "action-hover", "action button hover"),
         ("accent-text", "accent-soft", "accent label"),
         ("sidebar-text", "sidebar-background", "sidebar navigation"),
         ("health-valid-text", "success-soft", "valid Health status"),

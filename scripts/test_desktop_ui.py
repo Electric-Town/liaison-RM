@@ -569,11 +569,11 @@ def test_dark_mode(browser, external_requests: list[str]) -> None:
     styles = page.locator(".primary-button").first.evaluate(
         "element => ({ background: getComputedStyle(element).backgroundColor, color: getComputedStyle(element).color })"
     )
-    assert styles == {"background": "rgb(49, 87, 200)", "color": "rgb(255, 255, 255)"}
+    assert styles == {"background": "rgb(120, 200, 224)", "color": "rgb(10, 24, 26)"}
     sidebar = page.locator(".sidebar").evaluate(
         "element => ({ background: getComputedStyle(element).backgroundColor, color: getComputedStyle(element).color })"
     )
-    assert sidebar == {"background": "rgb(17, 25, 42)", "color": "rgb(255, 255, 255)"}
+    assert sidebar == {"background": "rgb(22, 35, 30)", "color": "rgb(244, 241, 232)"}
     SCREENSHOTS.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(SCREENSHOTS / "dark-workspace.png"), full_page=True)
     page.close()
