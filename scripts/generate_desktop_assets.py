@@ -54,6 +54,28 @@ def write_assets(destination: Path) -> None:
     )
 
 
+def same_rendered_asset(left_path: Path, right_path: Path) -> bool:
+    """Compare the rendered icon rather than host-specific container bytes.
+
+    Pillow delegates PNG and ICNS compression to platform libraries. The same
+    pixels can therefore have different byte streams on macOS and Linux. ICO
+    uses uncompressed BMP entries and remains byte-comparable so every bundled
+    size is covered without relying on Pillow's private ICO reader.
+    """
+    if left_path.suffix == ".ico":
+        return filecmp.cmp(left_path, right_path, shallow=False)
+
+    with Image.open(left_path) as left, Image.open(right_path) as right:
+        if left.format != right.format or left.info.get("sizes") != right.info.get("sizes"):
+            return False
+        left.load()
+        right.load()
+        return (
+            left.size == right.size
+            and left.convert("RGBA").tobytes() == right.convert("RGBA").tobytes()
+        )
+
+
 def check_assets() -> int:
     with tempfile.TemporaryDirectory() as temporary:
         generated = Path(temporary)
@@ -62,7 +84,7 @@ def check_assets() -> int:
         mismatches = [
             name for name in expected
             if not (DESTINATION / name).is_file()
-            or not filecmp.cmp(generated / name, DESTINATION / name, shallow=False)
+            or not same_rendered_asset(generated / name, DESTINATION / name)
         ]
         if mismatches:
             print(f"Desktop assets differ from generator output: {', '.join(mismatches)}")
