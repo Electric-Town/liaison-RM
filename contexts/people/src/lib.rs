@@ -5,6 +5,8 @@
 
 #![allow(clippy::module_name_repetitions, clippy::missing_errors_doc)]
 
+pub mod dietary;
+
 use chrono::NaiveDate;
 use liaison_shared_kernel::{PersonId, Revision};
 use serde::{Deserialize, Serialize};
