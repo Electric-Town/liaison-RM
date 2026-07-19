@@ -5,12 +5,16 @@ on:
     branches: [agent/full-delivery-worktree-20260719]
     paths:
       - ".github/workflows/export-full-delivery-worktree-once.yml"
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
 
 permissions:
   contents: read
 
 jobs:
   export:
+    if: github.event_name == 'push' || github.head_ref == 'agent/full-delivery-worktree-20260719'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
