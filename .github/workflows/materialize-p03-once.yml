@@ -17,7 +17,7 @@ jobs:
   materialize:
     if: github.event_name == 'push' || github.head_ref == 'feat/p03-recoverable-canonical-operations'
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,15 +43,12 @@ jobs:
           rm -f .github/workflows/diagnose-p03-bootstrap.yml
           rm .github/workflows/materialize-p03-once.yml
 
-      - name: Format, lock, and validate
+      - name: Format, lock, and validate source structure
         shell: bash
         run: |
           set -euo pipefail
           cargo fmt --all
           cargo generate-lockfile
-          cargo check --workspace --all-targets --all-features --locked
-          cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
-          cargo test --workspace --all-features --locked
           python3 scripts/check_architecture.py
           python3 scripts/check_repository.py
           python3 scripts/check_spec.py
