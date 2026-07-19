@@ -1,0 +1,176 @@
+g(unix)]
+     use liaison_people::PeopleError;
+     use liaison_people::{CreatePerson, ListPeople, PersonProfile, PersonRepository};
+-    use liaison_shared_kernel::{PersonId, WorkspaceId, WorkspaceSessionId};
++    use liaison_shared_kernel::{OperationId, PersonId, WorkspaceId, WorkspaceSessionId};
+     use liaison_workspace::{
+         BoundWorkspaceSessionPort, BoundWorkspaceStore, BuildProfile, InitialiseWorkspace,
+-        OpenWorkspaceSession, ValidateWorkspace, ValidationFinding, WorkspaceError,
+-        WorkspaceManifest, WorkspaceProfile, WorkspaceSession, WorkspaceSessionError,
+-        WorkspaceWriterAuthority, WorkspaceWriterAuthorityPort, WriterDiagnostic,
++        CanonicalOperationContext, OpenWorkspaceSession, OperationRecoveryReport,
++        ValidateWorkspace, ValidationFinding, WorkspaceError, WorkspaceManifest,
++        WorkspaceOperationError, WorkspaceProfile, WorkspaceSession, WorkspaceSessionError,
++        WorkspaceWorkGuard, WorkspaceWriterAuthority, WorkspaceWriterAuthorityPort,
++        WriterDiagnostic,
+     };
+     use std::{fs, path::Path};
+     use tempfile::tempdir;
+@@ -919,6 +932,13 @@ mod tests {
+     impl BoundWorkspaceSessionPort for TestBinding {
+         type Repositories = BoundMarkdownVault;
+ 
++        fn recover_pending_operations(
++            &self,
++            workspace_id: WorkspaceId,
++        ) -> Result<OperationRecoveryReport, WorkspaceOperationError> {
++            self.repositories.recover_operations(workspace_id)
++        }
++
+         fn into_repositories(self) -> Self::Repositories {
+             self.repositories
+         }
+@@ -943,6 +963,18 @@ mod tests {
+         }
+     }
+ 
++    fn mutation_people_repository<'work, 'session>(
++        work: &'work WorkspaceWorkGuard<'session, BoundMarkdownVault>,
++    ) -> impl liaison_people::PersonRepository + 'work
++    where
++        'session: 'work,
++    {
++        people_repository_for_operation(
++            work,
++            CanonicalOperationContext::new(OperationId::new(), Utc::now()),
++        )
++    }
++
+     fn try_bound_session(
+         vault: &MarkdownVault,
+         root: &Path,
+@@ -1030,7 +1062,7 @@ mod tests {
+             let work = session
+                 .begin_work()
+                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+-            let bound = people_repository(&work);
++            let bound = mutation_people_repository(&work);
+             let create_person = CreatePerson::new(&bound);
+             let person = create_person.execute(
+                 PersonId::new(),
+@@ -1087,7 +1119,7 @@ mod tests {
+         let work = session
+             .begin_work()
+             .unwrap_or_else(|error| unreachable!("legacy test work must begin: {error}"));
+-        let repository = people_repository(&work);
++        let repository = mutation_people_repository(&work);
+         assert!(
+             CreatePerson::new(&repository)
+                 .execute(PersonId::new(), "Legacy Person", None)
+@@ -1121,7 +1153,7 @@ mod tests {
+             let work = session
+                 .begin_work()
+                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+-            let bound = people_repository(&work);
++            let bound = mutation_people_repository(&work);
+             let create = CreatePerson::new(&bound);
+             let person = create.execute(PersonId::new(), "Alex Murphy", None);
+             assert!(person.is_ok());
+@@ -1175,7 +1207,7 @@ mod tests {
+             let work = session
+                 .begin_work()
+                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+-            let bound = people_repository(&work);
++            let bound = mutation_people_repository(&work);
+             let create = CreatePerson::new(&bound);
+             assert!(
+                 create
+@@ -1222,7 +1254,7 @@ mod tests {
+             let work = session
+                 .begin_work()
+                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+-            let bound = people_repository(&work);
++            let bound = mutation_people_repository(&work);
+             let created = CreatePerson::new(&bound).execute(
+                 PersonId::new(),
+                 "Alex Example",
+@@ -1307,7 +1339,7 @@ mod tests {
+             let work = session
+                 .begin_work()
+                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+-            let bound = people_repository(&work);
++            let bound = mutation_people_repository(&work);
+             assert!(
+                 CreatePerson::new(&bound)
+                     .execute(PersonId::new(), "Healthy Person", None)
+@@ -1376,7 +1408,7 @@ mod tests {
+             let work = session
+                 .begin_work()
+                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+-            let bound = people_repository(&work);
++            let bound = mutation_people_repository(&work);
+             let listed = ListPeople::new(&bound).execute(false);
+             assert!(matches!(listed, Ok(people) if people.is_empty()));
+         }
+@@ -1405,7 +1437,7 @@ mod tests {
+             let work = session
+                 .begin_work()
+                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+-            let bound = people_repository(&work);
++            let bound = mutation_people_repository(&work);
+             let created =
+                 CreatePerson::new(&bound).execute(PersonId::new(), "Duplicate Person", None);
+             assert!(created.is_ok());
+@@ -1470,7 +1502,7 @@ mod tests {
+             let work = session
+                 .begin_work()
+                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+-            let bound = people_repository(&work);
++            let bound = mutation_people_repository(&work);
+             assert!(
+                 CreatePerson::new(&bound)
+                     .execute(PersonId::new(), "Healthy Person", None)
+@@ -1543,7 +1575,7 @@ mod tests {
+             let work = list_session
+                 .begin_work()
+                 .map_err(|error| PeopleError::Storage(error.to_string()))?;
+-            let repository = people_repository(&work);
++            let repository = mutation_people_repository(&work);
+             ListPeople::new(&repository).execute(false)
+         });
+         assert!(matches!(
+@@ -1580,7 +1612,7 @@ mod tests {
+             let work = session
+                 .begin_work()
+                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+-            let repository = people_repository(&work);
++            let repository = mutation_people_repository(&work);
+             assert!(
+                 CreatePerson::new(&repository)
+                     .execute(PersonId::new(), "Healthy Person", None)
+@@ -1622,7 +1654,7 @@ mod tests {
+             let work = session
+                 .begin_work()
+                 .map_err(|error| PeopleError::Storage(error.to_string()))?;
+-            let repository = people_repository(&work);
++            let repository = mutation_people_repository(&work);
+             ListPeople::new(&repository).execute(false)
+         });
+         assert!(matches!(
+@@ -1700,7 +1732,7 @@ mod tests {
+         let work = session
+             .begin_work()
+             .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+-        let bound = people_repository(&work);
++        let bound = mutation_people_repository(&work);
+ 
+         assert!(matches!(
+             bound.create(&person),
+diff --git a/adapters/vault-markdown/src/operation.rs b/adapters/vault-markdown/src/operation.rs
+new file mode 100644
+index 0000000000000000000000000000000000000000..899d47c257811ce95eb87820894d3ec614af2d44
+--- /dev/null
++++ b/adapters/vault-markdown/src/operation.rs
+@@ -0,0 +1,1010 @@
++use cap_fs_ext::{DirExt, FollowSymlinks, OpenOptionsFollowExt, OpenOptionsSyncExt};
++use
