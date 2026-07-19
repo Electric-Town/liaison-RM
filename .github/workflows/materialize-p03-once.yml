@@ -1,11 +1,6 @@
 name: Materialize P03 recoverable operations once
 
 on:
-  push:
-    branches: [feat/p03-recoverable-canonical-operations]
-    paths:
-      - ".github/workflows/materialize-p03-once.yml"
-      - ".bootstrap/p03/**"
   pull_request:
     types: [opened, synchronize, reopened]
     branches: [main]
@@ -13,9 +8,13 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: materialize-p03-recoverable-operations
+  cancel-in-progress: true
+
 jobs:
   materialize:
-    if: github.event_name == 'push' || github.head_ref == 'feat/p03-recoverable-canonical-operations'
+    if: github.head_ref == 'feat/p03-recoverable-canonical-operations'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -75,4 +74,6 @@ jobs:
           git add -A
           git diff --cached --check
           git commit -m "feat(workspace): add recoverable canonical operations"
+          git fetch origin feat/p03-recoverable-canonical-operations
+          test "$(git rev-parse HEAD^)" = "$(git rev-parse origin/feat/p03-recoverable-canonical-operations)"
           git push origin HEAD:feat/p03-recoverable-canonical-operations
