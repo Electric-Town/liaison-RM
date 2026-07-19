@@ -6,7 +6,7 @@ This document specifies the five B0 Event stages — Details, Cohort, Attendees,
 
 What this document is not:
 
-- It is not canonical `DESIGN.md`. Promotion happens only at `T-B0-P03D`, after exact-head P03 evidence.
+- It is not canonical `DESIGN.md`, and it is never promoted into one. After exact-head P03 evidence, the `T-B0-P03D` design consultation creates canonical `DESIGN.md` with this file as one of its inputs; the plan design review then checks that direction and amends the P04 plan.
 - It is not P04 or P11 implementation authority, and it does not authorise any Events surface to ship.
 - It does not bind exact operation, error, or recovery states; those belong to P03 and are mapped at the P03D reconciliation.
 - It does not amend machine contracts, gates, or task ownership.
@@ -53,26 +53,33 @@ The Event stages sit inside this complete storyboard. The intended emotional out
 
 The interface consumes canonical values — availability, freshness, conflict, and disclosure facts, the attendee lifecycle, and the derived outcome — and never persists or computes a parallel readiness state. Visible labels are copy only, mapped one-to-one by a versioned presenter table. The canonical value, decision-table version, and policy identifier remain inspectable in the evidence drawer and in receipts.
 
-Presenter table, version `presenter-b0-0.1-candidate` (labels are en-IE source copy and localisable; canonical values are stable):
+Dietary-outcome presenter table, version `presenter-b0-0.1-candidate`, covering exactly the eight derived outcomes ADR-0010 names (labels are en-IE source copy and localisable; canonical values are stable):
 
 | Canonical value | Visible label | One-line meaning shown on demand |
 |---|---|---|
-| `verified_none` | No requirements — verified | This person confirmed they have no dietary requirements |
+| `verified_none` | No dietary requirements — verified | This person confirmed they have no dietary requirements |
 | `provided` | Instruction recorded | A catering instruction is recorded and current |
 | `pending` | Asked — awaiting reply | The person was asked and has not yet answered |
 | `declined` | Declined to share | The person chose not to disclose; default provision applies |
 | `unreachable` | Could not be reached | Contact was attempted and failed |
-| `excluded_from_catering` | Excluded from catering use | Disclosure for catering is not permitted for this person |
+| `excluded` | Catering use not permitted | Disclosure for catering is not permitted for this person |
 | `conflicting` | Sources disagree | Two active sources conflict and need resolution |
-| `stale` | Needs re-checking | The recorded information is older than its review policy allows |
 | `unknown` | Unknown — needs attention | Nothing usable is recorded; this never means "no requirements" |
+
+Attendee-lifecycle presenter (separate mapping — unresolved identity is a lifecycle and denominator state, not a dietary-readiness outcome):
+
+| Canonical lifecycle state | Visible label | One-line meaning shown on demand |
+|---|---|---|
 | unresolved identity | Identity not confirmed | This attendee row is not yet matched to one person |
+
+Staleness is P10-bound: it derives from verified time, purpose policy, and source revision, and whether it is a final P10 outcome or an orthogonal presenter modifier stays open until P10's exact derived-state contract exists. The "Needs re-checking" copy used in the Readiness stage below is a copy placeholder for whichever form P10 fixes, not a ninth canonical outcome.
 
 Rules:
 
-- one label per canonical value and one canonical value per label; the table version appears wherever outcomes are shown in evidence;
+- one label per canonical value and one canonical value per label, within each presenter; the table version appears wherever outcomes are shown in evidence;
 - `unknown` and `verified_none` labels must never be visually interchangeable;
-- outcome chips are atomic: one chip communicates one state, with a text label in the accessibility tree; colour alone never carries the distinction.
+- outcome chips are atomic: one chip communicates one state, with a text label in the accessibility tree; colour alone never carries the distinction;
+- prototype wording with no canonical P10 value remains copy only and never becomes a persisted or computed state.
 
 ## Stage contracts
 
@@ -93,14 +100,14 @@ Purpose: a named, dated event exists as a draft the operator can leave and resum
 │ Event date      [ 2026-08-14                      ]    │
 │ Location label  [ Dublin canteen (optional)       ]    │
 │                                                        │
-│ Draft saved automatically · Continue to Cohort →       │
+│ [P03-bound saved-state line] · Continue to Cohort →    │
 └────────────────────────────────────────────────────────┘
 ```
 
 | State | The operator sees | Actions | Announcement and focus |
 |---|---|---|---|
 | Empty (no event exists) | "Prepare the first Event" entry point with a one-sentence explanation | Create event | Focus moves to the name field on entry |
-| Draft | Fields with the saved-state line naming when the draft was last kept | Edit; continue; leave | Status line is a polite live region; no focus theft |
+| Draft | Fields with a P03-bound saved-state line; its exact wording and promise bind only to proven P03 states | Edit; continue; leave | Status line is a polite live region; no focus theft |
 | Invalid | Field-level message: name required, or date not a real date | Correct the field | Error text is programmatically associated; focus moves to the first invalid field on submit |
 | Interrupted, then reopened | "Resume: Summer all-hands lunch — Details" with the draft intact | Resume; discard draft (confirm) | Resume control is the first focusable element |
 | Success | Stepper advances to Cohort with Details marked complete | Continue; return to Details | `aria-current` moves; change announced once |
@@ -189,7 +196,7 @@ Purpose: every active attendee resolves to exactly one explicit outcome, with th
 | Missing information | Rows labelled "Unknown — needs attention"; unknown is visually and semantically distinct from verified none | Ask the person; record an accounted exception | Row label carries the state |
 | Stale | "Needs re-checking" rows show the verification date and the policy that aged them | Re-verify; record exception | Evidence drawer shows the dates |
 | Conflict | "Sources disagree" rows name both sources | Resolve in Directory; cannot be excepted away | Drawer lists both sources |
-| Excluded from catering | Counted and labelled; instruction content is never displayed for these rows | None within this event | Exclusion reason scope shown in drawer |
+| Catering use not permitted | Counted and labelled; instruction content is never displayed for these rows | None within this event | Exclusion reason scope shown in drawer |
 | Unresolved identity | Counted separately in the sentence and table | Return to Attendees to resolve | Link names the target stage |
 | Accounted exception (create) | A confirmation requiring reason, owner, source, and review or expiry date; refuses invalid identity and conflicting-source rows | Confirm; cancel | Dialog focus pattern; on confirm the row shows the exception distinctly |
 | Evidence drawer open | Source, capture and verification dates, canonical value, policy identifier and version, revision used | Close; act on the row | Drawer opens with focus on its title and returns focus to the row on close |
@@ -229,7 +236,7 @@ The content lines inside the preview box are illustrative layout only. The canon
 | Stale after source change | The sealed brief marked "no longer reflects its sources" with the changed inputs listed; its content and checksum unchanged | Generate a new revision | Stale marking never rewrites history |
 | Recovery | Reopening shows the sealed brief and its receipt exactly as before the interruption | Continue | Receipt is reachable from the stage without regenerating |
 
-Guardrails: there is no way to edit sealed content; regeneration creates a new revision beside the old one; the receipt uses provenance typography (monospace) for checksums and identifiers only. Instruction strings reach the brief verbatim, and a length bound is not least disclosure by itself: the surface where instructions are authored must carry permanent guidance copy — describe what catering must do, not the person's condition — and the preview is the last human review point for instruction content before disclosure.
+Guardrails: there is no way to edit sealed content; regeneration creates a new revision beside the old one; the receipt uses provenance typography (monospace) for checksums and identifiers only. The only text that can reach the Brief presenter is the constrained, validated operational instruction exposed by the authorised `DietaryOperationalView`; profile notes, diagnoses, restricted detail, and arbitrary source text have no path into it. Within that boundary the validated instruction reaches the Brief verbatim, and a length bound is still not least disclosure by itself: the surface where instructions are authored must carry permanent guidance copy — describe what catering must do, not the person's condition — and the preview is the last human review point for instruction content before disclosure.
 
 ## Route empty-state minimums
 
@@ -276,6 +283,6 @@ Nothing below is claimed by this document; it is the checklist the owning slices
 ## Open evidence-bound inputs
 
 1. The exact P03 command, result, error, and recovery-to-presentation mapping — required before P04; owned by the P03D reconciliation.
-2. The exact P05/P10 Event DTO and state delta against this contract — required before P11; recorded as a documented delta to the promoted `DESIGN.md`.
+2. The exact P05/P10 Event DTO and state delta against this contract — required before P11; recorded as a documented delta to the canonical `DESIGN.md` the consultation creates.
 
 Neither input is an invitation to guess ahead of its gate.
