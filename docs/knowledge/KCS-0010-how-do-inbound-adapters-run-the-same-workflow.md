@@ -40,6 +40,8 @@ The application result contains a contract version, command identifier, completi
 
 Workspace-relative paths inside Health findings are logical record identifiers, not host filesystem strings. The Markdown adapter converts path components to `/`-separated values before they enter the application contract. This keeps JSON, CLI, desktop, fixtures, and later APIs stable across Unix and Windows and avoids falling back to an absolute private path if a record cannot be relativised safely.
 
+User-selected or operating-system-provided absolute folders are different: they remain native host paths because the OS must open them. Tests construct expected defaults through `PathBuf::join`; they do not impose Unix separators on a Windows Documents path.
+
 The CLI opens a session for the command lifetime. Tauri keeps one managed application instance and its session map in native state; the current disposable UI holds only the opaque active session identifier returned by that native application. Browser fixtures may fake the typed bridge for interaction testing, but they are not storage or domain implementations.
 
 Browser fixtures also cannot prove the native WebKit event lifecycle. Capture any form, button, or other event target that is needed after an `await` before yielding to the native command. A compiled P01 review exposed a false-failure path where the Person file was written successfully and WebKit then cleared `event.currentTarget`; the interface reported failure and made a dangerous retry look appropriate. The native request shape, success message, file result, and post-command UI state must be tested together.

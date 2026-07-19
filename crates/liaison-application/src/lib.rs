@@ -827,6 +827,7 @@ mod tests {
     use liaison_workspace::{BuildProfile, WorkspaceProfile};
     use std::{
         fs,
+        path::PathBuf,
         sync::{
             Arc,
             atomic::{AtomicU64, Ordering},
@@ -946,7 +947,11 @@ mod tests {
         let result = application.default_workspace_path();
         assert!(result.is_ok());
         if let Ok(result) = result {
-            assert_eq!(result.value, "/Users/example/Documents/Liaison RM");
+            let expected = PathBuf::from("/Users/example/Documents")
+                .join("Liaison RM")
+                .to_string_lossy()
+                .into_owned();
+            assert_eq!(result.value, expected);
             assert_eq!(result.command_id.as_uuid(), Uuid::from_u128(1));
         }
     }
