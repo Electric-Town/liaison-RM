@@ -26,7 +26,7 @@ Scores rank work only when its dependencies and safety prerequisites are already
 | P02 Workspace Session authority | 12 | 3 | 0.85 | 4 | 7.65 | Must precede recoverable writes, security, and checkpoints. |
 | P03 Recoverable multi-target operations | 12 | 3 | 0.80 | 5 | 5.76 | Required before new canonical formats or imports. |
 | P04 Typed React/Tauri design system | 8 | 2 | 0.80 | 4 | 3.20 | Starts after stable application/session commands; parity precedes Events UI. |
-| P05 G3 Directory/profile/Event contracts | 10 | 3 | 0.75 | 5 | 4.50 | Keeps dietary/event schemas separate from security and the OKF acceptance owner. |
+| P05 G1 Directory/profile/Event contracts | 10 | 3 | 0.75 | 5 | 4.50 | Establishes the domain prerequisite consumed by P06/P07 and later G3 work. |
 | P05-OKF strict People schema/port | 10 | 2 | 0.90 | 3 | 6.00 | Runs after P03/P04; owns strict authoring and UAT-065 under FG-B0-001. |
 | P06 Tolerant Directory projection | 7 | 2 | 0.75 | 4 | 2.63 | Required before 10,000-person cohort workflows. |
 | P06-REPAIR Guided canonical repair | 7 | 3 | 0.85 | 3 | 5.95 | Runs after P03/P06; owns UAT-040 and closes FG-R1-002 before P09-OKF. |

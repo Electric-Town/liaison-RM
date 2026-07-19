@@ -144,7 +144,7 @@ gates:
       - Required kinds plus orthogonal availability, freshness, conflict, and disclosure axes are modelled as typed values.
       - Empty is never interpreted as verified none.
       - Operational instruction and detailed note use separate disclosure controls and no B0 catering-role grant exists.
-    evidence_required: [domain tests, schema tests, UAT-009, UAT-010]
+    evidence_required: [domain tests, schema tests]
 
   - id: FG-R3-002
     release: R3

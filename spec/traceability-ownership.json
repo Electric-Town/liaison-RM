@@ -14,15 +14,15 @@
       "id": "G0",
       "name": "One source of product truth",
       "depends_on": [],
-      "status": "current"
+      "status": "complete"
     },
     {
       "id": "G1",
-      "name": "Trusted local workspace foundation",
+      "name": "Trusted local workspace and domain foundation",
       "depends_on": [
         "G0"
       ],
-      "status": "blocked"
+      "status": "current"
     },
     {
       "id": "G3",
@@ -43,10 +43,19 @@
       "status": "blocked"
     },
     {
+      "id": "G2C",
+      "name": "Working With Me and configuration",
+      "depends_on": [
+        "B0"
+      ],
+      "status": "blocked"
+    },
+    {
       "id": "G2A",
       "name": "People and interaction memory",
       "depends_on": [
-        "B0"
+        "B0",
+        "G2C"
       ],
       "status": "blocked"
     },
@@ -54,15 +63,8 @@
       "id": "G2B",
       "name": "Relationship reminders and attention",
       "depends_on": [
-        "B0"
-      ],
-      "status": "blocked"
-    },
-    {
-      "id": "G2C",
-      "name": "Working With Me and configuration",
-      "depends_on": [
-        "B0"
+        "B0",
+        "G2A"
       ],
       "status": "blocked"
     },
@@ -97,7 +99,8 @@
       "id": "G5",
       "name": "Contact portability and governed signals",
       "depends_on": [
-        "A0"
+        "A0",
+        "G4"
       ],
       "status": "deferred"
     },
@@ -105,7 +108,8 @@
       "id": "G6",
       "name": "Safe automation and ecosystem",
       "depends_on": [
-        "A0"
+        "A0",
+        "G4"
       ],
       "status": "deferred"
     },
@@ -113,7 +117,7 @@
       "id": "G7",
       "name": "Public open-source release evidence",
       "depends_on": [
-        "B0"
+        "A0"
       ],
       "status": "blocked"
     }
@@ -184,7 +188,7 @@
       "milestone": "G0",
       "owning_gate": "FG-R0-002",
       "evidence_owner": "EO-GOVERNANCE",
-      "status": "current"
+      "status": "complete"
     },
     "T-R1-001": {
       "milestone": "G1",
@@ -504,19 +508,19 @@
       "milestone": "G0",
       "owning_gate": "FG-R0-002",
       "evidence_owner": "EO-GOVERNANCE",
-      "status": "current"
+      "status": "complete"
     },
     "T-B0-P01": {
       "milestone": "G1",
-      "owning_gate": "FG-R1-004",
+      "owning_gate": "FG-B0-001",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "blocked"
+      "status": "complete"
     },
     "T-B0-P02": {
       "milestone": "G1",
       "owning_gate": "FG-B0-001",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "blocked"
+      "status": "current"
     },
     "T-B0-P03": {
       "milestone": "G1",
@@ -537,7 +541,7 @@
       "status": "blocked"
     },
     "T-B0-P05": {
-      "milestone": "G3",
+      "milestone": "G1",
       "owning_gate": "FG-R3-001",
       "evidence_owner": "EO-EVENTS",
       "status": "blocked"
@@ -656,6 +660,12 @@
       "evidence_owner": "EO-CONNECTIONS",
       "status": "deferred"
     },
+    "T-R5-005-ACCEPT": {
+      "milestone": "G5",
+      "owning_gate": "FG-R5-005",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
     "T-R5-009": {
       "milestone": "G5",
       "owning_gate": "FG-R5-006",
@@ -700,14 +710,14 @@
       "owning_gate": "FG-B0-001",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "blocked"
+      "status": "current"
     },
     "LRM-WS-009": {
       "owning_task": "T-B0-P02",
       "owning_gate": "FG-B0-001",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "blocked"
+      "status": "current"
     },
     "LRM-WS-003": {
       "owning_task": "T-B0-P06",
@@ -959,61 +969,61 @@
       "owning_gate": "FG-B0-001",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "blocked"
+      "status": "complete"
     },
     "LRM-WS-011": {
       "owning_task": "T-B0-P01",
       "owning_gate": "FG-B0-001",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "blocked"
+      "status": "complete"
     },
     "LRM-PE-001": {
       "owning_task": "T-B0-P05",
       "owning_gate": "FG-R3-001",
-      "milestone": "G3",
+      "milestone": "G1",
       "evidence_owner": "EO-EVENTS",
       "status": "blocked"
     },
     "LRM-PE-002": {
       "owning_task": "T-B0-P05",
       "owning_gate": "FG-R3-001",
-      "milestone": "G3",
+      "milestone": "G1",
       "evidence_owner": "EO-EVENTS",
       "status": "blocked"
     },
     "LRM-PE-004": {
       "owning_task": "T-B0-P05",
       "owning_gate": "FG-R3-001",
-      "milestone": "G3",
+      "milestone": "G1",
       "evidence_owner": "EO-EVENTS",
       "status": "blocked"
     },
     "LRM-PE-005": {
       "owning_task": "T-B0-P05",
       "owning_gate": "FG-R3-001",
-      "milestone": "G3",
+      "milestone": "G1",
       "evidence_owner": "EO-EVENTS",
       "status": "blocked"
     },
     "LRM-PE-008": {
       "owning_task": "T-B0-P05",
       "owning_gate": "FG-R3-001",
-      "milestone": "G3",
+      "milestone": "G1",
       "evidence_owner": "EO-EVENTS",
       "status": "blocked"
     },
     "LRM-PE-009": {
       "owning_task": "T-B0-P05",
       "owning_gate": "FG-R3-001",
-      "milestone": "G3",
+      "milestone": "G1",
       "evidence_owner": "EO-EVENTS",
       "status": "blocked"
     },
     "LRM-PE-010": {
       "owning_task": "T-B0-P05",
       "owning_gate": "FG-R3-001",
-      "milestone": "G3",
+      "milestone": "G1",
       "evidence_owner": "EO-EVENTS",
       "status": "blocked"
     },
@@ -1764,14 +1774,14 @@
       "owning_gate": "FG-R0-002",
       "milestone": "G0",
       "evidence_owner": "EO-GOVERNANCE",
-      "status": "current"
+      "status": "complete"
     },
     "LRM-PK-009": {
       "owning_task": "T-R0-003",
       "owning_gate": "FG-R0-002",
       "milestone": "G0",
       "evidence_owner": "EO-GOVERNANCE",
-      "status": "current"
+      "status": "complete"
     },
     "LRM-A0-001": {
       "owning_task": "T-A0-001",
@@ -2319,7 +2329,7 @@
       "acceptance_task": "T-B0-P00",
       "milestone": "G0",
       "evidence_owner": "EO-GOVERNANCE",
-      "status": "current"
+      "status": "complete"
     },
     "FG-R1-001": {
       "acceptance_task": "T-A0-001",
@@ -2340,9 +2350,9 @@
       "status": "blocked"
     },
     "FG-R1-004": {
-      "acceptance_task": "T-B0-P01",
-      "milestone": "G1",
-      "evidence_owner": "EO-WORKSPACE",
+      "acceptance_task": "T-B0-ACCEPT",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked"
     },
     "FG-R1-005": {
@@ -2383,7 +2393,7 @@
     },
     "FG-R3-001": {
       "acceptance_task": "T-B0-P05",
-      "milestone": "G3",
+      "milestone": "G1",
       "evidence_owner": "EO-EVENTS",
       "status": "blocked"
     },
@@ -2412,7 +2422,7 @@
       "status": "blocked"
     },
     "FG-R4-001": {
-      "acceptance_task": "T-R4-003",
+      "acceptance_task": "T-R4-008",
       "milestone": "G4",
       "evidence_owner": "EO-CONNECTIONS",
       "status": "deferred"
@@ -2442,7 +2452,7 @@
       "status": "deferred"
     },
     "FG-R4-006": {
-      "acceptance_task": "T-R4-006",
+      "acceptance_task": "T-R4-007",
       "milestone": "G4",
       "evidence_owner": "EO-CONNECTIONS",
       "status": "deferred"
@@ -2466,7 +2476,7 @@
       "status": "deferred"
     },
     "FG-R5-003": {
-      "acceptance_task": "T-R5-003",
+      "acceptance_task": "T-R5-007",
       "milestone": "G5",
       "evidence_owner": "EO-PROFILES",
       "status": "deferred"
@@ -2478,7 +2488,7 @@
       "status": "deferred"
     },
     "FG-R5-005": {
-      "acceptance_task": "T-R5-008",
+      "acceptance_task": "T-R5-005-ACCEPT",
       "milestone": "G5",
       "evidence_owner": "EO-CONNECTIONS",
       "status": "deferred"
@@ -2538,7 +2548,7 @@
       "status": "blocked"
     },
     "FG-B0-001": {
-      "acceptance_task": "T-B0-P03",
+      "acceptance_task": "T-B0-P09-OKF",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
       "status": "blocked"

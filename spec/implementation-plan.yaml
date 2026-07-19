@@ -1,7 +1,7 @@
 schema_version: 2
 status: reconciled
 execution_authority: spec/traceability-ownership.json
-delivery_sequence: [G0, G1, G3, B0, G2A, G2B, G2C, A0, POST-A0, G4, G5, G6, G7]
+delivery_sequence: [G0, G1, G3, B0, G2C, G2A, G2B, A0, POST-A0, G4, G5, G6, G7]
 delivery_rule: B0 acceptance precedes every A0 task; A0 acceptance precedes provider, mobile, AI, MCP, and theme-package delivery. Dependencies may establish seams but never transfer acceptance ownership.
 
 tasks:
@@ -350,7 +350,7 @@ tasks:
     release: R4
     title: Implement self-service requests and Liaison Cards
     contexts: [sharing]
-    depends_on: [T-R4-005]
+    depends_on: [T-R4-005, T-R4-006]
     requirements: [LRM-SH-005, LRM-SH-006]
     uat: [UAT-018]
     outputs: [request-response-formats, offline-responder, card-format, import]
@@ -529,7 +529,7 @@ tasks:
     depends_on: [T-B0-P03]
     requirements: [LRM-PE-001, LRM-PE-002, LRM-PE-004, LRM-PE-005, LRM-PE-008, LRM-PE-009, LRM-PE-010]
     uat: []
-    evidence_dependencies: [LRM-EV-007, UAT-009, UAT-010]
+    evidence_dependencies: []
     outputs: [versioned-domain-schemas, orthogonal-dietary-facts, dietary-operational-view]
 
   - id: T-B0-P05-OKF
@@ -728,6 +728,16 @@ tasks:
     requirements: [LRM-CO-015]
     uat: [UAT-070]
     outputs: [connection-operations-feed, connector-version, grant-and-range-receipts, operation-counts, retry-revoke-history, hidden-refresh-and-egress-denial]
+
+  - id: T-R5-005-ACCEPT
+    release: R5
+    title: Qualify legacy migration, operation history, and denied-network local capture
+    contexts: [connections, imports, interactions, people]
+    depends_on: [T-R5-005, T-R5-006, T-R5-008]
+    requirements: []
+    uat: []
+    evidence_dependencies: [UAT-038, UAT-059, UAT-060, UAT-070]
+    outputs: [FG-R5-005-evidence, migration-reconciliation, operation-history-evidence, denied-network-local-capture-evidence]
 
   - id: T-R5-009
     release: R5

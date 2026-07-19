@@ -77,9 +77,9 @@ Exit evidence:
 - density, text-scale, user palette controls, and theme packages are not smuggled into B0/P04;
 - the web fixture uses a deterministic fake bridge and makes no product-authority claim.
 
-## P05 — B-domain contracts and atomic OKF authoring seam
+## P05 — G1 domain contracts and atomic OKF authoring seam
 
-Outcome: the G3 `T-B0-P05` defines revisioned People, Organisations, Groups, Locations, Memberships, Events, provenance, explicit field states, and event-local resolutions. The separate G1 `T-B0-P05-OKF`, after P03 and P04, owns the pinned OKF v0.1 Draft People schema, strict writer port, Liaison extension mapping, reserved paths, and sealed-plaintext denial under `FG-B0-001`. Sensitive types and policy are owned only by P07/P08 under `FG-B0-002`.
+Outcome: the G1 `T-B0-P05` defines revisioned People, Organisations, Groups, Locations, Memberships, Events, provenance, explicit field states, and event-local resolutions before P06/P07; G3 consumes those accepted contracts. The separate G1 `T-B0-P05-OKF`, after P03 and P04, owns the pinned OKF v0.1 Draft People schema, strict writer port, Liaison extension mapping, reserved paths, and sealed-plaintext denial under `FG-B0-001`. Sensitive types and policy are owned only by P07/P08 under `FG-B0-002`.
 
 Exit evidence:
 
@@ -139,7 +139,7 @@ Exit evidence:
 
 ## P09 — Required OKF normalization, then Directory onboarding
 
-Outcome: `T-B0-P09-OKF` first normalizes legacy Liaison People files through exact preview/backup, journaled failure-atomic commit, restart recovery, idempotent rerun, curated-index preservation, and exact rollback after P03/P05-OKF/P06 and the guided repair gate. The separate G3 P09 then lets a workplace operator maintain People and import Organisations, Groups, Locations, and effective Memberships through a streaming staged workflow.
+Outcome: `T-B0-P09-OKF` first normalizes legacy Liaison People files through exact preview/backup, journaled failure-atomic commit, restart recovery, idempotent rerun, curated-index preservation, and exact rollback after P03/P05-OKF/P06 and the guided repair gate, then closes `FG-B0-001`. The separate G3 P09 lets a workplace operator maintain People and import Organisations, Groups, Locations, and effective Memberships through a streaming staged workflow.
 
 Exit evidence:
 
