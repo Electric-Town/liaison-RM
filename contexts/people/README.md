@@ -11,7 +11,8 @@ People owns a human profile and the provenance of facts about that person. It do
 - **Contact point** — a typed email address, phone number, postal address, URL, or messaging handle.
 - **Important date** — a birthday, anniversary, or user-defined date; a birthday may omit its year.
 - **Archive** — reversible removal from active workflows.
-- **Dietary requirement** — a later R3 value object containing kind, coverage, instruction, verification, and disclosure policy.
+- **Dietary fact** — a recorded source fact in `dietary.rs`: one of the eight distinguished kinds plus four orthogonal axes (availability, freshness, conflict, catering disclosure), provenance, review dates, and a separately classified detailed note. An absent record is unknown, never verified none; verified none exists only as a dated verification. Legacy mutually exclusive coverage values migrate onto the axes while the original value and source stay recorded.
+- **Dietary operational view** — the authorised per-person view Events consumes: the axes plus the profile revision. The constrained single-line operational instruction is the only dietary text it can carry; the detailed note is structurally absent from the type, and no recipient, account, or catering-role grant concept exists in B0.
 
 ## Current R1 invariants
 

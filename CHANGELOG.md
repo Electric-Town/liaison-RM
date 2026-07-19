@@ -72,6 +72,8 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - A public-site validator covering metadata, local asset resolution, accessibility basics, structured data, language consistency, discovery files, and copy standards.
 - A real workplace-data pilot governance record set under `docs/pilot/` — data controller and accountable operators, lawful purpose and legal basis, special-category condition, DPIA decision, participant notice, retention and rights plan, incident response plan, and an independent-review record — with an explicit closed state for the pilot gate, plus KCS-0011 describing the authorisation path.
 
+- Structured dietary source facts in the People context: the eight distinguished dietary kinds, four orthogonal availability/freshness/conflict/disclosure axes validated across every combination, dated verified-none records so an absent field can never read as no restriction, legacy coverage migration that preserves the original value and provenance, a constrained operational instruction separated from the stricter-classified detailed note, and an authorised operational view for Events from which the note is structurally absent.
+
 ### Changed
 
 - Windows first-use registry creation now uses a cross-process initialisation
