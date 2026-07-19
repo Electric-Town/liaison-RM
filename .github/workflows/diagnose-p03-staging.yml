@@ -1,0 +1,36 @@
+name: Diagnose P03 staging
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    if: github.head_ref == 'agent/p03-source-publisher-20260719'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/p03-source-publisher-20260719
+      - name: Reconstruct without asserting expected digest
+        shell: bash
+        run: |
+          set +e
+          sha256sum .staging/p03/part-* > /tmp/diagnostics.txt
+          cat .staging/p03/part-* | tr -d '\r\n' | base64 --decode > /tmp/p03-source.patch.gz 2>> /tmp/diagnostics.txt
+          echo "decode_status=$?" >> /tmp/diagnostics.txt
+          sha256sum /tmp/p03-source.patch.gz >> /tmp/diagnostics.txt
+          gzip -t /tmp/p03-source.patch.gz 2>> /tmp/diagnostics.txt
+          echo "gzip_status=$?" >> /tmp/diagnostics.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p03-staging-diagnostics
+          path: |
+            /tmp/diagnostics.txt
+            /tmp/p03-source.patch.gz
+          if-no-files-found: error
+          retention-days: 1
