@@ -10,6 +10,7 @@ This adapter implements Workspace and People repository ports using the open Lia
 - use stable ID-bearing filenames;
 - apply revision preconditions before replacement;
 - return validation findings without deleting invalid files;
+- keep healthy People readable while Health reports malformed sibling records;
 - keep format documents private to the adapter.
 
 ## Non-responsibilities

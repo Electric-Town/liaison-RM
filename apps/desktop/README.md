@@ -1,18 +1,18 @@
 # Liaison RM desktop
 
-The desktop application is an inbound Tauri interface over the Workspace, People, and Markdown-vault application services.
+The desktop application is an inbound Tauri adapter over `liaison-application`, the sole Rust composition root. Tauri owns one managed application instance. Opening or creating a workspace returns an opaque session identifier; later commands use that session rather than accepting another filesystem path.
 
-## Current alpha workflow
+## Current review-build workflow
 
 - show the build's local-authority status;
 - suggest a local Documents path;
-- create an Airgap workspace;
+- create a local-authoritative workspace with no connection configured;
 - open an existing Liaison workspace;
 - create a basic person profile;
 - list current person records;
 - validate workspace layout and records without deleting files.
 
-The desktop layer does not own canonical schemas, calculate relationship priority, configure providers, or write files outside application-service ports.
+The desktop layer does not construct context services or repositories, own canonical schemas, calculate relationship priority, configure providers, or write files outside application-service ports. Successful native commands return typed `CommandResult` envelopes. Failures return `ApplicationError` values with a stable code, display message, recovery guidance, and private diagnostic details. The interface displays the message and recovery guidance only.
 
 ## Development
 

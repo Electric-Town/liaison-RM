@@ -56,19 +56,42 @@ impl MarkdownVault {
         if !people.is_dir() {
             return Err(PeopleError::NotFound);
         }
-        for entry in WalkDir::new(&people).min_depth(1).max_depth(1) {
-            let entry = entry.map_err(storage_people)?;
+        let mut matches = Vec::new();
+        for entry in WalkDir::new(&people)
+            .min_depth(1)
+            .max_depth(1)
+            .sort_by_file_name()
+        {
+            let Ok(entry) = entry else {
+                // Workspace Health owns unreadable-entry diagnostics. A bad
+                // sibling must not make a healthy target unreachable.
+                continue;
+            };
             if !entry.file_type().is_file()
                 || entry.path().extension().and_then(|value| value.to_str()) != Some("md")
             {
                 continue;
             }
-            let parsed = read_person_document(entry.path())?;
-            if parsed.document.id == id {
-                return Ok(entry.path().to_path_buf());
+            let Ok(parsed) = read_person_document(entry.path()) else {
+                // Health reports malformed records with their path and repair
+                // guidance. A damaged sibling must not make a healthy Person
+                // unreachable.
+                continue;
+            };
+            let Ok(person) = parsed.document.into_domain() else {
+                continue;
+            };
+            if person.id == id {
+                matches.push(entry.path().to_path_buf());
             }
         }
-        Err(PeopleError::NotFound)
+        match matches.as_slice() {
+            [] => Err(PeopleError::NotFound),
+            [path] => Ok(path.clone()),
+            _ => Err(PeopleError::Storage(
+                "duplicate person identity requires repair".to_owned(),
+            )),
+        }
     }
 }
 
@@ -77,6 +100,20 @@ impl WorkspaceStore for MarkdownVault {
         let manifest_path = Self::manifest_path(root);
         if manifest_path.exists() {
             return Err(WorkspaceError::AlreadyExists);
+        }
+        if root.exists() {
+            if !root.is_dir() {
+                return Err(WorkspaceError::InitialiseTargetNotEmpty);
+            }
+            let mut entries = fs::read_dir(root).map_err(storage_workspace)?;
+            if entries
+                .next()
+                .transpose()
+                .map_err(storage_workspace)?
+                .is_some()
+            {
+                return Err(WorkspaceError::InitialiseTargetNotEmpty);
+            }
         }
         manifest.validate()?;
         for relative in [
@@ -145,27 +182,70 @@ impl WorkspaceStore for MarkdownVault {
         }
         let people = Self::people_path(root);
         if people.is_dir() {
-            for entry in WalkDir::new(&people).min_depth(1).max_depth(1) {
-                let entry = entry.map_err(storage_workspace)?;
-                if !entry.file_type().is_file()
-                    || entry.path().extension().and_then(|value| value.to_str()) != Some("md")
-                {
+            let mut identities = BTreeMap::<String, String>::new();
+            for entry in WalkDir::new(&people)
+                .min_depth(1)
+                .max_depth(1)
+                .sort_by_file_name()
+            {
+                let entry = match entry {
+                    Ok(entry) => entry,
+                    Err(error) => {
+                        let path = error
+                            .path()
+                            .and_then(|path| path.strip_prefix(root).ok())
+                            .map_or_else(|| "people".to_owned(), portable_workspace_path);
+                        findings.push(ValidationFinding {
+                            code: "people.unreadable-entry".to_owned(),
+                            severity: FindingSeverity::Error,
+                            path,
+                            message: "a Person directory entry could not be read".to_owned(),
+                            recovery: "preserve the workspace, correct local file access, and run Health again; Liaison will not delete the entry automatically".to_owned(),
+                        });
+                        continue;
+                    }
+                };
+                if entry.path().extension().and_then(|value| value.to_str()) != Some("md") {
                     continue;
                 }
-                if let Err(error) = read_person_document(entry.path()) {
-                    let relative = entry
-                        .path()
-                        .strip_prefix(root)
-                        .unwrap_or(entry.path())
-                        .display()
-                        .to_string();
+                let relative = entry
+                    .path()
+                    .strip_prefix(root)
+                    .map_or_else(|_| "people".to_owned(), portable_workspace_path);
+                if !entry.file_type().is_file() {
                     findings.push(ValidationFinding {
                         code: "people.invalid-record".to_owned(),
                         severity: FindingSeverity::Error,
                         path: relative,
-                        message: error.to_string(),
-                        recovery: "inspect the file, preserve a copy, and repair its front matter; Liaison will not delete it automatically".to_owned(),
+                        message: "person record is not a regular file".to_owned(),
+                        recovery: "preserve the entry and replace it with a reviewed readable Markdown record; Liaison will not follow or delete it automatically".to_owned(),
                     });
+                    continue;
+                }
+                match read_person_document(entry.path())
+                    .and_then(|parsed| parsed.document.into_domain())
+                {
+                    Ok(person) => {
+                        let identity = person.id.to_string();
+                        if let Some(first_path) = identities.insert(identity, relative.clone()) {
+                            findings.push(ValidationFinding {
+                                code: "people.duplicate-id".to_owned(),
+                                severity: FindingSeverity::Error,
+                                path: relative,
+                                message: "person identity appears in more than one record".to_owned(),
+                                recovery: format!(
+                                    "preserve both files and resolve the duplicate identity with the first record at {first_path}; Liaison will not merge or delete either file automatically"
+                                ),
+                            });
+                        }
+                    }
+                    Err(error) => findings.push(ValidationFinding {
+                        code: "people.invalid-record".to_owned(),
+                        severity: FindingSeverity::Error,
+                        path: relative,
+                        message: safe_people_validation_message(&error).to_owned(),
+                        recovery: "inspect the file, preserve a copy, and repair its front matter; Liaison will not delete it automatically".to_owned(),
+                    }),
                 }
             }
         }
@@ -173,17 +253,26 @@ impl WorkspaceStore for MarkdownVault {
     }
 }
 
+fn portable_workspace_path(path: &Path) -> String {
+    path.iter()
+        .map(|component| component.to_string_lossy())
+        .collect::<Vec<_>>()
+        .join("/")
+}
+
 impl PersonRepository for MarkdownVault {
     fn create(&self, workspace: &Path, person: &PersonProfile) -> Result<(), PeopleError> {
         MarkdownVault::ensure_workspace(workspace)
             .map_err(|error| PeopleError::Storage(error.to_string()))?;
-        if MarkdownVault::find_person_path(workspace, person.id).is_ok() {
-            return Err(PeopleError::AlreadyExists);
+        match MarkdownVault::find_person_path(workspace, person.id) {
+            Ok(_) => return Err(PeopleError::AlreadyExists),
+            Err(PeopleError::NotFound) => {}
+            Err(error) => return Err(error),
         }
         let filename = format!("{}--{}.md", slug(&person.display_name), person.id);
         let path = Self::people_path(workspace).join(filename);
         let document = PersonDocument::from_domain(person, BTreeMap::new());
-        let rendered = render_person(&document, &default_person_body(person));
+        let rendered = render_person(&document, &default_person_body(person))?;
         atomic_create(&path, rendered.as_bytes()).map_err(storage_people)
     }
 
@@ -195,20 +284,39 @@ impl PersonRepository for MarkdownVault {
         MarkdownVault::ensure_workspace(workspace)
             .map_err(|error| PeopleError::Storage(error.to_string()))?;
         let people = Self::people_path(workspace);
-        let mut result = Vec::new();
-        for entry in WalkDir::new(&people).min_depth(1).max_depth(1) {
-            let entry = entry.map_err(storage_people)?;
+        let mut by_identity = BTreeMap::<String, Vec<PersonProfile>>::new();
+        for entry in WalkDir::new(&people)
+            .min_depth(1)
+            .max_depth(1)
+            .sort_by_file_name()
+        {
+            let Ok(entry) = entry else {
+                continue;
+            };
             if !entry.file_type().is_file()
                 || entry.path().extension().and_then(|value| value.to_str()) != Some("md")
             {
                 continue;
             }
-            let parsed = read_person_document(entry.path())?;
-            let person = parsed.document.into_domain()?;
+            let Ok(parsed) = read_person_document(entry.path()) else {
+                // Validation owns the diagnostic view. Listing remains useful
+                // for healthy records while a malformed sibling is repaired.
+                continue;
+            };
+            let Ok(person) = parsed.document.into_domain() else {
+                continue;
+            };
             if include_archived || !person.archived {
-                result.push(person);
+                by_identity
+                    .entry(person.id.to_string())
+                    .or_default()
+                    .push(person);
             }
         }
+        let mut result = by_identity
+            .into_values()
+            .filter_map(|mut people| (people.len() == 1).then(|| people.remove(0)))
+            .collect::<Vec<_>>();
         result.sort_by(|left, right| {
             left.display_name
                 .to_lowercase()
@@ -248,7 +356,7 @@ impl PersonRepository for MarkdownVault {
             });
         }
         let document = PersonDocument::from_domain(person, existing.document.extra);
-        let rendered = render_person(&document, &existing.body);
+        let rendered = render_person(&document, &existing.body)?;
         atomic_replace(&path, rendered.as_bytes()).map_err(storage_people)
     }
 }
@@ -304,19 +412,16 @@ impl PersonDocument {
                 self.schema_version
             )));
         }
-        if self.display_name.trim().is_empty() {
-            return Err(PeopleError::RequiredField("display name"));
-        }
-        Ok(PersonProfile {
-            id: self.id,
-            revision: self.revision,
-            display_name: self.display_name,
-            aliases: self.aliases,
-            emails: self.emails,
-            phones: self.phones,
-            birthday: self.birthday,
-            archived: self.archived,
-        })
+        PersonProfile::rehydrate(
+            self.id,
+            self.revision,
+            self.display_name,
+            self.aliases,
+            self.emails,
+            self.phones,
+            self.birthday,
+            self.archived,
+        )
     }
 }
 
@@ -341,6 +446,22 @@ fn read_person_document(path: &Path) -> Result<ParsedPerson, PeopleError> {
     })
 }
 
+fn safe_people_validation_message(error: &PeopleError) -> &'static str {
+    match error {
+        PeopleError::RequiredField(_) => "person record is missing a required value",
+        PeopleError::InvalidEmail(_) => "person record contains an invalid email address",
+        PeopleError::InvalidPhone(_) => "person record contains an invalid phone number",
+        PeopleError::InvalidPartialDate { .. } => "person record contains an invalid partial date",
+        PeopleError::AlreadyExists => "person record duplicates an existing identity",
+        PeopleError::NotFound => "person record could not be found",
+        PeopleError::RevisionConflict { .. } => {
+            "person record revision conflicts with the expected version"
+        }
+        PeopleError::RevisionOverflow => "person record revision is outside the supported range",
+        PeopleError::Storage(_) => "person record format or schema is invalid",
+    }
+}
+
 fn split_front_matter(text: &str) -> Result<(&str, &str), PeopleError> {
     let mut lines = text.split_inclusive('\n');
     if lines.next().map(str::trim_end) != Some("---") {
@@ -362,14 +483,9 @@ fn split_front_matter(text: &str) -> Result<(&str, &str), PeopleError> {
     ))
 }
 
-fn render_person(document: &PersonDocument, body: &str) -> String {
-    let yaml = serde_yaml::to_string(document).unwrap_or_else(|error| {
-        // Serialization of the in-memory document should be infallible for the
-        // supported value set. Returning an explicit marker keeps this helper
-        // total; callers validate persisted documents on the next read.
-        format!("serialization_error: {error}\n")
-    });
-    format!("---\n{yaml}---\n{}", body.trim_start_matches('\n'))
+fn render_person(document: &PersonDocument, body: &str) -> Result<String, PeopleError> {
+    let yaml = serde_yaml::to_string(document).map_err(storage_people)?;
+    Ok(format!("---\n{yaml}---\n{}", body.trim_start_matches('\n')))
 }
 
 fn default_person_body(person: &PersonProfile) -> String {
@@ -447,8 +563,11 @@ fn storage_people(error: impl std::fmt::Display) -> PeopleError {
 #[cfg(test)]
 mod tests {
     use super::MarkdownVault;
-    use liaison_people::{CreatePerson, ListPeople, PersonRepository};
-    use liaison_workspace::{BuildProfile, InitialiseWorkspace, WorkspaceProfile};
+    use liaison_people::{CreatePerson, ListPeople, PersonProfile, PersonRepository};
+    use liaison_shared_kernel::{PersonId, WorkspaceId};
+    use liaison_workspace::{
+        BuildProfile, InitialiseWorkspace, ValidateWorkspace, WorkspaceError, WorkspaceProfile,
+    };
     use std::fs;
     use tempfile::tempdir;
 
@@ -462,6 +581,7 @@ mod tests {
             let initialise = InitialiseWorkspace::new(vault.clone());
             let created = initialise.execute(
                 root,
+                WorkspaceId::new(),
                 "People",
                 WorkspaceProfile::Personal,
                 BuildProfile::Airgap,
@@ -470,9 +590,16 @@ mod tests {
             assert!(created.is_ok());
 
             let create_person = CreatePerson::new(vault.clone());
-            let person =
-                create_person.execute(root, "Alex Murphy", Some("alex@example.test".to_owned()));
+            let person = create_person.execute(
+                root,
+                PersonId::new(),
+                "Alex Murphy",
+                Some("alex@example.test".to_owned()),
+            );
             assert!(person.is_ok());
+            if let Ok(person) = &person {
+                assert_eq!(person.revision.get(), 1);
+            }
 
             let files = fs::read_dir(root.join("people"));
             assert!(files.is_ok());
@@ -499,6 +626,7 @@ mod tests {
                 initialise
                     .execute(
                         root,
+                        WorkspaceId::new(),
                         "People",
                         WorkspaceProfile::Personal,
                         BuildProfile::Airgap,
@@ -507,7 +635,7 @@ mod tests {
                     .is_ok()
             );
             let create = CreatePerson::new(vault.clone());
-            let person = create.execute(root, "Alex Murphy", None);
+            let person = create.execute(root, PersonId::new(), "Alex Murphy", None);
             assert!(person.is_ok());
             if let Ok(mut person) = person {
                 let path = MarkdownVault::find_person_path(root, person.id);
@@ -547,6 +675,7 @@ mod tests {
                 InitialiseWorkspace::new(vault.clone())
                     .execute(
                         root,
+                        WorkspaceId::new(),
                         "People",
                         WorkspaceProfile::Personal,
                         BuildProfile::Airgap,
@@ -555,8 +684,16 @@ mod tests {
                     .is_ok()
             );
             let create = CreatePerson::new(vault.clone());
-            assert!(create.execute(root, "Zara Example", None).is_ok());
-            assert!(create.execute(root, "Alex Example", None).is_ok());
+            assert!(
+                create
+                    .execute(root, PersonId::new(), "Zara Example", None)
+                    .is_ok()
+            );
+            assert!(
+                create
+                    .execute(root, PersonId::new(), "Alex Example", None)
+                    .is_ok()
+            );
             let people = ListPeople::new(vault).execute(root, false);
             assert!(people.is_ok());
             if let Ok(people) = people {
@@ -565,6 +702,283 @@ mod tests {
                     .map(|person| person.display_name.as_str())
                     .collect();
                 assert_eq!(names, vec!["Alex Example", "Zara Example"]);
+            }
+        }
+    }
+
+    #[test]
+    fn malformed_sibling_does_not_hide_healthy_people() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        if let Ok(directory) = directory {
+            let root = directory.path();
+            let vault = MarkdownVault::new();
+            assert!(
+                InitialiseWorkspace::new(vault.clone())
+                    .execute(
+                        root,
+                        WorkspaceId::new(),
+                        "People",
+                        WorkspaceProfile::Personal,
+                        BuildProfile::Airgap,
+                        "en-IE",
+                    )
+                    .is_ok()
+            );
+            let created = CreatePerson::new(vault.clone()).execute(
+                root,
+                PersonId::new(),
+                "Alex Example",
+                Some("alex@example.test".to_owned()),
+            );
+            assert!(created.is_ok());
+            let Ok(created) = created else {
+                return;
+            };
+            assert!(
+                fs::write(
+                    root.join("people/000-malformed.md"),
+                    "# Missing YAML front matter\n",
+                )
+                .is_ok()
+            );
+
+            let listed = ListPeople::new(vault.clone()).execute(root, false);
+            assert!(listed.is_ok());
+            if let Ok(listed) = listed {
+                assert_eq!(listed.len(), 1);
+                assert_eq!(listed[0].id, created.id);
+            }
+
+            let found = vault.find(root, created.id);
+            assert!(found.is_ok());
+            if let Ok(found) = found {
+                assert_eq!(found.display_name, "Alex Example");
+                assert_eq!(found.revision.get(), 1);
+            }
+        }
+    }
+
+    #[test]
+    fn initialisation_refuses_a_nonempty_directory_without_touching_user_files() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        if let Ok(directory) = directory {
+            let root = directory.path().join("existing");
+            assert!(fs::create_dir(&root).is_ok());
+            let user_file = root.join("user-notes.txt");
+            assert!(fs::write(&user_file, "keep me").is_ok());
+
+            let result = InitialiseWorkspace::new(MarkdownVault::new()).execute(
+                &root,
+                WorkspaceId::new(),
+                "People",
+                WorkspaceProfile::Personal,
+                BuildProfile::ConnectedLocal,
+                "en-IE",
+            );
+
+            assert_eq!(result, Err(WorkspaceError::InitialiseTargetNotEmpty));
+            assert_eq!(
+                fs::read_to_string(user_file).as_deref().ok(),
+                Some("keep me")
+            );
+            assert!(!root.join(".liaison/workspace.yaml").exists());
+        }
+    }
+
+    #[test]
+    fn semantic_corruption_is_reported_without_hiding_healthy_people() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        if let Ok(directory) = directory {
+            let root = directory.path();
+            let vault = MarkdownVault::new();
+            assert!(
+                InitialiseWorkspace::new(vault.clone())
+                    .execute(
+                        root,
+                        WorkspaceId::new(),
+                        "People",
+                        WorkspaceProfile::Personal,
+                        BuildProfile::ConnectedLocal,
+                        "en-IE",
+                    )
+                    .is_ok()
+            );
+            assert!(
+                CreatePerson::new(vault.clone())
+                    .execute(root, PersonId::new(), "Healthy Person", None)
+                    .is_ok()
+            );
+            let invalid_id = PersonId::new();
+            let invalid = format!(
+                "---\nformat: wrong-format\nschema_version: 1\nid: {invalid_id}\nrevision: 1\ndisplay_name: Invalid Person\n---\n# Invalid Person\n"
+            );
+            assert!(fs::write(root.join("people/invalid.md"), invalid).is_ok());
+
+            let report = ValidateWorkspace::new(vault.clone()).execute(root);
+            assert!(report.is_ok());
+            if let Ok(report) = report {
+                assert!(!report.is_valid());
+                assert!(report.findings.iter().any(|finding| {
+                    finding.code == "people.invalid-record"
+                        && finding.message == "person record format or schema is invalid"
+                }));
+            }
+            let listed = ListPeople::new(vault).execute(root, false);
+            assert!(listed.is_ok());
+            if let Ok(listed) = listed {
+                assert_eq!(listed.len(), 1);
+                assert_eq!(listed[0].display_name, "Healthy Person");
+            }
+        }
+    }
+
+    #[test]
+    fn invalid_serialized_email_is_redacted_from_health_and_not_loaded() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        if let Ok(directory) = directory {
+            let root = directory.path();
+            let vault = MarkdownVault::new();
+            assert!(
+                InitialiseWorkspace::new(vault.clone())
+                    .execute(
+                        root,
+                        WorkspaceId::new(),
+                        "People",
+                        WorkspaceProfile::Personal,
+                        BuildProfile::ConnectedLocal,
+                        "en-IE",
+                    )
+                    .is_ok()
+            );
+            let invalid_id = PersonId::new();
+            let private_input = "private-invalid-address";
+            let invalid = format!(
+                "---\nformat: liaison-person\nschema_version: 1\nid: {invalid_id}\nrevision: 1\ndisplay_name: Invalid Email\nemails:\n  - value: {private_input}\n    label: primary\n---\n# Invalid Email\n"
+            );
+            assert!(fs::write(root.join("people/invalid-email.md"), invalid).is_ok());
+
+            let report = ValidateWorkspace::new(vault.clone()).execute(root);
+            assert!(report.is_ok());
+            if let Ok(report) = report {
+                assert!(!report.is_valid());
+                assert!(report.findings.iter().all(|finding| {
+                    !finding.message.contains(private_input)
+                        && !finding.recovery.contains(private_input)
+                }));
+            }
+            let listed = ListPeople::new(vault).execute(root, false);
+            assert!(matches!(listed, Ok(people) if people.is_empty()));
+        }
+    }
+
+    #[test]
+    fn duplicate_person_identity_is_reported_and_not_returned_ambiguously() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        if let Ok(directory) = directory {
+            let root = directory.path();
+            let vault = MarkdownVault::new();
+            assert!(
+                InitialiseWorkspace::new(vault.clone())
+                    .execute(
+                        root,
+                        WorkspaceId::new(),
+                        "People",
+                        WorkspaceProfile::Personal,
+                        BuildProfile::ConnectedLocal,
+                        "en-IE",
+                    )
+                    .is_ok()
+            );
+            let created = CreatePerson::new(vault.clone()).execute(
+                root,
+                PersonId::new(),
+                "Duplicate Person",
+                None,
+            );
+            assert!(created.is_ok());
+            let Ok(created) = created else {
+                return;
+            };
+            let original = MarkdownVault::find_person_path(root, created.id);
+            assert!(original.is_ok());
+            let Ok(original) = original else {
+                return;
+            };
+            assert!(fs::copy(&original, root.join("people/zzz-duplicate-copy.md")).is_ok());
+
+            let report = ValidateWorkspace::new(vault.clone()).execute(root);
+            assert!(report.is_ok());
+            if let Ok(report) = report {
+                assert!(report.findings.iter().any(|finding| {
+                    finding.code == "people.duplicate-id"
+                        && finding.path == "people/zzz-duplicate-copy.md"
+                }));
+            }
+            let listed = ListPeople::new(vault.clone()).execute(root, false);
+            assert!(listed.is_ok());
+            if let Ok(listed) = listed {
+                assert!(listed.is_empty());
+            }
+            assert!(vault.find(root, created.id).is_err());
+            let colliding = PersonProfile::create(created.id, "Third Duplicate");
+            assert!(colliding.is_ok());
+            if let Ok(colliding) = colliding {
+                assert!(matches!(
+                    vault.create(root, &colliding),
+                    Err(liaison_people::PeopleError::Storage(_))
+                ));
+                let record_count = fs::read_dir(root.join("people"))
+                    .map(|entries| entries.filter_map(Result::ok).count());
+                assert_eq!(record_count.ok(), Some(2));
+            }
+        }
+    }
+
+    #[test]
+    fn non_regular_markdown_entry_is_a_health_finding_without_hiding_people() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        if let Ok(directory) = directory {
+            let root = directory.path();
+            let vault = MarkdownVault::new();
+            assert!(
+                InitialiseWorkspace::new(vault.clone())
+                    .execute(
+                        root,
+                        WorkspaceId::new(),
+                        "People",
+                        WorkspaceProfile::Personal,
+                        BuildProfile::ConnectedLocal,
+                        "en-IE",
+                    )
+                    .is_ok()
+            );
+            assert!(
+                CreatePerson::new(vault.clone())
+                    .execute(root, PersonId::new(), "Healthy Person", None)
+                    .is_ok()
+            );
+            assert!(fs::create_dir(root.join("people/not-a-record.md")).is_ok());
+
+            let report = ValidateWorkspace::new(vault.clone()).execute(root);
+            assert!(report.is_ok());
+            if let Ok(report) = report {
+                assert!(report.findings.iter().any(|finding| {
+                    finding.code == "people.invalid-record"
+                        && finding.path == "people/not-a-record.md"
+                        && finding.message == "person record is not a regular file"
+                }));
+            }
+            let listed = ListPeople::new(vault).execute(root, false);
+            assert!(listed.is_ok());
+            if let Ok(listed) = listed {
+                assert_eq!(listed.len(), 1);
+                assert_eq!(listed[0].display_name, "Healthy Person");
             }
         }
     }

@@ -50,6 +50,59 @@ def load_text(path: Path, errors: list[str]) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def relative_luminance(hex_color: str) -> float:
+    channels = [int(hex_color[index : index + 2], 16) / 255 for index in (1, 3, 5)]
+    linear = [
+        channel / 12.92 if channel <= 0.04045 else ((channel + 0.055) / 1.055) ** 2.4
+        for channel in channels
+    ]
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+
+def contrast_ratio(first: str, second: str) -> float:
+    lighter, darker = sorted(
+        [relative_luminance(first), relative_luminance(second)], reverse=True
+    )
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+def check_text_contrast(css: str, errors: list[str]) -> None:
+    blocks = re.findall(r"(?:^|\n)\s*:root\s*\{([^}]+)\}", css, flags=re.DOTALL)
+    if len(blocks) != 2:
+        errors.append("desktop CSS must define one base and one dark-mode :root token block")
+        return
+
+    def variables(block: str) -> dict[str, str]:
+        return {
+            name: value.lower()
+            for name, value in re.findall(r"--([a-z0-9-]+):\s*(#[0-9a-fA-F]{6})\s*;", block)
+        }
+
+    light = variables(blocks[0])
+    dark = light | variables(blocks[1])
+    pairs = [
+        ("action", "literal-white", "action button"),
+        ("action-hover", "literal-white", "action button hover"),
+        ("accent-text", "accent-soft", "accent label"),
+        ("sidebar-text", "sidebar-background", "sidebar navigation"),
+        ("health-valid-text", "success-soft", "valid Health status"),
+        ("health-error-text", "danger-soft", "error Health status"),
+        ("muted", "surface", "muted text on cards"),
+        ("muted", "canvas", "muted text on pages"),
+    ]
+    for mode, tokens in [("light", light), ("dark", dark)]:
+        tokens = tokens | {"literal-white": "#ffffff"}
+        for foreground, background, label in pairs:
+            if foreground not in tokens or background not in tokens:
+                errors.append(f"{mode} contrast check is missing tokens for {label}")
+                continue
+            ratio = contrast_ratio(tokens[foreground], tokens[background])
+            if ratio < 4.5:
+                errors.append(
+                    f"{mode} {label} contrast is {ratio:.2f}:1; text requires at least 4.5:1"
+                )
+
+
 def main() -> int:
     errors: list[str] = []
 
@@ -60,10 +113,20 @@ def main() -> int:
 
     desktop_cargo = tomllib.loads(load_text(TAURI / "Cargo.toml", errors) or "{}")
     dependencies = desktop_cargo.get("dependencies", {})
-    for required in ["liaison-workspace", "liaison-people", "liaison-vault-markdown", "tauri"]:
+    for required in ["liaison-application", "tauri"]:
         if required not in dependencies:
             errors.append(f"desktop crate is missing dependency {required}")
-    for forbidden in ["reqwest", "ureq", "hyper", "rusqlite", "sqlx"]:
+    for forbidden in [
+        "liaison-workspace",
+        "liaison-people",
+        "liaison-vault-markdown",
+        "liaison-shared-kernel",
+        "reqwest",
+        "ureq",
+        "hyper",
+        "rusqlite",
+        "sqlx",
+    ]:
         if forbidden in dependencies:
             errors.append(f"desktop crate includes forbidden dependency {forbidden}")
 
@@ -94,6 +157,26 @@ def main() -> int:
     for forbidden in ["reqwest", "ureq", "WebSocket", "telemetry", "analytics", "http://", "https://"]:
         if forbidden in rust:
             errors.append(f"desktop Rust source contains forbidden network/telemetry token {forbidden!r}")
+    for forbidden in [
+        "MarkdownVault",
+        "InitialiseWorkspace::new",
+        "ValidateWorkspace::new",
+        "CreatePerson::new",
+        "ListPeople::new",
+        "Result<WorkspaceView, String>",
+        "map_err(|error| error.to_string())",
+    ]:
+        if forbidden in rust:
+            errors.append(f"desktop Rust source bypasses the application boundary with {forbidden!r}")
+    for required in [
+        "State<'_, LiaisonApplication>",
+        ".manage(LiaisonApplication::new())",
+        "CommandResult<",
+        "ApplicationError",
+        "WorkspaceSessionId",
+    ]:
+        if required not in rust:
+            errors.append(f"desktop Rust source is missing application-boundary token {required!r}")
     for command in [
         "app_status",
         "default_workspace_path",
@@ -133,8 +216,28 @@ def main() -> int:
             errors.append(f"desktop JavaScript contains forbidden authority token {forbidden!r}")
     if "window.__TAURI__?.core?.invoke" not in javascript:
         errors.append("desktop JavaScript does not use the Tauri command bridge")
-    if "textContent" not in javascript or "innerHTML =" not in javascript:
-        errors.append("desktop JavaScript must use safe text rendering and a fixed static template")
+    if "textContent" not in javascript or "replaceChildren" not in javascript:
+        errors.append("desktop JavaScript must use DOM text rendering")
+    for unsafe_sink in ["innerHTML", "outerHTML", "insertAdjacentHTML", "document.write"]:
+        if unsafe_sink in javascript:
+            errors.append(f"desktop JavaScript contains unsafe HTML sink {unsafe_sink!r}")
+    for required in [
+        "commandValue",
+        "APPLICATION_CONTRACT_VERSION",
+        "sessionId: state.workspace.session_id",
+        "app.product_state",
+        "app.connection_state",
+        "app.release_evidence",
+        "Recovery:",
+    ]:
+        if required not in javascript:
+            errors.append(f"desktop JavaScript is missing bridge-parity token {required!r}")
+    for forbidden in ["workspacePath:", "error.details", "console.log", "console.error"]:
+        if forbidden in javascript:
+            errors.append(f"desktop JavaScript leaks an obsolete or private boundary token {forbidden!r}")
+
+    css = load_text(UI / "styles.css", errors)
+    check_text_contrast(css, errors)
 
     for icon in ["32x32.png", "128x128.png", "128x128@2x.png", "icon.icns", "icon.ico"]:
         if not (TAURI / "icons" / icon).is_file():
@@ -171,7 +274,7 @@ def main() -> int:
             print(f"- {error}", file=sys.stderr)
         return 1
 
-    print("Desktop shell check passed: local authority, accessibility, and Mac gates are present")
+    print("Desktop shell check passed: local authority, structural accessibility, contrast, and Mac gates are present")
     return 0
 
 

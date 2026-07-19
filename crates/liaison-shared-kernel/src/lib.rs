@@ -54,6 +54,9 @@ identifier!(WorkspaceId);
 identifier!(PersonId);
 identifier!(MemberId);
 identifier!(DeviceId);
+identifier!(CommandId);
+identifier!(WorkspaceSessionId);
+identifier!(JobId);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(transparent)]

@@ -1,5 +1,6 @@
 {
   "desktop_workflow": true,
   "mobile_reflow": true,
+  "dark_mode": true,
   "external_requests": []
 }

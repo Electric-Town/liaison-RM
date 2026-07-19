@@ -6,6 +6,11 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Added
 
+- One `liaison-application` composition root shared by the CLI and desktop, with typed command results, structured recoverable errors, deterministic runtime ports, and identity-bound workspace sessions.
+- Shared-fixture CLI and Tauri parity for workspace initialise/open/validate and Person create/list, including versioned envelopes, tolerant malformed-sibling reads, and initial Person revision 1.
+- Semantic Person validation, duplicate-identity Health findings, safe workspace-path rejection, actionable human Health output, retryable desktop create/open actions, native-safe keyboard form submission, correct hidden-state rendering, and automated base/dark text-contrast gates.
+- KCS-0010 and executable evidence for keeping inbound adapters on the same application workflow.
+
 - Accepted working-state decisions for one application composition root, Workspace Session authority, recoverable multi-target commits, workspace key hierarchy and local policy, disposable Directory projection, structurally least-disclosure event readiness, checkpoint/recovery separation, and B0-before-A0 delivery.
 - A repository-hosted working-state delivery contract with current implementation truth, B0/A0 acceptance boundaries, active-branch disposition, and evidence-safe claim language.
 - An evidence-qualified RICE model for B0/A0 work packages, a KCS article explaining dependency and safety overrides, and mandatory PR fields for priority assumptions and decision rationale.
@@ -56,6 +61,8 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 ### Fixed
 
 - Desktop alpha now compiles and lints cleanly across Linux, macOS, and Windows: Tauri command arguments acknowledge required ownership, the default workspace path uses `map_or_else`, and a deterministic Windows `icon.ico` resource is generated for `tauri-build`.
+- Health findings now expose portable `/`-separated workspace-relative paths across macOS, Linux, and Windows instead of leaking host-specific path separators into the shared application contract.
+- Default-workspace tests now compare the operating system's native Documents path composition instead of imposing Unix separators on Windows.
 
 ### Security
 

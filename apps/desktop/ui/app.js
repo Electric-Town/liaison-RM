@@ -5,6 +5,7 @@
     workspace: null,
     people: [],
   };
+  const APPLICATION_CONTRACT_VERSION = 1;
 
   const byId = (id) => document.getElementById(id);
   const invoke = async (command, payload = {}) => {
@@ -15,14 +16,42 @@
     return tauriInvoke(command, payload);
   };
 
+  const commandValue = (result) => {
+    if (
+      !result
+      || typeof result !== "object"
+      || result.contract_version !== APPLICATION_CONTRACT_VERSION
+      || !("value" in result)
+    ) {
+      throw new Error("The native Liaison bridge returned an unexpected result.");
+    }
+    return result.value;
+  };
+
+  const invokeValue = async (command, payload = {}) => commandValue(await invoke(command, payload));
+
   const status = (message) => {
     byId("live-status").textContent = message;
   };
 
-  const errorMessage = (error) => {
-    if (error instanceof Error) return error.message;
-    if (typeof error === "string") return error;
-    return "The operation did not complete.";
+  const errorText = (error) => {
+    if (
+      error
+      && typeof error === "object"
+      && "code" in error
+      && error.contract_version !== APPLICATION_CONTRACT_VERSION
+    ) {
+      return "The native Liaison bridge returned an incompatible error contract. Recovery: update or reinstall one matching Liaison RM build before retrying.";
+    }
+    const message = typeof error?.message === "string" && error.message.trim()
+      ? error.message.trim()
+      : error instanceof Error
+        ? error.message
+        : "The operation did not complete.";
+    const recovery = typeof error?.recovery === "string" && error.recovery.trim()
+      ? error.recovery.trim()
+      : "Review the workspace selection and retry.";
+    return `${message} Recovery: ${recovery}`;
   };
 
   const withBusy = async (button, busyLabel, work) => {
@@ -33,6 +62,7 @@
       return await work();
     } finally {
       button.textContent = original;
+      button.disabled = false;
       updateControls();
     }
   };
@@ -61,7 +91,11 @@
   const renderWorkspace = () => {
     const summary = byId("workspace-summary");
     if (!state.workspace) {
-      summary.innerHTML = "<div><dt>Status</dt><dd>None selected</dd></div><div><dt>Profile</dt><dd>—</dd></div><div><dt>People</dt><dd>—</dd></div>";
+      summary.replaceChildren(
+        summaryRow("Status", "None selected"),
+        summaryRow("Profile", "—"),
+        summaryRow("People", "—"),
+      );
       byId("workspace-path-label").textContent = "No workspace selected";
       return;
     }
@@ -112,7 +146,7 @@
       const name = document.createElement("strong");
       name.textContent = person.display_name;
       const email = document.createElement("small");
-      email.textContent = person.primary_email || "No email recorded";
+      email.textContent = person.emails?.[0]?.value || "No email recorded";
       details.append(name, email);
       const revision = document.createElement("span");
       revision.className = "revision";
@@ -132,19 +166,25 @@
 
   const refreshPeople = async () => {
     if (!state.workspace) return;
-    state.people = await invoke("list_people", { workspacePath: state.workspace.path });
-    state.workspace.people_count = state.people.length;
+    state.people = await invokeValue("list_people", {
+      request: { sessionId: state.workspace.session_id },
+    });
     renderPeople();
     renderWorkspace();
   };
 
-  const acceptWorkspace = async (workspace, action) => {
-    state.workspace = workspace;
-    byId("workspace-path").value = workspace.path;
-    await refreshPeople();
+  const acceptWorkspace = (opened, action) => {
+    state.workspace = opened.workspace;
+    state.people = opened.people;
+    byId("workspace-path").value = state.workspace.path;
+    showValidation(opened.validation);
     updateControls();
+    renderPeople();
     renderWorkspace();
-    status(`${action}: ${workspace.name}. ${state.people.length} people loaded.`);
+    const health = opened.validation.valid
+      ? "Workspace Health is valid."
+      : `Workspace Health reports ${opened.validation.findings.length} finding${opened.validation.findings.length === 1 ? "" : "s"}; review Health before editing.`;
+    status(`${action}: ${state.workspace.name}. ${state.people.length} people loaded. ${health}`);
   };
 
   const showValidation = (report) => {
@@ -156,7 +196,7 @@
     summary.querySelector("strong").textContent = report.valid ? "Workspace is valid" : "Workspace needs attention";
     summary.querySelector("p").textContent = report.valid
       ? `Schema ${report.schema_version}; no blocking findings.`
-      : `${report.finding_count} finding${report.finding_count === 1 ? "" : "s"} reported without changing files.`;
+      : `${report.findings.length} finding${report.findings.length === 1 ? "" : "s"} reported without changing files.`;
     findings.replaceChildren();
     report.findings.forEach((finding) => {
       const item = document.createElement("li");
@@ -175,10 +215,10 @@
 
   byId("use-default-path").addEventListener("click", async () => {
     try {
-      byId("workspace-path").value = await invoke("default_workspace_path");
+      byId("workspace-path").value = await invokeValue("default_workspace_path");
       status("Suggested a local Documents folder. Review it before creating the workspace.");
     } catch (error) {
-      status(errorMessage(error));
+      status(errorText(error));
     }
   });
 
@@ -187,17 +227,17 @@
     const button = event.submitter;
     await withBusy(button, "Creating…", async () => {
       try {
-        const workspace = await invoke("initialise_workspace", {
+        const opened = await invokeValue("initialise_workspace", {
           request: {
             path: byId("workspace-path").value,
             name: byId("workspace-name").value,
             profile: byId("workspace-profile").value,
           },
         });
-        await acceptWorkspace(workspace, "Created local workspace");
+        acceptWorkspace(opened, "Created local workspace");
         navigate("people");
       } catch (error) {
-        status(`Workspace was not created: ${errorMessage(error)}`);
+        status(`Workspace setup did not complete: ${errorText(error)}`);
       }
     });
   });
@@ -205,10 +245,10 @@
   byId("open-workspace").addEventListener("click", async (event) => {
     await withBusy(event.currentTarget, "Opening…", async () => {
       try {
-        const workspace = await invoke("open_workspace", { path: byId("workspace-path").value });
-        await acceptWorkspace(workspace, "Opened workspace");
+        const opened = await invokeValue("open_workspace", { path: byId("workspace-path").value });
+        acceptWorkspace(opened, "Opened workspace");
       } catch (error) {
-        status(`Workspace was not opened: ${errorMessage(error)}`);
+        status(`Workspace was not opened: ${errorText(error)}`);
       }
     });
   });
@@ -216,25 +256,26 @@
   byId("person-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!state.workspace) return;
-    const button = event.submitter;
+    const form = event.currentTarget;
+    const button = event.submitter || byId("create-person");
     await withBusy(button, "Saving…", async () => {
       try {
-        const person = await invoke("create_person", {
+        const person = await invokeValue("create_person", {
           request: {
-            workspacePath: state.workspace.path,
+            sessionId: state.workspace.session_id,
             displayName: byId("person-name").value,
             email: byId("person-email").value || null,
           },
         });
         state.people.push(person);
         state.people.sort((left, right) => left.display_name.localeCompare(right.display_name));
-        event.currentTarget.reset();
+        form.reset();
         renderPeople();
         renderWorkspace();
         status(`Saved ${person.display_name} as a local Markdown profile.`);
         byId("person-name").focus();
       } catch (error) {
-        status(`Person was not saved: ${errorMessage(error)}`);
+        status(`Person was not saved: ${errorText(error)}`);
       }
     });
   });
@@ -245,7 +286,7 @@
         await refreshPeople();
         status(`Refreshed ${state.people.length} local profile${state.people.length === 1 ? "" : "s"}.`);
       } catch (error) {
-        status(`People were not refreshed: ${errorMessage(error)}`);
+        status(`People were not refreshed: ${errorText(error)}`);
       }
     });
   });
@@ -254,11 +295,13 @@
     if (!state.workspace) return;
     await withBusy(event.currentTarget, "Validating…", async () => {
       try {
-        const report = await invoke("validate_workspace", { path: state.workspace.path });
+        const report = await invokeValue("validate_workspace", {
+          request: { sessionId: state.workspace.session_id },
+        });
         showValidation(report);
         status(report.valid ? "Workspace validation passed." : "Workspace validation reported findings.");
       } catch (error) {
-        status(`Validation did not complete: ${errorMessage(error)}`);
+        status(`Validation did not complete: ${errorText(error)}`);
       }
     });
   });
@@ -268,15 +311,18 @@
     renderWorkspace();
     renderPeople();
     try {
-      const app = await invoke("app_status");
-      byId("authority-label").textContent = app.local_authority && !app.network_clients_compiled
-        ? `Local authority · ${app.canonical_storage}`
-        : "Review application authority";
-      byId("workspace-path").value = await invoke("default_workspace_path");
-      status(`Liaison RM ${app.version} is ready. No workspace has been opened.`);
+      const app = await invokeValue("app_status");
+      byId("authority-label").textContent = `${app.product_state} · ${app.connection_state}`;
+      status(`Liaison RM ${app.version}: ${app.release_evidence}. No workspace has been opened.`);
     } catch (error) {
       byId("authority-label").textContent = "Native bridge unavailable";
-      status(errorMessage(error));
+      status(errorText(error));
+      return;
+    }
+    try {
+      byId("workspace-path").value = await invokeValue("default_workspace_path");
+    } catch (error) {
+      status(`A default workspace folder was not selected: ${errorText(error)}`);
     }
   };
 

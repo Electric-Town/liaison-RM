@@ -16,7 +16,7 @@ The product does not require an Electric Town account or hosted backend. Users c
 
 ### 1.1 Current implementation boundary
 
-The exact working-state boundary and accepted delivery order are maintained in [`docs/product/working-state-delivery.md`](docs/product/working-state-delivery.md). At the current pre-alpha boundary, `main` contains a narrow Workspace/People/Markdown/CLI/Tauri slice, profile and reason-only Review domain foundations, and provider contracts with a limited local-folder reference adapter. It does **not** contain a complete event workflow, `WorkspaceSession`, recoverable multi-target commits, sealed dietary persistence, local grant enforcement, an encrypted recovery package, a proven Airgap artifact, or a supported public release.
+The exact working-state boundary and accepted delivery order are maintained in [`docs/product/working-state-delivery.md`](docs/product/working-state-delivery.md). The reviewed P01 stack contains a narrow Workspace/People/Markdown slice behind one `liaison-application` composition root, typed identity-bound session identifiers, structured CLI/Tauri results and errors, profile and reason-only Review domain foundations, and provider contracts with a limited local-folder reference adapter. It does **not** contain write-authoritative `WorkspaceSession`, recoverable multi-target commits, a complete event workflow, sealed dietary persistence, local grant enforcement, an encrypted recovery package, a proven Airgap artifact, or a supported public release.
 
 An accepted decision defines what an implementation must become; it does not prove that the current binary satisfies the decision. Screenshots and browser fixtures are not native persistence, security, accessibility, Airgap, or release evidence.
 
@@ -393,7 +393,7 @@ liaison --workspace PATH workspace init|inspect|validate
 liaison --workspace PATH person create|list
 ```
 
-This slice does not yet satisfy the accepted typed result/error envelope, explicit mutation-workspace, non-zero invalid-validation, `WorkspaceSession`, recovery, import, event, or provider command contracts. [`apps/cli/README.md`](apps/cli/README.md) is the current executable command inventory.
+This slice uses the versioned P01 subset of the application result/error envelope, requires an explicit workspace path, and returns a deterministic non-zero result after invalid validation. The complete target envelope below still adds safe causes, structured recovery actions, and documentation references. Its current session is identity-bound only; writer authority, operation recovery, import, event, and provider commands remain gated. [`apps/cli/README.md`](apps/cli/README.md) is the executable command inventory.
 
 ### 12.2 Target command groups
 

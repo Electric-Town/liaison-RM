@@ -42,6 +42,7 @@ pub struct WorkspaceManifest {
 
 impl WorkspaceManifest {
     pub fn new(
+        workspace_id: WorkspaceId,
         name: impl Into<String>,
         profile: WorkspaceProfile,
         build_profile: BuildProfile,
@@ -54,7 +55,7 @@ impl WorkspaceManifest {
         Ok(Self {
             format: WORKSPACE_FORMAT.to_owned(),
             schema_version: CURRENT_SCHEMA_VERSION,
-            workspace_id: WorkspaceId::new(),
+            workspace_id,
             name,
             profile,
             build_profile,
@@ -97,6 +98,8 @@ pub enum WorkspaceError {
     UnsupportedSchema { found: u32, supported: u32 },
     #[error("workspace already exists")]
     AlreadyExists,
+    #[error("workspace initialisation target is not empty")]
+    InitialiseTargetNotEmpty,
     #[error("workspace does not exist")]
     NotFound,
     #[error("workspace storage error: {0}")]
@@ -145,12 +148,13 @@ where
     pub fn execute(
         &self,
         root: &Path,
+        workspace_id: WorkspaceId,
         name: impl Into<String>,
         profile: WorkspaceProfile,
         build_profile: BuildProfile,
         locale: impl Into<String>,
     ) -> Result<WorkspaceManifest, WorkspaceError> {
-        let manifest = WorkspaceManifest::new(name, profile, build_profile, locale)?;
+        let manifest = WorkspaceManifest::new(workspace_id, name, profile, build_profile, locale)?;
         self.store.initialise(root, &manifest)?;
         Ok(manifest)
     }
@@ -202,10 +206,12 @@ where
 #[cfg(test)]
 mod tests {
     use super::{BuildProfile, WorkspaceError, WorkspaceManifest, WorkspaceProfile};
+    use liaison_shared_kernel::WorkspaceId;
 
     #[test]
     fn manifest_rejects_blank_name() {
         let result = WorkspaceManifest::new(
+            WorkspaceId::new(),
             "  ",
             WorkspaceProfile::Personal,
             BuildProfile::Airgap,
@@ -217,6 +223,7 @@ mod tests {
     #[test]
     fn manifest_uses_current_format_and_schema() {
         let result = WorkspaceManifest::new(
+            WorkspaceId::new(),
             "People",
             WorkspaceProfile::Personal,
             BuildProfile::Airgap,

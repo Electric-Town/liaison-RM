@@ -6,19 +6,20 @@ This document tells a contributor what the next product is and prevents roadmap 
 
 ## Verified implementation boundary
 
-At the reconciliation point, `main` contains:
+The reviewed P01 branch, when applied on top of its P00 base, contains:
 
 - Workspace and People domain foundations;
 - readable Workspace YAML and Person Markdown storage;
-- workspace create/open/validate and Person create/list in the CLI;
-- a native Tauri alpha exposing the same narrow workflow;
+- one `liaison-application` composition root used by the CLI and native Tauri alpha;
+- typed identity-bound workspace session identifiers and shared structured result/error envelopes;
+- workspace create/open/validate and Person create/list through both inbound adapters;
 - profile/readiness and reason-only Review domain foundations that are not yet persisted or surfaced as a complete product;
 - provider-neutral contracts and a local-folder reference adapter with limited claims;
 - macOS and Windows packaging workflows.
 
 The installed macOS review application is version `0.1.0-alpha.1` and is an ad-hoc-signed universal internal alpha. It is not Developer ID signed, notarised, or a supported public release.
 
-The application does not yet provide a complete event workflow, encrypted recovery, a Workspace Session, recoverable multi-target writes, pinned OKF People authoring or normalization, Directory projection, supported Airgap proof, or Personal Memory Alpha. Documentation and prototypes describing those features are plans until exact-head implementation evidence exists.
+The application does not yet provide a complete event workflow, encrypted recovery, a write-authoritative Workspace Session, recoverable multi-target writes, pinned OKF People authoring or normalization, Directory projection, supported Airgap proof, or Personal Memory Alpha. The P01 session binds identity and repository access only. Documentation and prototypes describing later features are plans until exact-head implementation evidence exists.
 
 The approved Claudia/PingCRM/OKF strategy overlay is integrated into the machine contracts at SHA-256 `795a6e6751cd29a995478e254323f491e68a53ef7c35fa729d8627b87cd37089`. It adopts specific person-record outcomes and rejects blanket parity or provider-count claims.
 
@@ -27,7 +28,7 @@ The approved Claudia/PingCRM/OKF strategy overlay is integrated into the machine
 Work-package scores and the rules for dependency and safety overrides are in [B0 and A0 RICE prioritization](rice-prioritization.md). The score makes assumptions reviewable; it does not permit A0 to bypass B0 or visible features to bypass integrity, privacy, accessibility, or recovery gates.
 
 1. Reconcile contracts, decisions, versions, commands, evidence, and stale branch claims.
-2. Add one application composition root and Workspace Session.
+2. Add one application composition root, then establish write-authoritative Workspace Session ownership.
 3. Route every canonical mutation through recoverable multi-target operations.
 4. After P03, run design consultation to create canonical `DESIGN.md`, then plan design review to approve an amended P04 direction. G0 does not create or pre-empt this artifact.
 5. Replace the disposable vanilla shell with a typed React/Tauri adapter and an evidence-tested semantic design system.
@@ -64,6 +65,8 @@ Missing Developer ID signing or notarisation keeps the artifact labelled an inte
 A0 starts only after B0 acceptance and adds quick and full capture, a source-complete purpose-scoped profile, user-organised profile tabs with stable layout identifiers and settings round trips, explicit fact states, reversible identity review, a source- and range-labelled unified timeline, meaningful interactions, commitments, reason-only Review, distinct last-note and last-interaction values, open loops, and interruption-safe personal workflows. It reuses the B0 authority, storage, security, recovery, OKF, and UI foundations and must keep the B0 matrix green. A0 has no global person score, automatic exact or fuzzy merge, or generic task engine.
 
 Later provider operations require visible grants, source ranges, receipts, retries, revocation, retention, and history; hidden sync, hidden refresh, and unreported egress are prohibited. AI, MCP, plugin, import, and provider enrichment can produce source-backed staged proposals only and cannot write confirmed facts directly.
+
+A0 also adds previewable density, text-scale, reduced-motion, and validated-palette controls with settings export/import. Declarative third-party theme packages remain post-A0 work and must be schema-validated, checksummed, licensed, conformance-tested, and rollback-safe; they receive no arbitrary CSS, code, remote asset, filesystem, or network authority.
 
 ## Active-branch disposition
 
