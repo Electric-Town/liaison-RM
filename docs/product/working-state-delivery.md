@@ -34,12 +34,12 @@ cooperating ordinary unconfined Liaison processes on one OS account and machine
 reject copied workspaces with the same identity even when `HOME`/XDG values
 differ. Flatpak, macOS App Sandbox, and Windows AppContainer host/GUI pairings
 remain explicitly unsupported until a shared authority broker/namespace exists
-and are not treated as valid fallback registries. `T-B0-P02` remains open
+and are not treated as valid fallback registries. `T-B0-P02` is complete with accepted exact-head platform evidence.
 pending exact-head native Linux, macOS, and Windows evidence.
 
 The application also does not yet provide a complete event workflow, encrypted recovery, recoverable multi-target writes, final mutation preconditions, pinned OKF People authoring or normalization, Directory projection, supported Airgap proof, or Personal Memory Alpha. Recovery, key, and projection capabilities remain explicitly unavailable until their owning phases land. Local P02 source-worktree evidence is recorded, but exact-head remote Linux, macOS, and Windows matrices and installed-artifact requalification remain pending. Documentation and prototypes describing later features are plans until exact-head implementation evidence exists.
 
-The approved Claudia/PingCRM/OKF strategy overlay is integrated into the machine contracts at SHA-256 `795a6e6751cd29a995478e254323f491e68a53ef7c35fa729d8627b87cd37089`. It adopts specific person-record outcomes and rejects blanket parity or provider-count claims. G0, P00, and P01 are complete; G1 is current and P02 is the active package.
+The approved Claudia/PingCRM/OKF strategy overlay is integrated into the machine contracts at SHA-256 `795a6e6751cd29a995478e254323f491e68a53ef7c35fa729d8627b87cd37089`. It adopts specific person-record outcomes and rejects blanket parity or provider-count claims. G0, P00, P01, and P02 are complete; G1 is current and P03 is the active package.
 
 ## Accepted order
 

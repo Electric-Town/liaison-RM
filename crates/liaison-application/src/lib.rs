@@ -14,14 +14,17 @@ use liaison_people::{
     CreatePerson, EmailAddress, ListPeople, PartialDate, PeopleError, PersonProfile, PhoneNumber,
 };
 pub use liaison_shared_kernel::{
-    CommandId, JobId, PersonId, Revision, WorkspaceId, WorkspaceSessionId,
+    CommandId, JobId, OperationId, PersonId, Revision, WorkspaceId, WorkspaceSessionId,
 };
-use liaison_vault_markdown::{BoundMarkdownVault, MarkdownVault, people_repository};
+use liaison_vault_markdown::{
+    BoundMarkdownVault, MarkdownVault, people_mutation_repository, people_repository,
+};
 use liaison_workspace::{
     BoundWorkspaceSessionPort, BoundWorkspaceStore, FindingSeverity, InitialiseWorkspace,
-    OpenWorkspaceSession, ValidationFinding, WorkspaceAuthorityFailureKind,
-    WorkspaceAuthorityOperation, WorkspaceError, WorkspaceSession, WorkspaceSessionError,
-    WorkspaceWriterAuthority, WorkspaceWriterAuthorityPort, WriterDiagnostic,
+    OpenWorkspaceSession, OperationContext, OperationRecoveryReport, RecoverableOperationError,
+    ValidationFinding, WorkspaceAuthorityFailureKind, WorkspaceAuthorityOperation, WorkspaceError,
+    WorkspaceSession, WorkspaceSessionError, WorkspaceWriterAuthority,
+    WorkspaceWriterAuthorityPort, WriterDiagnostic,
 };
 pub use liaison_workspace::{BuildProfile, WorkspaceProfile};
 use liaison_workspace_session_local::LocalWorkspaceSessionAuthority;
@@ -47,6 +50,7 @@ pub trait RuntimePorts: fmt::Debug + Send + Sync {
     fn next_person_id(&self) -> PersonId;
     fn next_workspace_session_id(&self) -> WorkspaceSessionId;
     fn next_job_id(&self) -> JobId;
+    fn next_operation_id(&self) -> OperationId;
     fn random_bytes(&self, length: usize) -> Result<Vec<u8>, RuntimePortError>;
     fn documents_directory(&self) -> Result<PathBuf, RuntimePortError>;
 }
@@ -77,6 +81,10 @@ impl RuntimePorts for SystemRuntime {
 
     fn next_job_id(&self) -> JobId {
         JobId::new()
+    }
+
+    fn next_operation_id(&self) -> OperationId {
+        OperationId::new()
     }
 
     fn random_bytes(&self, length: usize) -> Result<Vec<u8>, RuntimePortError> {
@@ -298,6 +306,13 @@ impl BoundWorkspaceStore for LocalMarkdownBinding {
     fn validate_layout(&self) -> Result<Vec<ValidationFinding>, WorkspaceError> {
         self.repositories.validate_layout()
     }
+
+    fn recover_pending_operations(
+        &self,
+        workspace_id: WorkspaceId,
+    ) -> Result<OperationRecoveryReport, RecoverableOperationError> {
+        self.repositories.recover_pending_operations(workspace_id)
+    }
 }
 
 impl WorkspaceWriterAuthorityPort for LocalMarkdownBinding {
@@ -471,7 +486,10 @@ impl LiaisonApplication {
             let value = value.trim().to_owned();
             (!value.is_empty()).then_some(value)
         });
-        let repository = people_repository(&work);
+        let repository = people_mutation_repository(
+            &work,
+            OperationContext::new(self.runtime.next_operation_id(), self.runtime.now()),
+        );
         let person = CreatePerson::new(&repository)
             .execute(self.runtime.next_person_id(), command.display_name, email)
             .map_err(|error| people_error(&error, command_id))?;
@@ -835,6 +853,16 @@ fn workspace_session_error(
 ) -> ApplicationError {
     match error {
         WorkspaceSessionError::Workspace(error) => workspace_error(&error, correlation_id),
+        WorkspaceSessionError::Recovery(error) => application_error(
+            "workspace.recovery-required",
+            "the workspace has an incomplete canonical operation that could not be recovered safely",
+            "keep the workspace read-only, preserve the operation records, and resolve the reported conflict before reopening it",
+            details([
+                ("kind", Value::String(format!("{:?}", error.kind))),
+                ("reason", Value::String(error.message)),
+            ]),
+            correlation_id,
+        ),
         WorkspaceSessionError::WriterAlreadyActive { .. } => application_error(
             "workspace.writer-already-active",
             "another Liaison writer is active for this workspace",
@@ -1094,7 +1122,9 @@ mod tests {
         WorkspaceSessionCommand, application_error, details, workspace_initialised_open_error,
     };
     use chrono::{DateTime, TimeZone, Utc};
-    use liaison_shared_kernel::{CommandId, JobId, PersonId, WorkspaceId, WorkspaceSessionId};
+    use liaison_shared_kernel::{
+        CommandId, JobId, OperationId, PersonId, WorkspaceId, WorkspaceSessionId,
+    };
     use liaison_workspace::{BuildProfile, InitialiseWorkspace, WorkspaceProfile};
     use std::{
         fs,
@@ -1115,6 +1145,7 @@ mod tests {
         people: AtomicU64,
         sessions: AtomicU64,
         jobs: AtomicU64,
+        operations: AtomicU64,
         random_byte: u8,
         reuse_session: bool,
     }
@@ -1132,6 +1163,7 @@ mod tests {
                 people: AtomicU64::new(401),
                 sessions: AtomicU64::new(101),
                 jobs: AtomicU64::new(201),
+                operations: AtomicU64::new(501),
                 random_byte: 0xA5,
                 reuse_session: false,
             }
@@ -1176,6 +1208,10 @@ mod tests {
 
         fn next_job_id(&self) -> JobId {
             JobId::from_uuid(Self::next_uuid(&self.jobs))
+        }
+
+        fn next_operation_id(&self) -> OperationId {
+            OperationId::from_uuid(Self::next_uuid(&self.operations))
         }
 
         fn random_bytes(&self, length: usize) -> Result<Vec<u8>, RuntimePortError> {

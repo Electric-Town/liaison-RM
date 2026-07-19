@@ -1,7 +1,7 @@
 # P02 Workspace Session authority evidence
 
 Date: 2026-07-19
-Status: local composite authority slice reviewed; exact-head remote runtime evidence pending
+Status: complete; exact-head Linux, macOS, and Windows evidence accepted in merged PR #44
 
 ## Claim boundary
 
@@ -17,8 +17,10 @@ cooperating, ordinary unconfined Liaison processes on one OS account and
 machine therefore deny a second writer when a manifest is copied or
 file-synchronised to another path, even if their `HOME` or XDG environment
 differs. The registry contains no path, PID, diagnostics, or relationship data.
-`T-B0-P02` remains open until exact-head native Linux, macOS, and Windows
-evidence passes.
+`T-B0-P02` is complete. Merged PR #44 supplied exact-head native Linux,
+macOS, and Windows evidence, universal macOS and Windows review artifacts, and
+independent checksum/signature/architecture verification. Sandboxed package
+coordination remains outside the accepted B0 review-artifact boundary.
 
 This is source evidence, not installed-artifact or supported-release evidence.
 The final P02 commit and its rebased integration head are reported with the
@@ -122,7 +124,7 @@ broker/namespace or fails closed before opening a writer session.
 
 | Record | P02 evidence | Remaining work |
 |---|---|---|
-| `T-B0-P02` | Workspace Session, environment-independent composite path/identity OS authority for ordinary unconfined processes, quiescence, session-bound repositories, lock-free Health, copy denial, and process-exit release are implemented and locally exercised. | Exact-head remote Linux, macOS, and Windows runtime qualification remains pending; sandboxed packaging needs one shared broker/namespace or explicit fail-closed proof. |
+| `T-B0-P02` | Workspace Session, environment-independent composite path/identity OS authority for ordinary unconfined processes, quiescence, session-bound repositories, lock-free Health, copy denial, process-exit release, and exact-head Linux/macOS/Windows review evidence were accepted in merged PR #44. | Sandboxed packaging still needs one shared broker/namespace or explicit fail-closed proof before it can become a supported packaging mode. |
 | `LRM-WS-002` | New manifests declare a stable workspace ID, schema version, enabled `people` module, locale, and profile and pass the strict published schema; the P01 missing-module fixture reads as `people` without changing its bytes. | Exact-head manifest, Rust, and platform workflows must pass before the enclosing P02 gate is accepted. |
 | `LRM-WS-009` | Typed same-path and copied-path second-writer exclusion, read-only Health, explicit states, rename checks, both production launch orders, and process-exit release are covered for ordinary unconfined same-account processes without weakening identity authority. | Exact-head native Linux/Windows runtime evidence and the enclosing P02 gate remain pending; cross-container host/GUI authority is explicitly unsupported, not treated as a second valid namespace. |
 | `UAT-042` | The malformed-record, healthy-record, active-writer, typed-lock, and process-release portions are covered. | P03 must cover injected crashes, durable commit decisions, roll-forward, staging cleanup, and external-edit final preconditions. |

@@ -12,10 +12,12 @@ use cap_std::{
     fs::{Dir, OpenOptions},
 };
 use liaison_people::{PeopleError, PersonProfile};
-use liaison_shared_kernel::{PersonId, Revision};
+use liaison_shared_kernel::{PersonId, Revision, WorkspaceId};
 use liaison_workspace::{
-    BoundWorkspaceStore, FindingSeverity, ValidationFinding, WorkspaceError, WorkspaceManifest,
-    WorkspaceStore, WorkspaceValidationReport,
+    BoundWorkspaceStore, CanonicalPath, CanonicalPrecondition, CanonicalWrite, FindingSeverity,
+    OperationContext, OperationReceipt, OperationRecoveryReport, RecoverableOperationError,
+    RecoverableOperationErrorKind, RecoverableOperationStore, ValidationFinding, WorkspaceError,
+    WorkspaceManifest, WorkspaceStore, WorkspaceValidationReport,
 };
 use serde::{Deserialize, Serialize};
 use serde_yaml::Value;
@@ -28,9 +30,10 @@ use std::{
 use tempfile::NamedTempFile;
 use walkdir::WalkDir;
 
+mod operations;
 mod session_people;
 
-pub use session_people::people_repository;
+pub use session_people::{people_mutation_repository, people_repository};
 
 const MANIFEST_PATH: &str = ".liaison/workspace.yaml";
 const PERSON_FORMAT: &str = "liaison-person";
@@ -312,6 +315,24 @@ fn portable_workspace_path(path: &Path) -> String {
         .join("/")
 }
 
+impl RecoverableOperationStore for BoundMarkdownVault {
+    fn execute_operation(
+        &self,
+        workspace_id: liaison_shared_kernel::WorkspaceId,
+        context: OperationContext,
+        writes: Vec<CanonicalWrite>,
+    ) -> Result<OperationReceipt, RecoverableOperationError> {
+        operations::execute(&self.root, workspace_id, context, writes)
+    }
+
+    fn recover_operations(
+        &self,
+        workspace_id: liaison_shared_kernel::WorkspaceId,
+    ) -> Result<OperationRecoveryReport, RecoverableOperationError> {
+        operations::recover(&self.root, workspace_id)
+    }
+}
+
 impl BoundWorkspaceStore for BoundMarkdownVault {
     fn load_manifest(&self) -> Result<WorkspaceManifest, WorkspaceError> {
         bound_load_manifest(&self.root)
@@ -319,6 +340,13 @@ impl BoundWorkspaceStore for BoundMarkdownVault {
 
     fn validate_layout(&self) -> Result<Vec<ValidationFinding>, WorkspaceError> {
         bound_validate_layout(&self.root)
+    }
+
+    fn recover_pending_operations(
+        &self,
+        workspace_id: liaison_shared_kernel::WorkspaceId,
+    ) -> Result<OperationRecoveryReport, RecoverableOperationError> {
+        self.recover_operations(workspace_id)
     }
 }
 
@@ -459,51 +487,40 @@ fn bound_find_person(root: &Dir, id: PersonId) -> Result<(PathBuf, ParsedPerson)
     }
 }
 
-fn bound_create_person(root: &Dir, person: &PersonProfile) -> Result<(), PeopleError> {
+fn bound_create_person(
+    root: &Dir,
+    workspace_id: WorkspaceId,
+    context: OperationContext,
+    person: &PersonProfile,
+) -> Result<(), PeopleError> {
     bound_load_manifest(root).map_err(|error| PeopleError::Storage(error.to_string()))?;
     match bound_find_person(root, person.id) {
         Ok(_) => return Err(PeopleError::AlreadyExists),
         Err(PeopleError::NotFound) => {}
         Err(error) => return Err(error),
     }
-    let people = bound_people_directory(root)?;
     let filename = format!("{}--{}.md", slug(&person.display_name), person.id);
-    let temporary = format!(".person-{}.tmp", person.id);
+    let target = CanonicalPath::parse(format!("people/{filename}"))
+        .map_err(|error| PeopleError::Storage(error.to_string()))?;
     let document = PersonDocument::from_domain(person, BTreeMap::new());
     let rendered = render_person(&document, &default_person_body(person))?;
-    let mut options = OpenOptions::new();
-    options
-        .write(true)
-        .create_new(true)
-        .follow(FollowSymlinks::No);
-    let mut file = people
-        .open_with(&temporary, &options)
-        .map_err(storage_people)?;
-    if let Err(error) = file
-        .write_all(rendered.as_bytes())
-        .and_then(|()| file.sync_all())
-    {
-        drop(file);
-        let _ = people.remove_file(&temporary);
-        return Err(storage_people(error));
-    }
-    drop(file);
-    if let Err(error) = people.hard_link(&temporary, &people, &filename) {
-        let _ = people.remove_file(&temporary);
-        if error.kind() == io::ErrorKind::AlreadyExists {
-            return Err(PeopleError::AlreadyExists);
-        }
-        return Err(storage_people(error));
-    }
-    // Publication is complete once the no-clobber hard link exists. A crash
-    // before this point leaves only an ignored staging file; cleanup failure
-    // after publication must not report a false failed creation.
-    let _ = people.remove_file(&temporary);
-    Ok(())
+    let write = CanonicalWrite::new(target, rendered.into_bytes(), CanonicalPrecondition::Absent)
+        .map_err(|error| PeopleError::Storage(error.to_string()))?;
+    operations::execute(root, workspace_id, context, vec![write])
+        .map(|_| ())
+        .map_err(|error| {
+            if error.kind == RecoverableOperationErrorKind::Precondition {
+                PeopleError::AlreadyExists
+            } else {
+                PeopleError::Storage(error.to_string())
+            }
+        })
 }
 
 fn bound_save_person(
     root: &Dir,
+    workspace_id: WorkspaceId,
+    context: OperationContext,
     person: &PersonProfile,
     expected_revision: Revision,
 ) -> Result<(), PeopleError> {
@@ -524,30 +541,39 @@ fn bound_save_person(
             found: person.revision.get(),
         });
     }
-    let people = bound_people_directory(root)?;
-    let temporary = format!(".person-{}-{}.tmp", person.id, person.revision.get());
     let document = PersonDocument::from_domain(person, existing.document.extra);
     let rendered = render_person(&document, &existing.body)?;
-    let mut options = OpenOptions::new();
-    options
-        .write(true)
-        .create_new(true)
-        .follow(FollowSymlinks::No);
-    let mut file = people
-        .open_with(&temporary, &options)
-        .map_err(storage_people)?;
-    if let Err(error) = file
-        .write_all(rendered.as_bytes())
-        .and_then(|()| file.sync_all())
-    {
-        drop(file);
-        let _ = people.remove_file(&temporary);
-        return Err(storage_people(error));
-    }
-    drop(file);
-    people
-        .rename(&temporary, &people, &filename)
-        .map_err(storage_people)
+    let target = CanonicalPath::parse(format!(
+        "people/{}",
+        filename.to_string_lossy().replace('\\', "/")
+    ))
+    .map_err(|error| PeopleError::Storage(error.to_string()))?;
+    let digest = operations::digest_bytes(existing.raw_text.as_bytes())
+        .map_err(|error| PeopleError::Storage(error.to_string()))?;
+    let precondition = CanonicalPrecondition::exact_digest(
+        digest,
+        Some(expected_revision.get()),
+        Some("liaison-person-front-matter-revision".to_owned()),
+    )
+    .map_err(|error| PeopleError::Storage(error.to_string()))?;
+    let write = CanonicalWrite::new(target, rendered.into_bytes(), precondition)
+        .map_err(|error| PeopleError::Storage(error.to_string()))?;
+    operations::execute(root, workspace_id, context, vec![write])
+        .map(|_| ())
+        .map_err(|error| {
+            if error.kind == RecoverableOperationErrorKind::Precondition {
+                let current = bound_find_person(root, person.id)
+                    .ok()
+                    .map(|(_, parsed)| parsed.document.revision.get())
+                    .unwrap_or(expected_revision.get());
+                PeopleError::RevisionConflict {
+                    expected: expected_revision.get(),
+                    found: current,
+                }
+            } else {
+                PeopleError::Storage(error.to_string())
+            }
+        })
 }
 
 fn bound_validate_layout(root: &Dir) -> Result<Vec<ValidationFinding>, WorkspaceError> {
@@ -701,6 +727,7 @@ impl PersonDocument {
 struct ParsedPerson {
     document: PersonDocument,
     body: String,
+    raw_text: String,
 }
 
 fn read_person_document(path: &Path) -> Result<ParsedPerson, PeopleError> {
@@ -719,6 +746,7 @@ fn parse_person_document(text: &str) -> Result<ParsedPerson, PeopleError> {
     Ok(ParsedPerson {
         document,
         body: body.to_owned(),
+        raw_text: text.to_owned(),
     })
 }
 
@@ -873,7 +901,9 @@ fn storage_people(error: impl std::fmt::Display) -> PeopleError {
 
 #[cfg(test)]
 mod tests {
-    use super::{BoundMarkdownVault, MANIFEST_PATH, MarkdownVault, people_repository, slug};
+    use super::{
+        BoundMarkdownVault, MANIFEST_PATH, MarkdownVault, people_mutation_repository, slug,
+    };
     #[cfg(unix)]
     use super::{bound_people_directory, bound_person_entries, bound_read_person_entry};
     use cap_std::{ambient_authority, fs::Dir};
@@ -881,19 +911,34 @@ mod tests {
     #[cfg(unix)]
     use liaison_people::PeopleError;
     use liaison_people::{CreatePerson, ListPeople, PersonProfile, PersonRepository};
-    use liaison_shared_kernel::{PersonId, WorkspaceId, WorkspaceSessionId};
+    use liaison_shared_kernel::{OperationId, PersonId, WorkspaceId, WorkspaceSessionId};
     use liaison_workspace::{
         BoundWorkspaceSessionPort, BoundWorkspaceStore, BuildProfile, InitialiseWorkspace,
-        OpenWorkspaceSession, ValidateWorkspace, ValidationFinding, WorkspaceError,
-        WorkspaceManifest, WorkspaceProfile, WorkspaceSession, WorkspaceSessionError,
-        WorkspaceWriterAuthority, WorkspaceWriterAuthorityPort, WriterDiagnostic,
+        OpenWorkspaceSession, OperationContext, ValidateWorkspace, ValidationFinding,
+        WorkspaceError, WorkspaceManifest, WorkspaceProfile, WorkspaceSession,
+        WorkspaceSessionError, WorkspaceWriterAuthority, WorkspaceWriterAuthorityPort,
+        WriterDiagnostic,
     };
-    use std::{fs, path::Path};
+    use std::{
+        fs,
+        path::Path,
+        sync::atomic::{AtomicU64, Ordering},
+    };
     use tempfile::tempdir;
 
     #[derive(Debug)]
     struct TestBinding {
         repositories: BoundMarkdownVault,
+    }
+
+    fn operation_context() -> OperationContext {
+        static NEXT_OPERATION: AtomicU64 = AtomicU64::new(1);
+        OperationContext::new(
+            OperationId::from_uuid(uuid::Uuid::from_u128(u128::from(
+                NEXT_OPERATION.fetch_add(1, Ordering::SeqCst),
+            ))),
+            chrono::DateTime::<chrono::Utc>::UNIX_EPOCH,
+        )
     }
 
     impl BoundWorkspaceStore for TestBinding {
@@ -1030,7 +1075,7 @@ mod tests {
             let work = session
                 .begin_work()
                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
-            let bound = people_repository(&work);
+            let bound = people_mutation_repository(&work, operation_context());
             let create_person = CreatePerson::new(&bound);
             let person = create_person.execute(
                 PersonId::new(),
@@ -1087,7 +1132,7 @@ mod tests {
         let work = session
             .begin_work()
             .unwrap_or_else(|error| unreachable!("legacy test work must begin: {error}"));
-        let repository = people_repository(&work);
+        let repository = people_mutation_repository(&work, operation_context());
         assert!(
             CreatePerson::new(&repository)
                 .execute(PersonId::new(), "Legacy Person", None)
@@ -1121,7 +1166,7 @@ mod tests {
             let work = session
                 .begin_work()
                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
-            let bound = people_repository(&work);
+            let bound = people_mutation_repository(&work, operation_context());
             let create = CreatePerson::new(&bound);
             let person = create.execute(PersonId::new(), "Alex Murphy", None);
             assert!(person.is_ok());
@@ -1175,7 +1220,7 @@ mod tests {
             let work = session
                 .begin_work()
                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
-            let bound = people_repository(&work);
+            let bound = people_mutation_repository(&work, operation_context());
             let create = CreatePerson::new(&bound);
             assert!(
                 create
@@ -1222,7 +1267,7 @@ mod tests {
             let work = session
                 .begin_work()
                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
-            let bound = people_repository(&work);
+            let bound = people_mutation_repository(&work, operation_context());
             let created = CreatePerson::new(&bound).execute(
                 PersonId::new(),
                 "Alex Example",
@@ -1307,7 +1352,7 @@ mod tests {
             let work = session
                 .begin_work()
                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
-            let bound = people_repository(&work);
+            let bound = people_mutation_repository(&work, operation_context());
             assert!(
                 CreatePerson::new(&bound)
                     .execute(PersonId::new(), "Healthy Person", None)
@@ -1376,7 +1421,7 @@ mod tests {
             let work = session
                 .begin_work()
                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
-            let bound = people_repository(&work);
+            let bound = people_mutation_repository(&work, operation_context());
             let listed = ListPeople::new(&bound).execute(false);
             assert!(matches!(listed, Ok(people) if people.is_empty()));
         }
@@ -1405,7 +1450,7 @@ mod tests {
             let work = session
                 .begin_work()
                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
-            let bound = people_repository(&work);
+            let bound = people_mutation_repository(&work, operation_context());
             let created =
                 CreatePerson::new(&bound).execute(PersonId::new(), "Duplicate Person", None);
             assert!(created.is_ok());
@@ -1470,7 +1515,7 @@ mod tests {
             let work = session
                 .begin_work()
                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
-            let bound = people_repository(&work);
+            let bound = people_mutation_repository(&work, operation_context());
             assert!(
                 CreatePerson::new(&bound)
                     .execute(PersonId::new(), "Healthy Person", None)
@@ -1543,7 +1588,7 @@ mod tests {
             let work = list_session
                 .begin_work()
                 .map_err(|error| PeopleError::Storage(error.to_string()))?;
-            let repository = people_repository(&work);
+            let repository = people_mutation_repository(&work, operation_context());
             ListPeople::new(&repository).execute(false)
         });
         assert!(matches!(
@@ -1580,7 +1625,7 @@ mod tests {
             let work = session
                 .begin_work()
                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
-            let repository = people_repository(&work);
+            let repository = people_mutation_repository(&work, operation_context());
             assert!(
                 CreatePerson::new(&repository)
                     .execute(PersonId::new(), "Healthy Person", None)
@@ -1622,7 +1667,7 @@ mod tests {
             let work = session
                 .begin_work()
                 .map_err(|error| PeopleError::Storage(error.to_string()))?;
-            let repository = people_repository(&work);
+            let repository = people_mutation_repository(&work, operation_context());
             ListPeople::new(&repository).execute(false)
         });
         assert!(matches!(
@@ -1700,7 +1745,7 @@ mod tests {
         let work = session
             .begin_work()
             .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
-        let bound = people_repository(&work);
+        let bound = people_mutation_repository(&work, operation_context());
 
         assert!(matches!(
             bound.create(&person),

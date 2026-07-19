@@ -6,6 +6,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Added
 
+- Recoverable canonical multi-target operations with staged and flushed targets, exact digest/revision preconditions, a durable commit decision, per-target progress, roll-forward recovery, external-edit refusal, projection-stale marking, and fault-injection coverage.
 - A write-authoritative, `Arc`-owned Workspace Session that retains one
   capability root, workspace identity/schema, path-free repositories, an
   operating-system writer lock, quiescence, and explicit unavailable recovery,
