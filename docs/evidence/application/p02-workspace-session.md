@@ -213,7 +213,16 @@ session failed while reading identity-registry security. Review of the pinned
 dependency showed that its blanket handle helper called `GetSecurityInfo` with
 `SE_UNKNOWN_OBJECT_TYPE`. Liaison now calls the same bounded wrapper with
 `SE_FILE_OBJECT`, retaining the owner/DACL checks rather than bypassing them.
-The replacement exact-head Windows runtime result remains required.
+The replacement run then reached the real descriptor but rejected
+runner-managed Profile/LocalAppData ancestry as though those operating-system
+directories were Liaison-owned private objects. Windows may also apply the
+token's default owner, rather than TokenUser, to new objects in an elevated
+process. The adapter now removes Profile from the locator prerequisite, treats
+the LocalAppData Known Folder as retained no-reparse traversal, never creates a
+missing Known Folder, and applies a protected canonical ACL and TokenUser owner
+only to newly created Liaison registry/lock objects before strict verification.
+Existing unsafe objects are not repaired. The next exact-head Windows runtime
+result remains required.
 
 ## Dependency and release limits
 
@@ -236,15 +245,16 @@ is retained only as integration evidence and is not final-head, installed-app,
 native-QA, or release evidence. It did not replace the reviewed P01 installed
 application.
 
-The final P02 implementation commit
+The later P02 integration snapshot
 `4acf088b7dc5d791343fcafc1f41db462cb17626` was then rebuilt as a universal
 application, explicitly ad-hoc signed, strictly verified, and inspected as
 `x86_64` plus `arm64`. Its signed executable SHA-256 is
 `cb175446ab8950c878d5aff936b49720efe6c65c7bacbd949e58d7cc0169ea6f`.
 The full local provenance and claim boundary are recorded in the
 [P02 universal macOS build record](../macos/p02-native-build-2026-07-19.md).
-That bundle remains uninstalled local build evidence; exact pull-request-head
-remote matrices and installed-app requalification are still pending.
+That snapshot predates the Windows authority correction now under review. Its
+bundle remains uninstalled local build evidence; exact pull-request-head remote
+matrices and installed-app requalification are still pending.
 
 P03 remains responsible for durable operation journals, a durable commit
 decision, directory durability, multi-target roll-forward, staged-output

@@ -104,6 +104,16 @@ Windows file and directory security descriptors must be requested as
 wrapper with the explicit object type before applying the same owner and DACL
 checks.
 
+Windows LocalAppData is operating-system traversal infrastructure, not a
+Liaison-owned private object; Profile is not a second locator prerequisite.
+Retain and identity-check LocalAppData without following reparse points. On
+creation only, normalise the child Liaison registry and zero-byte locks to
+TokenUser ownership and the protected user/System/Administrators ACL, then
+require that exact shape on every use. Never auto-repair a pre-existing
+noncanonical registry or lock, and preserve the typed `cause_issue` through an
+initialisation wrapper so native failures remain diagnosable without
+disclosing a path.
+
 New version-one manifests publish `enabled_modules` and currently require the
 `people` identifier. A P01 manifest without that later field is read as
 `people` without rewriting its bytes; it remains invalid for new-writer schema

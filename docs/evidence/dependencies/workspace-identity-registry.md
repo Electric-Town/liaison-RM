@@ -42,28 +42,51 @@ new licence, provenance, platform, security, and Airgap review.
 
 On Linux and macOS, Liaison obtains the effective account's home from the OS
 account database and ignores `HOME`; Linux also ignores `XDG_DATA_HOME`.
-Windows Known Folder calls do not use the tested `HOME`, `XDG_DATA_HOME`,
-`USERPROFILE`, or `LOCALAPPDATA` overrides as authority. Liaison safely creates
-only missing components beneath the owned account home, one component at a
-time with no-follow capability handles. A missing root outside that boundary
-or inaccessible canonical location fails closed with a typed error; there is
-no fallback. The final registry is owned and private.
+Windows resolves only the LocalAppData Known Folder and does not use the tested
+`HOME`, `XDG_DATA_HOME`, `USERPROFILE`, or `LOCALAPPDATA` overrides as
+authority. On Unix, Liaison
+safely creates only missing components beneath the owned account home, one
+component at a time with no-follow capability handles. On Windows,
+`FOLDERID_LocalAppData` is operating-system traversal infrastructure: it must
+already exist, is opened without following a reparse point, and is retained by
+file identity. Profile is not a second locator prerequisite. Liaison does not
+require an elevated account's LocalAppData owner to equal its token-user SID
+and does not manufacture a missing Known Folder. A missing or inaccessible
+canonical location fails closed with a typed error; there is no fallback.
 
 On Unix, registry ownership must match the effective UID, the registry mode is
 exactly `0700`, and every zero-byte lock entry is owned, mode `0600`, and has
-one hard link. On Windows, the actual handle owner must match the current
-process SID; a present DACL must not grant Everyone, Authenticated Users, or
-Builtin Users write, delete, owner, or DACL-control rights. Reparse points are
-rejected and retained handles omit delete sharing. An inspection failure is a
-typed authority-unavailable result; Liaison does not downgrade to an assumed
-safe LocalAppData path.
+one hard link. On Windows, creation-only hardening changes the Liaison-owned
+registry and lock owner to the current token-user SID and installs a protected
+three-entry full-control DACL for that user, LocalSystem, and Builtin
+Administrators. Validation requires that exact owner and canonical ACL rather
+than blacklisting only familiar broad groups; an arbitrary account ACE or an
+inherit-only extra ACE therefore fails. A pre-existing noncanonical object is
+never repaired automatically. Reparse points are rejected, retained handles
+omit delete sharing, and the created-directory handle is identity-matched to
+the retained directory before use. An inspection failure is typed; Liaison
+does not downgrade to an assumed-safe LocalAppData path.
+
+The current capability directory builder cannot attach a Windows security
+descriptor to `CreateDirectoryW` atomically. After a successful create,
+Liaison immediately opens the new path without following a reparse point and
+without delete sharing, accepts only TokenUser, LocalSystem, or Builtin
+Administrators as the initial owner, installs the canonical descriptor, and
+identity-matches that handle to the retained registry directory. A different
+owner, replacement, non-empty created registry, or hardening failure fails
+closed. This is evidence for the stated ordinary cooperating, unconfined
+same-account contract; it is not a claim against a hostile same-user,
+administrator, or LocalSystem process. A future broader local-adversary claim
+would require creation with an atomic security descriptor or an equivalent
+brokered authority primitive.
 
 `windows-permissions` is an older, narrowly scoped wrapper over Win32 security
 APIs. Its blanket `WindowsSecure` handle implementation passes
 `SE_UNKNOWN_OBJECT_TYPE` to `GetSecurityInfo`; that is not the file/directory
 contract required by Liaison. The adapter therefore calls the crate's public
-`GetSecurityInfo` wrapper with `SE_FILE_OBJECT` explicitly, then uses the
-crate's SID, DACL, and effective-rights types for the bounded checks above.
+`GetSecurityInfo` and `SetSecurityInfo` wrappers with `SE_FILE_OBJECT`
+explicitly, then uses the crate's SID, DACL, ACE, and SDDL types for the
+bounded canonical checks above.
 Microsoft documents both the object-type parameter and `SE_FILE_OBJECT` in the
 [GetSecurityInfo contract](https://learn.microsoft.com/en-us/windows/win32/api/aclapi/nf-aclapi-getsecurityinfo)
 and [`SE_OBJECT_TYPE` enumeration](https://learn.microsoft.com/en-us/windows/win32/api/accctrl/ne-accctrl-se_object_type).

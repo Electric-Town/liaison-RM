@@ -1047,11 +1047,16 @@ fn workspace_initialised_open_error(
     error: ApplicationError,
     correlation_id: CommandId,
 ) -> ApplicationError {
+    let cause_issue = error.details.get("issue").cloned();
+    let mut cause = details([("cause_code", Value::String(error.code))]);
+    if let Some(issue) = cause_issue {
+        cause.insert("cause_issue".to_owned(), issue);
+    }
     application_error(
         "application.workspace-initialised-open-incomplete",
         "the workspace was initialised but its session could not be opened",
         "do not initialise it again; open the existing workspace and inspect Health",
-        details([("cause_code", Value::String(error.code))]),
+        cause,
         correlation_id,
     )
 }
@@ -1086,7 +1091,7 @@ mod tests {
         APPLICATION_CONTRACT_VERSION, AppStatusDto, CreatePersonCommand,
         InitialiseWorkspaceCommand, InspectWorkspaceHealthQuery, LiaisonApplication,
         ListPeopleQuery, OpenWorkspaceCommand, RuntimePortError, RuntimePorts,
-        WorkspaceSessionCommand,
+        WorkspaceSessionCommand, application_error, details, workspace_initialised_open_error,
     };
     use chrono::{DateTime, TimeZone, Utc};
     use liaison_shared_kernel::{CommandId, JobId, PersonId, WorkspaceId, WorkspaceSessionId};
@@ -1467,6 +1472,34 @@ mod tests {
             assert!(second.join(".liaison/workspace.yaml").is_file());
             assert!(error.recovery.contains("do not initialise it again"));
         }
+    }
+
+    #[test]
+    fn initialised_workspace_preserves_the_typed_authority_issue() {
+        let correlation_id = CommandId::new();
+        let cause = application_error(
+            "workspace.identity-authority-path-unsafe",
+            "the per-user workspace-identity authority path is unsafe",
+            "keep the workspace read-only",
+            details([(
+                "issue",
+                serde_json::json!("identity-registry-owner-mismatch"),
+            )]),
+            correlation_id,
+        );
+
+        let error = workspace_initialised_open_error(cause, correlation_id);
+
+        assert_eq!(
+            error.details.get("cause_code"),
+            Some(&serde_json::json!(
+                "workspace.identity-authority-path-unsafe"
+            ))
+        );
+        assert_eq!(
+            error.details.get("cause_issue"),
+            Some(&serde_json::json!("identity-registry-owner-mismatch"))
+        );
     }
 
     #[test]

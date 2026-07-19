@@ -63,12 +63,54 @@ impl IdentityRegistry {
             .map_err(|error| {
                 authority_unavailable(WorkspaceAuthorityOperation::ResolveIdentityRegistry, error)
             })?;
-        ensure_registry_directory(&parent_directory, directory_name)?;
+        let registry_created = ensure_registry_directory(&parent_directory, directory_name)?;
+        #[cfg(windows)]
+        let created_security_handle = registry_created
+            .then(|| open_and_harden_created_windows_registry(&parent_directory, directory_name))
+            .transpose()?;
+        #[cfg(not(windows))]
+        let _ = registry_created;
         let directory = parent_directory
             .open_dir_nofollow(directory_name)
             .map_err(|error| {
                 authority_unavailable(WorkspaceAuthorityOperation::InspectIdentityRegistry, error)
             })?;
+        #[cfg(windows)]
+        if let Some(created_security_handle) = created_security_handle {
+            let created = cap_std::fs::File::from_std(created_security_handle)
+                .metadata()
+                .map_err(|error| {
+                    authority_unavailable(
+                        WorkspaceAuthorityOperation::InspectIdentityRegistry,
+                        error,
+                    )
+                })?;
+            let bound = directory.dir_metadata().map_err(|error| {
+                authority_unavailable(WorkspaceAuthorityOperation::InspectIdentityRegistry, error)
+            })?;
+            if !same_bound_directory(&created, &bound) {
+                return Err(unsafe_path(
+                    WorkspaceAuthorityPathIssue::IdentityRegistryRootWasReplaced,
+                ));
+            }
+            let mut entries = directory.entries().map_err(|error| {
+                authority_unavailable(WorkspaceAuthorityOperation::InspectIdentityRegistry, error)
+            })?;
+            match entries.next() {
+                None => {}
+                Some(Ok(_)) => {
+                    return Err(unsafe_path(
+                        WorkspaceAuthorityPathIssue::IdentityRegistryPermissionsUnsafe,
+                    ));
+                }
+                Some(Err(error)) => {
+                    return Err(authority_unavailable(
+                        WorkspaceAuthorityOperation::InspectIdentityRegistry,
+                        error,
+                    ));
+                }
+            }
+        }
         let registry = Self {
             canonical_parent,
             parent_directory,
@@ -160,12 +202,16 @@ impl Drop for IdentityWriterAuthority {
 
 pub(crate) fn default_registry_path() -> Result<PathBuf, WorkspaceSessionError> {
     let (base, account_home) = platform_registry_base()?;
-    if !base.is_absolute() || !account_home.is_absolute() {
+    if !base.is_absolute()
+        || account_home
+            .as_ref()
+            .is_some_and(|account_home| !account_home.is_absolute())
+    {
         return Err(unsafe_path(
             WorkspaceAuthorityPathIssue::IdentityRegistryRootMustBeAbsolute,
         ));
     }
-    prepare_default_data_root(&base, &account_home)?;
+    prepare_default_data_root(&base, account_home.as_deref())?;
     let base = fs::canonicalize(base).map_err(|error| {
         authority_unavailable(WorkspaceAuthorityOperation::ResolveIdentityRegistry, error)
     })?;
@@ -173,23 +219,26 @@ pub(crate) fn default_registry_path() -> Result<PathBuf, WorkspaceSessionError> 
 }
 
 #[cfg(target_os = "linux")]
-fn platform_registry_base() -> Result<(PathBuf, PathBuf), WorkspaceSessionError> {
+fn platform_registry_base() -> Result<(PathBuf, Option<PathBuf>), WorkspaceSessionError> {
     reject_flatpak_authority_namespace(Path::new("/.flatpak-info"))?;
     let account_home = unix_account_home()?;
-    Ok((account_home.join(".local").join("share"), account_home))
+    Ok((
+        account_home.join(".local").join("share"),
+        Some(account_home),
+    ))
 }
 
 #[cfg(target_os = "macos")]
-fn platform_registry_base() -> Result<(PathBuf, PathBuf), WorkspaceSessionError> {
+fn platform_registry_base() -> Result<(PathBuf, Option<PathBuf>), WorkspaceSessionError> {
     let account_home = unix_account_home()?;
     Ok((
         account_home.join("Library").join("Application Support"),
-        account_home,
+        Some(account_home),
     ))
 }
 
 #[cfg(all(unix, not(any(target_os = "linux", target_os = "macos"))))]
-fn platform_registry_base() -> Result<(PathBuf, PathBuf), WorkspaceSessionError> {
+fn platform_registry_base() -> Result<(PathBuf, Option<PathBuf>), WorkspaceSessionError> {
     Err(authority_unavailable(
         WorkspaceAuthorityOperation::ResolveIdentityRegistry,
         io::Error::new(
@@ -200,8 +249,15 @@ fn platform_registry_base() -> Result<(PathBuf, PathBuf), WorkspaceSessionError>
 }
 
 #[cfg(windows)]
-fn platform_registry_base() -> Result<(PathBuf, PathBuf), WorkspaceSessionError> {
-    let base = dirs::data_local_dir().ok_or_else(|| {
+fn platform_registry_base() -> Result<(PathBuf, Option<PathBuf>), WorkspaceSessionError> {
+    windows_registry_base(dirs::data_local_dir())
+}
+
+#[cfg(windows)]
+fn windows_registry_base(
+    local_app_data: Option<PathBuf>,
+) -> Result<(PathBuf, Option<PathBuf>), WorkspaceSessionError> {
+    let base = local_app_data.ok_or_else(|| {
         authority_unavailable(
             WorkspaceAuthorityOperation::ResolveIdentityRegistry,
             io::Error::new(
@@ -210,16 +266,7 @@ fn platform_registry_base() -> Result<(PathBuf, PathBuf), WorkspaceSessionError>
             ),
         )
     })?;
-    let account_home = dirs::home_dir().ok_or_else(|| {
-        authority_unavailable(
-            WorkspaceAuthorityOperation::ResolveIdentityRegistry,
-            io::Error::new(
-                io::ErrorKind::NotFound,
-                "Windows did not provide the current account's Profile known folder",
-            ),
-        )
-    })?;
-    Ok((base, account_home))
+    Ok((base, None))
 }
 
 #[cfg(unix)]
@@ -269,11 +316,34 @@ fn reject_flatpak_authority_namespace(marker: &Path) -> Result<(), WorkspaceSess
 
 fn prepare_default_data_root(
     base: &Path,
-    account_home: &Path,
+    account_home: Option<&Path>,
 ) -> Result<(), WorkspaceSessionError> {
-    ensure_data_root_from_home(base, account_home)
+    #[cfg(windows)]
+    {
+        // LocalAppData is an operating-system Known Folder. It is traversal
+        // infrastructure, not a Liaison-owned security boundary, and may be
+        // owned by SYSTEM or Administrators on an elevated account. Liaison
+        // never creates a missing Windows Known Folder; it verifies the bound
+        // directory and applies a private ACL only to its own registry below.
+        let _ = account_home;
+        verify_existing_default_data_root(base)
+    }
+    #[cfg(not(windows))]
+    {
+        let account_home = account_home.ok_or_else(|| {
+            authority_unavailable(
+                WorkspaceAuthorityOperation::ResolveIdentityRegistry,
+                io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "the Unix identity-registry locator omitted the account home",
+                ),
+            )
+        })?;
+        ensure_data_root_from_home(base, account_home)
+    }
 }
 
+#[cfg(any(not(windows), test))]
 fn ensure_data_root_from_home(base: &Path, home: &Path) -> Result<(), WorkspaceSessionError> {
     let Ok(relative) = base.strip_prefix(home) else {
         return verify_existing_default_data_root(base);
@@ -387,24 +457,17 @@ fn verify_owned_data_directory(directory: &Dir) -> Result<(), WorkspaceSessionEr
             ));
         }
     }
-    #[cfg(windows)]
-    verify_windows_security(
-        directory,
-        WorkspaceAuthorityOperation::ResolveIdentityRegistry,
-        WorkspaceAuthorityPathIssue::IdentityRegistryPermissionsUnsafe,
-        WorkspaceAuthorityPathIssue::IdentityRegistryOwnerMismatch,
-    )?;
     Ok(())
 }
 
-fn ensure_registry_directory(parent: &Dir, name: &OsStr) -> Result<(), WorkspaceSessionError> {
-    match parent.symlink_metadata(name) {
-        Ok(_) => {}
+fn ensure_registry_directory(parent: &Dir, name: &OsStr) -> Result<bool, WorkspaceSessionError> {
+    let created = match parent.symlink_metadata(name) {
+        Ok(_) => false,
         Err(error) if error.kind() == io::ErrorKind::NotFound => {
             let builder = private_directory_builder();
             match parent.create_dir_with(name, &builder) {
-                Ok(()) => {}
-                Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
+                Ok(()) => true,
+                Err(error) if error.kind() == io::ErrorKind::AlreadyExists => false,
                 Err(error) => {
                     return Err(authority_unavailable(
                         WorkspaceAuthorityOperation::InspectIdentityRegistry,
@@ -419,11 +482,12 @@ fn ensure_registry_directory(parent: &Dir, name: &OsStr) -> Result<(), Workspace
                 error,
             ));
         }
-    }
+    };
     let metadata = parent.symlink_metadata(name).map_err(|error| {
         authority_unavailable(WorkspaceAuthorityOperation::InspectIdentityRegistry, error)
     })?;
-    verify_registry_metadata(&metadata)
+    verify_registry_metadata(&metadata)?;
+    Ok(created)
 }
 
 fn verify_registry_binding(
@@ -449,6 +513,7 @@ fn verify_registry_binding(
     #[cfg(windows)]
     verify_windows_security(
         directory,
+        true,
         WorkspaceAuthorityOperation::InspectIdentityRegistry,
         WorkspaceAuthorityPathIssue::IdentityRegistryPermissionsUnsafe,
         WorkspaceAuthorityPathIssue::IdentityRegistryOwnerMismatch,
@@ -520,13 +585,6 @@ fn verify_parent_binding(
             ));
         }
     }
-    #[cfg(windows)]
-    verify_windows_security(
-        parent,
-        WorkspaceAuthorityOperation::InspectIdentityRegistry,
-        WorkspaceAuthorityPathIssue::IdentityRegistryPermissionsUnsafe,
-        WorkspaceAuthorityPathIssue::IdentityRegistryOwnerMismatch,
-    )?;
     Ok(())
 }
 
@@ -538,7 +596,7 @@ fn open_identity_lock_file(
     directory: &Dir,
     file_name: &str,
 ) -> Result<File, WorkspaceSessionError> {
-    match directory.symlink_metadata(file_name) {
+    let missing = match directory.symlink_metadata(file_name) {
         Ok(metadata) if metadata_is_link_or_reparse(&metadata) => {
             return Err(unsafe_path(
                 WorkspaceAuthorityPathIssue::IdentityLockFileIsSymlink,
@@ -554,32 +612,82 @@ fn open_identity_lock_file(
                 WorkspaceAuthorityPathIssue::IdentityLockFileHasUnexpectedData,
             ));
         }
-        Ok(_) => {}
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+        Ok(_) => false,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => true,
         Err(error) => {
             return Err(authority_unavailable(
                 WorkspaceAuthorityOperation::OpenIdentityLockFile,
                 error,
             ));
         }
-    }
+    };
 
-    let mut options = private_open_options();
-    options.read(true).write(true).create(true);
+    let (file, created) = if missing {
+        match open_identity_lock_handle(directory, file_name, true) {
+            Ok(file) => (file, true),
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => (
+                open_identity_lock_handle(directory, file_name, false).map_err(|error| {
+                    authority_unavailable(WorkspaceAuthorityOperation::OpenIdentityLockFile, error)
+                })?,
+                false,
+            ),
+            Err(error) => {
+                return Err(authority_unavailable(
+                    WorkspaceAuthorityOperation::OpenIdentityLockFile,
+                    error,
+                ));
+            }
+        }
+    } else {
+        (
+            open_identity_lock_handle(directory, file_name, false).map_err(|error| {
+                authority_unavailable(WorkspaceAuthorityOperation::OpenIdentityLockFile, error)
+            })?,
+            false,
+        )
+    };
     #[cfg(windows)]
-    {
-        use cap_std::fs::OpenOptionsExt;
-        options.share_mode(0x0000_0001 | 0x0000_0002);
-    }
-    let file = directory
-        .open_with(file_name, &options)
-        .map_err(|error| {
-            authority_unavailable(WorkspaceAuthorityOperation::OpenIdentityLockFile, error)
-        })?
-        .into_std();
+    let file = if created {
+        let mut file = file;
+        apply_private_windows_security(
+            &mut file,
+            false,
+            WorkspaceAuthorityOperation::OpenIdentityLockFile,
+        )?;
+        file
+    } else {
+        file
+    };
+    #[cfg(not(windows))]
+    let _ = created;
     verify_identity_open_metadata(&file)?;
     verify_identity_lock_file(directory, file_name, &file)?;
     Ok(file)
+}
+
+fn open_identity_lock_handle(
+    directory: &Dir,
+    file_name: &str,
+    create_new: bool,
+) -> io::Result<File> {
+    let mut options = private_open_options();
+    options.read(true).write(true).create_new(create_new);
+    #[cfg(windows)]
+    {
+        use cap_std::fs::OpenOptionsExt;
+        use windows_permissions::constants::AccessRights;
+
+        let mut access =
+            AccessRights::GenericRead | AccessRights::GenericWrite | AccessRights::ReadControl;
+        if create_new {
+            access |= AccessRights::WriteDac | AccessRights::WriteOwner;
+        }
+        options.access_mode(access.bits());
+        options.share_mode(0x0000_0001 | 0x0000_0002);
+    }
+    directory
+        .open_with(file_name, &options)
+        .map(cap_std::fs::File::into_std)
 }
 
 fn verify_identity_lock_file(
@@ -686,6 +794,7 @@ fn verify_identity_open_metadata(file: &File) -> Result<(), WorkspaceSessionErro
     {
         verify_windows_security(
             file,
+            false,
             WorkspaceAuthorityOperation::OpenIdentityLockFile,
             WorkspaceAuthorityPathIssue::IdentityLockPermissionsUnsafe,
             WorkspaceAuthorityPathIssue::IdentityLockOwnerMismatch,
@@ -762,8 +871,163 @@ fn same_bound_directory(current: &cap_std::fs::Metadata, bound: &cap_std::fs::Me
 }
 
 #[cfg(windows)]
+fn open_and_harden_created_windows_registry(
+    parent: &Dir,
+    name: &OsStr,
+) -> Result<File, WorkspaceSessionError> {
+    let mut handle = open_windows_directory_security_handle(parent, name)?;
+    verify_windows_creation_owner(
+        &handle,
+        WorkspaceAuthorityOperation::InspectIdentityRegistry,
+    )?;
+    apply_private_windows_security(
+        &mut handle,
+        true,
+        WorkspaceAuthorityOperation::InspectIdentityRegistry,
+    )?;
+    verify_windows_security(
+        &handle,
+        true,
+        WorkspaceAuthorityOperation::InspectIdentityRegistry,
+        WorkspaceAuthorityPathIssue::IdentityRegistryPermissionsUnsafe,
+        WorkspaceAuthorityPathIssue::IdentityRegistryOwnerMismatch,
+    )?;
+    Ok(handle)
+}
+
+#[cfg(windows)]
+fn open_windows_directory_security_handle(
+    parent: &Dir,
+    name: &OsStr,
+) -> Result<File, WorkspaceSessionError> {
+    use cap_std::fs::OpenOptionsExt;
+    use windows_permissions::constants::AccessRights;
+
+    const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
+    const FILE_SHARE_READ: u32 = 0x0000_0001;
+    const FILE_SHARE_WRITE: u32 = 0x0000_0002;
+
+    let mut options = private_open_options();
+    options.read(true);
+    options.access_mode(
+        (AccessRights::ReadControl
+            | AccessRights::WriteDac
+            | AccessRights::WriteOwner
+            | AccessRights::Bit7)
+            .bits(),
+    );
+    options.share_mode(FILE_SHARE_READ | FILE_SHARE_WRITE);
+    options.custom_flags(FILE_FLAG_BACKUP_SEMANTICS);
+    let handle = parent
+        .open_with(name, &options)
+        .map(cap_std::fs::File::into_std)
+        .map_err(|error| {
+            authority_unavailable(WorkspaceAuthorityOperation::InspectIdentityRegistry, error)
+        })?;
+    let metadata = cap_std::fs::File::from_std(handle.try_clone().map_err(|error| {
+        authority_unavailable(WorkspaceAuthorityOperation::InspectIdentityRegistry, error)
+    })?)
+    .metadata()
+    .map_err(|error| {
+        authority_unavailable(WorkspaceAuthorityOperation::InspectIdentityRegistry, error)
+    })?;
+    if metadata_is_link_or_reparse(&metadata) || !metadata.is_dir() {
+        return Err(unsafe_path(
+            WorkspaceAuthorityPathIssue::IdentityRegistryRootWasReplaced,
+        ));
+    }
+    Ok(handle)
+}
+
+#[cfg(windows)]
+fn verify_windows_creation_owner<T>(
+    handle: &T,
+    operation: WorkspaceAuthorityOperation,
+) -> Result<(), WorkspaceSessionError>
+where
+    T: std::os::windows::io::AsRawHandle,
+{
+    use windows_permissions::{
+        LocalBox, Sid,
+        constants::{SeObjectType, SecurityInformation},
+        utilities::current_process_sid,
+        wrappers::GetSecurityInfo,
+    };
+
+    let descriptor = GetSecurityInfo(
+        handle,
+        SeObjectType::SE_FILE_OBJECT,
+        SecurityInformation::Owner,
+    )
+    .map_err(|error| authority_unavailable(operation, error))?;
+    let process_sid =
+        current_process_sid().map_err(|error| authority_unavailable(operation, error))?;
+    let system_sid: LocalBox<Sid> = "S-1-5-18"
+        .parse()
+        .map_err(|error| authority_unavailable(operation, error))?;
+    let administrators_sid: LocalBox<Sid> = "S-1-5-32-544"
+        .parse()
+        .map_err(|error| authority_unavailable(operation, error))?;
+    let owner = descriptor
+        .owner()
+        .ok_or_else(|| unsafe_path(WorkspaceAuthorityPathIssue::IdentityRegistryOwnerMismatch))?;
+    if owner != &*process_sid && owner != &*system_sid && owner != &*administrators_sid {
+        return Err(unsafe_path(
+            WorkspaceAuthorityPathIssue::IdentityRegistryOwnerMismatch,
+        ));
+    }
+    Ok(())
+}
+
+#[cfg(windows)]
+fn apply_private_windows_security<T>(
+    handle: &mut T,
+    container: bool,
+    operation: WorkspaceAuthorityOperation,
+) -> Result<(), WorkspaceSessionError>
+where
+    T: std::os::windows::io::AsRawHandle,
+{
+    use windows_permissions::{
+        LocalBox, SecurityDescriptor,
+        constants::{SeObjectType, SecurityInformation},
+        utilities::current_process_sid,
+        wrappers::SetSecurityInfo,
+    };
+
+    let process_sid =
+        current_process_sid().map_err(|error| authority_unavailable(operation, error))?;
+    let inheritance = if container { "OICI" } else { "" };
+    let descriptor: LocalBox<SecurityDescriptor> = format!(
+        "O:{process_sid}D:P(A;{inheritance};FA;;;{process_sid})(A;{inheritance};FA;;;SY)(A;{inheritance};FA;;;BA)"
+    )
+    .parse()
+    .map_err(|error| authority_unavailable(operation, error))?;
+    let dacl = descriptor.dacl().ok_or_else(|| {
+        authority_unavailable(
+            operation,
+            io::Error::new(
+                io::ErrorKind::InvalidData,
+                "the private Windows authority descriptor has no DACL",
+            ),
+        )
+    })?;
+    SetSecurityInfo(
+        handle,
+        SeObjectType::SE_FILE_OBJECT,
+        SecurityInformation::Owner | SecurityInformation::Dacl | SecurityInformation::ProtectedDacl,
+        Some(&process_sid),
+        None,
+        Some(dacl),
+        None,
+    )
+    .map_err(|error| authority_unavailable(operation, error))
+}
+
+#[cfg(windows)]
 fn verify_windows_security<T>(
     handle: &T,
+    container: bool,
     operation: WorkspaceAuthorityOperation,
     permissions_issue: WorkspaceAuthorityPathIssue,
     owner_issue: WorkspaceAuthorityPathIssue,
@@ -772,10 +1036,10 @@ where
     T: std::os::windows::io::AsRawHandle,
 {
     use windows_permissions::{
-        Sid, Trustee,
-        constants::{AccessRights, SeObjectType, SecurityInformation},
+        LocalBox, Sid,
+        constants::{AccessRights, AceFlags, AceType, SeObjectType, SecurityInformation},
         utilities::current_process_sid,
-        wrappers::GetSecurityInfo,
+        wrappers::{ConvertSecurityDescriptorToStringSecurityDescriptor, GetSecurityInfo},
     };
 
     // `windows-permissions` 0.2.4's blanket `WindowsSecure` implementation
@@ -795,28 +1059,50 @@ where
     let dacl = descriptor
         .dacl()
         .ok_or_else(|| unsafe_path(permissions_issue))?;
-    let broad_sids = ["S-1-1-0", "S-1-5-11", "S-1-5-32-545"];
-    let unsafe_rights = AccessRights::GenericWrite
-        | AccessRights::GenericAll
-        | AccessRights::WriteDac
-        | AccessRights::WriteOwner
-        | AccessRights::Delete
-        | AccessRights::Bit1
-        | AccessRights::Bit2
-        | AccessRights::Bit4
-        | AccessRights::Bit6
-        | AccessRights::Bit8;
-    for broad_sid in broad_sids {
-        let sid: windows_permissions::LocalBox<Sid> = broad_sid
-            .parse()
+    let dacl_sddl =
+        ConvertSecurityDescriptorToStringSecurityDescriptor(&descriptor, SecurityInformation::Dacl)
             .map_err(|error| authority_unavailable(operation, error))?;
-        let trustee = Trustee::from(&*sid);
-        let rights = dacl
-            .effective_rights(&trustee)
-            .map_err(|error| authority_unavailable(operation, error))?;
-        if rights.intersects(unsafe_rights) {
+    if !dacl_sddl.to_string_lossy().starts_with("D:P") || dacl.len() != 3 {
+        return Err(unsafe_path(permissions_issue));
+    }
+
+    let system_sid: LocalBox<Sid> = "S-1-5-18"
+        .parse()
+        .map_err(|error| authority_unavailable(operation, error))?;
+    let administrators_sid: LocalBox<Sid> = "S-1-5-32-544"
+        .parse()
+        .map_err(|error| authority_unavailable(operation, error))?;
+    let expected_flags = if container {
+        AceFlags::ObjectInherit | AceFlags::ContainerInherit
+    } else {
+        AceFlags::empty()
+    };
+    let mut process_seen = false;
+    let mut system_seen = false;
+    let mut administrators_seen = false;
+    for index in 0..dacl.len() {
+        let ace = dacl
+            .get_ace(index)
+            .ok_or_else(|| unsafe_path(permissions_issue))?;
+        if ace.ace_type() != AceType::ACCESS_ALLOWED_ACE_TYPE
+            || ace.flags() != expected_flags
+            || ace.mask() != AccessRights::FileAllAccess
+        {
             return Err(unsafe_path(permissions_issue));
         }
+        let sid = ace.sid().ok_or_else(|| unsafe_path(permissions_issue))?;
+        if sid == &*process_sid && !process_seen {
+            process_seen = true;
+        } else if sid == &*system_sid && !system_seen {
+            system_seen = true;
+        } else if sid == &*administrators_sid && !administrators_seen {
+            administrators_seen = true;
+        } else {
+            return Err(unsafe_path(permissions_issue));
+        }
+    }
+    if !process_seen || !system_seen || !administrators_seen {
+        return Err(unsafe_path(permissions_issue));
     }
     Ok(())
 }
@@ -860,14 +1146,100 @@ fn authority_unavailable(
 mod tests {
     #[cfg(target_os = "linux")]
     use super::reject_flatpak_authority_namespace;
+    #[cfg(windows)]
+    use super::{
+        IdentityRegistry, identity_lock_name, open_identity_lock_handle,
+        open_windows_directory_security_handle, verify_windows_security, windows_registry_base,
+    };
     use super::{ensure_data_root_from_home, prepare_default_data_root};
     use liaison_workspace::{
         WorkspaceAuthorityFailureKind, WorkspaceAuthorityOperation, WorkspaceSessionError,
     };
+    #[cfg(windows)]
+    use liaison_workspace::{WorkspaceAuthorityPathIssue, WorkspaceId};
     use std::error::Error;
     #[cfg(unix)]
     use std::fs;
     use tempfile::tempdir;
+
+    #[cfg(windows)]
+    fn set_windows_test_security<T>(
+        handle: &mut T,
+        inheritance: &str,
+        extra_ace: &str,
+    ) -> Result<(), Box<dyn Error>>
+    where
+        T: std::os::windows::io::AsRawHandle,
+    {
+        use windows_permissions::{
+            LocalBox, SecurityDescriptor,
+            constants::{SeObjectType, SecurityInformation},
+            utilities::current_process_sid,
+            wrappers::SetSecurityInfo,
+        };
+
+        let process_sid = current_process_sid()?;
+        let descriptor: LocalBox<SecurityDescriptor> = format!(
+            "O:{process_sid}D:P(A;{inheritance};FA;;;{process_sid})(A;{inheritance};FA;;;SY)(A;{inheritance};FA;;;BA){extra_ace}"
+        )
+        .parse()?;
+        SetSecurityInfo(
+            handle,
+            SeObjectType::SE_FILE_OBJECT,
+            SecurityInformation::Owner
+                | SecurityInformation::Dacl
+                | SecurityInformation::ProtectedDacl,
+            Some(&process_sid),
+            None,
+            descriptor.dacl(),
+            None,
+        )?;
+        Ok(())
+    }
+
+    #[cfg(windows)]
+    fn windows_test_dacl<T>(handle: &T) -> Result<std::ffi::OsString, Box<dyn Error>>
+    where
+        T: std::os::windows::io::AsRawHandle,
+    {
+        use windows_permissions::{
+            constants::{SeObjectType, SecurityInformation},
+            wrappers::{ConvertSecurityDescriptorToStringSecurityDescriptor, GetSecurityInfo},
+        };
+
+        let descriptor = GetSecurityInfo(
+            handle,
+            SeObjectType::SE_FILE_OBJECT,
+            SecurityInformation::Dacl,
+        )?;
+        Ok(ConvertSecurityDescriptorToStringSecurityDescriptor(
+            &descriptor,
+            SecurityInformation::Dacl,
+        )?)
+    }
+
+    #[cfg(windows)]
+    fn open_windows_test_file_security(
+        directory: &cap_std::fs::Dir,
+        name: &str,
+    ) -> Result<std::fs::File, Box<dyn Error>> {
+        use cap_fs_ext::{FollowSymlinks, OpenOptionsFollowExt};
+        use cap_std::fs::{OpenOptions, OpenOptionsExt};
+        use windows_permissions::constants::AccessRights;
+
+        let mut options = OpenOptions::new();
+        options.read(true).write(true).follow(FollowSymlinks::No);
+        options.access_mode(
+            (AccessRights::GenericRead
+                | AccessRights::GenericWrite
+                | AccessRights::ReadControl
+                | AccessRights::WriteDac
+                | AccessRights::WriteOwner)
+                .bits(),
+        );
+        options.share_mode(0x0000_0001 | 0x0000_0002);
+        Ok(directory.open_with(name, &options)?.into_std())
+    }
 
     #[test]
     fn first_use_creates_only_missing_owned_data_root_components() -> Result<(), Box<dyn Error>> {
@@ -920,7 +1292,7 @@ mod tests {
         let canonical_data_root = missing_home.join(".local").join("share");
 
         assert!(matches!(
-            prepare_default_data_root(&canonical_data_root, &missing_home),
+            prepare_default_data_root(&canonical_data_root, Some(&missing_home)),
             Err(WorkspaceSessionError::AuthorityUnavailable {
                 operation: WorkspaceAuthorityOperation::ResolveIdentityRegistry,
                 failure: WorkspaceAuthorityFailureKind::NotFound,
@@ -939,7 +1311,7 @@ mod tests {
         let missing_data_root = outside.path().join("missing-canonical-data-root");
 
         assert!(matches!(
-            prepare_default_data_root(&missing_data_root, account_home.path()),
+            prepare_default_data_root(&missing_data_root, Some(account_home.path())),
             Err(WorkspaceSessionError::AuthorityUnavailable {
                 operation: WorkspaceAuthorityOperation::ResolveIdentityRegistry,
                 failure: WorkspaceAuthorityFailureKind::NotFound,
@@ -947,6 +1319,127 @@ mod tests {
             })
         ));
         assert!(!missing_data_root.exists());
+        Ok(())
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn broad_windows_ancestor_does_not_weaken_created_authority_objects()
+    -> Result<(), Box<dyn Error>> {
+        use cap_std::{ambient_authority, fs::Dir};
+        use std::{ffi::OsStr, fs};
+
+        let root = tempdir()?;
+        fs::create_dir(root.path().join("broad-parent"))?;
+        let root_handle = Dir::open_ambient_dir(root.path(), ambient_authority())?;
+        let mut broad_parent =
+            open_windows_directory_security_handle(&root_handle, OsStr::new("broad-parent"))?;
+        set_windows_test_security(&mut broad_parent, "OICI", "(A;OICI;FA;;;BU)")?;
+        assert!(matches!(
+            verify_windows_security(
+                &broad_parent,
+                true,
+                WorkspaceAuthorityOperation::InspectIdentityRegistry,
+                WorkspaceAuthorityPathIssue::IdentityRegistryPermissionsUnsafe,
+                WorkspaceAuthorityPathIssue::IdentityRegistryOwnerMismatch,
+            ),
+            Err(WorkspaceSessionError::UnsafeAuthorityPath {
+                issue: WorkspaceAuthorityPathIssue::IdentityRegistryPermissionsUnsafe
+            })
+        ));
+
+        let registry_path = root.path().join("broad-parent").join("registry");
+        let registry = IdentityRegistry::bind(&registry_path)?;
+        let workspace_id = WorkspaceId::new();
+        let authority = registry.acquire(workspace_id)?;
+        authority.verify()?;
+        drop(authority);
+
+        assert!(
+            verify_windows_security(
+                &registry.directory,
+                true,
+                WorkspaceAuthorityOperation::InspectIdentityRegistry,
+                WorkspaceAuthorityPathIssue::IdentityRegistryPermissionsUnsafe,
+                WorkspaceAuthorityPathIssue::IdentityRegistryOwnerMismatch,
+            )
+            .is_ok()
+        );
+        let lock = open_identity_lock_handle(
+            &registry.directory,
+            &identity_lock_name(workspace_id),
+            false,
+        )?;
+        assert!(
+            verify_windows_security(
+                &lock,
+                false,
+                WorkspaceAuthorityOperation::OpenIdentityLockFile,
+                WorkspaceAuthorityPathIssue::IdentityLockPermissionsUnsafe,
+                WorkspaceAuthorityPathIssue::IdentityLockOwnerMismatch,
+            )
+            .is_ok()
+        );
+        Ok(())
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_registry_locator_requires_only_local_app_data() -> Result<(), Box<dyn Error>> {
+        let local_app_data = tempdir()?;
+        let (base, account_home) =
+            windows_registry_base(Some(local_app_data.path().to_path_buf()))?;
+
+        assert_eq!(base, local_app_data.path());
+        assert!(account_home.is_none());
+        Ok(())
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn existing_noncanonical_windows_authority_objects_fail_closed() -> Result<(), Box<dyn Error>> {
+        use cap_std::{ambient_authority, fs::Dir};
+        use std::{ffi::OsStr, fs};
+
+        let root = tempdir()?;
+        fs::create_dir(root.path().join("unsafe-registry"))?;
+        let root_handle = Dir::open_ambient_dir(root.path(), ambient_authority())?;
+        let mut unsafe_registry =
+            open_windows_directory_security_handle(&root_handle, OsStr::new("unsafe-registry"))?;
+        set_windows_test_security(
+            &mut unsafe_registry,
+            "OICI",
+            "(A;OICIIO;FW;;;S-1-5-21-1-2-3-1001)",
+        )?;
+        let before = windows_test_dacl(&unsafe_registry)?;
+        drop(unsafe_registry);
+        assert!(matches!(
+            IdentityRegistry::bind(&root.path().join("unsafe-registry")),
+            Err(WorkspaceSessionError::UnsafeAuthorityPath {
+                issue: WorkspaceAuthorityPathIssue::IdentityRegistryPermissionsUnsafe
+            })
+        ));
+        let after_handle =
+            open_windows_directory_security_handle(&root_handle, OsStr::new("unsafe-registry"))?;
+        assert_eq!(windows_test_dacl(&after_handle)?, before);
+
+        let safe_registry = IdentityRegistry::bind(&root.path().join("safe-registry"))?;
+        let workspace_id = WorkspaceId::new();
+        drop(safe_registry.acquire(workspace_id)?);
+        let lock_name = identity_lock_name(workspace_id);
+        let mut lock = open_windows_test_file_security(&safe_registry.directory, &lock_name)?;
+        set_windows_test_security(&mut lock, "", "(A;;FW;;;S-1-5-21-1-2-3-1001)")?;
+        drop(lock);
+        assert!(matches!(
+            safe_registry.acquire(workspace_id),
+            Err(WorkspaceSessionError::UnsafeAuthorityPath {
+                issue: WorkspaceAuthorityPathIssue::IdentityLockPermissionsUnsafe
+            })
+        ));
+        assert_eq!(
+            fs::metadata(root.path().join("safe-registry").join(lock_name))?.len(),
+            0
+        );
         Ok(())
     }
 

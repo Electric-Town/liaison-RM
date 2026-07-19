@@ -627,17 +627,10 @@ mod tests {
         let registry = tempdir()?;
         let identity = workspace_id(104);
         let adapter = bind(workspace.path(), &registry)?;
-        fs::write(identity_lock_path(&registry, identity), b"")?;
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            fs::set_permissions(
-                identity_lock_path(&registry, identity),
-                fs::Permissions::from_mode(0o600),
-            )?;
-        }
+        let first = adapter.acquire_writer(identity, diagnostic(9))?;
+        drop(first);
 
-        assert!(adapter.acquire_writer(identity, diagnostic(9)).is_ok());
+        assert!(adapter.acquire_writer(identity, diagnostic(10)).is_ok());
         Ok(())
     }
 

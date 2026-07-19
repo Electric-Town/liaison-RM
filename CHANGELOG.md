@@ -98,6 +98,13 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Windows identity-registry security inspection now queries file and directory
   handles as Win32 `SE_FILE_OBJECT` values instead of using the dependency's
   generic unknown-object helper, allowing owner/DACL checks to run natively.
+- Windows now resolves the LocalAppData Known Folder without making Profile a
+  second authority prerequisite, and treats that retained, no-reparse parent as
+  traversal infrastructure rather than a Liaison-owned private object. Newly
+  created Liaison registry directories and lock files are normalised to the
+  token user with one protected user/System/Administrators ACL; any existing
+  noncanonical registry or lock still fails closed. Initialisation errors retain
+  the typed authority issue without exposing a host path.
 - Desktop asset verification now compares rendered PNG and ICNS content across
   platforms while retaining byte-exact checks for the uncompressed Windows ICO,
   avoiding false drift failures from host-specific compression libraries.

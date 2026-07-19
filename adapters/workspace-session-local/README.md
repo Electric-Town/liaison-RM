@@ -17,18 +17,23 @@ Known Folder results rather than environment strings. The final directory is
 named `io.github.electric-town.liaison-rm-writer-authority-v1`.
 
 Registry entries contain no workspace path, person data, process identifier,
-or diagnostic. Missing local-data components beneath the owned account home
-are created one component at a time through no-follow capability handles. An
-inaccessible canonical location or a missing custom root outside that boundary
-returns a typed authority error; production does not select a fallback
-registry.
+or diagnostic. Missing Unix local-data components beneath the owned account
+home are created one component at a time through no-follow capability handles.
+Windows LocalAppData must already exist as an operating-system Known Folder;
+its retained ancestors are traversal infrastructure, while the child Liaison
+registry and locks are the private security boundary. An inaccessible
+canonical location or a missing custom root returns a typed authority error;
+production does not select a fallback registry.
 
 The adapter opens the workspace, `.liaison`, registry, and lock files through
 retained capability handles and refuses symlink, reparse, replacement,
 unexpected-data, ownership, permissions, and hard-link seams. Unix requires an
-owned `0700` registry and owned `0600`, single-link entries. Windows queries
-the actual owner SID and DACL, rejects broad write/control rights, compares
-handle-backed file identities, and omits delete sharing. The identity lock is
+owned `0700` registry and owned `0600`, single-link entries. Windows
+normalises newly created Liaison objects to the token-user owner and a
+protected user/System/Administrators ACL, requires that exact canonical shape
+thereafter, compares handle-backed file identities, and omits delete sharing.
+Existing unsafe registry or lock objects are rejected rather than repaired.
+The identity lock is
 released before the path-local lock on explicit close, RAII drop, or operating-
 system process-handle cleanup. Every session work lease revalidates both
 authorities before exposing repositories.
@@ -66,7 +71,10 @@ and machine, a copied workspace therefore cannot transfer a live writer lease.
 Focused tests cover same-path and copied-path contention, different identities,
 safe first use, hostile registry shapes, stale and malformed diagnostics,
 symlink and hard-link rejection, retained-directory replacement, and forced
-child-process termination. Real child processes using production `bind`
+child-process termination. Native Windows coverage additionally exercises a
+broad traversal parent, canonical creation of the registry and lock, and
+rejection of extra direct or inherit-only account ACEs. Real child processes
+using production `bind`
 exercise divergent `HOME`/`XDG_DATA_HOME` values in both launch orders and
 prove release after process exit; the Windows variant also changes
 `USERPROFILE` and `LOCALAPPDATA`. The Windows code and dependency compile under
