@@ -1,0 +1,110 @@
+te(),
+-            WorkspaceRecoveryState::UnavailableUntilRecoverableOperations
++            WorkspaceRecoveryState::Ready {
++                recovered_operations: 0,
++                discarded_uncommitted: 0,
++            }
+         );
+         assert_eq!(
+             session.key_state(),
+@@ -1236,6 +1297,13 @@ mod tests {
+     impl BoundWorkspaceSessionPort for SequencedBinding {
+         type Repositories = MemoryRepositories;
+ 
++        fn recover_pending_operations(
++            &self,
++            _workspace_id: WorkspaceId,
++        ) -> Result<OperationRecoveryReport, WorkspaceOperationError> {
++            Ok(OperationRecoveryReport::default())
++        }
++
+         fn into_repositories(self) -> Self::Repositories {
+             self.repositories
+         }
+@@ -1249,7 +1317,7 @@ mod tests {
+         let acquired_workspace_id = Arc::new(Mutex::new(None));
+         let authority_dropped = Arc::new(AtomicBool::new(false));
+         let result = OpenWorkspaceSession::new(SequencedBinding {
+-            manifests: Arc::new(Mutex::new(VecDeque::from([before.clone(), after.clone()]))),
++            manifests: Arc::new(Mutex::new(VecDeque::from([before.clone(), after.clone(), after.clone()]))),
+             repositories: MemoryRepositories {
+                 manifest: after.clone(),
+             },
+diff --git a/contexts/workspace/src/migration.rs b/contexts/workspace/src/migration.rs
+new file mode 100644
+index 0000000000000000000000000000000000000000..fa57202b1dfb5e87401c1ff2b4107ee3d44d43a7
+--- /dev/null
++++ b/contexts/workspace/src/migration.rs
+@@ -0,0 +1,479 @@
++//! Migration dry-run and backup-first execution contracts.
++//!
++//! Workspace migrations are canonical operations with one additional safety
++//! boundary: the pre-migration state must be captured before the durable
++//! commit decision, and post-migration validation either accepts the new
++//! schema or restores that capture. The Workspace context owns this sequence;
++//! storage adapters own how the backup and validation are performed.
++
++use crate::{
++    CanonicalOperationPlan, OperationPreview, OperationReceipt, RecoverableOperationStore,
++    WorkspaceOperationError,
++};
++use chrono::{DateTime, Utc};
++use liaison_shared_kernel::{OperationId, WorkspaceId};
++use serde::{Deserialize, Serialize};
++use std::fmt;
++use thiserror::Error;
++
++#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
++#[serde(transparent)]
++pub struct MigrationId(String);
++
++impl MigrationId {
++    pub fn parse(value: impl Into<String>) -> Result<Self, WorkspaceMigrationError> {
++        let value = value.into();
++        let valid = !value.is_empty()
++            && value.len() <= 160
++            && value
++                .chars()
++                .next()
++                .is_some_and(|character| character.is_ascii_lowercase())
++            && value
++                .chars()
++                .all(|character| character.is_ascii_lowercase() || character.is_ascii_digit() || character == '-');
++        if !valid {
++            return Err(WorkspaceMigrationError::InvalidMigrationId(value));
++        }
++        Ok(Self(value))
++    }
++
++    #[must_use]
++    pub fn as_str(&self) -> &str {
++        &self.0
++    }
++}
++
++impl fmt::Display for MigrationId {
++    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
++        formatter.write_str(&self.0)
++    }
++}
++
++#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
++#[serde(tag = "rollback", rename_all = "kebab-case")]
++pub enum MigrationReversibility {
++    RestorePreMigrationBackup,
++    Irreversible { statement: String },
++}
++
++impl MigrationReversibility {
++    fn validate(&self) -> Result<(), WorkspaceMigrationError> {
++        if let Self::Irreversible { statement } = self {
++            if statement.trim().is_empty() {
++                return Err(WorkspaceMigrationError::MissingIrreversibilityStatement);
++            }
++        }
++        Ok(())
++    }
++}
++
++#[derive(Debug, Clone, PartialEq, Eq)]
++p
