@@ -26,6 +26,13 @@ registry and locks are the private security boundary. An inaccessible
 canonical location or a missing custom root returns a typed authority error;
 production does not select a fallback registry.
 
+Windows registry creation is serialised across Liaison processes with a
+zero-byte sibling initialisation lock. It exists only to cover the short
+interval between directory creation and canonical ACL verification; it is not
+writer authority and contains no workspace identity or path. A second process
+waits for that verification before binding. A genuinely pre-existing unsafe
+registry still fails closed and is never repaired automatically.
+
 The adapter opens the workspace, `.liaison`, registry, and lock files through
 retained capability handles and refuses symlink, reparse, replacement,
 unexpected-data, ownership, permissions, and hard-link seams. Unix requires an
@@ -73,7 +80,8 @@ Focused tests cover same-path and copied-path contention, different identities,
 safe first use, hostile registry shapes, stale and malformed diagnostics,
 symlink and hard-link rejection, retained-directory replacement, and forced
 child-process termination. Native Windows coverage additionally exercises a
-broad traversal parent, canonical creation of the registry and lock, and
+broad traversal parent, concurrent first-use serialisation, canonical creation
+of the registry and lock, and
 rejection of extra direct or inherit-only account ACEs. Real child processes
 using production `bind`
 exercise divergent `HOME`/`XDG_DATA_HOME` values in both launch orders and

@@ -25,6 +25,9 @@ const PRIVATE_DIRECTORY_MODE: u32 = 0o700;
 const PRIVATE_FILE_MODE: u32 = 0o600;
 const REGISTRY_DIRECTORY_NAME: &str = "io.github.electric-town.liaison-rm-writer-authority-v1";
 #[cfg(windows)]
+const REGISTRY_INITIALISATION_LOCK_NAME: &str =
+    "io.github.electric-town.liaison-rm-writer-authority-initialise-v1.lock";
+#[cfg(windows)]
 const WINDOWS_FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x0000_0400;
 
 #[derive(Debug)]
@@ -63,6 +66,8 @@ impl IdentityRegistry {
             .map_err(|error| {
                 authority_unavailable(WorkspaceAuthorityOperation::ResolveIdentityRegistry, error)
             })?;
+        #[cfg(windows)]
+        let _initialisation_lock = RegistryInitialisationLock::acquire(&parent_directory)?;
         let registry_created = ensure_registry_directory(&parent_directory, directory_name)?;
         #[cfg(windows)]
         let created_security_handle = registry_created
@@ -170,6 +175,113 @@ impl IdentityRegistry {
             &self.directory,
         )
     }
+}
+
+/// Serialises the only Windows interval in which a newly created registry has
+/// inherited security but has not yet received Liaison's canonical ACL.
+///
+/// The zero-byte sibling file is coordination state, not writer authority.
+/// Keeping its handle locked until `IdentityRegistry::bind` has verified the
+/// hardened directory prevents a second Liaison process from treating that
+/// short-lived creation state as a hostile pre-existing registry.
+#[cfg(windows)]
+#[derive(Debug)]
+struct RegistryInitialisationLock {
+    file: File,
+}
+
+#[cfg(windows)]
+impl RegistryInitialisationLock {
+    fn acquire(parent: &Dir) -> Result<Self, WorkspaceSessionError> {
+        use cap_std::fs::OpenOptionsExt;
+        use windows_permissions::constants::AccessRights;
+
+        const FILE_SHARE_READ: u32 = 0x0000_0001;
+        const FILE_SHARE_WRITE: u32 = 0x0000_0002;
+
+        match parent.symlink_metadata(REGISTRY_INITIALISATION_LOCK_NAME) {
+            Ok(metadata)
+                if metadata_is_link_or_reparse(&metadata)
+                    || !metadata.is_file()
+                    || metadata.len() != 0 =>
+            {
+                return Err(unsafe_path(
+                    WorkspaceAuthorityPathIssue::IdentityRegistryPermissionsUnsafe,
+                ));
+            }
+            Ok(_) => {}
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+            Err(error) => {
+                return Err(authority_unavailable(
+                    WorkspaceAuthorityOperation::InspectIdentityRegistry,
+                    error,
+                ));
+            }
+        }
+
+        let mut options = private_open_options();
+        options.read(true).write(true).create(true);
+        options.access_mode((AccessRights::GenericRead | AccessRights::GenericWrite).bits());
+        // Other Liaison processes must be able to open the same inode before
+        // waiting on its operating-system lock; deletion stays unshared.
+        options.share_mode(FILE_SHARE_READ | FILE_SHARE_WRITE);
+        let file = parent
+            .open_with(REGISTRY_INITIALISATION_LOCK_NAME, &options)
+            .map(cap_std::fs::File::into_std)
+            .map_err(|error| {
+                authority_unavailable(WorkspaceAuthorityOperation::InspectIdentityRegistry, error)
+            })?;
+        verify_registry_initialisation_lock(parent, &file)?;
+        file.lock().map_err(|error| {
+            authority_unavailable(WorkspaceAuthorityOperation::InspectIdentityRegistry, error)
+        })?;
+        if let Err(error) = verify_registry_initialisation_lock(parent, &file) {
+            let _ = file.unlock();
+            return Err(error);
+        }
+        Ok(Self { file })
+    }
+}
+
+#[cfg(windows)]
+impl Drop for RegistryInitialisationLock {
+    fn drop(&mut self) {
+        let _ = self.file.unlock();
+    }
+}
+
+#[cfg(windows)]
+fn verify_registry_initialisation_lock(
+    parent: &Dir,
+    file: &File,
+) -> Result<(), WorkspaceSessionError> {
+    use cap_fs_ext::MetadataExt;
+
+    let open_metadata = cap_std::fs::File::from_std(file.try_clone().map_err(|error| {
+        authority_unavailable(WorkspaceAuthorityOperation::InspectIdentityRegistry, error)
+    })?)
+    .metadata()
+    .map_err(|error| {
+        authority_unavailable(WorkspaceAuthorityOperation::InspectIdentityRegistry, error)
+    })?;
+    let path_metadata = parent
+        .symlink_metadata(REGISTRY_INITIALISATION_LOCK_NAME)
+        .map_err(|error| {
+            authority_unavailable(WorkspaceAuthorityOperation::InspectIdentityRegistry, error)
+        })?;
+    if metadata_is_link_or_reparse(&path_metadata)
+        || !open_metadata.is_file()
+        || !path_metadata.is_file()
+        || open_metadata.len() != 0
+        || path_metadata.len() != 0
+        || path_metadata.nlink() != 1
+        || !same_bound_file(&open_metadata, &path_metadata)
+    {
+        return Err(unsafe_path(
+            WorkspaceAuthorityPathIssue::IdentityRegistryPermissionsUnsafe,
+        ));
+    }
+    Ok(())
 }
 
 #[derive(Debug)]
@@ -1465,6 +1577,35 @@ mod tests {
             )
             .is_ok()
         );
+        Ok(())
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn concurrent_windows_first_use_waits_for_canonical_registry_security()
+    -> Result<(), Box<dyn Error>> {
+        use std::sync::{Arc, Barrier};
+
+        const BINDERS: usize = 8;
+        let root = tempdir()?;
+        let registry_path = Arc::new(root.path().join("concurrent-registry"));
+        let barrier = Arc::new(Barrier::new(BINDERS));
+        let mut threads = Vec::with_capacity(BINDERS);
+
+        for _ in 0..BINDERS {
+            let registry_path = Arc::clone(&registry_path);
+            let barrier = Arc::clone(&barrier);
+            threads.push(std::thread::spawn(move || {
+                barrier.wait();
+                IdentityRegistry::bind(&registry_path)
+            }));
+        }
+
+        for thread in threads {
+            thread
+                .join()
+                .map_err(|_| std::io::Error::other("registry binder panicked"))??;
+        }
         Ok(())
     }
 

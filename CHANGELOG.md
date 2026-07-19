@@ -72,6 +72,9 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Changed
 
+- Windows first-use registry creation now uses a cross-process initialisation
+  lock so concurrent desktop or CLI launches cannot observe the directory
+  between creation and canonical ACL verification.
 - Traceability now records merged P00/P01 completion and active P02/G1 execution, closes the composite workspace gate only at downstream P09-OKF, proves gate and cross-milestone reachability, places P05's prerequisite domain contracts in G1, and reserves compiled-out Airgap evidence for UAT-024/FG-R2-005.
 - Mandatory build-order guidance and semantic specification checks now enforce P06-REPAIR between tolerant Directory reads and OKF normalization, together with the corrected P02, P03, repair, B0 acceptance, and A0 settings ownership edges.
 - Corrected machine-contract ownership so P02 owns session authority rather than installed/offline round-trip acceptance, B0 acceptance owns workspace creation and `UAT-001`, final A0 acceptance closes the full round-trip gate, settings-only export/import and `UAT-050` belong to A0 configuration, and post-P06 guided repair owns `UAT-040` through backup-first recoverable operations.
