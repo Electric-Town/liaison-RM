@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "active",
-  "source_sha256": "b7f527e303051caa5a8e5471f556deaacc317a1ca6d81336b3ee2ebf97034567",
+  "source_sha256": "55c14b5cb9ad9e8499d9bb860966f7b04ce828eeacaac1b232792f8eb4ec8044",
   "delivery_boundary": "B0 Workplace Review Alpha before A0 Personal Memory Alpha; provider, mobile, AI, MCP, and theme packages remain later.",
   "design_sequence": "After T-B0-P03, T-B0-P03D runs design consultation to create DESIGN.md and plan design review; T-B0-P04 cannot start before that gate. G0 does not create DESIGN.md.",
   "approved_strategy": {
@@ -1807,14 +1807,13 @@
       "context": "workspace",
       "priority": "must",
       "statement": "The product shall export a versioned settings-only bundle containing layouts, fields, packs, templates, views, appearance, and policies but no records, secrets, tokens, caches, or device paths.",
-      "owning_task": "T-B0-P03",
-      "owning_gate": "FG-B0-001",
-      "milestone": "G1",
-      "evidence_owner": "EO-WORKSPACE",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
       "supporting_tasks": [
-        "T-B0-P03",
-        "T-B0-P11"
+        "T-A0-P01"
       ]
     },
     {
@@ -1823,14 +1822,13 @@
       "context": "workspace",
       "priority": "must",
       "statement": "Settings import shall provide validation, migration and diff preview, conflict choices, dry-run, rollback, and unknown-safe-field preservation.",
-      "owning_task": "T-B0-P03",
-      "owning_gate": "FG-B0-001",
-      "milestone": "G1",
-      "evidence_owner": "EO-WORKSPACE",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
       "supporting_tasks": [
-        "T-B0-P03",
-        "T-B0-P11"
+        "T-A0-P01"
       ]
     },
     {
@@ -3315,20 +3313,20 @@
       "repository_release": "R1",
       "persona": "P-CRM",
       "title": "Repair invalid external edit",
-      "owning_task": "T-B0-P03",
-      "owning_gate": "FG-B0-001",
-      "milestone": "G1",
-      "evidence_owner": "EO-WORKSPACE",
+      "owning_task": "T-B0-P09",
+      "owning_gate": "FG-R3-002",
+      "milestone": "G3",
+      "evidence_owner": "EO-EVENTS",
       "status": "blocked",
       "supporting_tasks": [
-        "T-B0-P03",
+        "T-B0-P09",
         "T-R1-003",
         "T-R1-006",
         "T-R1-008"
       ],
       "supporting_gates": [
-        "FG-B0-001",
-        "FG-R1-002"
+        "FG-R1-002",
+        "FG-R3-002"
       ]
     },
     {
@@ -3504,20 +3502,16 @@
       "repository_release": "B0",
       "persona": "P-CRM",
       "title": "Transfer settings without transferring records or secrets",
-      "owning_task": "T-B0-P11",
-      "owning_gate": "FG-B0-003",
-      "milestone": "B0",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
       "supporting_tasks": [
-        "T-A0-P01",
-        "T-B0-ACCEPT",
-        "T-B0-P11"
+        "T-A0-P01"
       ],
       "supporting_gates": [
-        "FG-A0-G2C",
-        "FG-B0-001",
-        "FG-B0-003"
+        "FG-A0-G2C"
       ]
     },
     {

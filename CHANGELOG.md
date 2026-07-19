@@ -57,6 +57,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - The README and GitHub About contract now lead with the product outcome, state the pre-alpha boundary plainly, and route readers to current evidence, contribution guidance, and the public site.
 - Public site, README, project context, roadmap, and agent guidance now put B0 before A0, distinguish the tested CLI from the broken installed desktop Person-create path, and use 400% reflow as the accessibility evidence target.
 - Requirements and UAT task arrays now contain only atomically owned contracts; reused prerequisite or regression coverage is labelled `evidence_dependencies` rather than implying a second owner.
+- Settings-only bundle transfer (`LRM-WS-013`, `LRM-WS-014`, `UAT-050`) is now owned by the A0 G2c configuration task, and the guided Directory record repair journey (`UAT-040`) by the staged Directory onboarding task with its cohort gate; P03 keeps only failure-atomic storage and recovery evidence (`UAT-042`), and the B0 workspace and acceptance gates no longer cite settings transfer.
 
 ### Fixed
 
