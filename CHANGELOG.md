@@ -70,6 +70,8 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - A static public project site with semantic metadata, local assets, a custom 404 page, a social card, responsive layouts, and a GitHub Pages deployment workflow.
 - A public-site validator covering metadata, local asset resolution, accessibility basics, structured data, language consistency, discovery files, and copy standards.
 
+- A Customisation bounded-context domain core preparing the A0 G2c settings work: classified settings entries, an adversarial bundle review that lists rejected record-identifier, secret-like, and absolute-path content instead of silently dropping it, unknown-safe-key preservation, diff preview with mandatory conflict choices, and pure apply with exact revisioned rollback — with the bundle format explicitly provisional pending its owning milestone.
+
 ### Changed
 
 - Windows first-use registry creation now uses a cross-process initialisation

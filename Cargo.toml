@@ -7,6 +7,7 @@ members = [
     "adapters/vault-markdown",
     "adapters/workspace-session-local",
     "contexts/connections",
+    "contexts/customisation",
     "contexts/people",
     "contexts/profiles",
     "contexts/review-attention",
