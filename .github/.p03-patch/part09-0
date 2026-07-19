@@ -1,0 +1,98 @@
+e_id,
+-            }
+-            .into());
+-        }
+-        if current_manifest.schema_version != manifest.schema_version {
+-            return Err(WorkspaceError::SessionSchemaChanged {
+-                expected: manifest.schema_version,
+-                found: current_manifest.schema_version,
+-            }
+-            .into());
+-        }
++        ensure_same_session_manifest(&manifest, &current_manifest)?;
++        let recovery = self
++            .binding
++            .recover_pending_operations(current_manifest.workspace_id)?;
++        let recovered_manifest = self.binding.load_manifest()?;
++        recovered_manifest.validate()?;
++        ensure_same_session_manifest(&current_manifest, &recovered_manifest)?;
++        let recovered_operations = u32::try_from(recovery.rolled_forward.len())
++            .map_err(|_| WorkspaceSessionError::StateUnavailable)?;
++        let discarded_uncommitted = u32::try_from(recovery.discarded_uncommitted.len())
++            .map_err(|_| WorkspaceSessionError::StateUnavailable)?;
+         let repositories = self.binding.into_repositories();
+         Ok(WorkspaceSession {
+-            manifest: current_manifest,
++            manifest: recovered_manifest,
+             repositories,
+             writer_authority: Mutex::new(Some(writer_authority)),
+             lifecycle: Mutex::new(SessionLifecycle {
+@@ -778,13 +804,37 @@ where
+                 in_flight: 0,
+             }),
+             lifecycle_changed: Condvar::new(),
+-            recovery_state: WorkspaceRecoveryState::UnavailableUntilRecoverableOperations,
++            recovery_state: WorkspaceRecoveryState::Ready {
++                recovered_operations,
++                discarded_uncommitted,
++            },
+             key_state: WorkspaceKeyState::UnavailableUntilWorkspaceSecurity,
+             projection_state: WorkspaceProjectionState::UnavailableUntilDirectoryProjection,
+         })
+     }
+ }
+ 
++fn ensure_same_session_manifest(
++    expected: &WorkspaceManifest,
++    found: &WorkspaceManifest,
++) -> Result<(), WorkspaceSessionError> {
++    if found.workspace_id != expected.workspace_id {
++        return Err(WorkspaceError::SessionIdentityChanged {
++            expected: expected.workspace_id,
++            found: found.workspace_id,
++        }
++        .into());
++    }
++    if found.schema_version != expected.schema_version {
++        return Err(WorkspaceError::SessionSchemaChanged {
++            expected: expected.schema_version,
++            found: found.schema_version,
++        }
++        .into());
++    }
++    Ok(())
++}
++
+ pub trait WorkspaceStore: Send + Sync {
+     fn initialise(&self, root: &Path, manifest: &WorkspaceManifest) -> Result<(), WorkspaceError>;
+ 
+@@ -886,8 +936,9 @@ where
+ mod tests {
+     use super::{
+         BoundWorkspaceSessionPort, BoundWorkspaceStore, BuildProfile, OpenWorkspaceSession,
+-        ValidationFinding, WorkspaceError, WorkspaceKeyState, WorkspaceManifest, WorkspaceProfile,
+-        WorkspaceProjectionState, WorkspaceRecoveryState, WorkspaceSessionError,
++        OperationRecoveryReport, ValidationFinding, WorkspaceError, WorkspaceKeyState,
++        WorkspaceManifest, WorkspaceOperationError, WorkspaceProfile, WorkspaceProjectionState,
++        WorkspaceRecoveryState, WorkspaceSessionError,
+         WorkspaceWriterAuthority, WorkspaceWriterAuthorityPort, WriterDiagnostic,
+     };
+     use chrono::{DateTime, Utc};
+@@ -953,6 +1004,13 @@ mod tests {
+     impl BoundWorkspaceSessionPort for TrackingBinding {
+         type Repositories = MemoryRepositories;
+ 
++        fn recover_pending_operations(
++            &self,
++            _workspace_id: WorkspaceId,
++        ) -> Result<OperationRecoveryReport, WorkspaceOperationError> {
++            Ok(OperationRecoveryReport::default())
++        }
++
+         fn into_repositories(self) -> Self::Repositories {
+             self.repositories
+         }
+@@ -1103,7 +1161,10 @@ mod tests {
+         ));
+         assert_eq!(
+             session.recovery_sta
