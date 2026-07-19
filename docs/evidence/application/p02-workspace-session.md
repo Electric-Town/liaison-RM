@@ -227,8 +227,17 @@ was `fd995726f60eb4df2de9f92d8a92a63332163cce83c7b0ba0170356ca15e614d`.
 That artifact predates the final native-operation and special-file fixes, so it
 is retained only as integration evidence and is not final-head, installed-app,
 native-QA, or release evidence. It did not replace the reviewed P01 installed
-application. A final implementation-head P02 review bundle must be rebuilt and
-indexed separately before publication.
+application.
+
+The final P02 implementation commit
+`4acf088b7dc5d791343fcafc1f41db462cb17626` was then rebuilt as a universal
+application, explicitly ad-hoc signed, strictly verified, and inspected as
+`x86_64` plus `arm64`. Its signed executable SHA-256 is
+`cb175446ab8950c878d5aff936b49720efe6c65c7bacbd949e58d7cc0169ea6f`.
+The full local provenance and claim boundary are recorded in the
+[P02 universal macOS build record](../macos/p02-native-build-2026-07-19.md).
+That bundle remains uninstalled local build evidence; exact pull-request-head
+remote matrices and installed-app requalification are still pending.
 
 P03 remains responsible for durable operation journals, a durable commit
 decision, directory durability, multi-target roll-forward, staged-output
