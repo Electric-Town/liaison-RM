@@ -8,16 +8,26 @@ and exposes serializable commands, queries, results, and structured errors.
 
 - A path is accepted only by workspace initialise and open commands.
 - A successful open returns a typed `WorkspaceSessionId`.
-- Validation and People commands resolve the workspace through that session.
+- Workspace inspection and People commands resolve the workspace through a
+  write-authoritative session; one-shot Health is separately path-selected,
+  read-only, and lock-free.
+- Each session owns one retained root capability, its operating-system writer
+  authority, and path-free repositories derived from that exact root handle.
+- Close rejects new work, drains issued work guards, releases authority, and
+  invalidates the old session identifier.
 - Opening a workspace keeps healthy People visible when another Person file is
   malformed and returns the validation finding for repair.
 - Runtime time, identifiers, and randomness are injected through
   `RuntimePorts`, so tests do not depend on ambient time or identifiers.
 
-The current session binds a workspace identity and repository root. It does not
-yet claim writer-lock authority, operation recovery, key availability, or
-projection health. Those capabilities belong to the Workspace Session delivery
-phase and must be added here rather than independently in the CLI or Tauri.
+The current session claims writer authority only while both its workspace-local
+lock and per-user `WorkspaceId` lock handles are live. An independently copied
+workspace with the same identity is denied to cooperating Liaison processes on
+the same user account and machine. `T-B0-P02` remains open pending exact-head
+remote platform qualification. Recovery, key, and projection states are explicitly
+unavailable until P03, workspace security, and Directory projection provide
+their real implementations. P03 also owns durable multi-target commit decisions
+and final mutation preconditions; this P02 boundary does not imply them.
 
 ## Status language
 

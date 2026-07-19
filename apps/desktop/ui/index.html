@@ -66,31 +66,32 @@
             <div class="field">
               <label for="workspace-path">Absolute folder path</label>
               <div class="input-with-action">
-                <input id="workspace-path" name="path" type="text" autocomplete="off" spellcheck="false" required aria-describedby="path-help">
-                <button id="use-default-path" class="secondary-button" type="button">Use Documents</button>
+                <input id="workspace-path" name="path" type="text" autocomplete="off" spellcheck="false" required aria-describedby="path-help" data-native-operation="global">
+                <button id="use-default-path" class="secondary-button" type="button" data-native-operation="global">Use Documents</button>
               </div>
               <p id="path-help" class="field-help">Example: /Users/you/Documents/Liaison RM</p>
             </div>
             <div class="field">
               <label for="workspace-name">Workspace name</label>
-              <input id="workspace-name" name="name" type="text" value="Workplace review" maxlength="120" required>
+              <input id="workspace-name" name="name" type="text" value="Workplace review" maxlength="120" required data-native-operation="global">
             </div>
             <div class="field">
               <label for="workspace-profile">Workspace profile</label>
-              <select id="workspace-profile" name="profile">
+              <select id="workspace-profile" name="profile" data-native-operation="global">
                 <option value="workplace" selected>Workplace</option>
                 <option value="family">Family</option>
                 <option value="team">Team</option>
                 <option value="personal">Personal</option>
               </select>
             </div>
-            <button class="primary-button" type="submit">Create local workspace</button>
+            <button class="primary-button" type="submit" data-native-operation="global">Create local workspace</button>
           </form>
 
           <section class="card" aria-labelledby="open-heading">
             <h2 id="open-heading">Open an existing workspace</h2>
             <p>Enter its absolute folder path above, then open and validate the existing manifest.</p>
-            <button id="open-workspace" class="secondary-button full-width" type="button">Open existing workspace</button>
+            <button id="open-workspace" class="secondary-button full-width" type="button" data-native-operation="global">Open existing workspace</button>
+            <button id="inspect-workspace-health" class="secondary-button full-width" type="button" data-native-operation="global">Run read-only Health</button>
             <div class="divider" aria-hidden="true"></div>
             <h3>Current workspace</h3>
             <dl id="workspace-summary" class="summary-list">
@@ -109,7 +110,7 @@
             <h1 id="people-heading" tabindex="-1">Remember useful context without scoring people</h1>
             <p>Add a basic profile now. Topic Packs, relationships and review reasons arrive in later bounded-context changes.</p>
           </div>
-          <button id="refresh-people" class="secondary-button" type="button">Refresh list</button>
+          <button id="refresh-people" class="secondary-button" type="button" data-native-operation="session">Refresh list</button>
         </div>
 
         <div id="people-workspace-warning" class="notice warning" role="status">
@@ -127,7 +128,7 @@
               <label for="person-email">Email <span class="optional">optional</span></label>
               <input id="person-email" name="email" type="email" autocomplete="email" disabled>
             </div>
-            <button id="create-person" class="primary-button" type="submit" disabled>Save Markdown profile</button>
+            <button id="create-person" class="primary-button" type="submit" data-native-operation="session" disabled>Save Markdown profile</button>
           </form>
 
           <section class="card" aria-labelledby="people-list-heading">
@@ -149,11 +150,12 @@
             <h1 id="health-heading" tabindex="-1">Validate the open-file workspace</h1>
             <p>Validation reports problems without deleting or silently rewriting user-authored files.</p>
           </div>
-          <button id="run-validation" class="primary-button" type="button" disabled>Run validation</button>
+          <button id="run-validation" class="primary-button" type="button" data-native-operation="session" disabled>Run validation</button>
         </div>
 
         <section class="card health-card" aria-labelledby="validation-result-heading">
           <h2 id="validation-result-heading">Validation result</h2>
+          <p id="validation-scope" class="validation-scope">No workspace inspected.</p>
           <div id="validation-summary" class="health-summary">
             <span class="health-icon" aria-hidden="true">?</span>
             <div>

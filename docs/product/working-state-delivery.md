@@ -6,20 +6,38 @@ This document tells a contributor what the next product is and prevents roadmap 
 
 ## Verified implementation boundary
 
-The default branch, after the merged P00 and P01 changes, contains:
+The current P02 source state, built on the merged P00 and P01 foundation, contains:
 
 - Workspace and People domain foundations;
 - readable Workspace YAML and Person Markdown storage;
 - one `liaison-application` composition root used by the CLI and native Tauri alpha;
-- typed identity-bound workspace session identifiers and shared structured result/error envelopes;
+- write-authoritative Workspace Sessions that own identity/schema, one retained
+  capability root, path-free repositories, environment-independent composite
+  path/identity operating-system writer authority for ordinary unconfined
+  processes, quiescence, and explicit unavailable recovery/key/projection states;
+- lock-free one-shot Health for contended, malformed, and newer-schema
+  workspaces, plus shared structured result/error envelopes;
 - workspace create/open/validate and Person create/list through both inbound adapters;
 - profile/readiness and reason-only Review domain foundations that are not yet persisted or surfaced as a complete product;
 - provider-neutral contracts and a local-folder reference adapter with limited claims;
 - macOS and Windows packaging workflows.
 
-The installed macOS review application is version `0.1.0-alpha.1` and is an ad-hoc-signed universal internal alpha. It is not Developer ID signed, notarised, or a supported public release.
+The installed macOS review application is version `0.1.0-alpha.1` and contains
+a universal executable with a linker/ad-hoc code directory, but strict bundle
+verification reports that the application bundle is not signed. It is not
+Developer ID signed, notarised, or a supported public release.
 
-The application does not yet provide a complete event workflow, encrypted recovery, a write-authoritative Workspace Session, recoverable multi-target writes, pinned OKF People authoring or normalization, Directory projection, supported Airgap proof, or Personal Memory Alpha. The P01 session binds identity and repository access only. Documentation and prototypes describing later features are plans until exact-head implementation evidence exists.
+The P02 source state provides a write-authoritative Workspace Session with
+workspace-local and per-user `WorkspaceId` operating-system exclusion,
+retained capability roots, quiescence, and lock-free read-only Health. Current
+cooperating ordinary unconfined Liaison processes on one OS account and machine
+reject copied workspaces with the same identity even when `HOME`/XDG values
+differ. Flatpak, macOS App Sandbox, and Windows AppContainer host/GUI pairings
+remain explicitly unsupported until a shared authority broker/namespace exists
+and are not treated as valid fallback registries. `T-B0-P02` remains open
+pending exact-head native Linux, macOS, and Windows evidence.
+
+The application also does not yet provide a complete event workflow, encrypted recovery, recoverable multi-target writes, final mutation preconditions, pinned OKF People authoring or normalization, Directory projection, supported Airgap proof, or Personal Memory Alpha. Recovery, key, and projection capabilities remain explicitly unavailable until their owning phases land. Local P02 source-worktree evidence is recorded, but exact-head remote Linux, macOS, and Windows matrices and installed-artifact requalification remain pending. Documentation and prototypes describing later features are plans until exact-head implementation evidence exists.
 
 The approved Claudia/PingCRM/OKF strategy overlay is integrated into the machine contracts at SHA-256 `795a6e6751cd29a995478e254323f491e68a53ef7c35fa729d8627b87cd37089`. It adopts specific person-record outcomes and rejects blanket parity or provider-count claims. G0, P00, and P01 are complete; G1 is current and P02 is the active package.
 

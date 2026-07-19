@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://electric-town.org/liaison/schemas/workspace-manifest.schema.json",
+  "title": "Liaison workspace manifest",
+  "description": "The readable YAML manifest stored at .liaison/workspace.yaml. JSON Schema applies to the YAML data model after parsing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "schema_version",
+    "workspace_id",
+    "name",
+    "profile",
+    "build_profile",
+    "default_locale",
+    "enabled_modules"
+  ],
+  "properties": {
+    "format": {
+      "const": "liaison-workspace"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "workspace_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "profile": {
+      "enum": ["personal", "family", "team", "workplace"]
+    },
+    "build_profile": {
+      "enum": ["airgap", "connected-local"]
+    },
+    "default_locale": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "enabled_modules": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "contains": {
+        "const": "people"
+      },
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128,
+        "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$"
+      }
+    }
+  }
+}

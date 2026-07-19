@@ -6,7 +6,30 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Added
 
-- One `liaison-application` composition root shared by the CLI and desktop, with typed command results, structured recoverable errors, deterministic runtime ports, and identity-bound workspace sessions.
+- A write-authoritative, `Arc`-owned Workspace Session that retains one
+  capability root, workspace identity/schema, path-free repositories, an
+  operating-system writer lock, quiescence, and explicit unavailable recovery,
+  key, and projection states.
+- A local Workspace Session adapter with no-follow capability traversal,
+  typed writer contention, diagnostic-only bounded sidecars, process-exit lock
+  release, retained-root identity checks, and lock-free read-only Health.
+- Per-user `WorkspaceId` writer exclusion for copied or file-synchronised
+  workspaces, with zero-data registry entries, safe first-use creation, typed
+  identity contention, hostile-registry checks, post-lock manifest validation,
+  Windows owner/DACL verification, and focused native Windows workflow tests.
+- Safe desktop workspace switching that closes the previous session before
+  accepting its replacement and best-effort closes the replacement if the
+  previous session cannot close.
+- A published version-one Workspace manifest schema with explicit
+  `enabled_modules`, strict new-writer fixtures, lossless legacy reads for the
+  pre-field P01 manifest, and a pinned schema-validation workflow.
+- An opaque People repository borrowed from a live Workspace work guard, plus
+  compiler-boundary tests proving an unguarded Markdown vault cannot implement
+  or retain the production Person repository.
+- One-shot read-only Health from the selected folder even when no writer
+  session opens, with the inspected folder shown separately from the active
+  workspace.
+- One `liaison-application` composition root shared by the CLI and desktop, with typed command results, structured recoverable errors, deterministic runtime ports, and typed workspace session identifiers.
 - Shared-fixture CLI and Tauri parity for workspace initialise/open/validate and Person create/list, including versioned envelopes, tolerant malformed-sibling reads, and initial Person revision 1.
 - Semantic Person validation, duplicate-identity Health findings, safe workspace-path rejection, actionable human Health output, retryable desktop create/open actions, native-safe keyboard form submission, correct hidden-state rendering, and automated base/dark text-contrast gates.
 - KCS-0010 and executable evidence for keeping inbound adapters on the same application workflow.
@@ -49,6 +72,9 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Changed
 
+- Windows first-use registry creation now uses a cross-process initialisation
+  lock so concurrent desktop or CLI launches cannot observe the directory
+  between creation and canonical ACL verification.
 - Traceability now records merged P00/P01 completion and active P02/G1 execution, closes the composite workspace gate only at downstream P09-OKF, proves gate and cross-milestone reachability, places P05's prerequisite domain contracts in G1, and reserves compiled-out Airgap evidence for UAT-024/FG-R2-005.
 - Mandatory build-order guidance and semantic specification checks now enforce P06-REPAIR between tolerant Directory reads and OKF normalization, together with the corrected P02, P03, repair, B0 acceptance, and A0 settings ownership edges.
 - Corrected machine-contract ownership so P02 owns session authority rather than installed/offline round-trip acceptance, B0 acceptance owns workspace creation and `UAT-001`, final A0 acceptance closes the full round-trip gate, settings-only export/import and `UAT-050` belong to A0 configuration, and post-P06 guided repair owns `UAT-040` through backup-first recoverable operations.
@@ -63,15 +89,48 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Fixed
 
+- Desktop native operations now share one synchronous busy boundary with
+  generation/session checks, stale-result rejection, and explicit cleanup of
+  superseded workspace sessions, preventing overlapping switches or Person
+  results from leaking authority or state across workspaces. If both the old
+  session close and replacement cleanup fail, the interface retains explicit
+  restart recovery and disables further native operations until exit.
+- Capability-bound manifest and Person reads now preflight and post-validate
+  regular files around a nonblocking no-follow open, so FIFOs and other special
+  files cannot wedge one-shot Health or normal workspace access.
+- Windows identity-registry security inspection now queries file and directory
+  handles as Win32 `SE_FILE_OBJECT` values instead of using the dependency's
+  generic unknown-object helper, allowing owner/DACL checks to run natively.
+- Windows now resolves `FOLDERID_LocalAppData` with an explicit current-process
+  user token, without making Profile or mutable process environment a second
+  authority prerequisite, and treats that retained, no-reparse Known Folder as
+  traversal infrastructure rather than a Liaison-owned private object. Newly
+  created Liaison registry directories and lock files are normalised to the
+  token user with one protected user/System/Administrators ACL; any existing
+  noncanonical registry or lock still fails closed. Initialisation and Windows
+  API errors retain their typed recovery category without exposing a host path.
+- Desktop asset verification now compares rendered PNG and ICNS content across
+  platforms while retaining byte-exact checks for the uncompressed Windows ICO,
+  avoiding false drift failures from host-specific compression libraries.
+- Downloadable Mac and Windows review artifacts now carry checksum manifests
+  with artifact-relative paths and verify those manifests before upload.
 - Desktop alpha now compiles and lints cleanly across Linux, macOS, and Windows: Tauri command arguments acknowledge required ownership, the default workspace path uses `map_or_else`, and a deterministic Windows `icon.ico` resource is generated for `tauri-build`.
 - Health findings now expose portable `/`-separated workspace-relative paths across macOS, Linux, and Windows instead of leaking host-specific path separators into the shared application contract.
 - Default-workspace tests now compare the operating system's native Documents path composition instead of imposing Unix separators on Windows.
+- Workspace identity writer authority no longer forks when ordinary
+  same-account processes use different `HOME` or XDG values. Production
+  launch-order and process-exit tests now exercise the canonical locator, and
+  inaccessible or Flatpak-isolated authority fails closed without fallback.
 
 ### Security
 
 - Documented the prohibition on undeclared network requests, hidden telemetry, secret material in canonical files, and provider or plugin access without an explicit grant.
 - Defined separate Airgap and Connected-local build profiles and least-disclosure handling for sensitive relationship and workplace data.
 - Kept network, provider, SQL, Tauri, and secret-storage dependencies out of the initial Workspace and People domain crates.
+- Pinned and documented target-specific `uzers` 0.12.2, `winsafe` 0.0.28,
+  `rustix` 1.1.4, and `windows-permissions` 0.2.4 for environment-independent,
+  fail-closed per-user identity-registry resolution and ownership checks;
+  registry entries contain no path, PID, diagnostic, or relationship data.
 - Provider registration remains inert without a purpose-bound grant, and the local adapter claims backup/single-writer modes only.
 - Private assessments and sensitive Topic Pack values require explicit classification, purpose, and sharing grants.
 - Sensitive and secret profile definitions require sealed values in the new domain contract.

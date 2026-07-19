@@ -17,9 +17,18 @@ liaison --workspace PATH person create --name NAME [--email ADDRESS]
 liaison --workspace PATH person list [--include-archived]
 ```
 
-Each process opens or initialises a typed application workspace session before
-executing inspection, validation, or People commands. The session is currently
-identity-bound; writer locking and recoverable operations remain later gates.
+Each process opens or initialises a write-authoritative application workspace
+session before executing inspection or People commands. The session owns a
+composite path-local and per-user `WorkspaceId` operating-system authority plus
+root-bound repositories for the command lifetime. For ordinary unconfined
+same-account CLI/desktop processes, a copied workspace with the same identity
+returns `workspace.identity-writer-already-active` while the original is open,
+independently of `HOME`/XDG overrides. Sandboxed GUI/host-CLI coordination is
+not supported without a shared broker or authority namespace. `workspace
+validate` is different by design: it runs lock-free,
+one-shot read-only Health so a second process can inspect a contended,
+malformed, or newer-schema workspace without acquiring writer authority.
+Recoverable operations and final mutation preconditions remain later gates.
 
 The review CLI defaults the manifest declaration to `connected-local` because
 the current artifact has not passed the Airgap dependency and socket-denial
@@ -55,7 +64,7 @@ envelope.
 | 1 | General application or output error |
 | 2 | CLI usage error, including omitted `--workspace` |
 | 3 | Workspace, session, or Person not found |
-| 4 | Existing target, stale session, or revision conflict |
+| 4 | Existing target, active writer, stale session, or revision conflict |
 | 5 | Unsupported workspace schema |
 | 6 | Validation completed and returned one or more error findings |
 

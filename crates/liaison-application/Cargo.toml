@@ -13,6 +13,7 @@ liaison-people = { path = "../../contexts/people" }
 liaison-shared-kernel = { path = "../liaison-shared-kernel" }
 liaison-vault-markdown = { path = "../../adapters/vault-markdown" }
 liaison-workspace = { path = "../../contexts/workspace" }
+liaison-workspace-session-local = { path = "../../adapters/workspace-session-local" }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true

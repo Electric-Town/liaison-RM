@@ -12,9 +12,9 @@
 
 use liaison_application::{
     AppStatusDto, ApplicationError, BuildProfile, CommandResult, CreatePersonCommand,
-    InitialiseWorkspaceCommand, LiaisonApplication, ListPeopleQuery, OpenWorkspaceCommand,
-    PersonDto, WorkspaceOpenDto, WorkspaceProfile, WorkspaceSessionCommand, WorkspaceSessionId,
-    WorkspaceValidationDto,
+    InitialiseWorkspaceCommand, InspectWorkspaceHealthQuery, LiaisonApplication, ListPeopleQuery,
+    OpenWorkspaceCommand, PersonDto, WorkspaceClosedDto, WorkspaceOpenDto, WorkspaceProfile,
+    WorkspaceSessionCommand, WorkspaceSessionId, WorkspaceValidationDto,
 };
 use serde::Deserialize;
 use tauri::State;
@@ -96,6 +96,23 @@ fn validate_workspace(
     validate_workspace_impl(&application, request)
 }
 
+#[tauri::command]
+#[allow(clippy::needless_pass_by_value)] // Tauri commands own deserialized arguments.
+fn inspect_workspace_health(
+    application: State<'_, LiaisonApplication>,
+    path: String,
+) -> Result<CommandResult<WorkspaceValidationDto>, ApplicationError> {
+    inspect_workspace_health_impl(&application, path)
+}
+
+#[tauri::command]
+fn close_workspace(
+    application: State<'_, LiaisonApplication>,
+    request: WorkspaceSessionRequest,
+) -> Result<CommandResult<WorkspaceClosedDto>, ApplicationError> {
+    close_workspace_impl(&application, request)
+}
+
 fn initialise_workspace_impl(
     application: &LiaisonApplication,
     request: InitialiseWorkspaceRequest,
@@ -146,6 +163,22 @@ fn validate_workspace_impl(
     })
 }
 
+fn inspect_workspace_health_impl(
+    application: &LiaisonApplication,
+    path: String,
+) -> Result<CommandResult<WorkspaceValidationDto>, ApplicationError> {
+    application.inspect_workspace_health(InspectWorkspaceHealthQuery { path })
+}
+
+fn close_workspace_impl(
+    application: &LiaisonApplication,
+    request: WorkspaceSessionRequest,
+) -> Result<CommandResult<WorkspaceClosedDto>, ApplicationError> {
+    application.close_workspace(WorkspaceSessionCommand {
+        session_id: request.session_id,
+    })
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let result = tauri::Builder::default()
@@ -157,7 +190,9 @@ pub fn run() {
             open_workspace,
             list_people,
             create_person,
-            validate_workspace
+            validate_workspace,
+            inspect_workspace_health,
+            close_workspace
         ])
         .run(tauri::generate_context!());
     if let Err(error) = result {
@@ -169,8 +204,9 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::{
-        CreatePersonRequest, InitialiseWorkspaceRequest, create_person_impl,
-        initialise_workspace_impl, open_workspace_impl,
+        CreatePersonRequest, InitialiseWorkspaceRequest, WorkspaceSessionRequest,
+        close_workspace_impl, create_person_impl, initialise_workspace_impl,
+        inspect_workspace_health_impl, open_workspace_impl,
     };
     use liaison_application::{
         APPLICATION_CONTRACT_VERSION, BuildProfile, LiaisonApplication, Revision, WorkspaceProfile,
@@ -183,6 +219,40 @@ mod tests {
         serde_json::from_str(include_str!(
             "../../../../spec/fixtures/application-parity.json"
         ))
+    }
+
+    #[test]
+    fn desktop_request_types_deserialize_the_actual_camel_case_ipc_payloads()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let session = "00000000-0000-4000-8000-000000000123";
+        let create: CreatePersonRequest = serde_json::from_value(json!({
+            "sessionId": session,
+            "displayName": "Alex Murphy",
+            "email": "alex@example.test"
+        }))?;
+        assert_eq!(create.session_id.to_string(), session);
+        assert_eq!(create.display_name, "Alex Murphy");
+        assert_eq!(create.email.as_deref(), Some("alex@example.test"));
+
+        let workspace: WorkspaceSessionRequest = serde_json::from_value(json!({
+            "sessionId": session
+        }))?;
+        assert_eq!(workspace.session_id.to_string(), session);
+
+        let initialise: InitialiseWorkspaceRequest = serde_json::from_value(json!({
+            "path": "/tmp/liaison-review",
+            "name": "Review workspace",
+            "profile": "workplace"
+        }))?;
+        assert_eq!(initialise.profile, WorkspaceProfile::Workplace);
+
+        let wrong_case = serde_json::from_value::<CreatePersonRequest>(json!({
+            "session_id": session,
+            "display_name": "Alex Murphy",
+            "email": null
+        }));
+        assert!(wrong_case.is_err());
+        Ok(())
     }
 
     #[test]
@@ -247,6 +317,13 @@ mod tests {
         );
         fs::write(root.join("people/malformed.md"), "not front matter\n")?;
 
+        close_workspace_impl(
+            &application,
+            WorkspaceSessionRequest {
+                session_id: opened.value.workspace.session_id,
+            },
+        )?;
+
         let reopened = open_workspace_impl(&application, root.to_string_lossy().into_owned())?;
         assert_eq!(
             u64::from(reopened.contract_version),
@@ -275,6 +352,38 @@ mod tests {
         let mut normalized = serde_json::to_value(error)?;
         normalized["correlation_id"] = json!("<uuid>");
         assert_eq!(normalized, expected["relative_path_error"]);
+        Ok(())
+    }
+
+    #[test]
+    fn desktop_surfaces_typed_contention_while_health_remains_available()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let temporary = tempdir()?;
+        let root = temporary.path().join("workspace");
+        let writer = LiaisonApplication::new();
+        let observer = LiaisonApplication::new();
+        let _opened = initialise_workspace_impl(
+            &writer,
+            InitialiseWorkspaceRequest {
+                path: root.to_string_lossy().into_owned(),
+                name: "Contended".to_owned(),
+                profile: WorkspaceProfile::Workplace,
+            },
+        )?;
+
+        let contended = open_workspace_impl(&observer, root.to_string_lossy().into_owned());
+        assert!(contended.is_err());
+        let Err(error) = contended else {
+            return Ok(());
+        };
+        assert_eq!(error.code, "workspace.writer-already-active");
+        assert!(error.details.is_empty());
+        let rendered = serde_json::to_string(&error)?;
+        assert!(!rendered.contains(&root.to_string_lossy().into_owned()));
+        assert!(!rendered.contains("process_id"));
+
+        let health = inspect_workspace_health_impl(&observer, root.to_string_lossy().into_owned())?;
+        assert!(health.value.valid);
         Ok(())
     }
 

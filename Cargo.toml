@@ -5,6 +5,7 @@ members = [
     "adapters/object-store-local",
     "adapters/provider-registry-memory",
     "adapters/vault-markdown",
+    "adapters/workspace-session-local",
     "contexts/connections",
     "contexts/people",
     "contexts/profiles",
@@ -25,18 +26,25 @@ rust-version = "1.97.1"
 
 [workspace.dependencies]
 assert_cmd = "2.0"
+cap-fs-ext = "4.0.2"
+cap-std = "4.0.2"
 chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "4.5", features = ["derive"] }
 getrandom = "0.4.3"
 predicates = "3.1"
+rustix = { version = "1.1.4", features = ["process"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.9"
 sha2 = "0.10"
 tempfile = "3.20"
 thiserror = "2.0"
+trybuild = "1.0.118"
 uuid = { version = "1.18", features = ["serde", "v7"] }
+uzers = { version = "0.12.2", default-features = false }
 walkdir = "2.5"
+windows-permissions = "0.2.4"
+winsafe = { version = "=0.0.28", default-features = false, features = ["advapi", "shell"] }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

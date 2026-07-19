@@ -5,11 +5,28 @@ on:
     paths:
       - "Cargo.toml"
       - "Cargo.lock"
+      - "apps/cli/**"
       - "apps/desktop/**"
+      - "crates/liaison-application/**"
+      - "adapters/workspace-session-local/**"
       - "adapters/vault-markdown/**"
       - "contexts/people/**"
       - "contexts/workspace/**"
       - ".github/workflows/windows-desktop.yml"
+  push:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "apps/cli/**"
+      - "apps/desktop/**"
+      - "crates/liaison-application/**"
+      - "adapters/workspace-session-local/**"
+      - "adapters/vault-markdown/**"
+      - "contexts/people/**"
+      - "contexts/workspace/**"
+      - ".github/workflows/windows-desktop.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -30,6 +47,15 @@ jobs:
         run: cargo clippy -p liaison-desktop --all-targets --all-features --locked -- -D warnings
       - name: Test desktop crate
         run: cargo test -p liaison-desktop --all-features --locked
+      - name: Test workspace identity authority and callers
+        run: >-
+          cargo test
+          -p liaison-workspace-session-local
+          -p liaison-workspace
+          -p liaison-application
+          -p liaison-cli
+          --all-features
+          --locked
 
   bundle:
     name: Windows review bundle
@@ -52,8 +78,11 @@ jobs:
           test -n "$INSTALLER" || { echo "NSIS installer not produced" >&2; exit 1; }
           mkdir -p artifacts/windows
           cp "$INSTALLER" artifacts/windows/
-          sha256sum artifacts/windows/* > artifacts/windows/SHA256SUMS
-          cat artifacts/windows/SHA256SUMS
+          (
+            cd artifacts/windows
+            sha256sum *-setup.exe > SHA256SUMS
+            sha256sum -c SHA256SUMS
+          )
       - uses: actions/upload-artifact@v4
         with:
           name: liaison-rm-windows-review

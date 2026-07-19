@@ -168,7 +168,9 @@ input:disabled { background: #edf0f5; color: #697487; }
 .secondary-button:hover { background: #edf0f5; }
 button:disabled { cursor: not-allowed; opacity: 0.58; }
 .full-width { width: 100%; }
+.full-width + .full-width { margin-top: .75rem; }
 .divider { height: 1px; margin: 1.2rem 0; background: var(--border); }
+.validation-scope { overflow-wrap: anywhere; color: var(--muted); }
 
 .summary-list { margin: 0; }
 .summary-list div { display: grid; grid-template-columns: minmax(6rem, 0.45fr) 1fr; gap: 1rem; padding: 0.55rem 0; border-bottom: 1px solid #e9edf4; }

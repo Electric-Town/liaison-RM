@@ -1,0 +1,44 @@
+error: lifetime may not live long enough
+  --> tests/ui/repository-cannot-escape-work-guard.rs:11:5
+   |
+ 5 | fn escape<'work, 'session>(
+   |           ----- lifetime `'work` defined here
+...
+11 |     people_repository(work)
+   |     ^^^^^^^^^^^^^^^^^^^^^^^ returning this value requires that `'work` must outlive `'static`
+   |
+help: consider changing `impl PersonRepository + 'static`'s explicit `'static` bound to the lifetime of argument `work`
+   |
+ 7 - ) -> impl PersonRepository + 'static
+ 7 + ) -> impl PersonRepository + 'work
+   |
+help: alternatively, add an explicit `'static` bound to this reference
+   |
+ 6 -     work: &'work WorkspaceWorkGuard<'session, BoundMarkdownVault>,
+ 6 +     work: &'static WorkspaceWorkGuard<'session, BoundMarkdownVault>,
+   |
+
+error: lifetime may not live long enough
+  --> tests/ui/repository-cannot-escape-work-guard.rs:11:5
+   |
+ 5 | fn escape<'work, 'session>(
+   |                  -------- lifetime `'session` defined here
+...
+11 |     people_repository(work)
+   |     ^^^^^^^^^^^^^^^^^^^^^^^ returning this value requires that `'session` must outlive `'static`
+   |
+help: consider changing `impl PersonRepository + 'static`'s explicit `'static` bound to the lifetime of argument `work`
+   |
+ 7 - ) -> impl PersonRepository + 'static
+ 7 + ) -> impl PersonRepository + 'session
+   |
+help: alternatively, add an explicit `'static` bound to this reference
+   |
+ 6 -     work: &'work WorkspaceWorkGuard<'session, BoundMarkdownVault>,
+ 6 +     work: &'work WorkspaceWorkGuard<'static, BoundMarkdownVault>,
+   |
+
+help: the following changes may resolve your lifetime errors
+  |
+  = help: replace `'work` with `'static`
+  = help: replace `'session` with `'static`

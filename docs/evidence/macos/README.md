@@ -29,6 +29,12 @@ The separate [installed baseline QA record](installed-baseline-qa-2026-07-18.md)
 
 The [P01 native QA record](p01-native-qa-2026-07-18.md) binds the corrected Workspace/Person/Health workflow to an exact Apple Silicon source commit and executable checksum while keeping signing, universal packaging, relaunch restoration, network, accessibility, and release gates open.
 
+The [P02 universal build record](p02-native-build-2026-07-19.md) binds the
+Workspace Session implementation to a local universal source commit, explicit
+ad-hoc review signature, architecture inspection, and executable checksum. It
+is uninstalled build evidence and does not replace installed-app or remote
+cross-platform qualification.
+
 The browser fixture exercises interface behavior with a deterministic fake Tauri command bridge. It does not replace the native Rust, filesystem, package, signature, or clean-machine tests.
 
 ## Installed review observation
