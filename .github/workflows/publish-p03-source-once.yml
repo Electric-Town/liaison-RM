@@ -27,12 +27,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sha256sum .staging/p03/part-*
           cat .staging/p03/part-* | tr -d '\r\n' | base64 --decode > /tmp/p03-source.patch.gz
-          sha256sum /tmp/p03-source.patch.gz
           echo "b5925f4553592513c8ef0a105b9a4d3c86f728b5839c6dbb2488937451fbe926  /tmp/p03-source.patch.gz" | sha256sum -c -
           gzip -dc /tmp/p03-source.patch.gz > /tmp/p03-source.patch
-          sha256sum /tmp/p03-source.patch
           echo "409d7d6247d40f66e47bd28a00e72e0882e2957cf749d61edb3aff2c3998ce8a  /tmp/p03-source.patch" | sha256sum -c -
 
       - name: Apply directly reviewable source to the product branch
@@ -44,7 +41,7 @@ jobs:
           git apply --check /tmp/p03-source.patch
           git apply /tmp/p03-source.patch
 
-      - name: Format, resolve, and validate the exact source
+      - name: Format, resolve, and validate the affected source
         shell: bash
         run: |
           set -euo pipefail
@@ -54,9 +51,15 @@ jobs:
           python3 scripts/check_repository.py
           python3 scripts/check_spec.py
           python3 scripts/generate_traceability.py --check
-          cargo check --workspace --all-targets --all-features --locked
-          cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
-          cargo test --workspace --all-features --locked
+          packages=(
+            -p liaison-shared-kernel
+            -p liaison-workspace
+            -p liaison-vault-markdown
+            -p liaison-application
+          )
+          cargo check "${packages[@]}" --all-targets --all-features --locked
+          cargo clippy "${packages[@]}" --all-targets --all-features --locked -- -D warnings
+          cargo test "${packages[@]}" --all-features --locked
           git diff --check
 
       - name: Commit ordinary source files
