@@ -1,0 +1,134 @@
+ub struct WorkspaceMigrationPlan {
++    migration_id: MigrationId,
++    source_schema: u32,
++    target_schema: u32,
++    reversibility: MigrationReversibility,
++    operation: CanonicalOperationPlan,
++}
++
++impl WorkspaceMigrationPlan {
++    pub fn new(
++        migration_id: MigrationId,
++        source_schema: u32,
++        target_schema: u32,
++        reversibility: MigrationReversibility,
++        operation: CanonicalOperationPlan,
++    ) -> Result<Self, WorkspaceMigrationError> {
++        if operation.mutation_kind() != crate::CanonicalMutationKind::WorkspaceMigration {
++            return Err(WorkspaceMigrationError::OperationKindMismatch);
++        }
++        if source_schema == 0 || target_schema == 0 || source_schema == target_schema {
++            return Err(WorkspaceMigrationError::InvalidSchemaTransition {
++                source: source_schema,
++                target: target_schema,
++            });
++        }
++        reversibility.validate()?;
++        Ok(Self {
++            migration_id,
++            source_schema,
++            target_schema,
++            reversibility,
++            operation,
++        })
++    }
++
++    #[must_use]
++    pub fn preview(&self) -> WorkspaceMigrationPreview {
++        WorkspaceMigrationPreview {
++            migration_id: self.migration_id.clone(),
++            workspace_id: self.operation.workspace_id(),
++            source_schema: self.source_schema,
++            target_schema: self.target_schema,
++            reversibility: self.reversibility.clone(),
++            operation: OperationPreview::from(&self.operation),
++        }
++    }
++
++    #[must_use]
++    pub const fn operation_id(&self) -> OperationId {
++        self.operation.operation_id()
++    }
++
++    #[must_use]
++    pub const fn workspace_id(&self) -> WorkspaceId {
++        self.operation.workspace_id()
++    }
++
++    #[must_use]
++    pub const fn source_schema(&self) -> u32 {
++        self.source_schema
++    }
++
++    #[must_use]
++    pub const fn target_schema(&self) -> u32 {
++        self.target_schema
++    }
++
++    #[must_use]
++    pub fn reversibility(&self) -> &MigrationReversibility {
++        &self.reversibility
++    }
++
++    fn into_operation(self) -> CanonicalOperationPlan {
++        self.operation
++    }
++}
++
++#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
++pub struct WorkspaceMigrationPreview {
++    pub migration_id: MigrationId,
++    pub workspace_id: WorkspaceId,
++    pub source_schema: u32,
++    pub target_schema: u32,
++    pub reversibility: MigrationReversibility,
++    pub operation: OperationPreview,
++}
++
++#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
++pub struct PreMigrationBackupReceipt {
++    pub backup_id: String,
++    pub workspace_id: WorkspaceId,
++    pub operation_id: OperationId,
++    pub captured_at: DateTime<Utc>,
++    pub source_schema: u32,
++}
++
++pub trait PreMigrationBackupPort: fmt::Debug + Send + Sync {
++    fn capture_pre_migration(
++        &self,
++        workspace_id: WorkspaceId,
++        operation_id: OperationId,
++        source_schema: u32,
++    ) -> Result<PreMigrationBackupReceipt, WorkspaceMigrationError>;
++
++    fn restore_pre_migration(
++        &self,
++        receipt: &PreMigrationBackupReceipt,
++    ) -> Result<(), WorkspaceMigrationError>;
++}
++
++pub trait PostMigrationValidationPort: fmt::Debug + Send + Sync {
++    fn validate_post_migration(
++        &self,
++        workspace_id: WorkspaceId,
++        target_schema: u32,
++    ) -> Result<(), WorkspaceMigrationError>;
++}
++
++#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
++pub struct WorkspaceMigrationReceipt {
++    pub migration_id: MigrationId,
++    pub backup: PreMigrationBackupReceipt,
++    pub operation: OperationReceipt,
++    pub post_validation_passed: bool,
++}
++
++#[derive(Debug)]
++pub struct DryRunWorkspaceMigration<'store, Store> {
++    store: &'store Store,
++}
++
++impl<'store, Store> DryRunWorkspaceMigration<'store, Store>
++where
++    Store: RecoverableOperationStore,
