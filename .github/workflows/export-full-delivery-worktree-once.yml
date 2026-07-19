@@ -1,0 +1,24 @@
+name: Export full delivery worktree once
+
+on:
+  push:
+    branches: [agent/full-delivery-worktree-20260719]
+    paths:
+      - ".github/workflows/export-full-delivery-worktree-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: liaison-full-delivery-worktree
+          include-hidden-files: true
+          retention-days: 1
+          path: |
+            .
+            !.git/**
