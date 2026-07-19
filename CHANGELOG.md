@@ -80,6 +80,8 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 - Typed custom-field values in the Profiles context: each field value is now validated against its field type — numbers, booleans, ISO and partial dates (a month and day without a year), and single/multi-select options — with an explicit, ordered, unique option set required for selection fields and forbidden for others. Calculated fields are read-only, and a user-defined custom field cannot occupy a reserved canonical namespace (identity, contact, name, dietary), so it can never shadow, retype, or replace those facts.
 
+- A Customisation bounded-context domain core preparing the A0 G2c settings work: classified settings entries, an adversarial bundle review that lists rejected record-identifier, secret-like, and absolute-path content instead of silently dropping it, unknown-safe-key preservation, diff preview with mandatory conflict choices, and pure apply with exact revisioned rollback — with the bundle format explicitly provisional pending its owning milestone.
+
 ### Changed
 
 - Windows first-use registry creation now uses a cross-process initialisation

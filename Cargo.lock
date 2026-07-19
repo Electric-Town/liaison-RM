@@ -1868,6 +1868,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "liaison-customisation"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "liaison-shared-kernel",
+ "serde",
+ "thiserror 2.0.19",
+ "uuid",
+]
+
+[[package]]
 name = "liaison-desktop"
 version = "0.1.0-alpha.1"
 dependencies = [
