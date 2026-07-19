@@ -1889,6 +1889,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "liaison-organisations"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "chrono",
+ "liaison-shared-kernel",
+ "serde",
+ "thiserror 2.0.18",
+ "uuid",
+]
+
+[[package]]
 name = "liaison-people"
 version = "0.1.0-alpha.1"
 dependencies = [
