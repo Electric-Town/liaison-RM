@@ -18,7 +18,7 @@ jobs:
         with:
           ref: agent/p03-source-publisher-20260719
           fetch-depth: 0
-      - name: Reconstruct and apply source
+      - name: Reconstruct, apply, and correct source
         shell: bash
         run: |
           set -euo pipefail
@@ -27,6 +27,31 @@ jobs:
           git fetch origin feat/p03-recoverable-operations
           git checkout -B feat/p03-recoverable-operations origin/feat/p03-recoverable-operations
           git apply /tmp/p03-source.patch
+          python3 - <<'PY'
+          from pathlib import Path
+
+          cargo = Path("adapters/vault-markdown/Cargo.toml")
+          text = cargo.read_text(encoding="utf-8")
+          if "chrono.workspace = true" not in text.split("[dev-dependencies]", 1)[0]:
+              text = text.replace(
+                  "[dependencies]\ncap-fs-ext.workspace = true\n",
+                  "[dependencies]\ncap-fs-ext.workspace = true\nchrono.workspace = true\n",
+                  1,
+              )
+          text = text.replace("\n[dev-dependencies]\nchrono.workspace = true\n", "\n[dev-dependencies]\n", 1)
+          cargo.write_text(text, encoding="utf-8")
+
+          source = Path("adapters/vault-markdown/src/operations.rs")
+          text = source.read_text(encoding="utf-8")
+          text = text.replace(
+              "        let bytes = read_file(&staged, &staged_name(target.ordinal)).map_err(|error| {",
+              "        let staged_filename = staged_name(target.ordinal);\n"
+              "        let bytes = read_file(&staged, Path::new(&staged_filename)).map_err(|error| {",
+              1,
+          )
+          text = text.replace('            map_io("read staged target", error)\n', "            error\n", 1)
+          source.write_text(text, encoding="utf-8")
+          PY
           cargo fmt --all
           cargo generate-lockfile
       - name: Capture affected-package validation outputs
