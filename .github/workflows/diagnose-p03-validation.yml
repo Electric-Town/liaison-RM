@@ -1,0 +1,59 @@
+name: Diagnose P03 validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    if: github.head_ref == 'agent/p03-source-publisher-20260719'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/p03-source-publisher-20260719
+          fetch-depth: 0
+      - name: Reconstruct and apply source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .staging/p03/part-* | tr -d '\r\n' | base64 --decode > /tmp/p03-source.patch.gz
+          gzip -dc /tmp/p03-source.patch.gz > /tmp/p03-source.patch
+          git fetch origin feat/p03-recoverable-operations
+          git checkout -B feat/p03-recoverable-operations origin/feat/p03-recoverable-operations
+          git apply /tmp/p03-source.patch
+          cargo fmt --all
+          cargo generate-lockfile
+      - name: Capture all validation outputs
+        shell: bash
+        run: |
+          set +e
+          mkdir -p /tmp/p03-validation
+          run_check() {
+            name="$1"
+            shift
+            echo "$*" > "/tmp/p03-validation/${name}.command"
+            "$@" > "/tmp/p03-validation/${name}.log" 2>&1
+            echo "$?" > "/tmp/p03-validation/${name}.status"
+          }
+          run_check architecture python3 scripts/check_architecture.py
+          run_check repository python3 scripts/check_repository.py
+          run_check spec python3 scripts/check_spec.py
+          run_check traceability python3 scripts/generate_traceability.py --check
+          run_check cargo-check cargo check --workspace --all-targets --all-features --locked
+          run_check cargo-clippy cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+          run_check cargo-test cargo test --workspace --all-features --locked
+          git diff --check > /tmp/p03-validation/git-diff.log 2>&1
+          echo "$?" > /tmp/p03-validation/git-diff.status
+          git diff --stat > /tmp/p03-validation/diff-stat.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p03-validation-diagnostics
+          path: /tmp/p03-validation
+          if-no-files-found: error
+          retention-days: 1
