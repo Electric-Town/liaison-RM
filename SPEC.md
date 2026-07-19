@@ -529,15 +529,15 @@ The accepted order is dependency-driven and supersedes older personal-desktop-be
 4. **P03 — recoverable operations:** staged multi-target writes, durable commit decision, roll-forward recovery, exactly-once minimal evidence, and fault/race tests.
 5. **P03 design gate:** after P03, design consultation creates canonical `DESIGN.md`; plan design review checks it against the complete B0 journey and amends P04 before desktop implementation. G0 records but does not execute this gate.
 6. **P04 — desktop adapter migration:** React/TypeScript/Vite over typed Rust commands with Workspace/People/Health parity and a semantic design system.
-7. **P05 — sensitive/domain contracts:** revisioned People, Organisations, Groups, Locations, Memberships, Events, provenance, field state, sealed value, and event-local resolution types.
-8. **P06 — scalable Directory reads:** tolerant scan, disposable SQLite/FTS projection, filters, pagination, canonical revalidation, Health findings, and 10,000/50,000 evidence.
+7. **P05 — B-domain contracts plus atomic OKF seam:** the G3 P05 task defines revisioned People, Organisations, Groups, Locations, Memberships, Events, provenance, field state, and event-local resolution types; separate `T-B0-P05-OKF` owns the pinned OKF v0.1 Draft schema and strict People authoring port under `FG-B0-001` after P03/P04. Sensitive contracts are not owned by either P05 task and remain exclusive to P07/P08 under `FG-B0-002`.
+8. **P06 — scalable tolerant Directory reads:** the single Directory projection owns OKF-tolerant reading, Liaison domain-validity quarantine, SQLite/FTS filters, pagination, canonical revalidation, Health findings, and 10,000/50,000 evidence.
 9. **P07 — Workspace Security and local policy:** key lifecycle, recovery envelope, optional Keychain cache, trusted local owner/device, purpose grants, role presets, and payload-minimal activity evidence.
 10. **P08 — recovery before real sensitive data:** quiescent local checkpoint plus encrypted clean-install recovery package.
-11. **P09 — Directory onboarding:** People maintenance and streaming CSV preview/reconciliation for People, Organisations, Locations, Groups, and Memberships.
+11. **P09 — required OKF normalization then Directory onboarding:** `T-B0-P09-OKF` owns previewable, exact-backup-first, journaled, failure-atomic, idempotent and exactly reversible normalization after P03/P05-OKF/P06. The separate G3 P09 task then owns People maintenance and streaming CSV preview/reconciliation for People, Organisations, Locations, Groups, and Memberships.
 12. **P10 — Events core:** immutable cohort, exact readiness, structurally limited `DietaryOperationalView`, sealed internal brief, verified delivery, and staleness.
 13. **P11 — B interface:** Overview, Directory, Events, Health, and Settings plus the complete cohort-to-brief state machine.
 14. **B0 — Workplace Review Alpha:** for one trusted local workspace owner, the installed universal Mac review artifact passes scale, crash, key, grant, leak, encrypted-restore, accessibility, offline, readable-file, and contributor-journey evidence. Workplace surfaces structurally omit relationship allocation/ranking/scoring. It remains an internal review alpha unless public signing/notarisation gates pass.
-15. **A0 — Personal Memory Alpha:** only after B0 acceptance, add profile editing, stable user-organised tabs/layouts with lossless settings round trips, meaningful interactions, bounded commitments, last-interaction/open-loop views, and reason-only Review over the same foundations. A0 does not add a generic task engine.
+15. **A0 — Personal Memory Alpha:** only after B0 acceptance, add quick/full capture, a source-complete purpose-scoped profile, stable user-organised tabs/layouts with lossless settings round trips, explicit fact states, reversible identity review, a source- and range-labelled unified timeline, meaningful interactions, bounded commitments, distinct last-note/last-interaction values, open-loop views, and reason-only Review over the same foundations. A0 does not add a generic task engine, global person score, or automatic exact/fuzzy merge.
 16. **Post-A0:** sharing, provider transports, contacts/calendars/email, facilities, mobile products, Meitheal integration, OpenAPI/MCP/AI/plugins, Linux/Windows support, and public notarized distribution advance under their own gates.
 
 ## 18. Explicit exclusions from B0
@@ -558,9 +558,14 @@ B0 Workplace Review Alpha does not require:
 - user-organised profile tabs or a general profile-layout designer;
 - a generic task-management engine;
 - relationship allocation, relationship-value ranking, or relationship-strength scoring;
+- general and third-party migrations beyond the required OKF People normalization;
 - Developer ID signing, notarisation, or a supported public download.
 
 The first acceptance workflow is a receptionist selecting an event cohort, finding every dietary-information gap, and producing a purpose-authorised least-disclosure catering brief from local records. B0 is independently reviewable but is not a supported public release.
+
+The required OKF People normalization is narrow B0 authority for Liaison's first canonical People writer. It does not admit Meerkat, Monica, CRM-in-Markdown, broad CSV/vCard conversion, provider sync, or arbitrary migration adapters. Every B0 People writer emits the pinned OKF v0.1 Draft envelope through one typed port while Liaison's versioned domain extension remains authoritative; OKF-valid never implies Liaison-valid or event-ready, and sealed sensitive values never enter plaintext.
+
+Later provider and import surfaces prohibit hidden sync, hidden refresh, and unreported egress. Later AI, MCP, plugin, provider, and import enrichment produces source-backed staged proposals only; direct AI writes to confirmed facts or relationship state are prohibited.
 
 ## 19. Definition of done
 

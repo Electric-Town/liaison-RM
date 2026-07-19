@@ -241,6 +241,190 @@ def validate_b0_workplace_contract(
     )
 
 
+def validate_okf_and_comparator_contract(
+    requirements: list[dict],
+    cases: list[dict],
+    task_blocks: dict[str, str],
+    gate_blocks: dict[str, str],
+    errors: list[str],
+) -> None:
+    """Keep the amended OKF, sourced-profile, and later-safety decisions exact."""
+
+    requirement_text = {
+        item["id"]: f"{item.get('statement', '')} {item.get('acceptance', '')}"
+        for item in requirements
+    }
+    case_text = {
+        item["id"]: " ".join(
+            str(item.get(field, "")) for field in ("title", "given", "when", "then")
+        )
+        for item in cases
+    }
+
+    required_requirement_fragments = {
+        "LRM-WS-017": (
+            "pinned OKF v0.1 Draft",
+            "strict writes",
+            "tolerant reads",
+            "backup-first",
+            "journaled",
+            "failure-atomic",
+            "idempotent",
+            "exactly reversible",
+            "body bytes",
+            "malformed siblings",
+            "reserved or index content",
+        ),
+        "LRM-PE-016": (
+            "pinned OKF v0.1 Draft",
+            "type: person",
+            "domain fields remain the schema authority",
+            "sealed sensitive values",
+            "never enter plaintext",
+        ),
+        "LRM-PE-017": (
+            "shall not imply Liaison domain validity",
+            "inert or quarantined",
+            "cannot affect event readiness",
+            "unknown types",
+            "healthy People",
+        ),
+        "LRM-PE-018": (
+            "purpose-scoped profile",
+            "no global person score shall exist",
+            "contain no global person score",
+        ),
+        "LRM-PE-019": ("canonical source", "missing provider coverage"),
+        "LRM-PE-020": ("conflicting", "stale", "withheld", "never silently select a winner"),
+        "LRM-PE-021": ("stable-ID field diffs", "no external edit", "silently change disclosure", "operational readiness"),
+        "LRM-IN-001": (
+            "unified timeline",
+            "source-linked",
+            "requested and covered range",
+            "factual counts shall never become a global person score",
+            "no file, CLI, UI, projection, export, API, plugin, or automation output derives a person score",
+        ),
+        "LRM-CO-015": (
+            "operations feed separate from relationship reminders",
+            "hidden refresh and unreported egress are prohibited",
+            "revocation stops all refresh and egress",
+        ),
+        "LRM-AU-013": (
+            "source-backed staged proposal",
+            "shall never directly overwrite a confirmed fact",
+            "cannot directly write a confirmed fact",
+            "assessment",
+            "freshness",
+            "cadence",
+        ),
+        "LRM-UX-015": (
+            "explicit geocoding egress",
+            "structural Workplace denial",
+            "deny the capability in Workplace schemas and surfaces",
+            "semantic list or table",
+            "shall never rank People by a relationship score",
+            "contain no hidden geocoding, global person score, ranking",
+        ),
+    }
+    for identifier, fragments in required_requirement_fragments.items():
+        require_fragments(identifier, requirement_text.get(identifier, ""), fragments, errors)
+
+    required_uat_fragments = {
+        "UAT-065": ("every B0-released UI and CLI", "OKF v0.1 Draft", "body bytes", "sealed values never appear in plaintext", "does not co-own"),
+        "UAT-066": ("every write boundary", "failure-atomic", "idempotent", "byte-exact originals", "no partial profile or index state"),
+        "UAT-067": ("last note and last interaction remain distinct", "VoiceOver", "400 percent zoom and reflow", "no global person score"),
+        "UAT-068": (
+            "remembered rejection",
+            "reversible",
+            "neither exact identifiers nor fuzzy thresholds automatically merge People",
+        ),
+        "UAT-069": (
+            "requested and covered range",
+            "correction history",
+            "no activity count becomes a global person score",
+        ),
+        "UAT-070": (
+            "no hidden refresh or unreported provider egress occurs",
+            "never pollutes relationship reminders",
+        ),
+        "UAT-071": (
+            "No AI, MCP, plugin, provider or import path directly overwrites",
+            "changes assessment or freshness",
+            "resets cadence",
+        ),
+        "UAT-072": (
+            "Workplace denies the capability structurally",
+            "no relationship score or hidden sync ranks People",
+            "semantic result",
+        ),
+    }
+    for identifier, fragments in required_uat_fragments.items():
+        require_fragments(identifier, case_text.get(identifier, ""), fragments, errors)
+
+    for identifier, fragments in {
+        "FG-B0-001": ("pinned OKF v0.1 Draft", "sealed sensitive values never enter plaintext", "OKF-valid but domain-invalid", "UAT-065", "UAT-066"),
+        "FG-A0-001": (
+            "source-complete purpose-scoped profile",
+            "never merge automatically",
+            "timeline counts never become a global person score",
+            "UAT-067",
+            "UAT-068",
+            "UAT-069",
+        ),
+        "FG-R5-005": (
+            "UAT-070",
+            "Hidden refresh, unreported egress, and relationship-reminder pollution are structurally denied",
+        ),
+        "FG-R5-006": (
+            "Workplace schemas, files, CLI, UI, settings, exports, and adapters deny spatial discovery structurally",
+            "semantic list or table",
+            "neither view ranks People by a global person or relationship score",
+            "UAT-072",
+        ),
+        "FG-R6-007": (
+            "cannot directly write a confirmed fact",
+            "cannot silently change assessment, freshness, cadence",
+            "UAT-071",
+        ),
+    }.items():
+        require_fragments(identifier, gate_blocks.get(identifier, ""), fragments, errors)
+
+    for identifier, fragments in {
+        "T-B0-P05-OKF": ("LRM-PE-016", "UAT-065", "strict-People-writer", "sealed-plaintext-denial"),
+        "T-B0-P06": ("LRM-PE-017", "tolerant-OKF-reader", "domain-validity-quarantine"),
+        "T-B0-P09-OKF": ("LRM-WS-017", "UAT-066", "journaled-failure-atomic-migration", "exact-rollback"),
+        "T-A0-P04": ("LRM-PE-018", "LRM-PE-021", "LRM-IN-001", "UAT-067", "UAT-069", "no-global-person-score"),
+        "T-R5-008": ("LRM-CO-015", "UAT-070", "hidden-refresh-and-egress-denial"),
+        "T-R5-009": ("LRM-UX-015", "UAT-072", "Workplace-denial", "semantic-list-table-parity"),
+        "T-R6-007": ("LRM-AU-013", "UAT-071", "direct-write-denial"),
+    }.items():
+        require_fragments(identifier, task_blocks.get(identifier, ""), fragments, errors)
+
+    p05 = task_blocks.get("T-B0-P05", "")
+    for leaked in ("LRM-SEC-001", "LRM-SEC-002", "UAT-043", "workspace-security", "sealed-envelope-types"):
+        if leaked.lower() in p05.lower():
+            errors.append(f"T-B0-P05: sensitive FG-B0-002 contract leaked into G3 task: {leaked}")
+
+    for identifier in ("T-B0-P01", "T-B0-P02"):
+        text = task_blocks.get(identifier, "").lower()
+        for expansion in ("okf", "lrm-pe-016", "lrm-pe-017", "lrm-ws-017", "uat-065", "uat-066"):
+            if expansion in text:
+                errors.append(f"{identifier}: OKF work must not expand P01 or P02: {expansion}")
+
+    for relative in ("SPEC.md", "docs/product/working-state-delivery.md"):
+        try:
+            boundary = (ROOT / relative).read_text(encoding="utf-8")
+        except OSError as exc:
+            errors.append(f"{relative}: cannot verify B0 migration boundary: {exc}")
+            continue
+        require_fragments(
+            relative,
+            boundary,
+            ("required OKF People normalization", "general and third-party migrations"),
+            errors,
+        )
+
+
 def validate_traceability(
     requirement_ids: set[str],
     case_ids: set[str],
@@ -263,6 +447,18 @@ def validate_traceability(
     uat_ownership = ownership.get("uat_ownership", {})
     milestones = ownership.get("milestones", [])
     evidence_owners = ownership.get("evidence_owners", [])
+
+    approved_strategy = ownership.get("approved_strategy", {})
+    if approved_strategy.get("approved_sha256") != (
+        "795a6e6751cd29a995478e254323f491e68a53ef7c35fa729d8627b87cd37089"
+    ):
+        errors.append("traceability: approved strategy SHA-256 is missing or stale")
+    require_fragments(
+        "traceability approved strategy",
+        str(approved_strategy.get("scope", "")),
+        ("required OKF People normalization", "general or third-party migrations"),
+        errors,
+    )
 
     expected_maps = (
         ("requirement", requirement_ids, set(requirement_ownership)),
@@ -344,6 +540,7 @@ def validate_traceability(
     }
     task_requirements = inline_edges(task_blocks, "requirements")
     task_uat = inline_edges(task_blocks, "uat")
+    task_evidence_dependencies = inline_edges(task_blocks, "evidence_dependencies")
     task_dependencies = inline_edges(task_blocks, "depends_on")
     task_order = {identifier: index for index, identifier in enumerate(task_blocks)}
     visiting_tasks: set[str] = set()
@@ -368,6 +565,42 @@ def validate_traceability(
 
     for identifier in task_blocks:
         visit_task(identifier)
+
+    # Canonical task arrays express ownership. Reused regression or prerequisite
+    # coverage must be explicit evidence_dependencies, never a duplicate-owner
+    # illusion in requirements or uat.
+    for task, identifiers in task_requirements.items():
+        for identifier in identifiers:
+            owner = requirement_ownership.get(identifier, {}).get("owning_task")
+            if owner != task:
+                errors.append(
+                    f"{task}: canonical requirements contains non-owned {identifier}; "
+                    "move it to evidence_dependencies"
+                )
+    for task, identifiers in task_uat.items():
+        for identifier in identifiers:
+            owner = uat_ownership.get(identifier, {}).get("owning_task")
+            if owner != task:
+                errors.append(
+                    f"{task}: canonical uat contains non-owned {identifier}; "
+                    "move it to evidence_dependencies"
+                )
+    known_evidence_dependencies = requirement_ids | case_ids
+    for task, identifiers in task_evidence_dependencies.items():
+        for identifier in identifiers:
+            if identifier not in known_evidence_dependencies:
+                errors.append(f"{task}: unknown evidence dependency {identifier}")
+                continue
+            owner = (
+                requirement_ownership.get(identifier, {}).get("owning_task")
+                if identifier in requirement_ids
+                else uat_ownership.get(identifier, {}).get("owning_task")
+            )
+            if owner == task:
+                errors.append(
+                    f"{task}: owned {identifier} belongs in its canonical array, "
+                    "not evidence_dependencies"
+                )
 
     for identifier, edge in task_ownership.items():
         for field, known in (
@@ -489,17 +722,18 @@ def validate_traceability(
             )
 
     expected_proposals = {
-        *(f"LRM-WS-{value:03d}" for value in range(12, 17)),
-        *(f"LRM-PE-{value:03d}" for value in range(11, 16)),
+        *(f"LRM-WS-{value:03d}" for value in range(12, 18)),
+        *(f"LRM-PE-{value:03d}" for value in range(11, 22)),
         *(f"LRM-RE-{value:03d}" for value in range(6, 9)),
         *(f"LRM-IN-{value:03d}" for value in range(6, 9)),
         *(f"LRM-RM-{value:03d}" for value in range(4, 6)),
-        *(f"LRM-UX-{value:03d}" for value in range(10, 15)),
+        *(f"LRM-UX-{value:03d}" for value in range(10, 16)),
         *(f"LRM-EV-{value:03d}" for value in range(10, 14)),
-        *(f"LRM-CO-{value:03d}" for value in range(13, 15)),
-        *(f"LRM-AU-{value:03d}" for value in range(10, 13)),
+        *(f"LRM-CO-{value:03d}" for value in range(13, 16)),
+        *(f"LRM-AU-{value:03d}" for value in range(10, 14)),
         *(f"LRM-PK-{value:03d}" for value in range(7, 10)),
-        *(f"UAT-{value:03d}" for value in range(45, 65)),
+        *(f"UAT-{value:03d}" for value in range(45, 73)),
+        "LRM-IN-001",
         "FG-UX-THEME-001",
         "P-PROFESSIONAL",
     }
@@ -695,6 +929,9 @@ def main() -> int:
 
     if task_blocks and gate_blocks:
         validate_b0_workplace_contract(
+            requirements, cases, task_blocks, gate_blocks, errors
+        )
+        validate_okf_and_comparator_contract(
             requirements, cases, task_blocks, gate_blocks, errors
         )
         validate_traceability(

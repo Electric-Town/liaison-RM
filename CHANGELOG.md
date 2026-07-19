@@ -14,6 +14,10 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - A post-P03 design gate that runs design consultation to create `DESIGN.md`, then plan design review before P04 begins; G0 records the gate without pre-empting the design artifact.
 - Explicit B0 event-readiness contracts for ordered outcomes, attendee corrections and denominator reconciliation, real-pilot privacy approval, one trusted owner, and byte-identical least-disclosure recipient briefs.
 - KCS guidance for changing product contracts without creating traceability orphans.
+- ADR 0013 and KCS-0009 pinning the immutable OKF v0.1 Draft People authoring source, Liaison domain-extension authority, strict-write/tolerant-read behavior, sealed-plaintext denial, and required recoverable B0 People normalization.
+- Atomic P05-OKF, P06, and P09-OKF ownership under `FG-B0-001`, with sensitive work removed from G3 P05 and retained exclusively under `FG-B0-002`.
+- A0 source-complete purpose-scoped profile, fact-state, reversible identity-review, and source/range timeline contracts plus later provider-operation, staged-enrichment, and privacy-bounded spatial contracts.
+- Semantic specification checks and negative mutation coverage for the B0 migration exception, global-score/task-engine/auto-merge/direct-write/hidden-sync prohibitions, and canonical task ownership versus explicit evidence dependencies.
 
 - Repository governance, contribution, knowledge, content-quality, architecture, and user-experience review standards.
 - Pull-request evidence requirements and repository policy checks.
@@ -47,6 +51,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - The R2 roadmap now includes locale-catalog, expansion, Unicode, accessible-name, formatting, and named human-review evidence gates.
 - The README and GitHub About contract now lead with the product outcome, state the pre-alpha boundary plainly, and route readers to current evidence, contribution guidance, and the public site.
 - Public site, README, project context, roadmap, and agent guidance now put B0 before A0, distinguish the tested CLI from the broken installed desktop Person-create path, and use 400% reflow as the accessibility evidence target.
+- Requirements and UAT task arrays now contain only atomically owned contracts; reused prerequisite or regression coverage is labelled `evidence_dependencies` rather than implying a second owner.
 
 ### Fixed
 

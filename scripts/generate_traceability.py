@@ -69,10 +69,24 @@ def supporting_task_edges(tasks: list[dict[str, str]], field: str) -> dict[str, 
     result: dict[str, list[str]] = {}
     pattern = re.compile(rf"^\s{{4}}{re.escape(field)}:\s*\[([^]]*)\]", re.MULTILINE)
     for task in tasks:
+        values: list[str] = []
         match = pattern.search(task["block"])
-        if match is None:
-            continue
-        for value in [item.strip() for item in match.group(1).split(",") if item.strip()]:
+        if match is not None:
+            values.extend(
+                item.strip() for item in match.group(1).split(",") if item.strip()
+            )
+        evidence_match = re.search(
+            r"^\s{4}evidence_dependencies:\s*\[([^]]*)\]",
+            task["block"],
+            re.MULTILINE,
+        )
+        if evidence_match is not None:
+            values.extend(
+                item.strip()
+                for item in evidence_match.group(1).split(",")
+                if item.strip()
+            )
+        for value in values:
             result.setdefault(value, []).append(task["id"])
     return result
 
@@ -160,6 +174,7 @@ def build_report() -> dict[str, Any]:
         "source_sha256": source_digest(),
         "delivery_boundary": ownership["delivery_boundary"],
         "design_sequence": ownership["design_sequence"],
+        "approved_strategy": ownership["approved_strategy"],
         "counts": {
             "requirements": len(requirement_rows),
             "personas": len(uat_doc["personas"]),
@@ -197,6 +212,14 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"Delivery boundary: {report['delivery_boundary']}",
         "",
         f"Design sequence: {report['design_sequence']}",
+        "",
+        "Approved strategy: {title} (`{sha}`; {status})".format(
+            title=report["approved_strategy"]["title"],
+            sha=report["approved_strategy"]["approved_sha256"],
+            status=report["approved_strategy"]["status"],
+        ),
+        "",
+        f"Strategy scope: {report['approved_strategy']['scope']}",
         "",
         "## Coverage summary",
         "",

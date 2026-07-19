@@ -294,14 +294,27 @@ gates:
 
   - id: FG-R5-005
     release: R5
-    name: Legacy migration reconciled
+    name: Legacy migration and operation history reconciled
     blocks: [migration-release]
     criteria:
       - Meerkat, Monica, and CRM-in-Markdown imports report mapped, transformed, unresolved, and unsupported data.
       - Source provenance remains.
       - Preview, rollback, and idempotent re-import pass for every supported source.
+      - Each provider or import operation exposes connector and version, grant, requested and covered source range, attempt and success times, created, updated, skipped and quarantined counts, conflicts, errors, retry, revoke, retention, and history.
+      - Hidden refresh, unreported egress, and relationship-reminder pollution are structurally denied.
       - Local voice and OCR are claimed only after their independent denied-network, preview, provenance, and confirmation evidence passes.
-    evidence_required: [UAT-038, UAT-059, UAT-060, synthetic fixtures]
+    evidence_required: [UAT-038, UAT-059, UAT-060, UAT-070, synthetic fixtures, operation-receipt and hidden-egress fixtures]
+
+  - id: FG-R5-006
+    release: R5
+    name: Spatial discovery remains optional and privacy bounded
+    blocks: [spatial-discovery-release]
+    criteria:
+      - Provider-denied and explicitly granted paths expose the exact geocoding egress, grant, coarse or precise mode, and revocation state.
+      - Coordinate correction and deletion persist without hidden refresh or retained ranking material.
+      - Workplace schemas, files, CLI, UI, settings, exports, and adapters deny spatial discovery structurally.
+      - An equivalent semantic list or table exists and neither view ranks People by a global person or relationship score.
+    evidence_required: [UAT-072, denied-network and egress fixtures, coordinate deletion, Workplace structural denial, semantic parity]
 
   - id: FG-R6-001
     release: R6
@@ -361,6 +374,16 @@ gates:
       - Liaison exposes no general task assignment, dependency, routine, project, workload, or execution surface.
     evidence_required: [UAT-061, negative task-surface fixture]
 
+  - id: FG-R6-007
+    release: R6
+    name: Enrichment remains a source-backed staged proposal
+    blocks: [enrichment-release]
+    criteria:
+      - Every life-change, biography, or enrichment proposal contains old and new values, source, confidence, egress context, and explicit review.
+      - AI, MCP, plugins, providers, and import adapters cannot directly write a confirmed fact.
+      - Reject, correct, and accept use application commands and cannot silently change assessment, freshness, cadence, disclosure, or operational readiness.
+    evidence_required: [UAT-071, direct-write denial, assessment-freshness-cadence negative fixture]
+
   - id: FG-REL-001
     release: all
     name: Release evidence complete
@@ -380,8 +403,11 @@ gates:
       - Workspace Session owns the operating-system writer lock and read-only Health remains available.
       - Every canonical mutation uses per-file identity and digest preconditions, flushed staging, final recheck, one durable commit decision, and evidenced roll-forward recovery.
       - Malformed records do not hide healthy Directory records.
+      - Every Liaison-authored non-reserved People document uses the pinned OKF v0.1 Draft envelope through one strict writer while Liaison domain extensions remain authoritative and sealed sensitive values never enter plaintext.
+      - Tolerant reads preserve unknown types, keys, extensions, body bytes, links and curated indexes; OKF-valid but domain-invalid facts remain inert or quarantined and cannot affect event readiness.
+      - The required OKF People normalization is previewable, exact-backup-first, journaled, failure-atomic, idempotent, restart-recoverable and exactly reversible with no partial profile or index state.
       - Settings-only import and export is previewable, rollback-safe, and contains no records, secrets, device paths, or provider-backup claim.
-    evidence_required: [UAT-001, UAT-040, UAT-042, UAT-050, fault-injection matrix, rename and file-sync matrix, CLI-Tauri parity tests]
+    evidence_required: [UAT-001, UAT-040, UAT-042, UAT-050, UAT-065, UAT-066, fault-injection matrix, rename and file-sync matrix, OKF conformance and sealed-leak fixtures, CLI-Tauri parity tests]
 
   - id: FG-B0-DESIGN-001
     release: B0
@@ -435,9 +461,12 @@ gates:
     depends_on: [FG-A0-G2A, FG-A0-G2B, FG-A0-G2C, FG-B0-003]
     criteria:
       - The G2A, G2B, and G2C capability gates pass in one installed Personal Memory Alpha artifact.
+      - Quick and full capture, the source-complete purpose-scoped profile, stable configurable tabs, explicit fact states, reversible identity review, and the unified source and range-labelled timeline pass as one installed workflow.
+      - Last note and last interaction remain distinct; conflicts and external edits never silently choose a winner or change disclosure or operational readiness.
+      - Exact and fuzzy identity candidates never merge automatically, and timeline counts never become a global person score.
       - Personal workflows recover after interruption and remain open-file or properly sealed.
       - Every B0 gate and regression remains green.
-    evidence_required: [UAT-044, B0 regression, compiled design review, native QA report]
+    evidence_required: [UAT-044, UAT-067, UAT-068, UAT-069, B0 regression including UAT-065, compiled design review, native QA report]
 
   - id: FG-A0-G2A
     release: A0

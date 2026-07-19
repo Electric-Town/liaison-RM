@@ -181,6 +181,8 @@ workspace/
 
 Human-scale records use Markdown with versioned YAML front matter. Documented JSONL partitions hold high-volume machine streams. Unknown fields and user-authored Markdown sections must survive supported round trips. Secrets never enter canonical files.
 
+The planned first B0 People writer is pinned to the OKF v0.1 Draft Markdown envelope through [ADR 0013](docs/decisions/0013-pin-okf-v0-1-people-authoring-profile.md). OKF supplies the portable envelope; Liaison's versioned domain extension remains authoritative for identity, purpose, revision, provenance, information state, sensitivity, disclosure, and operational meaning. OKF-valid never means Liaison-valid or event-ready, and sealed facts never enter plaintext merely for interoperability. This writer and the required OKF People normalization are planned contracts, not capabilities in the current alpha.
+
 Read the full storage contract in [`docs/architecture/open-workspace.md`](docs/architecture/open-workspace.md).
 
 ## Architecture
@@ -248,14 +250,16 @@ The accepted working order is P00 through P11, B0 acceptance, then A0. The broad
 | **P03 design gate** | Design consultation creates `DESIGN.md`, then plan design review approves the P04 direction |
 | **P04–P08** | Typed accessible desktop system, accessible built-in themes, versioned B-domain contracts, scalable Directory, local security, checkpoints, and encrypted recovery packages |
 | **P09–P11** | Directory import, exact event dietary readiness, least-disclosure brief delivery, and the complete installed desktop workflow |
-| **B0** | Workplace Review Alpha qualified in a freshly installed universal Mac review application |
-| **A0** | Personal Memory Alpha, including user-organised profile tabs, interactions, bounded commitments, reason-only Review, and accessible appearance settings without regressing B0 |
-| **After A0** | Declarative theme packages, sharing, providers, mobile, Meitheal, CardDAV/calendars/email, facilities, OpenAPI, MCP, AI, and plugins as independent gates |
+| **B0** | Workplace Review Alpha with pinned strict-write/tolerant-read OKF People records, required failure-atomic People normalization, exact event readiness, and qualification in a freshly installed universal Mac review application |
+| **A0** | Personal Memory Alpha with source-complete purpose-scoped profiles, user-organised tabs, reversible identity review, source/range timeline, bounded commitments, reason-only Review, no global person score or automatic merge, and accessible appearance settings without regressing B0 |
+| **After A0** | General and third-party migrations, declarative theme packages, sharing, visible provider operations without hidden sync, mobile, Meitheal, CardDAV/calendars/email, facilities, spatial discovery, OpenAPI, MCP, staged AI proposals, and plugins as independent gates |
 
 The first operational wedge is event dietary readiness: select an attendee cohort, identify every unresolved coverage state and produce a least-disclosure catering brief.
 
 ## Current work
 The [working-state delivery contract](docs/product/working-state-delivery.md) and [generated traceability appendix](docs/product/traceability.md) record the accepted B0 Workplace Review then A0 Personal Memory sequence, current implementation truth, and reviewed branch dispositions. Repository state still changes quickly: verify the default-branch head, open pull requests, changed files, and exact-head checks before using any branch as a dependency.
+
+B0 includes the required OKF People normalization only; general and third-party migrations remain later work. Across all releases, Liaison prohibits a global person score, a generic task engine, automatic exact/fuzzy identity merge, direct AI writes to confirmed facts, and hidden provider sync, refresh, or egress.
 
 An open PR, prototype, screenshot, workflow definition, and installed application are different evidence classes. None proves that planned behaviour is on `main` or release-ready.
 

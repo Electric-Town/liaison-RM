@@ -72,16 +72,18 @@ Exit evidence:
 - semantic tokens meet light/dark contrast, focus, density, motion, and long-content requirements;
 - the web fixture uses a deterministic fake bridge and makes no product-authority claim.
 
-## P05 — Sensitive and B-domain contracts
+## P05 — B-domain contracts and atomic OKF authoring seam
 
-Outcome: revisioned People, Organisations, Groups, Locations, Memberships, Events, provenance, explicit field states, event-local resolutions, and sealed-value types are defined before persistence.
+Outcome: the G3 `T-B0-P05` defines revisioned People, Organisations, Groups, Locations, Memberships, Events, provenance, explicit field states, and event-local resolutions. The separate G1 `T-B0-P05-OKF`, after P03 and P04, owns the pinned OKF v0.1 Draft People schema, strict writer port, Liaison extension mapping, reserved paths, and sealed-plaintext denial under `FG-B0-001`. Sensitive types and policy are owned only by P07/P08 under `FG-B0-002`.
 
 Exit evidence:
 
-- plaintext plus `sealed: true` is unrepresentable for restricted persisted values;
+- every non-reserved People writer emits `type: person` and the supported OKF core mapping through one typed port;
+- Liaison's domain extension remains schema authority and plaintext plus `sealed: true` is unrepresentable for restricted persisted values;
 - B stores no diagnosis, medical history, treatment detail, or diagnostic narrative;
 - every dietary value has source, state, recorded/verified time, purpose, classification, revision, and disclosure policy;
 - schemas, round trips, unknown-field handling, and migrations are explicit.
+- `UAT-065` proves all released B0 UI/CLI writers, Markdown round trip, unknown-content preservation, and sealed-data non-disclosure.
 
 ## P06 — Scalable Directory reads
 
@@ -94,6 +96,7 @@ Exit evidence:
 - sensitive payloads and person-to-dietary associations do not enter plaintext SQLite;
 - deletion/rebuild reconciliation passes;
 - deterministic 10,000-person/50,000-membership budgets pass.
+- unknown OKF types, keys, links, sections and malformed siblings remain tolerable, while OKF-valid but Liaison-invalid facts are quarantined and cannot affect readiness.
 
 ## P07 — Workspace Security and honest local policy
 
@@ -117,9 +120,9 @@ Exit evidence:
 - tamper, omission, wrong passphrase, schema, identity, and target-path failures leave the current workspace untouched;
 - isolated restore succeeds on a clean Mac without the original Keychain entry.
 
-## P09 — Directory onboarding
+## P09 — Required OKF normalization, then Directory onboarding
 
-Outcome: a workplace operator can maintain People and import Organisations, Groups, Locations, and effective Memberships through a streaming staged workflow.
+Outcome: `T-B0-P09-OKF` first normalizes legacy Liaison People files through exact preview/backup, journaled failure-atomic commit, restart recovery, idempotent rerun, curated-index preservation, and exact rollback after P03/P05-OKF/P06. The separate G3 P09 then lets a workplace operator maintain People and import Organisations, Groups, Locations, and effective Memberships through a streaming staged workflow.
 
 Exit evidence:
 
@@ -127,6 +130,9 @@ Exit evidence:
 - invalid rows remain inspectable and formula-prefixed content is safe;
 - large imports use bounded memory and accessible pagination;
 - confirmed batches commit through the recoverable operation engine.
+- `UAT-066` proves no partial profile/index state and byte-exact rollback across every write boundary.
+
+The required OKF People normalization is the only B0 migration exception. General and third-party migrations remain excluded from B0 and stay in R5/G5.
 
 ## P10 — Events and dietary readiness
 
@@ -160,7 +166,7 @@ B0 is an internal review alpha. Missing Developer ID signing, notarisation, stap
 
 ## A0 — Personal Memory Alpha
 
-A0 starts only after B0 acceptance. It adds Person/profile editing, stable custom-field layouts, user-organised profile tabs with stable IDs/order/visibility, lossless settings export/import, keyboard reordering, meaningful interactions, bounded commitments, last-interaction and open-loop views, and reason-only Review over the same session, security, recovery, Directory, and UI foundations. It does not add a generic task engine. The complete B0 matrix remains a regression gate.
+A0 starts only after B0 acceptance. It adds quick/full capture, a source-complete purpose-scoped profile, explicit fact states, stable custom-field layouts, user-organised profile tabs with stable IDs/order/visibility, lossless settings export/import, reversible identity review, a source- and range-labelled unified timeline, keyboard reordering, meaningful interactions, bounded commitments, distinct last-note and last-interaction views, and reason-only Review over the same session, security, recovery, Directory, OKF, and UI foundations. It does not add a generic task engine, global person score, or automatic exact/fuzzy merge. The complete B0 matrix, including `UAT-065`, remains a regression gate.
 
 ## After A0
 
@@ -170,6 +176,9 @@ Later independently gated outcomes include:
 - local/removable-media/WebDAV/S3-compatible provider transport and provider-author tooling;
 - CardDAV, CalDAV/iCalendar, email metadata, migrations, and facilities imports;
 - local OpenAPI, MCP, webhooks, n8n, Ollama, remote AI grants, and WASI plugins;
+- visible provider/import operation receipts and history with no hidden sync, hidden refresh, or unreported egress;
+- source-backed enrichment proposals that cannot directly write confirmed facts or mutate assessment, freshness, or cadence;
+- optional post-A0 spatial discovery only with explicit egress, coarse/local controls, coordinate deletion, structural Workplace denial, and semantic list/table parity;
 - native mobile products, phone synchronisation, and Meitheal integration;
 - Linux/Flatpak and supported Windows distribution;
 - Developer ID signing, notarisation, upgrades, uninstall/reinstall, provenance, and public release operations.

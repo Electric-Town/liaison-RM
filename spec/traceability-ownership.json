@@ -3,6 +3,12 @@
   "status": "active",
   "delivery_boundary": "B0 Workplace Review Alpha before A0 Personal Memory Alpha; provider, mobile, AI, MCP, and theme packages remain later.",
   "design_sequence": "After T-B0-P03, T-B0-P03D runs design consultation to create DESIGN.md and plan design review; T-B0-P04 cannot start before that gate. G0 does not create DESIGN.md.",
+  "approved_strategy": {
+    "title": "Liaison RM product strategy and Claudia/PingCRM/OKF reconciliation",
+    "status": "integrated-by-g0-contract-reconciliation",
+    "approved_sha256": "795a6e6751cd29a995478e254323f491e68a53ef7c35fa729d8627b87cd37089",
+    "scope": "Pins OKF v0.1 Draft People authoring, preserves B0 before A0, includes the required OKF People normalization in B0, and excludes general or third-party migrations from B0."
+  },
   "milestones": [
     {
       "id": "G0",
@@ -536,6 +542,12 @@
       "evidence_owner": "EO-EVENTS",
       "status": "blocked"
     },
+    "T-B0-P05-OKF": {
+      "milestone": "G1",
+      "owning_gate": "FG-B0-001",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
     "T-B0-P06": {
       "milestone": "G1",
       "owning_gate": "FG-R1-003",
@@ -552,6 +564,12 @@
       "milestone": "G1",
       "owning_gate": "FG-B0-002",
       "evidence_owner": "EO-SECURITY",
+      "status": "blocked"
+    },
+    "T-B0-P09-OKF": {
+      "milestone": "G1",
+      "owning_gate": "FG-B0-001",
+      "evidence_owner": "EO-WORKSPACE",
       "status": "blocked"
     },
     "T-B0-P09": {
@@ -602,6 +620,12 @@
       "evidence_owner": "EO-PROFILES",
       "status": "blocked"
     },
+    "T-A0-P04": {
+      "milestone": "A0",
+      "owning_gate": "FG-A0-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
     "T-A0-001": {
       "milestone": "A0",
       "owning_gate": "FG-A0-001",
@@ -620,9 +644,27 @@
       "evidence_owner": "EO-PROFILES",
       "status": "deferred"
     },
+    "T-R5-008": {
+      "milestone": "G5",
+      "owning_gate": "FG-R5-005",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "T-R5-009": {
+      "milestone": "G5",
+      "owning_gate": "FG-R5-006",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "deferred"
+    },
     "T-R6-006": {
       "milestone": "G6",
       "owning_gate": "FG-R6-006",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "T-R6-007": {
+      "milestone": "G6",
+      "owning_gate": "FG-R6-007",
       "evidence_owner": "EO-AUTOMATION",
       "status": "deferred"
     },
@@ -759,6 +801,13 @@
       "evidence_owner": "EO-SECURITY",
       "status": "blocked"
     },
+    "LRM-WS-017": {
+      "owning_task": "T-B0-P09-OKF",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
     "LRM-RC-001": {
       "owning_task": "T-B0-P08",
       "owning_gate": "FG-B0-002",
@@ -833,6 +882,48 @@
       "owning_task": "T-A0-P01",
       "owning_gate": "FG-A0-G2C",
       "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-PE-016": {
+      "owning_task": "T-B0-P05-OKF",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "LRM-PE-017": {
+      "owning_task": "T-B0-P06",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "LRM-PE-018": {
+      "owning_task": "T-A0-P04",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-PE-019": {
+      "owning_task": "T-A0-P04",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-PE-020": {
+      "owning_task": "T-A0-P04",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-PE-021": {
+      "owning_task": "T-A0-P04",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked"
     },
@@ -942,10 +1033,10 @@
       "status": "blocked"
     },
     "LRM-IN-001": {
-      "owning_task": "T-A0-P02",
-      "owning_gate": "FG-A0-G2A",
-      "milestone": "G2A",
-      "evidence_owner": "EO-PROFILES",
+      "owning_task": "T-A0-P04",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked"
     },
     "LRM-IN-006": {
@@ -1340,6 +1431,13 @@
       "evidence_owner": "EO-CONNECTIONS",
       "status": "deferred"
     },
+    "LRM-CO-015": {
+      "owning_task": "T-R5-008",
+      "owning_gate": "FG-R5-005",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
     "LRM-SH-001": {
       "owning_task": "T-R4-005",
       "owning_gate": "FG-R4-004",
@@ -1480,6 +1578,13 @@
       "evidence_owner": "EO-AUTOMATION",
       "status": "deferred"
     },
+    "LRM-AU-013": {
+      "owning_task": "T-R6-007",
+      "owning_gate": "FG-R6-007",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
     "LRM-UX-001": {
       "owning_task": "T-B0-P04",
       "owning_gate": "FG-R2-001",
@@ -1589,6 +1694,13 @@
       "owning_task": "T-UX-THEME-001",
       "owning_gate": "FG-UX-THEME-001",
       "milestone": "POST-A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "deferred"
+    },
+    "LRM-UX-015": {
+      "owning_task": "T-R5-009",
+      "owning_gate": "FG-R5-006",
+      "milestone": "G5",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "deferred"
     },
@@ -2132,6 +2244,62 @@
       "milestone": "POST-A0",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "deferred"
+    },
+    "UAT-065": {
+      "owning_task": "T-B0-P05-OKF",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "UAT-066": {
+      "owning_task": "T-B0-P09-OKF",
+      "owning_gate": "FG-B0-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    "UAT-067": {
+      "owning_task": "T-A0-P04",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-068": {
+      "owning_task": "T-A0-P04",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-069": {
+      "owning_task": "T-A0-P04",
+      "owning_gate": "FG-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-070": {
+      "owning_task": "T-R5-008",
+      "owning_gate": "FG-R5-005",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "UAT-071": {
+      "owning_task": "T-R6-007",
+      "owning_gate": "FG-R6-007",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "UAT-072": {
+      "owning_task": "T-R5-009",
+      "owning_gate": "FG-R5-006",
+      "milestone": "G5",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "deferred"
     }
   },
   "gate_ownership": {
@@ -2304,9 +2472,15 @@
       "status": "deferred"
     },
     "FG-R5-005": {
-      "acceptance_task": "T-R5-005",
+      "acceptance_task": "T-R5-008",
       "milestone": "G5",
       "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
+    "FG-R5-006": {
+      "acceptance_task": "T-R5-009",
+      "milestone": "G5",
+      "evidence_owner": "EO-EXPERIENCE",
       "status": "deferred"
     },
     "FG-R6-001": {
@@ -2341,6 +2515,12 @@
     },
     "FG-R6-006": {
       "acceptance_task": "T-R6-006",
+      "milestone": "G6",
+      "evidence_owner": "EO-AUTOMATION",
+      "status": "deferred"
+    },
+    "FG-R6-007": {
+      "acceptance_task": "T-R6-007",
       "milestone": "G6",
       "evidence_owner": "EO-AUTOMATION",
       "status": "deferred"
@@ -2742,6 +2922,120 @@
       "disposition": "adopted",
       "canonical_id": "UAT-064",
       "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+    },
+    {
+      "proposal_id": "LRM-WS-017",
+      "disposition": "adopted",
+      "canonical_id": "LRM-WS-017",
+      "rationale": "Adopted as the B0-required OKF People normalization contract; general and third-party migrations remain outside B0."
+    },
+    {
+      "proposal_id": "LRM-PE-016",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-016",
+      "rationale": "Adopted as the pinned strict-write OKF People envelope while Liaison remains domain authority and sealed values remain non-plaintext."
+    },
+    {
+      "proposal_id": "LRM-PE-017",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-017",
+      "rationale": "Adopted as the tolerant-read and separate domain-validity contract for B0 Directory projection."
+    },
+    {
+      "proposal_id": "LRM-PE-018",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-018",
+      "rationale": "Adopted for the A0 source-complete purpose-scoped profile under the final A0 acceptance gate."
+    },
+    {
+      "proposal_id": "LRM-PE-019",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-019",
+      "rationale": "Adopted for A0 claim provenance, coverage, freshness, disclosure, and correction inspection."
+    },
+    {
+      "proposal_id": "LRM-PE-020",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-020",
+      "rationale": "Adopted for explicit conflicting, stale, withheld, and proposed profile states without a silent winner."
+    },
+    {
+      "proposal_id": "LRM-PE-021",
+      "disposition": "adopted",
+      "canonical_id": "LRM-PE-021",
+      "rationale": "Adopted for staged external-edit diffs with no silent disclosure or readiness change."
+    },
+    {
+      "proposal_id": "LRM-IN-001",
+      "disposition": "adopted",
+      "canonical_id": "LRM-IN-001",
+      "rationale": "The existing identifier is amended under FG-A0-001 to own the source- and range-labelled unified timeline and no-score invariant."
+    },
+    {
+      "proposal_id": "LRM-CO-015",
+      "disposition": "adopted",
+      "canonical_id": "LRM-CO-015",
+      "rationale": "Adopted for R5 provider and import operation receipts, retry, revoke, retention, history, and hidden-egress denial."
+    },
+    {
+      "proposal_id": "LRM-AU-013",
+      "disposition": "adopted",
+      "canonical_id": "LRM-AU-013",
+      "rationale": "Adopted for R6 source-backed staged enrichment proposals with direct-write and relationship-state denial."
+    },
+    {
+      "proposal_id": "LRM-UX-015",
+      "disposition": "adopted",
+      "canonical_id": "LRM-UX-015",
+      "rationale": "Adopted as a separately gated post-A0 R5 spatial capability with explicit egress, Workplace denial, deletion, and semantic parity."
+    },
+    {
+      "proposal_id": "UAT-065",
+      "disposition": "adopted",
+      "canonical_id": "UAT-065",
+      "rationale": "Adopted as atomic P05-OKF strict-writer and sealed-data evidence under FG-B0-001."
+    },
+    {
+      "proposal_id": "UAT-066",
+      "disposition": "adopted",
+      "canonical_id": "UAT-066",
+      "rationale": "Adopted as atomic P09-OKF normalization, recovery, and exact-rollback evidence under FG-B0-001."
+    },
+    {
+      "proposal_id": "UAT-067",
+      "disposition": "adopted",
+      "canonical_id": "UAT-067",
+      "rationale": "Adopted for the installed A0 source-complete purpose-scoped profile and accessibility workflow."
+    },
+    {
+      "proposal_id": "UAT-068",
+      "disposition": "adopted",
+      "canonical_id": "UAT-068",
+      "rationale": "Adopted for explicit reversible identity review and automatic-merge denial."
+    },
+    {
+      "proposal_id": "UAT-069",
+      "disposition": "adopted",
+      "canonical_id": "UAT-069",
+      "rationale": "Adopted for the source- and range-labelled unified timeline with no person score."
+    },
+    {
+      "proposal_id": "UAT-070",
+      "disposition": "adopted",
+      "canonical_id": "UAT-070",
+      "rationale": "Adopted for R5 operation receipt, retry, revoke, hidden refresh, egress, and reminder-isolation evidence."
+    },
+    {
+      "proposal_id": "UAT-071",
+      "disposition": "adopted",
+      "canonical_id": "UAT-071",
+      "rationale": "Adopted for R6 enrichment proposal review and direct-write denial."
+    },
+    {
+      "proposal_id": "UAT-072",
+      "disposition": "adopted",
+      "canonical_id": "UAT-072",
+      "rationale": "Adopted for separately gated spatial egress, deletion, Workplace denial, and semantic parity evidence."
     },
     {
       "proposal_id": "FG-UX-THEME-001",

@@ -1,6 +1,6 @@
 # Working-state delivery contract
 
-Last reconciled: 2026-07-18
+Last reconciled: 2026-07-19
 
 This document tells a contributor what the next product is and prevents roadmap breadth from being mistaken for current implementation. Normative domain and safety rules remain in `SPEC.md`, accepted decision records, schemas, and tests.
 
@@ -18,7 +18,9 @@ At the reconciliation point, `main` contains:
 
 The installed macOS review application is version `0.1.0-alpha.1` and is an ad-hoc-signed universal internal alpha. It is not Developer ID signed, notarised, or a supported public release.
 
-The application does not yet provide a complete event workflow, encrypted recovery, a Workspace Session, recoverable multi-target writes, Directory projection, supported Airgap proof, or Personal Memory Alpha. Documentation and prototypes describing those features are plans until exact-head implementation evidence exists.
+The application does not yet provide a complete event workflow, encrypted recovery, a Workspace Session, recoverable multi-target writes, pinned OKF People authoring or normalization, Directory projection, supported Airgap proof, or Personal Memory Alpha. Documentation and prototypes describing those features are plans until exact-head implementation evidence exists.
+
+The approved Claudia/PingCRM/OKF strategy overlay is integrated into the machine contracts at SHA-256 `795a6e6751cd29a995478e254323f491e68a53ef7c35fa729d8627b87cd37089`. It adopts specific person-record outcomes and rejects blanket parity or provider-count claims.
 
 ## Accepted order
 
@@ -29,9 +31,10 @@ Work-package scores and the rules for dependency and safety overrides are in [B0
 3. Route every canonical mutation through recoverable multi-target operations.
 4. After P03, run design consultation to create canonical `DESIGN.md`, then plan design review to approve an amended P04 direction. G0 does not create or pre-empt this artifact.
 5. Replace the disposable vanilla shell with a typed React/Tauri adapter and an evidence-tested semantic design system.
-6. Implement Directory, security/local policy, checkpoint and encrypted recovery, import, Events core, and B0 interface.
-7. Qualify B0 in the compiled installed Mac application.
-8. Implement and independently qualify A0.
+6. After P04, add the pinned OKF People schema and strict writer in P05-OKF, tolerant Directory reading in P06, and required legacy-People normalization in P09-OKF; keep sensitive contracts exclusively in P07/P08 and event/dietary contracts in the G3 P05/P10 path.
+7. Implement Directory security/local policy, checkpoint and encrypted recovery, onboarding import, Events core, and B0 interface.
+8. Qualify B0 in the compiled installed Mac application.
+9. Implement and independently qualify A0.
 
 ## B0 Workplace Review Alpha
 
@@ -47,14 +50,20 @@ B0 is complete only when an installed universal Mac build can:
 - survive interruption, relaunch, committed-operation recovery, external edits, stale inputs, and denied grants;
 - create and restore an encrypted recovery package on a clean installation without the original Keychain entry;
 - pass keyboard, VoiceOver, contrast, zoom/reflow, reduced-motion, narrow-window, offline, readable-file, and egress evidence.
+- write every non-reserved People record through the pinned OKF v0.1 Draft envelope while Liaison domain extensions remain authoritative and sealed facts never enter plaintext;
+- tolerate unknown OKF keys/types, body sections, links, curated indexes, and malformed siblings, and complete the required OKF People normalization with preview, exact backup, journaled recovery, idempotent rerun, and exact rollback.
 
 B0 assumes one trusted local workspace owner. It supports event-bounded preparation and gap resolution, but it has no generic task engine and cannot allocate, score, rank, weight, or assign relationship attention in a workplace workspace. Mobile clients, provider transports, AI, MCP, and Meitheal integration are later independent outcomes, not hidden B0 dependencies.
+
+The required OKF People normalization is the only format-migration exception in B0. General and third-party migrations remain excluded, including Meerkat, Monica, CRM-in-Markdown, broad vCard conversion, provider sync, and arbitrary format adapters.
 
 Missing Developer ID signing or notarisation keeps the artifact labelled an internal review alpha.
 
 ## A0 Personal Memory Alpha
 
-A0 starts only after B0 acceptance and adds Person/profile editing, user-organised profile tabs with stable layout identifiers and settings round trips, meaningful interactions, commitments, reason-only Review, last-interaction context, open loops, and interruption-safe personal workflows. It reuses the B0 authority, storage, security, recovery, and UI foundations and must keep the B0 matrix green.
+A0 starts only after B0 acceptance and adds quick and full capture, a source-complete purpose-scoped profile, user-organised profile tabs with stable layout identifiers and settings round trips, explicit fact states, reversible identity review, a source- and range-labelled unified timeline, meaningful interactions, commitments, reason-only Review, distinct last-note and last-interaction values, open loops, and interruption-safe personal workflows. It reuses the B0 authority, storage, security, recovery, OKF, and UI foundations and must keep the B0 matrix green. A0 has no global person score, automatic exact or fuzzy merge, or generic task engine.
+
+Later provider operations require visible grants, source ranges, receipts, retries, revocation, retention, and history; hidden sync, hidden refresh, and unreported egress are prohibited. AI, MCP, plugin, import, and provider enrichment can produce source-backed staged proposals only and cannot write confirmed facts directly.
 
 ## Active-branch disposition
 

@@ -41,6 +41,8 @@ Status: **pre-alpha**.
 
 The current implementation order is governed by [the working-state delivery contract](docs/product/working-state-delivery.md) and accepted ADR 0012: B0 Workplace Review Alpha is delivered and qualified before A0 Personal Memory Alpha. Roadmap breadth, prototypes, and stale pull requests do not change that order.
 
+The Claudia/PingCRM/OKF strategy overlay approved at SHA-256 `795a6e6751cd29a995478e254323f491e68a53ef7c35fa729d8627b87cd37089` is now integrated into the canonical requirements, UAT, gates, tasks, and ownership. It adopts bounded comparator outcomes rather than blanket parity. ADR 0013 pins the B0 People compatibility profile; it does not claim that the current alpha implements it.
+
 The default branch contains governance, product and interaction specifications, machine-readable planning, the Rust Workspace/People/CLI and Markdown slice, provider-neutral Connections, Topic Pack contracts, purpose-specific profile readiness, reason-only Review and Attention runtime foundations, localisation architecture, a native Tauri desktop alpha with macOS review bundles and Windows NSIS build configuration, and a public project site. It does not yet have a supported public release.
 
 The installed macOS alpha launches and renders the local workspace interface. Native QA on 2026-07-18 found that desktop person creation fails at the Tauri argument contract because the frontend request uses camel-case `workspacePath` and `displayName` fields while the Rust request deserializer expects `workspace_path` and `display_name`. CLI Person tests do not prove the installed desktop path. Until the typed application bridge is repaired and retested, public documentation must not say the desktop can add a Person.
@@ -53,6 +55,7 @@ Do not claim any of the following without exact-head evidence:
 - that the product is WCAG-, EN 301 549-, privacy-, or security-certified;
 - that Google Drive, WebDAV, S3, CardDAV, email, calendar, AI, MCP, or plugins are production integrations;
 - that backup restore, multi-writer synchronisation, Airgap isolation, or migration is release-ready.
+- that current People files already conform to the pinned OKF profile or that the required normalizer has shipped.
 
 ### Current review stack
 
@@ -557,6 +560,8 @@ Storage invariants:
 - secrets never enter canonical files, logs, fixtures, screenshots, or exported settings;
 - fixtures contain synthetic data only.
 
+Planned B0 People authoring pins the OKF v0.1 Draft envelope. Liaison's versioned domain extension remains authoritative for identity, purpose, revision, provenance, state, sensitivity, disclosure, and operational meaning. Writers are strict; readers are tolerant. OKF-valid never means Liaison-valid or event-ready, and sealed sensitive facts never enter plaintext. The required OKF People normalization is previewable, exact-backup-first, journaled, failure-atomic, idempotent, restart-recoverable, and exactly reversible. General and third-party migrations remain excluded from B0.
+
 Pure "everything is one Markdown file" is not a requirement. Millions of access or email-metadata events should not become millions of tiny files. Open, documented JSONL is acceptable for machine streams.
 
 ## 14. Local authority
@@ -656,6 +661,7 @@ A workspace can request selected information from a person without requiring an 
 - AI output is untrusted input.
 - Read tools return source references and the grant used.
 - Write tools stage proposals by default.
+- Direct AI, MCP, plugin, provider, or import writes to confirmed facts, assessment, freshness, cadence, disclosure, or operational readiness are prohibited.
 - Proposal review shows records, fields, old values, new values, provenance, and consequences.
 - No personal data is sent to a model without a provider, purpose, scope, and expiry grant.
 - Local Ollama-compatible operation must not require a remote account.
@@ -811,13 +817,15 @@ The current merge order is P00–P11, B0 acceptance, then A0. The complete exit 
 
 - **P00–P03:** reconcile truth, establish one typed application and Workspace Session boundary, and route canonical mutations through recoverable multi-target operations.
 - **P03 design gate:** design consultation creates canonical `DESIGN.md`, then plan design review approves an amended P04 direction. G0 does not create `DESIGN.md`.
-- **P04–P08:** deliver the typed accessible desktop system, B-domain contracts, scalable Directory, local security, quiescent checkpoints, and encrypted recovery packages.
+- **P04:** deliver the typed accessible desktop system after design consultation and plan design review.
+- **P05-OKF/P06/P09-OKF:** after P03/P04, deliver the pinned strict People writer, tolerant Directory projection, and required recoverable OKF People normalization under `FG-B0-001`; P01/P02 do not expand.
+- **P05/P07/P08:** keep G3 dietary/domain schemas separate from sensitive security and recovery ownership under their single gates.
 - **P09–P11:** complete Directory onboarding, immutable event cohorts, exact dietary readiness, least-disclosure brief delivery, and the compiled B0 interface.
 - **B0:** qualify Workplace Review Alpha in a freshly installed universal Mac review application for one trusted local workspace owner.
-- **A0:** add custom profile layouts, personal interactions, commitments, last-interaction context, open loops, and reason-only Review while retaining the complete B0 regression matrix.
-- **After A0:** independently gate sharing, providers, mobile, Meitheal, CardDAV/calendars/email, facilities, OpenAPI, MCP, AI, and plugins.
+- **A0:** add quick/full capture, source-complete purpose-scoped profiles, explicit fact states, reversible identity review, a source/range unified timeline, custom profile layouts, personal interactions, commitments, distinct last-note/last-interaction context, open loops, and reason-only Review while retaining the complete B0 regression matrix.
+- **After A0:** independently gate general/third-party migrations, sharing, visible provider operations, mobile, Meitheal, CardDAV/calendars/email, facilities, optional spatial discovery, OpenAPI, MCP, staged AI proposals, and plugins.
 
-B0 has event-bounded preparation and gap resolution only. It does not contain a generic task engine or workplace relationship allocation, cadence, attention weighting, ranking, or scoring.
+B0 has event-bounded preparation and gap resolution only. It does not contain a generic task engine or workplace relationship allocation, cadence, attention weighting, ranking, or scoring. A0 also has no global person score and exact or fuzzy candidates never merge automatically. Later connections have no hidden sync, refresh, or egress.
 
 ## 23. Recommended implementation order
 

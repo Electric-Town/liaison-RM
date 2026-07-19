@@ -17,7 +17,7 @@ When changing any governed catalogue:
 
 1. Update the requirement, persona, UAT, gate, or task in its canonical source.
 2. Add or update exactly one ownership record with an owning task or acceptance task, owning gate, milestone, evidence owner, and status.
-3. Make the owning task name every requirement and UAT it owns. Make the owning gate name each owned UAT in its evidence.
+3. Make the owning task name every requirement and UAT it owns in canonical `requirements` and `uat` arrays. Those arrays contain owned IDs only. Put reused regression or prerequisite coverage in `evidence_dependencies`; it never creates another owner. Make the owning gate name each owned UAT in its evidence.
 4. Keep task dependencies acyclic and topologically ordered. A dependency must appear before its dependent task.
 5. Give superseded tasks a real replacement and a disposition. Preserve reviewed branches only with an explicit blocked or deferred condition.
 6. Record the disposition and canonical identifier for every adopted founder-plan proposal.
@@ -37,6 +37,9 @@ Zero-orphan structure does not make contradictory product language safe. B0 must
 - byte-identical preview and emitted immutable brief evidence;
 - structural absence of diagnoses, private notes, hidden-row metadata, generic tasks, relationship allocation, cadence, scoring, and attention weights;
 - a separate independent governance gate before any real workplace-data pilot.
+- pinned OKF v0.1 Draft strict People writes, tolerant reads, separate Liaison domain validity, and no sealed plaintext;
+- required OKF People normalization with exact preview/backup, journaled failure-atomic recovery, idempotent rerun, and exact rollback, while general and third-party migrations remain excluded from B0;
+- no global person score, generic task engine, automatic exact/fuzzy merge, direct AI write, hidden sync, hidden refresh, or unreported egress.
 
 If a changed UAT, gate, task, requirement, README, or public page contradicts those assertions, reconcile the source rather than adding an exception in prose.
 
@@ -52,6 +55,7 @@ If a changed UAT, gate, task, requirement, README, or public page contradicts th
 ## Common mistakes
 
 - adding a requirement and only mentioning it in a task description;
+- listing a requirement or UAT in two tasks' canonical arrays instead of using `evidence_dependencies` for the non-owning edge;
 - using release labels as ownership;
 - letting a current task belong to a blocked milestone;
 - editing generated traceability by hand;
