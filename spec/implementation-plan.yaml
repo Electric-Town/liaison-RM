@@ -484,8 +484,8 @@ tasks:
     rice: {reach: 12, impact: 3, confidence: 0.85, effort_weeks: 4, score: 7.65}
     contexts: [workspace]
     depends_on: [T-B0-P01]
-    requirements: [LRM-WS-001, LRM-WS-002, LRM-WS-009]
-    uat: [UAT-001]
+    requirements: [LRM-WS-002, LRM-WS-009]
+    uat: []
     evidence_dependencies: [UAT-042]
     outputs: [workspace-session, OS-writer-lock, quiescence, session-bound-repositories]
 
@@ -495,8 +495,8 @@ tasks:
     rice: {reach: 12, impact: 3, confidence: 0.80, effort_weeks: 5, score: 5.76}
     contexts: [workspace, people]
     depends_on: [T-B0-P02]
-    requirements: [LRM-WS-004, LRM-WS-005, LRM-WS-007, LRM-WS-010, LRM-WS-013, LRM-WS-014]
-    uat: [UAT-040, UAT-042]
+    requirements: [LRM-WS-004, LRM-WS-005, LRM-WS-007, LRM-WS-010]
+    uat: [UAT-042]
     outputs: [operation-engine, per-file-final-preconditions, durable-commit-decision, commit-progress-complete, roll-forward-recovery, migration-dry-run, fault-matrix]
 
   - id: T-B0-P03D
@@ -553,6 +553,17 @@ tasks:
     evidence_dependencies: [UAT-041, UAT-042]
     outputs: [tolerant-OKF-reader, domain-validity-quarantine, tolerant-scanner, SQLite-FTS-projection, pagination, scale-fixtures]
 
+  - id: T-B0-P06-REPAIR
+    release: B0
+    title: Repair invalid canonical records through guided failure-atomic operations
+    rice: {reach: 7, impact: 3, confidence: 0.85, effort_weeks: 3, score: 5.95}
+    contexts: [workspace, directory, people]
+    depends_on: [T-B0-P03, T-B0-P06]
+    requirements: []
+    uat: [UAT-040]
+    evidence_dependencies: [LRM-WS-006, LRM-WS-007, LRM-WS-010, UAT-042]
+    outputs: [guided-repair-preview, exact-pre-repair-backup, backup-first-failure-atomic-repair, exact-repair-receipt, exact-rollback, recovery-knowledge]
+
   - id: T-B0-P07
     release: B0
     title: Add Workspace Security, key recovery, purpose grants, and minimal audit
@@ -579,7 +590,7 @@ tasks:
     title: Normalize legacy People files to the pinned OKF profile
     rice: {reach: 8, impact: 3, confidence: 0.80, effort_weeks: 4, score: 4.80}
     contexts: [workspace, people, directory, migration]
-    depends_on: [T-B0-P03, T-B0-P05-OKF, T-B0-P06]
+    depends_on: [T-B0-P03, T-B0-P05-OKF, T-B0-P06, T-B0-P06-REPAIR]
     requirements: [LRM-WS-017]
     uat: [UAT-066]
     outputs: [normalization-preview, exact-backup, journaled-failure-atomic-migration, curated-index-preservation, idempotent-recovery, exact-rollback]
@@ -613,9 +624,9 @@ tasks:
     contexts: [experience, directory, events, recovery]
     depends_on: [T-B0-P04, T-B0-P08, T-B0-P10]
     requirements: [LRM-WS-008, LRM-UX-005, LRM-UX-011]
-    uat: [UAT-050]
-    evidence_dependencies: [LRM-WS-013, LRM-WS-014, LRM-UX-009, LRM-PK-006, UAT-041, UAT-042, UAT-043, UAT-062]
-    outputs: [Overview, Directory, Events, Health, Settings, Event-Details-state-machine, settings-preview-diff-rollback, appearance-persistence, interruption-recovery]
+    uat: []
+    evidence_dependencies: [LRM-UX-009, LRM-PK-006, UAT-041, UAT-042, UAT-043, UAT-062]
+    outputs: [Overview, Directory, Events, Health, Settings, Event-Details-state-machine, built-in-theme-choice, built-in-theme-persistence, interruption-recovery]
 
   - id: T-B0-PILOT
     release: B0
@@ -633,9 +644,9 @@ tasks:
     rice: {reach: 4, impact: 3, confidence: 0.90, effort_weeks: 3, score: 3.60}
     contexts: [product, experience, packaging, security]
     depends_on: [T-B0-P11]
-    requirements: [LRM-PK-006]
-    uat: [UAT-041]
-    evidence_dependencies: [LRM-PK-008, UAT-042, UAT-043, UAT-050, UAT-055, UAT-062]
+    requirements: [LRM-WS-001, LRM-PK-006]
+    uat: [UAT-001, UAT-041]
+    evidence_dependencies: [LRM-PK-008, UAT-042, UAT-043, UAT-055, UAT-062]
     outputs: [exact-head-evidence, design-review, native-QA, offline-egress-proof, Mac-review-bundle]
 
   - id: T-A0-P01
@@ -644,9 +655,9 @@ tasks:
     rice: {reach: 5, impact: 2, confidence: 0.65, effort_weeks: 8, score: 0.81}
     contexts: [workspace, people, profiles, experience]
     depends_on: [T-B0-ACCEPT]
-    requirements: [LRM-WS-012, LRM-WS-015, LRM-PE-006, LRM-PE-007, LRM-PE-011, LRM-PE-012, LRM-PE-013, LRM-PE-014, LRM-PE-015, LRM-UX-007, LRM-UX-010, LRM-UX-013]
-    uat: [UAT-002, UAT-020, UAT-021, UAT-045, UAT-046, UAT-053, UAT-054, UAT-056, UAT-063]
-    evidence_dependencies: [LRM-PE-001, LRM-PE-002, LRM-PE-003, LRM-PE-004, LRM-PE-005, UAT-050]
+    requirements: [LRM-WS-012, LRM-WS-013, LRM-WS-014, LRM-WS-015, LRM-PE-006, LRM-PE-007, LRM-PE-011, LRM-PE-012, LRM-PE-013, LRM-PE-014, LRM-PE-015, LRM-UX-007, LRM-UX-010, LRM-UX-013]
+    uat: [UAT-002, UAT-020, UAT-021, UAT-045, UAT-046, UAT-050, UAT-053, UAT-054, UAT-056, UAT-063]
+    evidence_dependencies: [LRM-PE-001, LRM-PE-002, LRM-PE-003, LRM-PE-004, LRM-PE-005]
     outputs: [purpose-bound-contexts, Working-With-Me, merge-split-preview, typed-custom-fields, stable-tabs, safe-rehoming, density-text-scale-motion-palette, settings-round-trip]
 
   - id: T-A0-P02
@@ -688,6 +699,7 @@ tasks:
     depends_on: [T-A0-P04]
     requirements: [LRM-A0-001]
     uat: [UAT-044]
+    evidence_dependencies: [UAT-001, UAT-002]
     outputs: [profile-editing, configurable-profile-tabs, settings-round-trip, interactions, commitments, reason-only-review, open-loops, A0-evidence]
 
   - id: T-R5-006

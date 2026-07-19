@@ -49,6 +49,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Changed
 
+- Corrected machine-contract ownership so P02 owns session authority rather than installed/offline round-trip acceptance, B0 acceptance owns workspace creation and `UAT-001`, final A0 acceptance closes the full round-trip gate, settings-only export/import and `UAT-050` belong to A0 configuration, and post-P06 guided repair owns `UAT-040` through backup-first recoverable operations.
 - The repository README now serves as a detailed public product overview and routes contributors to canonical product, architecture, security, planning, and status sources.
 - `AGENTS.md` now requires branch, exact-head, source-hierarchy, relationship-domain, provider, AI, accessibility, and handoff checks before completion claims.
 - Reason-only review is the personal-workspace default; weighted Review Priority is explicitly queue ordering rather than relationship strength.

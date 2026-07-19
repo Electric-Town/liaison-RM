@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "active",
-  "source_sha256": "b7f527e303051caa5a8e5471f556deaacc317a1ca6d81336b3ee2ebf97034567",
+  "source_sha256": "bfdda66d31441625c5bdd67bcd268126b148825c3797e5d1f47451fbecfce9f8",
   "delivery_boundary": "B0 Workplace Review Alpha before A0 Personal Memory Alpha; provider, mobile, AI, MCP, and theme packages remain later.",
   "design_sequence": "After T-B0-P03, T-B0-P03D runs design consultation to create DESIGN.md and plan design review; T-B0-P04 cannot start before that gate. G0 does not create DESIGN.md.",
   "approved_strategy": {
@@ -15,7 +15,7 @@
     "personas": 15,
     "uat_cases": 75,
     "feature_gates": 48,
-    "implementation_tasks": 77,
+    "implementation_tasks": 78,
     "evidence_owners": 9,
     "proposal_dispositions": 76
   },
@@ -182,13 +182,13 @@
       "context": "workspace",
       "priority": "must",
       "statement": "The application shall create a workspace in a user-selected local directory without requiring an account or network connection.",
-      "owning_task": "T-B0-P02",
-      "owning_gate": "FG-B0-001",
-      "milestone": "G1",
-      "evidence_owner": "EO-WORKSPACE",
+      "owning_task": "T-B0-ACCEPT",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
       "supporting_tasks": [
-        "T-B0-P02",
+        "T-B0-ACCEPT",
         "T-R1-002",
         "T-R1-008"
       ]
@@ -271,6 +271,7 @@
       "status": "blocked",
       "supporting_tasks": [
         "T-B0-P06",
+        "T-B0-P06-REPAIR",
         "T-R1-003",
         "T-R1-006",
         "T-R1-008"
@@ -288,7 +289,8 @@
       "evidence_owner": "EO-WORKSPACE",
       "status": "blocked",
       "supporting_tasks": [
-        "T-B0-P03"
+        "T-B0-P03",
+        "T-B0-P06-REPAIR"
       ]
     },
     {
@@ -1583,7 +1585,8 @@
       "evidence_owner": "EO-WORKSPACE",
       "status": "blocked",
       "supporting_tasks": [
-        "T-B0-P03"
+        "T-B0-P03",
+        "T-B0-P06-REPAIR"
       ]
     },
     {
@@ -1803,34 +1806,32 @@
     },
     {
       "id": "LRM-WS-013",
-      "repository_release": "B0",
+      "repository_release": "A0",
       "context": "workspace",
       "priority": "must",
       "statement": "The product shall export a versioned settings-only bundle containing layouts, fields, packs, templates, views, appearance, and policies but no records, secrets, tokens, caches, or device paths.",
-      "owning_task": "T-B0-P03",
-      "owning_gate": "FG-B0-001",
-      "milestone": "G1",
-      "evidence_owner": "EO-WORKSPACE",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
       "supporting_tasks": [
-        "T-B0-P03",
-        "T-B0-P11"
+        "T-A0-P01"
       ]
     },
     {
       "id": "LRM-WS-014",
-      "repository_release": "B0",
+      "repository_release": "A0",
       "context": "workspace",
       "priority": "must",
       "statement": "Settings import shall provide validation, migration and diff preview, conflict choices, dry-run, rollback, and unknown-safe-field preservation.",
-      "owning_task": "T-B0-P03",
-      "owning_gate": "FG-B0-001",
-      "milestone": "G1",
-      "evidence_owner": "EO-WORKSPACE",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
+      "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
       "supporting_tasks": [
-        "T-B0-P03",
-        "T-B0-P11"
+        "T-A0-P01"
       ]
     },
     {
@@ -2594,13 +2595,14 @@
       "repository_release": "R1",
       "persona": "P-INDIVIDUAL",
       "title": "Create and recover a local workspace",
-      "owning_task": "T-B0-P02",
-      "owning_gate": "FG-B0-001",
-      "milestone": "G1",
-      "evidence_owner": "EO-WORKSPACE",
+      "owning_task": "T-B0-ACCEPT",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
       "supporting_tasks": [
-        "T-B0-P02",
+        "T-A0-001",
+        "T-B0-ACCEPT",
         "T-R1-002",
         "T-R1-005",
         "T-R1-006",
@@ -2608,7 +2610,7 @@
         "T-R1-009"
       ],
       "supporting_gates": [
-        "FG-B0-001",
+        "FG-B0-003",
         "FG-R1-001",
         "FG-R1-004"
       ]
@@ -2624,6 +2626,7 @@
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
       "supporting_tasks": [
+        "T-A0-001",
         "T-A0-P01",
         "T-R1-004",
         "T-R1-005",
@@ -3315,19 +3318,18 @@
       "repository_release": "R1",
       "persona": "P-CRM",
       "title": "Repair invalid external edit",
-      "owning_task": "T-B0-P03",
-      "owning_gate": "FG-B0-001",
+      "owning_task": "T-B0-P06-REPAIR",
+      "owning_gate": "FG-R1-002",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
       "status": "blocked",
       "supporting_tasks": [
-        "T-B0-P03",
+        "T-B0-P06-REPAIR",
         "T-R1-003",
         "T-R1-006",
         "T-R1-008"
       ],
       "supporting_gates": [
-        "FG-B0-001",
         "FG-R1-002"
       ]
     },
@@ -3371,6 +3373,7 @@
         "T-B0-P02",
         "T-B0-P03",
         "T-B0-P06",
+        "T-B0-P06-REPAIR",
         "T-B0-P11"
       ],
       "supporting_gates": [
@@ -3501,23 +3504,19 @@
     },
     {
       "id": "UAT-050",
-      "repository_release": "B0",
+      "repository_release": "A0",
       "persona": "P-CRM",
       "title": "Transfer settings without transferring records or secrets",
-      "owning_task": "T-B0-P11",
-      "owning_gate": "FG-B0-003",
-      "milestone": "B0",
+      "owning_task": "T-A0-P01",
+      "owning_gate": "FG-A0-G2C",
+      "milestone": "G2C",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
       "supporting_tasks": [
-        "T-A0-P01",
-        "T-B0-ACCEPT",
-        "T-B0-P11"
+        "T-A0-P01"
       ],
       "supporting_gates": [
-        "FG-A0-G2C",
-        "FG-B0-001",
-        "FG-B0-003"
+        "FG-A0-G2C"
       ]
     },
     {
@@ -3975,16 +3974,16 @@
       "id": "FG-R1-001",
       "repository_release": "R1",
       "name": "Canonical workspace round trip",
-      "acceptance_task": "T-B0-P02",
-      "milestone": "G1",
-      "evidence_owner": "EO-WORKSPACE",
+      "acceptance_task": "T-A0-001",
+      "milestone": "A0",
+      "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked"
     },
     {
       "id": "FG-R1-002",
       "repository_release": "R1",
       "name": "Crash-safe writes and repair",
-      "acceptance_task": "T-B0-P03",
+      "acceptance_task": "T-B0-P06-REPAIR",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
       "status": "blocked"
@@ -4944,6 +4943,15 @@
       "status": "blocked"
     },
     {
+      "id": "T-B0-P06-REPAIR",
+      "repository_release": "B0",
+      "title": "Repair invalid canonical records through guided failure-atomic operations",
+      "milestone": "G1",
+      "owning_gate": "FG-R1-002",
+      "evidence_owner": "EO-WORKSPACE",
+      "status": "blocked"
+    },
+    {
       "id": "T-B0-P07",
       "repository_release": "B0",
       "title": "Add Workspace Security, key recovery, purpose grants, and minimal audit",
@@ -5144,13 +5152,13 @@
       "proposal_id": "LRM-WS-013",
       "disposition": "adopted",
       "canonical_id": "LRM-WS-013",
-      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+      "rationale": "Adopted for A0 settings-only transfer under T-A0-P01 and FG-A0-G2C; B0 retains built-in theme choice and persistence only."
     },
     {
       "proposal_id": "LRM-WS-014",
       "disposition": "adopted",
       "canonical_id": "LRM-WS-014",
-      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+      "rationale": "Adopted for A0 validated settings import under T-A0-P01 and FG-A0-G2C; B0 owns no settings-transfer workflow."
     },
     {
       "proposal_id": "LRM-WS-015",
@@ -5378,7 +5386,7 @@
       "proposal_id": "UAT-050",
       "disposition": "adopted",
       "canonical_id": "UAT-050",
-      "rationale": "Adopted by P00 contract reconciliation; implementation remains governed by its owning milestone and gate."
+      "rationale": "Adopted as the complete A0 settings-transfer acceptance case under T-A0-P01 and FG-A0-G2C."
     },
     {
       "proposal_id": "UAT-051",

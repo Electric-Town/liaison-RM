@@ -54,8 +54,9 @@ gates:
     criteria:
       - Interrupted writes leave old valid state or recoverable journal.
       - Duplicate IDs, invalid schemas, revision regressions, and unsafe paths are reported.
-      - Repair creates backup and preview.
-    evidence_required: [fault-injection tests, UAT-040, recovery knowledge article]
+      - Guided repair previews every affected canonical target before mutation and creates an exact pre-repair backup.
+      - Repair is failure-atomic, records a bounded receipt, and supports exact rollback without silently deleting an invalid source.
+    evidence_required: [fault-injection tests, UAT-040, exact repair receipt and rollback fixture, recovery knowledge article]
 
   - id: FG-R1-003
     release: R1
@@ -406,8 +407,7 @@ gates:
       - Every Liaison-authored non-reserved People document uses the pinned OKF v0.1 Draft envelope through one strict writer while Liaison domain extensions remain authoritative and sealed sensitive values never enter plaintext.
       - Tolerant reads preserve unknown types, keys, extensions, body bytes, links and curated indexes; OKF-valid but domain-invalid facts remain inert or quarantined and cannot affect event readiness.
       - The required OKF People normalization is previewable, exact-backup-first, journaled, failure-atomic, idempotent, restart-recoverable and exactly reversible with no partial profile or index state.
-      - Settings-only import and export is previewable, rollback-safe, and contains no records, secrets, device paths, or provider-backup claim.
-    evidence_required: [UAT-001, UAT-040, UAT-042, UAT-050, UAT-065, UAT-066, fault-injection matrix, rename and file-sync matrix, OKF conformance and sealed-leak fixtures, CLI-Tauri parity tests]
+    evidence_required: [UAT-042, UAT-065, UAT-066, fault-injection matrix, rename and file-sync matrix, OKF conformance and sealed-leak fixtures, CLI-Tauri parity tests]
 
   - id: FG-B0-DESIGN-001
     release: B0
@@ -437,12 +437,13 @@ gates:
     name: Installed Workplace Review Alpha accepted
     blocks: [A0]
     criteria:
+      - A fresh installed artifact creates, closes, and reopens a local workspace without an account, then rebuilds after projection deletion while network access is denied.
       - The installed universal Mac application completes Event Details, Cohort, Attendees, Readiness, and Brief after Directory import.
       - The ordered decision table and attendee transition matrix reconcile every active attendee and invalid combination; only bounded EventReadinessFollowUp exists.
       - Immutable preview and emitted brief bytes match; names are absent by default and opaque identifiers require explicit approved policy; diagnostic detail, private notes, hidden-row metadata, catering-role grants, generic tasks, relationship allocation, cadence, ranking, scoring, and attention weights are structurally absent.
       - System, light, dark, and high_contrast built-ins use one semantic contract and preserve meaning across the complete keyboard, VoiceOver, contrast, 400 percent zoom and reflow, target, reduced-motion, localisation, interruption, offline, egress, relaunch, and readable-file matrix.
       - Missing signing or notarisation is disclosed as an internal review-alpha limitation.
-    evidence_required: [UAT-009, UAT-010, UAT-011, UAT-041, UAT-050, UAT-062, decision-table and attendee-lifecycle property tests, byte-equality and negative-disclosure fixtures, compiled design review, native QA report, Mac provenance]
+    evidence_required: [UAT-001, UAT-009, UAT-010, UAT-011, UAT-041, UAT-062, decision-table and attendee-lifecycle property tests, byte-equality and negative-disclosure fixtures, compiled design review, native QA report, Mac provenance]
 
   - id: FG-B0-PILOT-001
     release: B0
@@ -493,6 +494,7 @@ gates:
     criteria:
       - Purpose boundaries, Working With Me provenance, typed custom fields, stable tabs, safe rehoming, merge or split, and opaque identity bridges preserve data and consent semantics.
       - Density, text scale, motion, validated palettes, and settings round trip work by keyboard and screen reader without record or semantic leakage.
+      - Settings transfer validates, previews, dry-runs, applies, conflicts, and rolls back a versioned settings-only bundle while excluding records, secrets, tokens, caches, and device paths.
     evidence_required: [UAT-002, UAT-020, UAT-021, UAT-045, UAT-046, UAT-050, UAT-053, UAT-054, UAT-056, UAT-063]
 
   - id: FG-UX-THEME-001
