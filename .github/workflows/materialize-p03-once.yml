@@ -1,0 +1,75 @@
+name: Materialize P03 recoverable operations once
+
+on:
+  push:
+    branches: [feat/p03-recoverable-canonical-operations]
+    paths:
+      - ".github/workflows/materialize-p03-once.yml"
+      - ".bootstrap/p03/**"
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p03-recoverable-canonical-operations
+          fetch-depth: 0
+
+      - name: Reconstruct and verify reviewed patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .bootstrap/p03/part-* | tr -d '\r\n' | base64 --decode > /tmp/p03-source.patch.gz
+          echo "b5925f4553592513c8ef0a105b9a4d3c86f728b5839c6dbb2488937451fbe926  /tmp/p03-source.patch.gz" | sha256sum -c -
+          gzip -t /tmp/p03-source.patch.gz
+          gzip -dc /tmp/p03-source.patch.gz > /tmp/p03-source.patch
+          git apply --check --whitespace=error-all /tmp/p03-source.patch
+
+      - name: Apply directly reviewable P03 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply /tmp/p03-source.patch
+          rm -rf .bootstrap/p03
+          rm .github/workflows/materialize-p03-once.yml
+
+      - name: Format, lock, and validate
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo fmt --all
+          cargo generate-lockfile
+          cargo check --workspace --all-targets --all-features --locked
+          cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+          cargo test --workspace --all-features --locked
+          python3 scripts/check_architecture.py
+          python3 scripts/check_repository.py
+          python3 scripts/check_spec.py
+          python3 scripts/check_providers.py
+          python3 scripts/check_wit_contract.py
+          python3 scripts/check_workspace_manifest.py
+          python3 scripts/check_desktop_shell.py
+          python3 scripts/check_localization.py
+          python3 scripts/check_relationship_model.py
+          python3 scripts/check_public_site.py
+          python3 scripts/generate_traceability.py --check
+          node --check apps/desktop/ui/app.js
+          git diff --check
+          test ! -e .bootstrap/p03
+          test ! -e .github/workflows/materialize-p03-once.yml
+
+      - name: Commit ordinary source files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "feat(workspace): add recoverable canonical operations"
+          git push origin HEAD:feat/p03-recoverable-canonical-operations
