@@ -47,7 +47,7 @@ Execution position: G0/P00 and P01 are complete on the default branch; G1 is cur
 
 1. **P00 — contract truth:** reconcile accepted ADRs, formats, requirements, UAT, gates, tasks, versions, commands, evidence, and stale-branch claims.
 2. **P01 — application composition:** add `liaison-application`, typed commands/DTOs/errors, common CLI/Tauri composition, tolerant Health, and correct validation/error semantics.
-3. **P02 — workspace authority:** add `WorkspaceSession`, one advisory writer lock, read-only recovery, quiescence, and explicit schema handling.
+3. **P02 — workspace authority:** add `WorkspaceSession`, composite path-local and per-user `WorkspaceId` advisory writer authority, read-only recovery, quiescence, and explicit schema handling.
 4. **P03 — recoverable operations:** route every canonical mutation through staged multi-target operations with a durable commit decision and roll-forward recovery.
 5. **P03 design gate:** run design consultation to create canonical `DESIGN.md`, then run plan design review against the complete B0 journey and amend P04 before implementation. G0 records this gate but does not create the file or preselect the direction.
 6. **P04 — desktop inbound adapter:** migrate to React/TypeScript/Vite over typed Rust commands and prove Workspace, People, and Health parity before new event UI.

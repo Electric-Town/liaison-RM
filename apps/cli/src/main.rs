@@ -161,7 +161,8 @@ fn application_exit_code(code: &str) -> u8 {
         | "people.revision-conflict"
         | "application.workspace-session-stale"
         | "application.workspace-session-quiescing"
-        | "workspace.writer-already-active" => EXIT_CONFLICT,
+        | "workspace.writer-already-active"
+        | "workspace.identity-writer-already-active" => EXIT_CONFLICT,
         "workspace.unsupported-schema" => EXIT_UNSUPPORTED,
         _ => EXIT_GENERAL_ERROR,
     }

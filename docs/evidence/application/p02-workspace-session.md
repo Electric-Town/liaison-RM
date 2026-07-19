@@ -1,34 +1,35 @@
 # P02 Workspace Session authority evidence
 
-Date: 2026-07-18
-Status: local path-bound authority slice reviewed; workspace-identity and exact-head remote evidence pending
+Date: 2026-07-19
+Status: local composite authority slice reviewed; exact-head remote runtime evidence pending
 
 ## Claim boundary
 
-The P02 source state provides a path-bound write-authoritative
+The P02 source state provides a write-authoritative
 `WorkspaceSession` for the current Workspace/People/Markdown slice. A session owns workspace
 identity/schema, one retained capability root, path-free repositories, one
-operating-system writer authority, a quiescence barrier, and explicit recovery,
-key, and projection states.
+composite operating-system writer authority, a quiescence barrier, and explicit
+recovery, key, and projection states.
 
-The current lock lives inside the selected workspace. A file-synced or copied
-workspace at another path contains an independent lock inode and can still
-obtain writer authority for the same workspace identifier. This leaves
-`LRM-WS-009` and `T-B0-P02` blocked until identity-scoped cross-path exclusion
-and native platform evidence exist. Rename and retained-root checks do not
-substitute for that missing identity registry.
+The composite authority retains the workspace-local lock and adds a per-user,
+zero-data operating-system lock keyed only by `WorkspaceId`. Current cooperating
+Liaison processes on one OS user account and machine therefore deny a second
+writer when a manifest is copied or file-synchronised to another path. The
+registry contains no path, PID, diagnostics, or relationship data. `T-B0-P02`
+remains open until exact-head native Linux, macOS, and Windows evidence passes.
 
 This is source evidence, not installed-artifact or supported-release evidence.
-The P02 work began from P01 commit `807071e`; the final P02 commit is reported
-with the review handoff rather than embedded circularly in this file. Remote
+The final P02 commit and its rebased integration head are reported with the
+review handoff rather than embedded circularly in this file. Remote
 Linux/macOS/Windows matrices, installed macOS requalification, signing,
 notarisation, Airgap proof, and public distribution remain pending.
 
-On Unix, the advisory lock coordinates cooperating Liaison processes. A
+The authority coordinates cooperating Liaison processes. A
 hostile or non-cooperating same-user process can still unlink the lock inode or
 write canonical files directly. Liaison verifies the retained control
-directory and lock inode before issuing each new work guard, but that is not a
-hostile-process atomicity guarantee.
+directory, identity registry, and both lock identities before issuing each new
+work guard, but that is not a hostile-process atomicity guarantee. Older builds,
+other user accounts, and other machines remain outside this P02 boundary.
 
 ## Behaviours exercised
 
@@ -39,14 +40,26 @@ hostile-process atomicity guarantee.
 - `.liaison`, the stable lock file, the diagnostic sidecar, manifests, and
   People records are opened relative to retained capability directories with
   no-follow checks at governed boundaries.
-- A second process receives `workspace.writer-already-active`. The bounded
+- A same-path second process receives `workspace.writer-already-active`; a
+  copied-path process with the same manifest identity receives
+  `workspace.identity-writer-already-active`. The bounded
   JSON sidecar is untrusted diagnostic metadata and does not grant, steal, or
   release the lock.
 - Missing, malformed, stale, and oversized diagnostics do not change authority.
 - Symlinked or replaced authority paths fail with typed errors rather than
   falling through to another filesystem object.
-- A forced child-process exit releases the operating-system lock through handle
-  cleanup; no PID or age heuristic participates.
+- A real child process holding either the same path or a different path with
+  the same identity denies the contender. Forced exit releases both operating-
+  system locks through handle cleanup; no PID or age heuristic participates.
+- Different Workspace IDs can hold authority concurrently. Stale empty
+  registry entries neither grant nor deny authority.
+- Registry roots and entries reject relative paths, symlinks/reparse points,
+  replacement, unsafe ownership or permissions, unexpected bytes, and unsafe
+  hard-link counts. Safe first use creates only missing owned local-data
+  components with no-follow traversal.
+- The manifest is validated before acquisition and re-read under authority.
+  Identity/schema drift aborts and releases authority; the session retains the
+  post-lock manifest.
 - `begin_work` revalidates live authority, rejects work after quiescence starts,
   and lets issued work drain before `close` releases the lock.
 - Read-only Health does not acquire or materialise writer artifacts and remains
@@ -65,8 +78,8 @@ hostile-process atomicity guarantee.
 
 | Record | P02 evidence | Remaining work |
 |---|---|---|
-| `T-B0-P02` | Workspace Session, path-local OS writer lock, quiescence, session-bound repositories, and lock-free Health are implemented in the current slice. | Identity-scoped cross-path exclusion plus exact-head remote platform qualification remain pending. |
-| `LRM-WS-009` | Typed same-path second-writer exclusion, read-only Health, explicit states, rename checks, and forced process-exit release are covered locally. | A file-synced copy at another path can still acquire an independent lock; identity-scoped denial and Windows runtime evidence remain pending. |
+| `T-B0-P02` | Workspace Session, composite path/identity OS authority, quiescence, session-bound repositories, lock-free Health, copy denial, and process-exit release are implemented and locally exercised. | Exact-head remote Linux, macOS, and Windows runtime qualification remains pending. |
+| `LRM-WS-009` | Typed same-path and copied-path second-writer exclusion, read-only Health, explicit states, rename checks, and forced process-exit release are covered locally. | Exact-head native Windows runtime evidence and the enclosing P02 gate remain pending. |
 | `UAT-042` | The malformed-record, healthy-record, active-writer, typed-lock, and process-release portions are covered. | P03 must cover injected crashes, durable commit decisions, roll-forward, staging cleanup, and external-edit final preconditions. |
 | `FG-B0-001` | The application/session/Health portion is advanced. | The gate remains open until P03 recoverable operations and the complete fault-injection matrix pass. |
 
@@ -77,16 +90,22 @@ Neither `UAT-042` nor `FG-B0-001` is closed by P02.
 The following checks passed in the source worktree:
 
 ```text
-cargo fmt --all -- --check
+cargo fmt --all --check
 cargo check --workspace --all-targets --all-features --locked
 cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 cargo test --workspace --all-features --locked
+cargo check -p liaison-workspace-session-local -p liaison-workspace -p liaison-application -p liaison-cli --all-targets --all-features --locked --target x86_64-pc-windows-gnu
+cargo clippy -p liaison-workspace-session-local -p liaison-workspace -p liaison-application -p liaison-cli --all-targets --all-features --locked --target x86_64-pc-windows-gnu -- -D warnings
 python3 scripts/check_repository.py
 python3 scripts/check_spec.py
 python3 scripts/check_architecture.py
 python3 scripts/check_providers.py
 python3 scripts/check_wit_contract.py
 python3 scripts/check_desktop_shell.py
+python3 scripts/check_localization.py
+python3 scripts/check_relationship_model.py
+python3 scripts/check_public_site.py
+python3 scripts/generate_traceability.py --check
 node --check apps/desktop/ui/app.js
 python3 scripts/test_desktop_ui.py
 ```
@@ -108,14 +127,19 @@ byte-compares host-generated PNG/ICNS encodings and this is recorded as a
 pre-existing host-portability issue; the checked-in assets were deliberately
 not regenerated. The semantic desktop-shell check passed.
 
-The local Rust target inventory contained only `aarch64-apple-darwin` and
-`x86_64-apple-darwin`; no Windows runtime or cross-target result is claimed.
+The local Rust target inventory was extended with `x86_64-pc-windows-gnu`.
+`cargo check` and Clippy with warnings denied passed for the Workspace Session,
+Workspace, application, and CLI crates on that Windows target, including
+`windows-permissions` 0.2.4. This is compile evidence only: no Windows runtime
+or native filesystem result is claimed until the `windows-2022` job passes.
 
 ## Dependency and release limits
 
 The capability-filesystem dependency decision is recorded in
 [`../dependencies/cap-std-4.0.2.md`](../dependencies/cap-std-4.0.2.md). The
-local host did not have `cargo-deny` or `cargo-audit`, so their licence and
+identity registry dependency decision is recorded in
+[`../dependencies/workspace-identity-registry.md`](../dependencies/workspace-identity-registry.md).
+The local host did not have `cargo-deny` or `cargo-audit`, so their licence and
 advisory gates were not reproduced locally; the repository does not yet
 provide those jobs, so this is an unimplemented release gate. No P02 installed
 application was built or substituted for the reviewed P01 installed-app

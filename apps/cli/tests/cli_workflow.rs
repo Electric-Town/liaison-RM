@@ -1,12 +1,28 @@
 use assert_cmd::Command;
-use chrono::Utc;
-use liaison_application::WorkspaceSessionId;
-use liaison_workspace::{WorkspaceWriterAuthorityPort, WriterDiagnostic};
-use liaison_workspace_session_local::LocalWorkspaceSessionAuthority;
+use liaison_application::{LiaisonApplication, OpenWorkspaceCommand};
 use predicates::prelude::*;
 use serde_json::Value;
 use std::{error::Error, fs};
 use tempfile::tempdir;
+
+fn copy_directory(source: &std::path::Path, destination: &std::path::Path) -> std::io::Result<()> {
+    fs::create_dir(destination)?;
+    for entry in fs::read_dir(source)? {
+        let entry = entry?;
+        let destination_entry = destination.join(entry.file_name());
+        let file_type = entry.file_type()?;
+        if file_type.is_dir() {
+            copy_directory(&entry.path(), &destination_entry)?;
+        } else if file_type.is_file() {
+            fs::copy(entry.path(), destination_entry)?;
+        } else {
+            return Err(std::io::Error::other(
+                "test workspace copy refuses non-file entries",
+            ));
+        }
+    }
+    Ok(())
+}
 
 fn parity_fixture() -> Result<Value, serde_json::Error> {
     serde_json::from_str(include_str!(
@@ -287,9 +303,10 @@ fn writer_contention_is_typed_but_cli_health_stays_read_only() -> Result<(), Box
         .assert()
         .success();
 
-    let authority = LocalWorkspaceSessionAuthority::bind(&workspace)?.acquire_writer(
-        WriterDiagnostic::new(WorkspaceSessionId::new(), std::process::id(), Utc::now()),
-    )?;
+    let owner = LiaisonApplication::new();
+    let _authority = owner.open_workspace(OpenWorkspaceCommand {
+        path: workspace.to_string_lossy().into_owned(),
+    })?;
 
     let mut health = Command::cargo_bin("liaison")?;
     health
@@ -322,6 +339,72 @@ fn writer_contention_is_typed_but_cli_health_stays_read_only() -> Result<(), Box
     assert!(!rendered.contains("process_id"));
     assert!(!rendered.contains("observed_diagnostic"));
 
-    drop(authority);
+    Ok(())
+}
+
+#[test]
+fn copied_workspace_identity_is_typed_but_cli_health_stays_read_only() -> Result<(), Box<dyn Error>>
+{
+    let directory = tempdir()?;
+    let source = directory.path().join("Source");
+    let copied = directory.path().join("Copied");
+    let mut initialise = Command::cargo_bin("liaison")?;
+    initialise
+        .arg("--workspace")
+        .arg(&source)
+        .args(["workspace", "init", "--name", "Copied identity"])
+        .assert()
+        .success();
+
+    let owner = LiaisonApplication::new();
+    let opened = owner.open_workspace(OpenWorkspaceCommand {
+        path: source.to_string_lossy().into_owned(),
+    })?;
+    copy_directory(&source, &copied)?;
+
+    let mut health = Command::cargo_bin("liaison")?;
+    health
+        .arg("--workspace")
+        .arg(&copied)
+        .args(["--output", "json", "workspace", "validate"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"valid\": true"));
+
+    let mut create = Command::cargo_bin("liaison")?;
+    let output = create
+        .arg("--workspace")
+        .arg(&copied)
+        .args([
+            "--output",
+            "json",
+            "person",
+            "create",
+            "--name",
+            "Blocked Copy",
+        ])
+        .output()?;
+    assert_eq!(output.status.code(), Some(4));
+    let error: Value = serde_json::from_slice(&output.stderr)?;
+    assert_eq!(
+        error["error"]["code"],
+        "workspace.identity-writer-already-active"
+    );
+    assert_eq!(error["error"]["details"], serde_json::json!({}));
+    let rendered = String::from_utf8_lossy(&output.stderr);
+    assert!(!rendered.contains(&source.to_string_lossy().into_owned()));
+    assert!(!rendered.contains(&copied.to_string_lossy().into_owned()));
+    assert!(!rendered.contains(&opened.value.workspace.workspace_id.to_string()));
+    assert!(!rendered.contains("process_id"));
+
+    drop(owner);
+    let mut create_after_exit = Command::cargo_bin("liaison")?;
+    create_after_exit
+        .arg("--workspace")
+        .arg(&copied)
+        .args(["person", "create", "--name", "Permitted Copy"])
+        .assert()
+        .success();
+
     Ok(())
 }

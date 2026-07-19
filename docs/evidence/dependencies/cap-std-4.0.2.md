@@ -46,10 +46,11 @@ family and its platform support (`cap-primitives`, `io-extras`, `io-lifetimes`,
 `rustix`, and target-specific Windows support). It adds no HTTP client, DNS
 client, remote endpoint, account, telemetry, updater, or database.
 
-The local review compiled and exercised macOS/Unix behavior. Windows-specific
-share-mode code and runtime tests are guarded by `cfg(windows)` and require a
-Windows runner. Only `aarch64-apple-darwin` and `x86_64-apple-darwin` targets
-were installed on the review host, so this decision does not claim a Windows
+The local review exercised macOS/Unix behavior. The later P02 identity-registry
+review installed `x86_64-pc-windows-gnu` and compiled/linted the exact
+Workspace Session, Workspace, application, and CLI call sites, including
+Windows share-mode and handle-identity code. Native runtime tests still require
+the pinned Windows runner; this decision does not claim a Windows filesystem
 runtime result.
 
 ## Airgap and audit limits

@@ -13,6 +13,10 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - A local Workspace Session adapter with no-follow capability traversal,
   typed writer contention, diagnostic-only bounded sidecars, process-exit lock
   release, retained-root identity checks, and lock-free read-only Health.
+- Per-user `WorkspaceId` writer exclusion for copied or file-synchronised
+  workspaces, with zero-data registry entries, safe first-use creation, typed
+  identity contention, hostile-registry checks, post-lock manifest validation,
+  Windows owner/DACL verification, and focused native Windows workflow tests.
 - Safe desktop workspace switching that closes the previous session before
   accepting its replacement and best-effort closes the replacement if the
   previous session cannot close.
@@ -82,6 +86,10 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Documented the prohibition on undeclared network requests, hidden telemetry, secret material in canonical files, and provider or plugin access without an explicit grant.
 - Defined separate Airgap and Connected-local build profiles and least-disclosure handling for sensitive relationship and workplace data.
 - Kept network, provider, SQL, Tauri, and secret-storage dependencies out of the initial Workspace and People domain crates.
+- Pinned and documented `dirs` 6.0.0, `rustix` 1.1.4, and target-only
+  `windows-permissions` 0.2.4 for fail-closed per-user identity-registry
+  resolution and ownership checks; registry entries contain no path, PID,
+  diagnostic, or relationship data.
 - Provider registration remains inert without a purpose-bound grant, and the local adapter claims backup/single-writer modes only.
 - Private assessments and sensitive Topic Pack values require explicit classification, purpose, and sharing grants.
 - Sensitive and secret profile definitions require sealed values in the new domain contract.

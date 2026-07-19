@@ -6,7 +6,8 @@
 #![allow(clippy::module_name_repetitions, clippy::missing_errors_doc)]
 
 use chrono::{DateTime, Utc};
-use liaison_shared_kernel::{WorkspaceId, WorkspaceSessionId};
+pub use liaison_shared_kernel::WorkspaceId;
+use liaison_shared_kernel::WorkspaceSessionId;
 use serde::{Deserialize, Serialize};
 use std::{
     error::Error as StdError,
@@ -183,6 +184,19 @@ pub enum WorkspaceAuthorityPathIssue {
     LockFileIsSymlink,
     LockPathIsNotFile,
     LockFileWasReplaced,
+    IdentityRegistryRootMustBeAbsolute,
+    IdentityRegistryRootIsSymlink,
+    IdentityRegistryRootIsNotDirectory,
+    IdentityRegistryRootWasReplaced,
+    IdentityRegistryPermissionsUnsafe,
+    IdentityRegistryOwnerMismatch,
+    IdentityLockFileIsSymlink,
+    IdentityLockPathIsNotFile,
+    IdentityLockFileWasReplaced,
+    IdentityLockFileHasUnexpectedData,
+    IdentityLockPermissionsUnsafe,
+    IdentityLockOwnerMismatch,
+    IdentityLockLinkCountUnsafe,
 }
 
 impl fmt::Display for WorkspaceAuthorityPathIssue {
@@ -201,7 +215,68 @@ impl fmt::Display for WorkspaceAuthorityPathIssue {
             Self::LockFileIsSymlink => "the writer-lock path must not be a symbolic link",
             Self::LockPathIsNotFile => "the writer-lock path is not a regular file",
             Self::LockFileWasReplaced => "the writer-lock file changed while it was being opened",
+            Self::IdentityRegistryRootMustBeAbsolute => {
+                "the per-user writer-authority registry must be absolute"
+            }
+            Self::IdentityRegistryRootIsSymlink => {
+                "the per-user writer-authority registry must not be a symbolic link or reparse point"
+            }
+            Self::IdentityRegistryRootIsNotDirectory => {
+                "the per-user writer-authority registry is not a directory"
+            }
+            Self::IdentityRegistryRootWasReplaced => {
+                "the per-user writer-authority registry changed after it was bound"
+            }
+            Self::IdentityRegistryPermissionsUnsafe => {
+                "the per-user writer-authority registry permissions are unsafe"
+            }
+            Self::IdentityRegistryOwnerMismatch => {
+                "the per-user writer-authority registry has a different owner"
+            }
+            Self::IdentityLockFileIsSymlink => {
+                "the identity writer-lock path must not be a symbolic link or reparse point"
+            }
+            Self::IdentityLockPathIsNotFile => {
+                "the identity writer-lock path is not a regular file"
+            }
+            Self::IdentityLockFileWasReplaced => {
+                "the identity writer-lock file changed while it was being opened"
+            }
+            Self::IdentityLockFileHasUnexpectedData => {
+                "the identity writer-lock file contains unexpected data"
+            }
+            Self::IdentityLockPermissionsUnsafe => {
+                "the identity writer-lock file permissions are unsafe"
+            }
+            Self::IdentityLockOwnerMismatch => {
+                "the identity writer-lock file has a different owner"
+            }
+            Self::IdentityLockLinkCountUnsafe => {
+                "the identity writer-lock file has an unsafe link count"
+            }
         })
+    }
+}
+
+impl WorkspaceAuthorityPathIssue {
+    #[must_use]
+    pub const fn is_identity_authority(self) -> bool {
+        matches!(
+            self,
+            Self::IdentityRegistryRootMustBeAbsolute
+                | Self::IdentityRegistryRootIsSymlink
+                | Self::IdentityRegistryRootIsNotDirectory
+                | Self::IdentityRegistryRootWasReplaced
+                | Self::IdentityRegistryPermissionsUnsafe
+                | Self::IdentityRegistryOwnerMismatch
+                | Self::IdentityLockFileIsSymlink
+                | Self::IdentityLockPathIsNotFile
+                | Self::IdentityLockFileWasReplaced
+                | Self::IdentityLockFileHasUnexpectedData
+                | Self::IdentityLockPermissionsUnsafe
+                | Self::IdentityLockOwnerMismatch
+                | Self::IdentityLockLinkCountUnsafe
+        )
     }
 }
 
@@ -212,6 +287,10 @@ pub enum WorkspaceAuthorityOperation {
     InspectControlDirectory,
     OpenLockFile,
     AcquireWriterLock,
+    ResolveIdentityRegistry,
+    InspectIdentityRegistry,
+    OpenIdentityLockFile,
+    AcquireIdentityLock,
 }
 
 impl fmt::Display for WorkspaceAuthorityOperation {
@@ -221,7 +300,24 @@ impl fmt::Display for WorkspaceAuthorityOperation {
             Self::InspectControlDirectory => "inspecting the workspace control directory",
             Self::OpenLockFile => "opening the workspace writer-lock file",
             Self::AcquireWriterLock => "acquiring the workspace writer lock",
+            Self::ResolveIdentityRegistry => "resolving the per-user writer-authority registry",
+            Self::InspectIdentityRegistry => "inspecting the per-user writer-authority registry",
+            Self::OpenIdentityLockFile => "opening the workspace-identity writer lock",
+            Self::AcquireIdentityLock => "acquiring the workspace-identity writer lock",
         })
+    }
+}
+
+impl WorkspaceAuthorityOperation {
+    #[must_use]
+    pub const fn is_identity_authority(self) -> bool {
+        matches!(
+            self,
+            Self::ResolveIdentityRegistry
+                | Self::InspectIdentityRegistry
+                | Self::OpenIdentityLockFile
+                | Self::AcquireIdentityLock
+        )
     }
 }
 
@@ -262,6 +358,8 @@ pub enum WorkspaceSessionError {
         /// Untrusted diagnostics observed only after the OS rejected the lock.
         observed_diagnostic: Option<WriterDiagnostic>,
     },
+    #[error("another Liaison writer is active for this workspace identity")]
+    IdentityWriterAlreadyActive,
     #[error("unsafe workspace authority path: {issue}")]
     UnsafeAuthorityPath { issue: WorkspaceAuthorityPathIssue },
     #[error("workspace writer authority failed while {operation}: {failure}")]
@@ -292,6 +390,7 @@ pub trait WorkspaceWriterAuthority: fmt::Debug + Send + Sync {
 pub trait WorkspaceWriterAuthorityPort: fmt::Debug + Send + Sync {
     fn acquire_writer(
         &self,
+        workspace_id: WorkspaceId,
         diagnostic: WriterDiagnostic,
     ) -> Result<Box<dyn WorkspaceWriterAuthority>, WorkspaceSessionError>;
 }
@@ -606,12 +705,30 @@ where
         self,
         diagnostic: WriterDiagnostic,
     ) -> Result<WorkspaceSession<B::Repositories>, WorkspaceSessionError> {
-        let writer_authority = self.binding.acquire_writer(diagnostic)?;
         let manifest = self.binding.load_manifest()?;
         manifest.validate()?;
+        let writer_authority = self
+            .binding
+            .acquire_writer(manifest.workspace_id, diagnostic)?;
+        let current_manifest = self.binding.load_manifest()?;
+        current_manifest.validate()?;
+        if current_manifest.workspace_id != manifest.workspace_id {
+            return Err(WorkspaceError::SessionIdentityChanged {
+                expected: manifest.workspace_id,
+                found: current_manifest.workspace_id,
+            }
+            .into());
+        }
+        if current_manifest.schema_version != manifest.schema_version {
+            return Err(WorkspaceError::SessionSchemaChanged {
+                expected: manifest.schema_version,
+                found: current_manifest.schema_version,
+            }
+            .into());
+        }
         let repositories = self.binding.into_repositories();
         Ok(WorkspaceSession {
-            manifest,
+            manifest: current_manifest,
             repositories,
             writer_authority: Mutex::new(Some(writer_authority)),
             lifecycle: Mutex::new(SessionLifecycle {
@@ -734,8 +851,9 @@ mod tests {
     use chrono::{DateTime, Utc};
     use liaison_shared_kernel::{WorkspaceId, WorkspaceSessionId};
     use std::{
+        collections::VecDeque,
         sync::{
-            Arc,
+            Arc, Mutex,
             atomic::{AtomicBool, Ordering},
             mpsc,
         },
@@ -762,6 +880,7 @@ mod tests {
     #[derive(Debug)]
     struct TrackingBinding {
         repositories: MemoryRepositories,
+        authority_acquired: Arc<AtomicBool>,
         authority_dropped: Arc<AtomicBool>,
     }
 
@@ -778,8 +897,10 @@ mod tests {
     impl WorkspaceWriterAuthorityPort for TrackingBinding {
         fn acquire_writer(
             &self,
+            _workspace_id: WorkspaceId,
             diagnostic: WriterDiagnostic,
         ) -> Result<Box<dyn WorkspaceWriterAuthority>, WorkspaceSessionError> {
+            self.authority_acquired.store(true, Ordering::SeqCst);
             Ok(Box::new(TrackingAuthority {
                 diagnostic,
                 dropped: Arc::clone(&self.authority_dropped),
@@ -842,10 +963,12 @@ mod tests {
 
     fn tracking_session(
         manifest: WorkspaceManifest,
+        acquired: &Arc<AtomicBool>,
         dropped: &Arc<AtomicBool>,
     ) -> Result<super::WorkspaceSession<MemoryRepositories>, WorkspaceSessionError> {
         OpenWorkspaceSession::new(TrackingBinding {
             repositories: MemoryRepositories { manifest },
+            authority_acquired: Arc::clone(acquired),
             authority_dropped: Arc::clone(dropped),
         })
         .execute(diagnostic())
@@ -882,8 +1005,9 @@ mod tests {
     #[test]
     fn session_owns_authority_repositories_and_honest_unavailable_states() {
         let dropped = Arc::new(AtomicBool::new(false));
+        let acquired = Arc::new(AtomicBool::new(false));
         let expected_manifest = manifest();
-        let session = tracking_session(expected_manifest.clone(), &dropped);
+        let session = tracking_session(expected_manifest.clone(), &acquired, &dropped);
         assert!(session.is_ok());
         let Ok(session) = session else {
             return;
@@ -915,6 +1039,7 @@ mod tests {
             }
         }
         assert!(!dropped.load(Ordering::SeqCst));
+        assert!(acquired.load(Ordering::SeqCst));
         drop(session);
         assert!(dropped.load(Ordering::SeqCst));
     }
@@ -922,7 +1047,8 @@ mod tests {
     #[test]
     fn close_rejects_new_work_drains_in_flight_and_releases_authority() {
         let dropped = Arc::new(AtomicBool::new(false));
-        let session = tracking_session(manifest(), &dropped);
+        let acquired = Arc::new(AtomicBool::new(false));
+        let session = tracking_session(manifest(), &acquired, &dropped);
         assert!(session.is_ok());
         let Ok(session) = session else {
             return;
@@ -969,17 +1095,96 @@ mod tests {
     }
 
     #[test]
-    fn invalid_schema_releases_authority_before_returning_error() {
+    fn invalid_schema_is_rejected_before_authority_is_acquired() {
         let dropped = Arc::new(AtomicBool::new(false));
+        let acquired = Arc::new(AtomicBool::new(false));
         let mut invalid = manifest();
         invalid.schema_version += 1;
-        let result = tracking_session(invalid, &dropped);
+        let result = tracking_session(invalid, &acquired, &dropped);
         assert!(matches!(
             result,
             Err(WorkspaceSessionError::Workspace(
                 WorkspaceError::UnsupportedSchema { .. }
             ))
         ));
-        assert!(dropped.load(Ordering::SeqCst));
+        assert!(!acquired.load(Ordering::SeqCst));
+        assert!(!dropped.load(Ordering::SeqCst));
+    }
+
+    #[derive(Debug)]
+    struct SequencedBinding {
+        manifests: Arc<Mutex<VecDeque<WorkspaceManifest>>>,
+        repositories: MemoryRepositories,
+        acquired_workspace_id: Arc<Mutex<Option<WorkspaceId>>>,
+        authority_dropped: Arc<AtomicBool>,
+    }
+
+    impl BoundWorkspaceStore for SequencedBinding {
+        fn load_manifest(&self) -> Result<WorkspaceManifest, WorkspaceError> {
+            self.manifests
+                .lock()
+                .map_err(|_| WorkspaceError::Storage("test manifest queue unavailable".into()))?
+                .pop_front()
+                .ok_or_else(|| WorkspaceError::Storage("test manifest queue exhausted".into()))
+        }
+
+        fn validate_layout(&self) -> Result<Vec<ValidationFinding>, WorkspaceError> {
+            Ok(Vec::new())
+        }
+    }
+
+    impl WorkspaceWriterAuthorityPort for SequencedBinding {
+        fn acquire_writer(
+            &self,
+            workspace_id: WorkspaceId,
+            diagnostic: WriterDiagnostic,
+        ) -> Result<Box<dyn WorkspaceWriterAuthority>, WorkspaceSessionError> {
+            *self
+                .acquired_workspace_id
+                .lock()
+                .map_err(|_| WorkspaceSessionError::StateUnavailable)? = Some(workspace_id);
+            Ok(Box::new(TrackingAuthority {
+                diagnostic,
+                dropped: Arc::clone(&self.authority_dropped),
+            }))
+        }
+    }
+
+    impl BoundWorkspaceSessionPort for SequencedBinding {
+        type Repositories = MemoryRepositories;
+
+        fn into_repositories(self) -> Self::Repositories {
+            self.repositories
+        }
+    }
+
+    #[test]
+    fn manifest_identity_change_after_acquisition_releases_authority() {
+        let before = manifest();
+        let mut after = before.clone();
+        after.workspace_id = WorkspaceId::from_uuid(Uuid::from_u128(3));
+        let acquired_workspace_id = Arc::new(Mutex::new(None));
+        let authority_dropped = Arc::new(AtomicBool::new(false));
+        let result = OpenWorkspaceSession::new(SequencedBinding {
+            manifests: Arc::new(Mutex::new(VecDeque::from([before.clone(), after.clone()]))),
+            repositories: MemoryRepositories {
+                manifest: after.clone(),
+            },
+            acquired_workspace_id: Arc::clone(&acquired_workspace_id),
+            authority_dropped: Arc::clone(&authority_dropped),
+        })
+        .execute(diagnostic());
+
+        assert!(matches!(
+            result,
+            Err(WorkspaceSessionError::Workspace(
+                WorkspaceError::SessionIdentityChanged { expected, found }
+            )) if expected == before.workspace_id && found == after.workspace_id
+        ));
+        assert_eq!(
+            acquired_workspace_id.lock().ok().and_then(|value| *value),
+            Some(before.workspace_id)
+        );
+        assert!(authority_dropped.load(Ordering::SeqCst));
     }
 }

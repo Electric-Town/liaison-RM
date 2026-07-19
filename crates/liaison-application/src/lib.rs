@@ -270,8 +270,17 @@ struct LocalMarkdownBinding {
 }
 
 impl LocalMarkdownBinding {
-    fn bind(vault: &MarkdownVault, root: &Path) -> Result<Self, WorkspaceSessionError> {
-        let authority = LocalWorkspaceSessionAuthority::bind(root)?;
+    fn bind(
+        vault: &MarkdownVault,
+        root: &Path,
+        identity_registry_root: Option<&Path>,
+    ) -> Result<Self, WorkspaceSessionError> {
+        let authority = match identity_registry_root {
+            Some(registry_root) => {
+                LocalWorkspaceSessionAuthority::bind_with_registry(root, registry_root)?
+            }
+            None => LocalWorkspaceSessionAuthority::bind(root)?,
+        };
         let repositories = vault.bind_directory(authority.try_clone_root_directory()?);
         Ok(Self {
             authority,
@@ -293,9 +302,10 @@ impl BoundWorkspaceStore for LocalMarkdownBinding {
 impl WorkspaceWriterAuthorityPort for LocalMarkdownBinding {
     fn acquire_writer(
         &self,
+        workspace_id: WorkspaceId,
         diagnostic: WriterDiagnostic,
     ) -> Result<Box<dyn WorkspaceWriterAuthority>, WorkspaceSessionError> {
-        self.authority.acquire_writer(diagnostic)
+        self.authority.acquire_writer(workspace_id, diagnostic)
     }
 }
 
@@ -313,6 +323,8 @@ pub struct LiaisonApplication {
     vault: MarkdownVault,
     runtime: Arc<dyn RuntimePorts>,
     sessions: Mutex<HashMap<WorkspaceSessionId, Arc<LocalWorkspaceSession>>>,
+    #[cfg(test)]
+    identity_registry_guard: Option<Arc<tempfile::TempDir>>,
 }
 
 impl LiaisonApplication {
@@ -327,6 +339,21 @@ impl LiaisonApplication {
             vault: MarkdownVault::new(),
             runtime,
             sessions: Mutex::new(HashMap::new()),
+            #[cfg(test)]
+            identity_registry_guard: None,
+        }
+    }
+
+    #[cfg(test)]
+    fn with_runtime_and_identity_registry(
+        runtime: Arc<dyn RuntimePorts>,
+        identity_registry_guard: Arc<tempfile::TempDir>,
+    ) -> Self {
+        Self {
+            vault: MarkdownVault::new(),
+            runtime,
+            sessions: Mutex::new(HashMap::new()),
+            identity_registry_guard: Some(identity_registry_guard),
         }
     }
 
@@ -508,8 +535,16 @@ impl LiaisonApplication {
         command_id: CommandId,
     ) -> Result<WorkspaceOpenDto, ApplicationError> {
         let session_id = self.runtime.next_workspace_session_id();
-        let binding = LocalMarkdownBinding::bind(&self.vault, root)
-            .map_err(|error| workspace_session_error(error, command_id))?;
+        #[cfg(test)]
+        let identity_registry_root = self
+            .identity_registry_guard
+            .as_ref()
+            .map(|guard| guard.path().join("writer-authority"));
+        #[cfg(not(test))]
+        let identity_registry_root: Option<PathBuf> = None;
+        let binding =
+            LocalMarkdownBinding::bind(&self.vault, root, identity_registry_root.as_deref())
+                .map_err(|error| workspace_session_error(error, command_id))?;
         let session = Arc::new(
             OpenWorkspaceSession::new(binding)
                 .execute(WriterDiagnostic::new(
@@ -794,6 +829,25 @@ fn workspace_session_error(
             BTreeMap::new(),
             correlation_id,
         ),
+        WorkspaceSessionError::IdentityWriterAlreadyActive => application_error(
+            "workspace.identity-writer-already-active",
+            "another Liaison writer is active for this workspace identity",
+            "use read-only Health or close the other Liaison process before retrying the mutation",
+            BTreeMap::new(),
+            correlation_id,
+        ),
+        WorkspaceSessionError::UnsafeAuthorityPath { issue } if issue.is_identity_authority() => {
+            application_error(
+                "workspace.identity-authority-path-unsafe",
+                "the per-user workspace-identity authority path is unsafe",
+                "keep the workspace read-only and repair the local Liaison authority registry before retrying",
+                details([(
+                    "issue",
+                    serde_json::to_value(issue).unwrap_or(Value::String("unexpected".to_owned())),
+                )]),
+                correlation_id,
+            )
+        }
         WorkspaceSessionError::UnsafeAuthorityPath { issue } => application_error(
             "workspace.writer-authority-path-unsafe",
             "the workspace writer-authority path is unsafe",
@@ -809,6 +863,25 @@ fn workspace_session_error(
             failure: WorkspaceAuthorityFailureKind::NotFound,
             ..
         } => workspace_error(WorkspaceError::NotFound, correlation_id),
+        WorkspaceSessionError::AuthorityUnavailable {
+            operation, failure, ..
+        } if operation.is_identity_authority() => application_error(
+            "workspace.identity-authority-unavailable",
+            "workspace-identity writer authority is unavailable",
+            "keep the workspace read-only, correct the per-user Liaison authority registry, and retry",
+            details([
+                (
+                    "operation",
+                    serde_json::to_value(operation)
+                        .unwrap_or(Value::String("unexpected".to_owned())),
+                ),
+                (
+                    "failure",
+                    serde_json::to_value(failure).unwrap_or(Value::String("unexpected".to_owned())),
+                ),
+            ]),
+            correlation_id,
+        ),
         WorkspaceSessionError::AuthorityUnavailable {
             operation, failure, ..
         } => application_error(
@@ -1098,7 +1171,35 @@ mod tests {
 
     fn application() -> (LiaisonApplication, Arc<FakeRuntime>) {
         let runtime = Arc::new(FakeRuntime::new());
-        (LiaisonApplication::with_runtime(runtime.clone()), runtime)
+        let registry = Arc::new(tempdir().unwrap_or_else(|error| {
+            unreachable!("test identity registry must be available: {error}")
+        }));
+        (
+            LiaisonApplication::with_runtime_and_identity_registry(runtime.clone(), registry),
+            runtime,
+        )
+    }
+
+    fn copy_directory(
+        source: &std::path::Path,
+        destination: &std::path::Path,
+    ) -> std::io::Result<()> {
+        fs::create_dir(destination)?;
+        for entry in fs::read_dir(source)? {
+            let entry = entry?;
+            let file_type = entry.file_type()?;
+            let destination_entry = destination.join(entry.file_name());
+            if file_type.is_dir() {
+                copy_directory(&entry.path(), &destination_entry)?;
+            } else if file_type.is_file() {
+                fs::copy(entry.path(), destination_entry)?;
+            } else {
+                return Err(std::io::Error::other(
+                    "test workspace copy refuses non-file entries",
+                ));
+            }
+        }
+        Ok(())
     }
 
     #[test]
@@ -1427,6 +1528,134 @@ mod tests {
             fs::read(diagnostic_path),
             Ok(after) if after == diagnostic_before
         ));
+    }
+
+    #[test]
+    fn copied_workspace_identity_is_denied_while_health_remains_read_only() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        let Ok(directory) = directory else {
+            return;
+        };
+        let registry = Arc::new(tempdir().unwrap_or_else(|error| {
+            unreachable!("test identity registry must be available: {error}")
+        }));
+        let writer = LiaisonApplication::with_runtime_and_identity_registry(
+            Arc::new(FakeRuntime::new()),
+            Arc::clone(&registry),
+        );
+        let observer = LiaisonApplication::with_runtime_and_identity_registry(
+            Arc::new(FakeRuntime::new()),
+            registry,
+        );
+        let source = directory.path().join("source");
+        let copied = directory.path().join("copied");
+        let opened = writer.initialise_workspace(InitialiseWorkspaceCommand {
+            path: source.to_string_lossy().into_owned(),
+            name: "Copied identity".to_owned(),
+            profile: WorkspaceProfile::Workplace,
+            build_profile: BuildProfile::ConnectedLocal,
+            locale: "en-IE".to_owned(),
+        });
+        assert!(opened.is_ok());
+        let Ok(opened) = opened else {
+            return;
+        };
+        assert!(copy_directory(&source, &copied).is_ok());
+
+        let denied = observer.open_workspace(OpenWorkspaceCommand {
+            path: copied.to_string_lossy().into_owned(),
+        });
+        assert!(denied.is_err());
+        if let Err(error) = denied {
+            assert_eq!(error.code, "workspace.identity-writer-already-active");
+            assert!(error.details.is_empty());
+            let rendered = serde_json::to_string(&error);
+            assert!(rendered.is_ok());
+            if let Ok(rendered) = rendered {
+                assert!(!rendered.contains(&source.to_string_lossy().into_owned()));
+                assert!(!rendered.contains(&copied.to_string_lossy().into_owned()));
+                assert!(!rendered.contains(&opened.value.workspace.workspace_id.to_string()));
+                assert!(!rendered.contains("process_id"));
+            }
+        }
+
+        let health = observer.inspect_workspace_health(InspectWorkspaceHealthQuery {
+            path: copied.to_string_lossy().into_owned(),
+        });
+        assert!(matches!(health, Ok(report) if report.value.valid));
+        assert!(
+            writer
+                .close_workspace(WorkspaceSessionCommand {
+                    session_id: opened.value.workspace.session_id,
+                })
+                .is_ok()
+        );
+        assert!(
+            observer
+                .open_workspace(OpenWorkspaceCommand {
+                    path: copied.to_string_lossy().into_owned(),
+                })
+                .is_ok()
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn unsafe_identity_registry_denies_write_open_but_not_read_only_health() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        let Ok(directory) = directory else {
+            return;
+        };
+        let registry = Arc::new(tempdir().unwrap_or_else(|error| {
+            unreachable!("test identity registry must be available: {error}")
+        }));
+        let creator = LiaisonApplication::with_runtime_and_identity_registry(
+            Arc::new(FakeRuntime::new()),
+            Arc::clone(&registry),
+        );
+        let root = directory.path().join("workspace");
+        let opened = creator.initialise_workspace(InitialiseWorkspaceCommand {
+            path: root.to_string_lossy().into_owned(),
+            name: "Unsafe registry".to_owned(),
+            profile: WorkspaceProfile::Workplace,
+            build_profile: BuildProfile::ConnectedLocal,
+            locale: "en-IE".to_owned(),
+        });
+        assert!(opened.is_ok());
+        let Ok(opened) = opened else {
+            return;
+        };
+        assert!(
+            creator
+                .close_workspace(WorkspaceSessionCommand {
+                    session_id: opened.value.workspace.session_id,
+                })
+                .is_ok()
+        );
+        let registry_root = registry.path().join("writer-authority");
+        assert!(fs::set_permissions(&registry_root, fs::Permissions::from_mode(0o755)).is_ok());
+        let observer = LiaisonApplication::with_runtime_and_identity_registry(
+            Arc::new(FakeRuntime::new()),
+            registry,
+        );
+
+        let denied = observer.open_workspace(OpenWorkspaceCommand {
+            path: root.to_string_lossy().into_owned(),
+        });
+        assert!(matches!(
+            denied,
+            Err(error) if error.code == "workspace.identity-authority-path-unsafe"
+                && error.details.get("issue")
+                    == Some(&serde_json::json!("identity-registry-permissions-unsafe"))
+        ));
+        let health = observer.inspect_workspace_health(InspectWorkspaceHealthQuery {
+            path: root.to_string_lossy().into_owned(),
+        });
+        assert!(matches!(health, Ok(report) if report.value.valid));
     }
 
     #[test]

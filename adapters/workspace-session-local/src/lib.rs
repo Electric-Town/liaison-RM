@@ -5,14 +5,17 @@
 
 #![allow(clippy::missing_errors_doc, clippy::module_name_repetitions)]
 
+mod identity_registry;
+
 use cap_fs_ext::{DirExt, FollowSymlinks, OpenOptionsFollowExt};
 use cap_std::{
     ambient_authority,
     fs::{Dir, OpenOptions},
 };
+use identity_registry::{IdentityRegistry, IdentityWriterAuthority};
 use liaison_workspace::{
     WorkspaceAuthorityFailureKind, WorkspaceAuthorityOperation, WorkspaceAuthorityPathIssue,
-    WorkspaceSessionError, WorkspaceWriterAuthority, WorkspaceWriterAuthorityPort,
+    WorkspaceId, WorkspaceSessionError, WorkspaceWriterAuthority, WorkspaceWriterAuthorityPort,
     WriterDiagnostic,
 };
 use std::{
@@ -31,11 +34,26 @@ const DIAGNOSTIC_MAX_BYTES: u64 = 16 * 1024;
 pub struct LocalWorkspaceSessionAuthority {
     root_directory: Dir,
     control_directory: Dir,
+    identity_registry: IdentityRegistry,
 }
 
 impl LocalWorkspaceSessionAuthority {
     #[cfg(any(unix, windows))]
     pub fn bind(root: &Path) -> Result<Self, WorkspaceSessionError> {
+        let registry_root = identity_registry::default_registry_path()?;
+        Self::bind_with_registry(root, &registry_root)
+    }
+
+    /// Binds the workspace to an explicit process-shared identity registry.
+    ///
+    /// Production callers use [`Self::bind`]. This seam supports isolated
+    /// host composition and deterministic tests; every cooperating Liaison
+    /// process for one user must resolve the same registry root.
+    #[cfg(any(unix, windows))]
+    pub fn bind_with_registry(
+        root: &Path,
+        registry_root: &Path,
+    ) -> Result<Self, WorkspaceSessionError> {
         if !root.is_absolute() {
             return Err(unsafe_path(WorkspaceAuthorityPathIssue::RootMustBeAbsolute));
         }
@@ -61,9 +79,11 @@ impl LocalWorkspaceSessionAuthority {
             return Err(unsafe_path(WorkspaceAuthorityPathIssue::RootIsNotDirectory));
         }
         let control_directory = open_control_directory(&root_directory)?;
+        let identity_registry = IdentityRegistry::bind(registry_root)?;
         Ok(Self {
             root_directory,
             control_directory,
+            identity_registry,
         })
     }
 
@@ -95,6 +115,7 @@ impl LocalWorkspaceSessionAuthority {
 impl WorkspaceWriterAuthorityPort for LocalWorkspaceSessionAuthority {
     fn acquire_writer(
         &self,
+        workspace_id: WorkspaceId,
         diagnostic: WriterDiagnostic,
     ) -> Result<Box<dyn WorkspaceWriterAuthority>, WorkspaceSessionError> {
         self.verify_control_binding()?;
@@ -129,11 +150,19 @@ impl WorkspaceWriterAuthorityPort for LocalWorkspaceSessionAuthority {
             let _ = lock_file.unlock();
             return Err(error);
         }
+        let identity_authority = match self.identity_registry.acquire(workspace_id) {
+            Ok(authority) => authority,
+            Err(error) => {
+                let _ = lock_file.unlock();
+                return Err(error);
+            }
+        };
         let diagnostic_published = publish_diagnostic(&self.control_directory, &diagnostic);
         Ok(Box::new(LocalWriterAuthority {
             root_directory: retained_root_directory,
             control_directory: retained_control_directory,
             lock_file,
+            identity_authority: Some(identity_authority),
             diagnostic,
             diagnostic_published,
         }))
@@ -145,6 +174,7 @@ struct LocalWriterAuthority {
     root_directory: Dir,
     control_directory: Dir,
     lock_file: File,
+    identity_authority: Option<IdentityWriterAuthority>,
     diagnostic: WriterDiagnostic,
     diagnostic_published: bool,
 }
@@ -160,12 +190,17 @@ impl WorkspaceWriterAuthority for LocalWriterAuthority {
 
     fn verify_authority(&self) -> Result<(), WorkspaceSessionError> {
         verify_control_binding(&self.root_directory, &self.control_directory)?;
-        verify_locked_file(&self.control_directory, &self.lock_file)
+        verify_locked_file(&self.control_directory, &self.lock_file)?;
+        self.identity_authority
+            .as_ref()
+            .ok_or(WorkspaceSessionError::Closed)?
+            .verify()
     }
 }
 
 impl Drop for LocalWriterAuthority {
     fn drop(&mut self) {
+        drop(self.identity_authority.take());
         let _ = self.lock_file.unlock();
     }
 }
@@ -453,8 +488,8 @@ mod tests {
     use chrono::{DateTime, Utc};
     use liaison_shared_kernel::WorkspaceSessionId;
     use liaison_workspace::{
-        WorkspaceAuthorityPathIssue, WorkspaceSessionError, WorkspaceWriterAuthorityPort,
-        WriterDiagnostic,
+        WorkspaceAuthorityPathIssue, WorkspaceId, WorkspaceSessionError,
+        WorkspaceWriterAuthorityPort, WriterDiagnostic,
     };
     use std::{
         error::Error,
@@ -470,6 +505,8 @@ mod tests {
     use uuid::Uuid;
 
     const CHILD_ROOT_ENV: &str = "LIAISON_TEST_CHILD_LOCK_ROOT";
+    const CHILD_REGISTRY_ENV: &str = "LIAISON_TEST_CHILD_REGISTRY_ROOT";
+    const CHILD_WORKSPACE_ID_ENV: &str = "LIAISON_TEST_CHILD_WORKSPACE_ID";
     const CHILD_READY: &str = "LIAISON_CHILD_WRITER_LOCKED";
 
     fn workspace() -> Result<TempDir, io::Error> {
@@ -486,6 +523,20 @@ mod tests {
         )
     }
 
+    fn workspace_id(seed: u128) -> WorkspaceId {
+        WorkspaceId::from_uuid(Uuid::from_u128(seed))
+    }
+
+    fn bind(
+        root: &Path,
+        registry_parent: &TempDir,
+    ) -> Result<LocalWorkspaceSessionAuthority, WorkspaceSessionError> {
+        LocalWorkspaceSessionAuthority::bind_with_registry(
+            root,
+            &registry_parent.path().join("writer-authority"),
+        )
+    }
+
     fn lock_path(root: &Path) -> PathBuf {
         root.join(".liaison").join(LOCK_FILE_NAME)
     }
@@ -494,23 +545,31 @@ mod tests {
         root.join(".liaison").join(DIAGNOSTIC_FILE_NAME)
     }
 
+    fn identity_lock_path(registry_parent: &TempDir, identity: WorkspaceId) -> PathBuf {
+        registry_parent
+            .path()
+            .join("writer-authority")
+            .join(format!("workspace-{identity}.lock"))
+    }
+
     #[test]
     fn independent_handles_exclude_until_authority_drop() -> Result<(), Box<dyn Error>> {
         let workspace = workspace()?;
-        let first_adapter = LocalWorkspaceSessionAuthority::bind(workspace.path())?;
-        let second_adapter = LocalWorkspaceSessionAuthority::bind(workspace.path())?;
+        let registry = tempdir()?;
+        let first_adapter = bind(workspace.path(), &registry)?;
+        let second_adapter = bind(workspace.path(), &registry)?;
         let first_diagnostic = diagnostic(1);
-        let first = first_adapter.acquire_writer(first_diagnostic.clone())?;
+        let first = first_adapter.acquire_writer(workspace_id(100), first_diagnostic.clone())?;
 
         assert!(matches!(
-            second_adapter.acquire_writer(diagnostic(2)),
+            second_adapter.acquire_writer(workspace_id(100), diagnostic(2)),
             Err(WorkspaceSessionError::WriterAlreadyActive {
                 observed_diagnostic: Some(found)
             }) if found == first_diagnostic
         ));
 
         drop(first);
-        let replacement = second_adapter.acquire_writer(diagnostic(3))?;
+        let replacement = second_adapter.acquire_writer(workspace_id(100), diagnostic(3))?;
         assert_eq!(
             replacement.diagnostic().session_id(),
             diagnostic(3).session_id()
@@ -519,18 +578,113 @@ mod tests {
     }
 
     #[test]
+    fn copied_paths_with_one_identity_share_one_writer_authority() -> Result<(), Box<dyn Error>> {
+        let source = workspace()?;
+        let copy = workspace()?;
+        let registry = tempdir()?;
+        let identity = workspace_id(101);
+        let source_authority =
+            bind(source.path(), &registry)?.acquire_writer(identity, diagnostic(4))?;
+
+        assert!(matches!(
+            bind(copy.path(), &registry)?.acquire_writer(identity, diagnostic(5)),
+            Err(WorkspaceSessionError::IdentityWriterAlreadyActive)
+        ));
+
+        drop(source_authority);
+        assert!(
+            bind(copy.path(), &registry)?
+                .acquire_writer(identity, diagnostic(6))
+                .is_ok()
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn different_workspace_identities_can_write_at_the_same_time() -> Result<(), Box<dyn Error>> {
+        let first = workspace()?;
+        let second = workspace()?;
+        let registry = tempdir()?;
+        let first_authority =
+            bind(first.path(), &registry)?.acquire_writer(workspace_id(102), diagnostic(7))?;
+        let second_authority =
+            bind(second.path(), &registry)?.acquire_writer(workspace_id(103), diagnostic(8))?;
+
+        assert_ne!(
+            first_authority.diagnostic().session_id(),
+            second_authority.diagnostic().session_id()
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn stale_empty_identity_entry_does_not_grant_or_deny_authority() -> Result<(), Box<dyn Error>> {
+        let workspace = workspace()?;
+        let registry = tempdir()?;
+        let identity = workspace_id(104);
+        let adapter = bind(workspace.path(), &registry)?;
+        fs::write(identity_lock_path(&registry, identity), b"")?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(
+                identity_lock_path(&registry, identity),
+                fs::Permissions::from_mode(0o600),
+            )?;
+        }
+
+        assert!(adapter.acquire_writer(identity, diagnostic(9)).is_ok());
+        Ok(())
+    }
+
+    #[test]
+    fn hostile_registry_shapes_and_identity_entry_data_fail_closed() -> Result<(), Box<dyn Error>> {
+        let workspace = workspace()?;
+        let parent = tempdir()?;
+        let relative = Path::new("relative-registry");
+        assert!(matches!(
+            LocalWorkspaceSessionAuthority::bind_with_registry(workspace.path(), relative),
+            Err(WorkspaceSessionError::UnsafeAuthorityPath {
+                issue: WorkspaceAuthorityPathIssue::IdentityRegistryRootMustBeAbsolute
+            })
+        ));
+
+        let ordinary_file = parent.path().join("ordinary-file");
+        fs::write(&ordinary_file, b"preserve")?;
+        assert!(matches!(
+            LocalWorkspaceSessionAuthority::bind_with_registry(workspace.path(), &ordinary_file),
+            Err(WorkspaceSessionError::UnsafeAuthorityPath {
+                issue: WorkspaceAuthorityPathIssue::IdentityRegistryRootIsNotDirectory
+            })
+        ));
+
+        let registry = tempdir()?;
+        let identity = workspace_id(105);
+        let adapter = bind(workspace.path(), &registry)?;
+        fs::write(identity_lock_path(&registry, identity), b"unexpected")?;
+        assert!(matches!(
+            adapter.acquire_writer(identity, diagnostic(10)),
+            Err(WorkspaceSessionError::UnsafeAuthorityPath {
+                issue: WorkspaceAuthorityPathIssue::IdentityLockFileHasUnexpectedData
+            })
+        ));
+        Ok(())
+    }
+
+    #[test]
     fn stale_malformed_and_oversized_diagnostics_never_grant_or_steal_authority()
     -> Result<(), Box<dyn Error>> {
         let workspace = workspace()?;
+        let registry = tempdir()?;
         fs::write(
             diagnostic_path(workspace.path()),
             serde_json::to_vec(&diagnostic(10))?,
         )?;
-        let adapter = LocalWorkspaceSessionAuthority::bind(workspace.path())?;
-        let held = adapter.acquire_writer(diagnostic(11))?;
+        let adapter = bind(workspace.path(), &registry)?;
+        let held = adapter.acquire_writer(workspace_id(110), diagnostic(11))?;
         fs::write(diagnostic_path(workspace.path()), b"not json")?;
         assert!(matches!(
-            adapter.acquire_writer(diagnostic(12)),
+            adapter.acquire_writer(workspace_id(110), diagnostic(12)),
             Err(WorkspaceSessionError::WriterAlreadyActive {
                 observed_diagnostic: None
             })
@@ -540,13 +694,17 @@ mod tests {
             vec![b'x'; usize::try_from(DIAGNOSTIC_MAX_BYTES)? + 1],
         )?;
         assert!(matches!(
-            adapter.acquire_writer(diagnostic(13)),
+            adapter.acquire_writer(workspace_id(110), diagnostic(13)),
             Err(WorkspaceSessionError::WriterAlreadyActive {
                 observed_diagnostic: None
             })
         ));
         drop(held);
-        assert!(adapter.acquire_writer(diagnostic(14)).is_ok());
+        assert!(
+            adapter
+                .acquire_writer(workspace_id(110), diagnostic(14))
+                .is_ok()
+        );
         Ok(())
     }
 
@@ -579,9 +737,111 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
+    fn hostile_unix_identity_registry_state_fails_closed() -> Result<(), Box<dyn Error>> {
+        use std::os::unix::{fs::PermissionsExt, fs::symlink};
+
+        let workspace = workspace()?;
+        let parent = tempdir()?;
+        let outside = tempdir()?;
+        let symlinked_registry = parent.path().join("symlinked-registry");
+        symlink(outside.path(), &symlinked_registry)?;
+        assert!(matches!(
+            LocalWorkspaceSessionAuthority::bind_with_registry(
+                workspace.path(),
+                &symlinked_registry
+            ),
+            Err(WorkspaceSessionError::UnsafeAuthorityPath {
+                issue: WorkspaceAuthorityPathIssue::IdentityRegistryRootIsSymlink
+            })
+        ));
+
+        let insecure_registry = parent.path().join("insecure-registry");
+        fs::create_dir(&insecure_registry)?;
+        fs::set_permissions(&insecure_registry, fs::Permissions::from_mode(0o755))?;
+        assert!(matches!(
+            LocalWorkspaceSessionAuthority::bind_with_registry(
+                workspace.path(),
+                &insecure_registry
+            ),
+            Err(WorkspaceSessionError::UnsafeAuthorityPath {
+                issue: WorkspaceAuthorityPathIssue::IdentityRegistryPermissionsUnsafe
+            })
+        ));
+
+        let registry = tempdir()?;
+        let identity = workspace_id(106);
+        let adapter = bind(workspace.path(), &registry)?;
+        let identity_lock = identity_lock_path(&registry, identity);
+        let outside_lock = registry.path().join("outside-identity-lock");
+        fs::write(&outside_lock, b"preserve")?;
+        symlink(&outside_lock, &identity_lock)?;
+        assert!(matches!(
+            adapter.acquire_writer(identity, diagnostic(15)),
+            Err(WorkspaceSessionError::UnsafeAuthorityPath {
+                issue: WorkspaceAuthorityPathIssue::IdentityLockFileIsSymlink
+            })
+        ));
+        assert_eq!(fs::read(outside_lock)?, b"preserve");
+
+        let permissions_identity = workspace_id(108);
+        let permissions_lock = identity_lock_path(&registry, permissions_identity);
+        fs::write(&permissions_lock, b"")?;
+        fs::set_permissions(&permissions_lock, fs::Permissions::from_mode(0o644))?;
+        assert!(matches!(
+            adapter.acquire_writer(permissions_identity, diagnostic(17)),
+            Err(WorkspaceSessionError::UnsafeAuthorityPath {
+                issue: WorkspaceAuthorityPathIssue::IdentityLockPermissionsUnsafe
+            })
+        ));
+
+        let linked_identity = workspace_id(109);
+        let linked_lock = identity_lock_path(&registry, linked_identity);
+        fs::write(&linked_lock, b"")?;
+        fs::set_permissions(&linked_lock, fs::Permissions::from_mode(0o600))?;
+        fs::hard_link(&linked_lock, registry.path().join("linked-identity-lock"))?;
+        assert!(matches!(
+            adapter.acquire_writer(linked_identity, diagnostic(18)),
+            Err(WorkspaceSessionError::UnsafeAuthorityPath {
+                issue: WorkspaceAuthorityPathIssue::IdentityLockLinkCountUnsafe
+            })
+        ));
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn live_authority_detects_identity_registry_replacement_before_more_work()
+    -> Result<(), Box<dyn Error>> {
+        use std::os::unix::fs::PermissionsExt;
+
+        let workspace = workspace()?;
+        let registry = tempdir()?;
+        let identity = workspace_id(107);
+        let authority =
+            bind(workspace.path(), &registry)?.acquire_writer(identity, diagnostic(16))?;
+        let live_registry = registry.path().join("writer-authority");
+        fs::rename(
+            &live_registry,
+            registry.path().join("writer-authority-displaced"),
+        )?;
+        fs::create_dir(&live_registry)?;
+        fs::set_permissions(&live_registry, fs::Permissions::from_mode(0o700))?;
+
+        assert!(matches!(
+            authority.verify_authority(),
+            Err(WorkspaceSessionError::UnsafeAuthorityPath {
+                issue: WorkspaceAuthorityPathIssue::IdentityRegistryRootWasReplaced
+            })
+        ));
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    #[test]
     fn symlinks_and_replaced_control_directory_fail_closed() -> Result<(), Box<dyn Error>> {
         use std::os::unix::fs::symlink;
 
+        let registry = tempdir()?;
         let symlinked_control = tempdir()?;
         let outside = tempdir()?;
         symlink(outside.path(), symlinked_control.path().join(".liaison"))?;
@@ -596,9 +856,9 @@ mod tests {
         let outside_lock = lock_workspace.path().join("outside-lock");
         fs::write(&outside_lock, b"preserve")?;
         symlink(&outside_lock, lock_path(lock_workspace.path()))?;
-        let adapter = LocalWorkspaceSessionAuthority::bind(lock_workspace.path())?;
+        let adapter = bind(lock_workspace.path(), &registry)?;
         assert!(matches!(
-            adapter.acquire_writer(diagnostic(20)),
+            adapter.acquire_writer(workspace_id(120), diagnostic(20)),
             Err(WorkspaceSessionError::UnsafeAuthorityPath {
                 issue: WorkspaceAuthorityPathIssue::LockFileIsSymlink
             })
@@ -606,14 +866,14 @@ mod tests {
         assert_eq!(fs::read(&outside_lock)?, b"preserve");
 
         let replaced = workspace()?;
-        let adapter = LocalWorkspaceSessionAuthority::bind(replaced.path())?;
+        let adapter = bind(replaced.path(), &registry)?;
         fs::rename(
             replaced.path().join(".liaison"),
             replaced.path().join(".liaison-old"),
         )?;
         fs::create_dir(replaced.path().join(".liaison"))?;
         assert!(matches!(
-            adapter.acquire_writer(diagnostic(21)),
+            adapter.acquire_writer(workspace_id(121), diagnostic(21)),
             Err(WorkspaceSessionError::UnsafeAuthorityPath {
                 issue: WorkspaceAuthorityPathIssue::ControlDirectoryWasReplaced
             })
@@ -626,8 +886,9 @@ mod tests {
     fn live_authority_detects_external_lock_inode_replacement_before_more_work()
     -> Result<(), Box<dyn Error>> {
         let workspace = workspace()?;
-        let authority = LocalWorkspaceSessionAuthority::bind(workspace.path())?
-            .acquire_writer(diagnostic(25))?;
+        let registry = tempdir()?;
+        let authority =
+            bind(workspace.path(), &registry)?.acquire_writer(workspace_id(125), diagnostic(25))?;
         fs::remove_file(lock_path(workspace.path()))?;
         fs::write(lock_path(workspace.path()), b"replacement")?;
 
@@ -646,11 +907,12 @@ mod tests {
         use std::os::unix::fs::symlink;
 
         let workspace = workspace()?;
+        let registry = tempdir()?;
         let outside = workspace.path().join("outside-diagnostic");
         fs::write(&outside, b"preserve")?;
         symlink(&outside, diagnostic_path(workspace.path()))?;
-        let authority = LocalWorkspaceSessionAuthority::bind(workspace.path())?
-            .acquire_writer(diagnostic(22))?;
+        let authority =
+            bind(workspace.path(), &registry)?.acquire_writer(workspace_id(122), diagnostic(22))?;
         assert!(!authority.diagnostic_published());
         assert_eq!(fs::read(outside)?, b"preserve");
         Ok(())
@@ -663,12 +925,13 @@ mod tests {
 
         let workspace = workspace()?;
         let aliases = tempdir()?;
+        let registry = tempdir()?;
         let alias = aliases.path().join("workspace-alias");
         symlink(workspace.path(), &alias)?;
-        let held = LocalWorkspaceSessionAuthority::bind(workspace.path())?
-            .acquire_writer(diagnostic(23))?;
+        let held =
+            bind(workspace.path(), &registry)?.acquire_writer(workspace_id(123), diagnostic(23))?;
         assert!(matches!(
-            LocalWorkspaceSessionAuthority::bind(&alias)?.acquire_writer(diagnostic(24)),
+            bind(&alias, &registry)?.acquire_writer(workspace_id(123), diagnostic(24)),
             Err(WorkspaceSessionError::WriterAlreadyActive { .. })
         ));
         drop(held);
@@ -697,9 +960,11 @@ mod tests {
         }
     }
 
-    #[test]
-    fn forced_process_exit_releases_operating_system_authority() -> Result<(), Box<dyn Error>> {
-        let workspace = workspace()?;
+    fn spawn_child_lock_holder(
+        root: &Path,
+        registry: &Path,
+        identity: WorkspaceId,
+    ) -> Result<ChildGuard, Box<dyn Error>> {
         let child = Command::new(std::env::current_exe()?)
             .args([
                 "--exact",
@@ -708,7 +973,9 @@ mod tests {
                 "--nocapture",
                 "--test-threads=1",
             ])
-            .env(CHILD_ROOT_ENV, workspace.path())
+            .env(CHILD_ROOT_ENV, root)
+            .env(CHILD_REGISTRY_ENV, registry)
+            .env(CHILD_WORKSPACE_ID_ENV, identity.to_string())
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()?;
@@ -737,18 +1004,56 @@ mod tests {
                 }
             }
         });
-        assert!(receiver.recv_timeout(Duration::from_secs(10))?);
+        if !receiver.recv_timeout(Duration::from_secs(10))? {
+            return Err(io::Error::other("child did not acquire authority").into());
+        }
         reader
             .join()
             .map_err(|_| io::Error::other("child reader panicked"))?;
+        Ok(child)
+    }
 
-        let adapter = LocalWorkspaceSessionAuthority::bind(workspace.path())?;
+    #[test]
+    fn forced_process_exit_releases_operating_system_authority() -> Result<(), Box<dyn Error>> {
+        let workspace = workspace()?;
+        let registry_parent = tempdir()?;
+        let registry = registry_parent.path().join("writer-authority");
+        let identity = workspace_id(130);
+        let mut child = spawn_child_lock_holder(workspace.path(), &registry, identity)?;
+
+        let adapter =
+            LocalWorkspaceSessionAuthority::bind_with_registry(workspace.path(), &registry)?;
         assert!(matches!(
-            adapter.acquire_writer(diagnostic(31)),
+            adapter.acquire_writer(identity, diagnostic(31)),
             Err(WorkspaceSessionError::WriterAlreadyActive { .. })
         ));
         assert!(!child.terminate()?.success());
-        assert!(adapter.acquire_writer(diagnostic(32)).is_ok());
+        assert!(adapter.acquire_writer(identity, diagnostic(32)).is_ok());
+        Ok(())
+    }
+
+    #[test]
+    fn forced_process_exit_releases_copied_workspace_identity_authority()
+    -> Result<(), Box<dyn Error>> {
+        let source = workspace()?;
+        let copied = workspace()?;
+        let registry_parent = tempdir()?;
+        let registry = registry_parent.path().join("writer-authority");
+        let identity = workspace_id(131);
+        let mut child = spawn_child_lock_holder(source.path(), &registry, identity)?;
+        let copied_adapter =
+            LocalWorkspaceSessionAuthority::bind_with_registry(copied.path(), &registry)?;
+
+        assert!(matches!(
+            copied_adapter.acquire_writer(identity, diagnostic(33)),
+            Err(WorkspaceSessionError::IdentityWriterAlreadyActive)
+        ));
+        assert!(!child.terminate()?.success());
+        assert!(
+            copied_adapter
+                .acquire_writer(identity, diagnostic(34))
+                .is_ok()
+        );
         Ok(())
     }
 
@@ -758,8 +1063,14 @@ mod tests {
         let Some(root) = std::env::var_os(CHILD_ROOT_ENV) else {
             return Ok(());
         };
-        let _authority = LocalWorkspaceSessionAuthority::bind(Path::new(&root))?
-            .acquire_writer(diagnostic(30))?;
+        let registry = std::env::var_os(CHILD_REGISTRY_ENV)
+            .ok_or_else(|| io::Error::other("child registry root unavailable"))?;
+        let identity = std::env::var(CHILD_WORKSPACE_ID_ENV)?.parse::<WorkspaceId>()?;
+        let _authority = LocalWorkspaceSessionAuthority::bind_with_registry(
+            Path::new(&root),
+            Path::new(&registry),
+        )?
+        .acquire_writer(identity, diagnostic(30))?;
         println!("{CHILD_READY}");
         io::stdout().flush()?;
         let mut input = [0_u8; 1];
@@ -771,12 +1082,24 @@ mod tests {
     #[test]
     fn retained_windows_handles_prevent_delete_or_replacement() -> Result<(), Box<dyn Error>> {
         let workspace = workspace()?;
-        let adapter = LocalWorkspaceSessionAuthority::bind(workspace.path())?;
-        let authority = adapter.acquire_writer(diagnostic(40))?;
+        let registry = tempdir()?;
+        let adapter = bind(workspace.path(), &registry)?;
+        let identity = workspace_id(140);
+        let authority = adapter.acquire_writer(identity, diagnostic(40))?;
         let lock = lock_path(workspace.path());
         assert!(fs::rename(&lock, lock.with_extension("moved")).is_err());
         let control = workspace.path().join(".liaison");
         assert!(fs::rename(&control, workspace.path().join("moved")).is_err());
+        let registry_root = registry.path().join("writer-authority");
+        assert!(
+            fs::rename(
+                &registry_root,
+                registry.path().join("writer-authority-moved")
+            )
+            .is_err()
+        );
+        let identity_lock = identity_lock_path(&registry, identity);
+        assert!(fs::rename(&identity_lock, identity_lock.with_extension("moved")).is_err());
         drop(authority);
         Ok(())
     }

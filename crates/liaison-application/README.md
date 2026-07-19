@@ -20,10 +20,11 @@ and exposes serializable commands, queries, results, and structured errors.
 - Runtime time, identifiers, and randomness are injected through
   `RuntimePorts`, so tests do not depend on ambient time or identifiers.
 
-The current session claims writer authority only while its operating-system
-path-local lock handle is live. An independently copied workspace with the same
-identity at another path is not yet excluded, so `LRM-WS-009` and `T-B0-P02`
-remain blocked. Recovery, key, and projection states are explicitly
+The current session claims writer authority only while both its workspace-local
+lock and per-user `WorkspaceId` lock handles are live. An independently copied
+workspace with the same identity is denied to cooperating Liaison processes on
+the same user account and machine. `T-B0-P02` remains open pending exact-head
+remote platform qualification. Recovery, key, and projection states are explicitly
 unavailable until P03, workspace security, and Directory projection provide
 their real implementations. P03 also owns durable multi-target commit decisions
 and final mutation preconditions; this P02 boundary does not imply them.

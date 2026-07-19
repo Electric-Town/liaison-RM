@@ -7,6 +7,11 @@ the previous native session before accepting the replacement. If the previous
 session cannot close, it keeps the previous selection and best-effort closes
 the replacement so an unused writer lock is not silently retained.
 
+The native application session owns both workspace-local and per-user
+`WorkspaceId` writer authority. Current cooperating Liaison processes on one
+OS user account and machine therefore report a typed conflict for a copied
+workspace while keeping read-only Health available.
+
 ## Current review-build workflow
 
 - show the build's local-authority status;

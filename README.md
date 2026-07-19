@@ -20,7 +20,7 @@ Liaison RM is a local-authoritative relationship memory and attention system. It
 The product is being built around readable Markdown and YAML records, a shared Rust core, a first-class `liaison` CLI and a native Tauri desktop. Search indexes, caches and graph layouts are projections that can be rebuilt. The workspace stays under the owner’s control.
 
 > [!WARNING]
-> **Pre-alpha.** The current P02 source stack has the tested workspace, People and CLI slice, desktop alpha, and path-bound Workspace Session authority. It does not yet reject an independently copied workspace with the same identity at another path, so `LRM-WS-009` and `T-B0-P02` remain blocked. Recoverable multi-target operations, B0, and public binary distribution are also incomplete. There are no signed downloads.
+> **Pre-alpha.** The current P02 source stack has the tested workspace, People and CLI slice, desktop alpha, and composite path-plus-identity Workspace Session authority. Cooperating Liaison processes on one machine now reject an independently copied workspace with the same identity. Exact-head remote platform qualification, recoverable multi-target operations, B0, and public binary distribution remain incomplete. There are no signed downloads.
 
 ## Why this exists
 

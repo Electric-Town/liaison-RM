@@ -5,6 +5,7 @@ on:
     paths:
       - "Cargo.toml"
       - "Cargo.lock"
+      - "apps/cli/**"
       - "apps/desktop/**"
       - "crates/liaison-application/**"
       - "adapters/workspace-session-local/**"
@@ -12,6 +13,20 @@ on:
       - "contexts/people/**"
       - "contexts/workspace/**"
       - ".github/workflows/windows-desktop.yml"
+  push:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "apps/cli/**"
+      - "apps/desktop/**"
+      - "crates/liaison-application/**"
+      - "adapters/workspace-session-local/**"
+      - "adapters/vault-markdown/**"
+      - "contexts/people/**"
+      - "contexts/workspace/**"
+      - ".github/workflows/windows-desktop.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -32,6 +47,15 @@ jobs:
         run: cargo clippy -p liaison-desktop --all-targets --all-features --locked -- -D warnings
       - name: Test desktop crate
         run: cargo test -p liaison-desktop --all-features --locked
+      - name: Test workspace identity authority and callers
+        run: >-
+          cargo test
+          -p liaison-workspace-session-local
+          -p liaison-workspace
+          -p liaison-application
+          -p liaison-cli
+          --all-features
+          --locked
 
   bundle:
     name: Windows review bundle

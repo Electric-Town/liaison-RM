@@ -4,7 +4,7 @@ title: How do the CLI and desktop run the same Liaison workflow?
 state: Draft
 owner: application
 created: 2026-07-18
-reviewed: 2026-07-18
+reviewed: 2026-07-19
 applies_to:
   - liaison-application
   - liaison-cli
@@ -60,8 +60,10 @@ Browser fixtures also cannot prove the native WebKit event lifecycle. Capture an
 The composition root owns cross-context orchestration while each bounded context retains its invariants and ports. The same application method therefore determines initial revision, tolerant reads, validation findings, error codes, and recovery guidance for every inbound adapter. `spec/fixtures/application-parity.json` records the stable subset both adapter-boundary tests must satisfy.
 
 The P02 slice binds workspace identity/schema, one retained root capability,
-path-free repository access, one operating-system writer authority, and a
-quiescence barrier. Lock metadata is diagnostic only. Recovery, key, and
+path-free repository access, composite workspace-local and per-user
+`WorkspaceId` operating-system authority, and a quiescence barrier. The
+manifest is re-read under authority and the post-lock value becomes the
+session snapshot. Lock metadata is diagnostic only. Recovery, key, and
 projection states remain explicit unavailable values; recoverable operations,
 final mutation preconditions, Airgap isolation, and release readiness require
 their own implementation and evidence.
@@ -89,8 +91,15 @@ Check that:
 - invalid validation returns a deterministic non-zero CLI exit after emitting the report;
 - a second writer receives the stable typed contention code while read-only
   Health remains available and does not create lock artifacts;
+- a copied workspace with the same identity receives
+  `workspace.identity-writer-already-active`, discloses neither path nor
+  identity, and opens only after explicit close or process exit;
+- different workspace identities remain independently writable, while a
+  stale empty identity entry neither grants nor steals authority;
 - forced process exit releases the operating-system lock without a PID or age
   heuristic;
+- registry first use and hostile owner, permission, symlink/reparse,
+  replacement, data, and hard-link cases fail closed on the owning platforms;
 - opening and creating a replacement workspace close the previous session, and
   failed switching best-effort closes the replacement without changing the
   selected workspace;
