@@ -22,7 +22,10 @@ The current P02 source state, built on the merged P00 and P01 foundation, contai
 - provider-neutral contracts and a local-folder reference adapter with limited claims;
 - macOS and Windows packaging workflows.
 
-The installed macOS review application is version `0.1.0-alpha.1` and is an ad-hoc-signed universal internal alpha. It is not Developer ID signed, notarised, or a supported public release.
+The installed macOS review application is version `0.1.0-alpha.1` and contains
+a universal executable with a linker/ad-hoc code directory, but strict bundle
+verification reports that the application bundle is not signed. It is not
+Developer ID signed, notarised, or a supported public release.
 
 The P02 source state provides a write-authoritative Workspace Session with
 workspace-local and per-user `WorkspaceId` operating-system exclusion,

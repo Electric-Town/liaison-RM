@@ -19,6 +19,7 @@ search_terms:
   - WebKit event currentTarget
 related_requirements:
   - LRM-AP-001
+  - LRM-WS-002
   - LRM-WS-009
   - LRM-WS-011
 related_uat:
@@ -50,8 +51,13 @@ disposable UI holds only the opaque active session identifier returned by that
 native application. Replacing the selected workspace first opens the
 replacement, then closes the previous session before accepting it; failure to
 close the previous session keeps it selected and best-effort closes the
-replacement. Browser fixtures may fake the typed bridge for interaction
-testing, but they are not storage or domain implementations.
+replacement. The disposable desktop admits one native operation at a time,
+disables every native-operation field and action while it is active, and
+captures both a monotonic operation generation and the starting session ID.
+It applies a result only if both still own the current state and explicitly
+closes an opened replacement that became superseded. Browser fixtures may fake
+the typed bridge for interaction testing, but they are not storage or domain
+implementations.
 
 Browser fixtures also cannot prove the native WebKit event lifecycle. Capture any form, button, or other event target that is needed after an `await` before yielding to the native command. A compiled P01 review exposed a false-failure path where the Person file was written successfully and WebKit then cleared `event.currentTarget`; the interface reported failure and made a dangerous retry look appropriate. The native request shape, success message, file result, and post-command UI state must be tested together.
 
@@ -77,6 +83,12 @@ People repository with `people_repository(&work)`. Do not expose the private
 adapter type, accept an unrelated guard as a token, or add a second path-taking
 Person store. Compiler-boundary tests prove both the denied unguarded use and
 the allowed guarded use.
+
+Capability-bound manifest and Person reads reject a non-regular file before
+opening it, use a no-follow nonblocking open, and validate the opened handle
+again. The preflight provides a clear typed result; the nonblocking open and
+post-check close the replacement race without letting a FIFO wedge one-shot
+Health or an ordinary workspace command.
 
 New version-one manifests publish `enabled_modules` and currently require the
 `people` identifier. A P01 manifest without that later field is read as
@@ -133,6 +145,12 @@ Check that:
 - opening and creating a replacement workspace close the previous session, and
   failed switching best-effort closes the replacement without changing the
   selected workspace;
+- delayed or programmatic overlapping desktop operations result in at most one
+  native command, one visible active session, no hidden replacement lock, no
+  cross-workspace Person result, and restored controls/focus;
+- manifest and `people/*.md` FIFOs or other special files return a typed result
+  within the bounded regression timeout; healthy People remain listable and a
+  Person special file becomes a Health finding;
 - human and JSON failures retain the same stable code, recovery action, safe details, and correlation identifier;
 - the rejected email or phone value is absent from errors and test output;
 - the exact compiled Tauri bundle accepts the same request DTO names exercised by adapter tests;

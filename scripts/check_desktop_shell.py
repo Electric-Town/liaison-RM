@@ -224,7 +224,8 @@ def main() -> int:
     for required in [
         "commandValue",
         "APPLICATION_CONTRACT_VERSION",
-        "sessionId: state.workspace.session_id",
+        "sessionId: operation.sessionId",
+        "operationOwnsCurrentSession(operation)",
         "app.product_state",
         "app.connection_state",
         "app.release_evidence",

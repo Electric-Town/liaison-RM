@@ -17,10 +17,15 @@ REPORT = Path(os.environ.get("DESKTOP_TEST_REPORT", "artifacts/desktop-ui-report
 
 BRIDGE = r"""
 (() => {
-  const people = [];
+  const peopleByPath = new Map();
   let workspace = null;
   const sessions = new Map();
   const closedSessions = [];
+  const delayedCommands = new Set();
+  const delayResolvers = new Map();
+  const commandCounts = new Map();
+  let inFlightCommands = 0;
+  let maxInFlightCommands = 0;
   let nextSessionNumber = 101;
   let failNextCloseFor = null;
   let commandNumber = 1;
@@ -65,7 +70,18 @@ BRIDGE = r"""
       );
     }
   };
+  const sessionPeople = (sessionId) => {
+    requireSession(sessionId);
+    const path = sessions.get(sessionId).workspace.path;
+    if (!peopleByPath.has(path)) peopleByPath.set(path, []);
+    return peopleByPath.get(path);
+  };
+  const waitForConfiguredDelay = async (command) => {
+    if (!delayedCommands.delete(command)) return;
+    await new Promise((resolve) => delayResolvers.set(command, resolve));
+  };
   const openResult = (path, name, profile) => {
+    if (!peopleByPath.has(path)) peopleByPath.set(path, []);
     const sessionId = `01900000-0000-7000-8000-${String(nextSessionNumber++).padStart(12, "0")}`;
     const opened = {
       workspace: {
@@ -79,7 +95,7 @@ BRIDGE = r"""
         locale: "en-IE",
         enabled_modules: ["people"],
       },
-      people: people.slice(),
+      people: peopleByPath.get(path).slice(),
       validation: null,
     };
     workspace = opened;
@@ -92,11 +108,32 @@ BRIDGE = r"""
     closedSessions: () => closedSessions.slice(),
     currentSession: () => workspace?.workspace.session_id || null,
     failNextClose: (sessionId) => { failNextCloseFor = sessionId; },
+    delayNext: (command) => delayedCommands.add(command),
+    release: (command) => {
+      const resolve = delayResolvers.get(command);
+      if (!resolve) return false;
+      delayResolvers.delete(command);
+      resolve();
+      return true;
+    },
+    isDelayed: (command) => delayResolvers.has(command),
+    invocationCount: (command) => commandCounts.get(command) || 0,
+    inFlightCommands: () => inFlightCommands,
+    maxInFlightCommands: () => maxInFlightCommands,
+    resetOperationMetrics: () => {
+      commandCounts.clear();
+      maxInFlightCommands = inFlightCommands;
+    },
   };
   window.__TAURI__ = {
     core: {
       invoke: async (command, payload = {}) => {
-        switch (command) {
+        commandCounts.set(command, (commandCounts.get(command) || 0) + 1);
+        inFlightCommands += 1;
+        maxInFlightCommands = Math.max(maxInFlightCommands, inFlightCommands);
+        try {
+          await waitForConfiguredDelay(command);
+          switch (command) {
           case "app_status":
             return result({
               version: "0.1.0-alpha.1",
@@ -146,11 +183,10 @@ BRIDGE = r"""
             return result({ session_id: sessionId });
           }
           case "list_people": {
-            requireSession(payload.request.sessionId);
-            return result(people.slice());
+            return result(sessionPeople(payload.request.sessionId).slice());
           }
           case "create_person": {
-            requireSession(payload.request.sessionId);
+            const people = sessionPeople(payload.request.sessionId);
             const person = {
               id: `01900000-0000-7000-8000-${String(people.length + 2).padStart(12, "0")}`,
               revision: 1,
@@ -172,6 +208,9 @@ BRIDGE = r"""
             return result(validation());
           default:
             throw new Error(`Unexpected command: ${command}`);
+          }
+        } finally {
+          inFlightCommands -= 1;
         }
       },
     },
@@ -314,6 +353,156 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     assert external_requests == []
 
 
+def initialise_overlap_workspace(page: Page, path: str) -> str:
+    load_page(page)
+    page.wait_for_function(
+        "!document.querySelector('[data-native-operation]').disabled"
+    )
+    page.get_by_label("Absolute folder path").fill(path)
+    page.get_by_label("Workspace name").fill("Overlap source")
+    page.get_by_role("button", name="Create local workspace").click()
+    page.locator("#live-status").get_by_text(
+        "Workspace setup did not complete", exact=False
+    ).wait_for()
+    page.get_by_role("button", name="Create local workspace").click()
+    page.get_by_role(
+        "heading", name="Remember useful context without scoring people"
+    ).wait_for()
+    return page.evaluate("window.__liaisonBridgeState.currentSession()")
+
+
+def test_overlapping_workspace_switches(browser, external_requests: list[str]) -> None:
+    page = browser.new_page(viewport={"width": 1280, "height": 900})
+    page.set_default_timeout(8_000)
+    page.on(
+        "request",
+        lambda request: external_requests.append(request.url)
+        if not request.url.startswith("file://")
+        else None,
+    )
+    first_session = initialise_overlap_workspace(
+        page, "/Users/tester/Documents/overlap-switch-source"
+    )
+    page.get_by_role("button", name="Workspace").click()
+    page.get_by_label("Absolute folder path").fill(
+        "/Users/tester/Documents/overlap-switch-target"
+    )
+    page.evaluate(
+        """
+        window.__liaisonBridgeState.resetOperationMetrics();
+        window.__liaisonBridgeState.delayNext("open_workspace");
+        """
+    )
+    open_button = page.get_by_role("button", name="Open existing workspace")
+    open_button.click()
+    page.wait_for_function(
+        'window.__liaisonBridgeState.isDelayed("open_workspace")'
+    )
+    assert page.locator("#main-content").get_attribute("aria-busy") == "true"
+    assert page.locator("[data-native-operation]:not(:disabled)").count() == 0
+
+    # A synthetic second event covers keyboard/programmatic re-entry even though
+    # every visible native-operation control is disabled during the first switch.
+    page.locator("#open-workspace").dispatch_event("click")
+    assert page.evaluate(
+        'window.__liaisonBridgeState.invocationCount("open_workspace")'
+    ) == 1
+    assert page.evaluate("window.__liaisonBridgeState.inFlightCommands()") == 1
+    assert page.evaluate("window.__liaisonBridgeState.maxInFlightCommands()") == 1
+
+    assert page.evaluate(
+        'window.__liaisonBridgeState.release("open_workspace")'
+    ) is True
+    page.locator("#live-status").get_by_text("Opened workspace", exact=False).wait_for()
+    page.wait_for_function("!document.querySelector('#open-workspace').disabled")
+    replacement_session = page.evaluate(
+        "window.__liaisonBridgeState.currentSession()"
+    )
+    assert replacement_session != first_session
+    assert page.evaluate("window.__liaisonBridgeState.activeSessions()") == [
+        replacement_session
+    ]
+    assert first_session in page.evaluate(
+        "window.__liaisonBridgeState.closedSessions()"
+    )
+    assert page.evaluate(
+        'window.__liaisonBridgeState.invocationCount("open_workspace")'
+    ) == 1
+    assert page.locator("[data-native-operation]:disabled").count() == 0
+    assert page.locator("#main-content").get_attribute("aria-busy") is None
+    assert open_button.evaluate("element => element === document.activeElement")
+    page.close()
+
+
+def test_person_result_cannot_cross_workspace(browser, external_requests: list[str]) -> None:
+    page = browser.new_page(viewport={"width": 1280, "height": 900})
+    page.set_default_timeout(8_000)
+    page.on(
+        "request",
+        lambda request: external_requests.append(request.url)
+        if not request.url.startswith("file://")
+        else None,
+    )
+    source_session = initialise_overlap_workspace(
+        page, "/Users/tester/Documents/overlap-person-source"
+    )
+    page.get_by_label("Display name").fill("Delayed Person")
+    page.evaluate(
+        """
+        window.__liaisonBridgeState.resetOperationMetrics();
+        window.__liaisonBridgeState.delayNext("create_person");
+        """
+    )
+    page.get_by_role("button", name="Save Markdown profile").click()
+    page.wait_for_function(
+        'window.__liaisonBridgeState.isDelayed("create_person")'
+    )
+    assert page.locator("#main-content").get_attribute("aria-busy") == "true"
+    assert page.locator("[data-native-operation]:not(:disabled)").count() == 0
+
+    page.get_by_role("button", name="Workspace").click()
+    # Native-operation fields are disabled for users. Force a value and event
+    # to prove script/programmatic re-entry is rejected by the synchronous
+    # guard as well.
+    page.evaluate(
+        """
+        document.getElementById("workspace-path").value =
+          "/Users/tester/Documents/overlap-person-target";
+        """
+    )
+    page.locator("#open-workspace").dispatch_event("click")
+    assert page.evaluate(
+        'window.__liaisonBridgeState.invocationCount("open_workspace")'
+    ) == 0
+    assert page.evaluate("window.__liaisonBridgeState.activeSessions()") == [
+        source_session
+    ]
+    assert page.evaluate("window.__liaisonBridgeState.maxInFlightCommands()") == 1
+
+    assert page.evaluate(
+        'window.__liaisonBridgeState.release("create_person")'
+    ) is True
+    page.locator("#live-status").get_by_text("Saved Delayed Person", exact=False).wait_for()
+    page.wait_for_function("!document.querySelector('#open-workspace').disabled")
+    page.get_by_role("button", name="Open existing workspace").click()
+    page.locator("#live-status").get_by_text("Opened workspace", exact=False).wait_for()
+    target_session = page.evaluate("window.__liaisonBridgeState.currentSession()")
+    assert target_session != source_session
+    assert page.evaluate("window.__liaisonBridgeState.activeSessions()") == [
+        target_session
+    ]
+    assert source_session in page.evaluate(
+        "window.__liaisonBridgeState.closedSessions()"
+    )
+    assert page.locator("#people-count").inner_text() == "0"
+    assert page.get_by_text("Delayed Person", exact=True).count() == 0
+    assert "Delayed Person" not in page.locator("#live-status").inner_text()
+    assert page.evaluate("window.__liaisonBridgeState.maxInFlightCommands()") == 1
+    assert page.locator("[data-native-operation]:disabled").count() == 0
+    assert page.locator("#main-content").get_attribute("aria-busy") is None
+    page.close()
+
+
 def test_mobile(browser, external_requests: list[str]) -> None:
     page = browser.new_page(viewport={"width": 390, "height": 844}, reduced_motion="reduce")
     page.set_default_timeout(8_000)
@@ -363,6 +552,8 @@ def test_dark_mode(browser, external_requests: list[str]) -> None:
 def main() -> int:
     results = {
         "desktop_workflow": False,
+        "native_switch_serialization": False,
+        "native_session_result_serialization": False,
         "mobile_reflow": False,
         "dark_mode": False,
         "external_requests": [],
@@ -376,6 +567,10 @@ def main() -> int:
         test_desktop(page, external_requests)
         results["desktop_workflow"] = True
         results["external_requests"] = external_requests
+        test_overlapping_workspace_switches(browser, external_requests)
+        results["native_switch_serialization"] = True
+        test_person_result_cannot_cross_workspace(browser, external_requests)
+        results["native_session_result_serialization"] = True
         test_mobile(browser, external_requests)
         results["mobile_reflow"] = True
         test_dark_mode(browser, external_requests)
@@ -386,7 +581,7 @@ def main() -> int:
 
     REPORT.parent.mkdir(parents=True, exist_ok=True)
     REPORT.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
-    print("Desktop UI tests passed: workspace switching/rollback, person, validation, focus, mobile reflow, dark mode, and zero external requests")
+    print("Desktop UI tests passed: globally serialized native operations, workspace switching/rollback, stale-person isolation, validation, focus recovery, mobile reflow, dark mode, and zero external requests")
     return 0
 
 

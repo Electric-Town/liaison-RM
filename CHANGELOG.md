@@ -86,6 +86,13 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Fixed
 
+- Desktop native operations now share one synchronous busy boundary with
+  generation/session checks, stale-result rejection, and explicit cleanup of
+  superseded workspace sessions, preventing overlapping switches or Person
+  results from leaking authority or state across workspaces.
+- Capability-bound manifest and Person reads now preflight and post-validate
+  regular files around a nonblocking no-follow open, so FIFOs and other special
+  files cannot wedge one-shot Health or normal workspace access.
 - Desktop asset verification now compares rendered PNG and ICNS content across
   platforms while retaining byte-exact checks for the uncompressed Windows ICO,
   avoiding false drift failures from host-specific compression libraries.

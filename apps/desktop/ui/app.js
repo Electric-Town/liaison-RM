@@ -5,6 +5,10 @@
     workspace: null,
     people: [],
   };
+  const nativeOperation = {
+    generation: 0,
+    active: null,
+  };
   const APPLICATION_CONTRACT_VERSION = 1;
 
   const byId = (id) => document.getElementById(id);
@@ -54,16 +58,47 @@
     return `${message} Recovery: ${recovery}`;
   };
 
-  const withBusy = async (button, busyLabel, work) => {
-    const original = button.textContent;
-    button.disabled = true;
-    button.textContent = busyLabel;
+  const currentSessionId = () => state.workspace?.session_id || null;
+
+  const isCurrentOperation = (operation) => (
+    nativeOperation.active?.generation === operation.generation
+  );
+
+  const operationOwnsCurrentSession = (operation) => (
+    isCurrentOperation(operation)
+    && currentSessionId() === operation.sessionId
+  );
+
+  const withNativeOperation = async (button, busyLabel, work) => {
+    if (nativeOperation.active) return undefined;
+
+    const operation = Object.freeze({
+      generation: ++nativeOperation.generation,
+      sessionId: currentSessionId(),
+    });
+    nativeOperation.active = operation;
+    const original = button?.textContent || "";
+    const restoreFocus = button && document.activeElement === button ? button : null;
+    if (button && busyLabel) button.textContent = busyLabel;
+    byId("main-content").setAttribute("aria-busy", "true");
+    updateControls();
     try {
-      return await work();
+      return await work(operation);
     } finally {
-      button.textContent = original;
-      button.disabled = false;
-      updateControls();
+      if (isCurrentOperation(operation)) {
+        nativeOperation.active = null;
+        if (button) button.textContent = original;
+        byId("main-content").removeAttribute("aria-busy");
+        updateControls();
+        if (
+          restoreFocus
+          && document.activeElement === document.body
+          && !restoreFocus.disabled
+          && restoreFocus.offsetParent !== null
+        ) {
+          restoreFocus.focus({ preventScroll: true });
+        }
+      }
     }
   };
 
@@ -158,22 +193,48 @@
 
   const updateControls = () => {
     const ready = Boolean(state.workspace);
-    ["person-name", "person-email", "create-person", "run-validation", "refresh-people"].forEach((id) => {
-      byId(id).disabled = !ready;
+    const busy = Boolean(nativeOperation.active);
+    document.querySelectorAll("[data-native-operation]").forEach((control) => {
+      const needsSession = control.dataset.nativeOperation === "session";
+      control.disabled = busy || (needsSession && !ready);
+    });
+    ["person-name", "person-email"].forEach((id) => {
+      byId(id).disabled = busy || !ready;
     });
     byId("people-workspace-warning").hidden = ready;
   };
 
-  const refreshPeople = async () => {
-    if (!state.workspace) return;
-    state.people = await invokeValue("list_people", {
-      request: { sessionId: state.workspace.session_id },
+  const refreshPeople = async (operation) => {
+    if (!operation.sessionId) return false;
+    const people = await invokeValue("list_people", {
+      request: { sessionId: operation.sessionId },
     });
+    if (!operationOwnsCurrentSession(operation)) return false;
+    state.people = people;
     renderPeople();
     renderWorkspace();
+    return true;
   };
 
-  const acceptWorkspace = async (opened, action) => {
+  const closeSupersededWorkspace = async (opened, operation) => {
+    const replacementSessionId = opened?.workspace?.session_id;
+    if (!replacementSessionId || replacementSessionId === currentSessionId()) return;
+    try {
+      await invokeValue("close_workspace", {
+        request: { sessionId: replacementSessionId },
+      });
+    } catch (error) {
+      if (isCurrentOperation(operation)) {
+        status(`Superseded workspace cleanup did not complete: ${errorText(error)}`);
+      }
+    }
+  };
+
+  const acceptWorkspace = async (opened, action, operation) => {
+    if (!operationOwnsCurrentSession(operation)) {
+      await closeSupersededWorkspace(opened, operation);
+      return false;
+    }
     const previous = state.workspace;
     if (previous && previous.session_id !== opened.workspace.session_id) {
       try {
@@ -181,17 +242,14 @@
           request: { sessionId: previous.session_id },
         });
       } catch (error) {
-        try {
-          await invokeValue("close_workspace", {
-            request: { sessionId: opened.workspace.session_id },
-          });
-        } catch {
-          // Closing the replacement is best-effort; the original close error
-          // is the actionable failure and the original selection stays put.
-        }
+        await closeSupersededWorkspace(opened, operation);
         status(`Workspace switch did not complete: ${errorText(error)}`);
         return false;
       }
+    }
+    if (!operationOwnsCurrentSession(operation)) {
+      await closeSupersededWorkspace(opened, operation);
+      return false;
     }
     state.workspace = opened.workspace;
     state.people = opened.people;
@@ -234,61 +292,74 @@
     button.addEventListener("click", () => navigate(button.dataset.route));
   });
 
-  byId("use-default-path").addEventListener("click", async () => {
-    try {
-      byId("workspace-path").value = await invokeValue("default_workspace_path");
-      status("Suggested a local Documents folder. Review it before creating the workspace.");
-    } catch (error) {
-      status(errorText(error));
-    }
+  byId("use-default-path").addEventListener("click", async (event) => {
+    await withNativeOperation(event.currentTarget, "Selecting…", async (operation) => {
+      try {
+        const path = await invokeValue("default_workspace_path");
+        if (!isCurrentOperation(operation)) return;
+        byId("workspace-path").value = path;
+        status("Suggested a local Documents folder. Review it before creating the workspace.");
+      } catch (error) {
+        if (isCurrentOperation(operation)) status(errorText(error));
+      }
+    });
   });
 
   byId("workspace-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const button = event.submitter;
-    await withBusy(button, "Creating…", async () => {
+    await withNativeOperation(button, "Creating…", async (operation) => {
       try {
+        const request = {
+          path: byId("workspace-path").value,
+          name: byId("workspace-name").value,
+          profile: byId("workspace-profile").value,
+        };
         const opened = await invokeValue("initialise_workspace", {
-          request: {
-            path: byId("workspace-path").value,
-            name: byId("workspace-name").value,
-            profile: byId("workspace-profile").value,
-          },
+          request,
         });
-        if (await acceptWorkspace(opened, "Created local workspace")) {
+        if (await acceptWorkspace(opened, "Created local workspace", operation)) {
           navigate("people");
         }
       } catch (error) {
-        status(`Workspace setup did not complete: ${errorText(error)}`);
+        if (isCurrentOperation(operation)) {
+          status(`Workspace setup did not complete: ${errorText(error)}`);
+        }
       }
     });
   });
 
   byId("open-workspace").addEventListener("click", async (event) => {
-    await withBusy(event.currentTarget, "Opening…", async () => {
+    await withNativeOperation(event.currentTarget, "Opening…", async (operation) => {
       try {
-        const opened = await invokeValue("open_workspace", { path: byId("workspace-path").value });
-        await acceptWorkspace(opened, "Opened workspace");
+        const path = byId("workspace-path").value;
+        const opened = await invokeValue("open_workspace", { path });
+        await acceptWorkspace(opened, "Opened workspace", operation);
       } catch (error) {
-        status(`Workspace was not opened: ${errorText(error)}`);
+        if (isCurrentOperation(operation)) {
+          status(`Workspace was not opened: ${errorText(error)}`);
+        }
       }
     });
   });
 
   byId("inspect-workspace-health").addEventListener("click", async (event) => {
-    await withBusy(event.currentTarget, "Inspecting…", async () => {
+    await withNativeOperation(event.currentTarget, "Inspecting…", async (operation) => {
       try {
         const inspectedPath = byId("workspace-path").value;
         const report = await invokeValue("inspect_workspace_health", {
           path: inspectedPath,
         });
+        if (!isCurrentOperation(operation)) return;
         showValidation(report, inspectedPath, "Read-only folder");
         navigate("health");
         status(report.valid
           ? "Read-only Workspace Health passed without acquiring writer authority."
           : `Read-only Workspace Health reported ${report.findings.length} finding${report.findings.length === 1 ? "" : "s"} without changing files.`);
       } catch (error) {
-        status(`Read-only Workspace Health did not complete: ${errorText(error)}`);
+        if (isCurrentOperation(operation)) {
+          status(`Read-only Workspace Health did not complete: ${errorText(error)}`);
+        }
       }
     });
   });
@@ -298,15 +369,17 @@
     if (!state.workspace) return;
     const form = event.currentTarget;
     const button = event.submitter || byId("create-person");
-    await withBusy(button, "Saving…", async () => {
+    await withNativeOperation(button, "Saving…", async (operation) => {
       try {
+        if (!operation.sessionId) return;
         const person = await invokeValue("create_person", {
           request: {
-            sessionId: state.workspace.session_id,
+            sessionId: operation.sessionId,
             displayName: byId("person-name").value,
             email: byId("person-email").value || null,
           },
         });
+        if (!operationOwnsCurrentSession(operation)) return;
         state.people.push(person);
         state.people.sort((left, right) => left.display_name.localeCompare(right.display_name));
         form.reset();
@@ -315,33 +388,43 @@
         status(`Saved ${person.display_name} as a local Markdown profile.`);
         byId("person-name").focus();
       } catch (error) {
-        status(`Person was not saved: ${errorText(error)}`);
+        if (operationOwnsCurrentSession(operation)) {
+          status(`Person was not saved: ${errorText(error)}`);
+        }
       }
     });
   });
 
   byId("refresh-people").addEventListener("click", async (event) => {
-    await withBusy(event.currentTarget, "Refreshing…", async () => {
+    await withNativeOperation(event.currentTarget, "Refreshing…", async (operation) => {
       try {
-        await refreshPeople();
-        status(`Refreshed ${state.people.length} local profile${state.people.length === 1 ? "" : "s"}.`);
+        if (await refreshPeople(operation)) {
+          status(`Refreshed ${state.people.length} local profile${state.people.length === 1 ? "" : "s"}.`);
+        }
       } catch (error) {
-        status(`People were not refreshed: ${errorText(error)}`);
+        if (operationOwnsCurrentSession(operation)) {
+          status(`People were not refreshed: ${errorText(error)}`);
+        }
       }
     });
   });
 
   byId("run-validation").addEventListener("click", async (event) => {
     if (!state.workspace) return;
-    await withBusy(event.currentTarget, "Validating…", async () => {
+    await withNativeOperation(event.currentTarget, "Validating…", async (operation) => {
       try {
+        if (!operation.sessionId) return;
+        const workspacePath = state.workspace.path;
         const report = await invokeValue("validate_workspace", {
-          request: { sessionId: state.workspace.session_id },
+          request: { sessionId: operation.sessionId },
         });
-        showValidation(report, state.workspace.path, "Active workspace");
+        if (!operationOwnsCurrentSession(operation)) return;
+        showValidation(report, workspacePath, "Active workspace");
         status(report.valid ? "Workspace validation passed." : "Workspace validation reported findings.");
       } catch (error) {
-        status(`Validation did not complete: ${errorText(error)}`);
+        if (operationOwnsCurrentSession(operation)) {
+          status(`Validation did not complete: ${errorText(error)}`);
+        }
       }
     });
   });
@@ -350,20 +433,29 @@
     updateControls();
     renderWorkspace();
     renderPeople();
-    try {
-      const app = await invokeValue("app_status");
-      byId("authority-label").textContent = `${app.product_state} · ${app.connection_state}`;
-      status(`Liaison RM ${app.version}: ${app.release_evidence}. No workspace has been opened.`);
-    } catch (error) {
-      byId("authority-label").textContent = "Native bridge unavailable";
-      status(errorText(error));
-      return;
-    }
-    try {
-      byId("workspace-path").value = await invokeValue("default_workspace_path");
-    } catch (error) {
-      status(`A default workspace folder was not selected: ${errorText(error)}`);
-    }
+    await withNativeOperation(null, "", async (operation) => {
+      try {
+        const app = await invokeValue("app_status");
+        if (!isCurrentOperation(operation)) return;
+        byId("authority-label").textContent = `${app.product_state} · ${app.connection_state}`;
+        status(`Liaison RM ${app.version}: ${app.release_evidence}. No workspace has been opened.`);
+      } catch (error) {
+        if (isCurrentOperation(operation)) {
+          byId("authority-label").textContent = "Native bridge unavailable";
+          status(errorText(error));
+        }
+        return;
+      }
+      try {
+        const path = await invokeValue("default_workspace_path");
+        if (!isCurrentOperation(operation)) return;
+        byId("workspace-path").value = path;
+      } catch (error) {
+        if (isCurrentOperation(operation)) {
+          status(`A default workspace folder was not selected: ${errorText(error)}`);
+        }
+      }
+    });
   };
 
   start();

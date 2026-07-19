@@ -6,7 +6,7 @@
 
 #![allow(clippy::module_name_repetitions, clippy::missing_errors_doc)]
 
-use cap_fs_ext::{DirExt, FollowSymlinks, OpenOptionsFollowExt};
+use cap_fs_ext::{DirExt, FollowSymlinks, OpenOptionsFollowExt, OpenOptionsSyncExt};
 use cap_std::{
     ambient_authority,
     fs::{Dir, OpenOptions},
@@ -324,11 +324,17 @@ impl BoundWorkspaceStore for BoundMarkdownVault {
 
 fn nofollow_read_options() -> OpenOptions {
     let mut options = OpenOptions::new();
-    options.read(true).follow(FollowSymlinks::No);
+    options.read(true).follow(FollowSymlinks::No).nonblock(true);
     options
 }
 
 fn bound_read_text(directory: &Dir, path: &Path) -> io::Result<String> {
+    if !directory.symlink_metadata(path)?.is_file() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "record is not a regular file",
+        ));
+    }
     let mut file = directory.open_with(path, &nofollow_read_options())?;
     if !file.metadata()?.is_file() {
         return Err(io::Error::new(
@@ -373,6 +379,11 @@ fn bound_person_entries(people: &Dir) -> Result<Vec<cap_std::fs::DirEntry>, Peop
 }
 
 fn bound_read_person_entry(entry: &cap_std::fs::DirEntry) -> Result<ParsedPerson, PeopleError> {
+    if !entry.file_type().map_err(storage_people)?.is_file() {
+        return Err(PeopleError::Storage(
+            "person record is not a regular file".to_owned(),
+        ));
+    }
     let mut file = entry
         .open_with(&nofollow_read_options())
         .map_err(storage_people)?;
@@ -723,6 +734,9 @@ fn safe_people_validation_message(error: &PeopleError) -> &'static str {
             "person record revision conflicts with the expected version"
         }
         PeopleError::RevisionOverflow => "person record revision is outside the supported range",
+        PeopleError::Storage(message) if message == "person record is not a regular file" => {
+            "person record is not a regular file"
+        }
         PeopleError::Storage(_) => "person record format or schema is invalid",
     }
 }
@@ -860,8 +874,12 @@ fn storage_people(error: impl std::fmt::Display) -> PeopleError {
 #[cfg(test)]
 mod tests {
     use super::{BoundMarkdownVault, MANIFEST_PATH, MarkdownVault, people_repository, slug};
+    #[cfg(unix)]
+    use super::{bound_people_directory, bound_person_entries, bound_read_person_entry};
     use cap_std::{ambient_authority, fs::Dir};
     use chrono::Utc;
+    #[cfg(unix)]
+    use liaison_people::PeopleError;
     use liaison_people::{CreatePerson, ListPeople, PersonProfile, PersonRepository};
     use liaison_shared_kernel::{PersonId, WorkspaceId, WorkspaceSessionId};
     use liaison_workspace::{
@@ -925,7 +943,10 @@ mod tests {
         }
     }
 
-    fn bound_session(vault: &MarkdownVault, root: &Path) -> WorkspaceSession<BoundMarkdownVault> {
+    fn try_bound_session(
+        vault: &MarkdownVault,
+        root: &Path,
+    ) -> Result<WorkspaceSession<BoundMarkdownVault>, WorkspaceSessionError> {
         let directory = Dir::open_ambient_dir(root, ambient_authority())
             .unwrap_or_else(|error| unreachable!("test workspace must open: {error}"));
         OpenWorkspaceSession::new(TestBinding {
@@ -936,7 +957,51 @@ mod tests {
             std::process::id(),
             Utc::now(),
         ))
-        .unwrap_or_else(|error| unreachable!("test session must open: {error}"))
+    }
+
+    fn bound_session(vault: &MarkdownVault, root: &Path) -> WorkspaceSession<BoundMarkdownVault> {
+        try_bound_session(vault, root)
+            .unwrap_or_else(|error| unreachable!("test session must open: {error}"))
+    }
+
+    #[cfg(unix)]
+    fn create_fifo(path: &Path) {
+        let status = std::process::Command::new("mkfifo").arg(path).status();
+        assert!(
+            matches!(status, Ok(status) if status.success()),
+            "test FIFO must be created"
+        );
+    }
+
+    #[cfg(unix)]
+    fn run_quickly<T, F>(operation: F) -> T
+    where
+        T: Send + 'static,
+        F: FnOnce() -> T + Send + 'static,
+    {
+        let (sender, receiver) = std::sync::mpsc::sync_channel(1);
+        let worker = std::thread::spawn(move || {
+            let _ = sender.send(operation());
+        });
+        let value = receiver
+            .recv_timeout(std::time::Duration::from_secs(2))
+            .unwrap_or_else(|error| {
+                unreachable!("vault operation must not block on a special file: {error}")
+            });
+        assert!(worker.join().is_ok(), "vault operation must not panic");
+        value
+    }
+
+    #[cfg(unix)]
+    fn read_person_entry_for_test(root: &Path, filename: &str) -> Result<(), PeopleError> {
+        let root = Dir::open_ambient_dir(root, ambient_authority())
+            .map_err(|error| PeopleError::Storage(error.to_string()))?;
+        let people = bound_people_directory(&root)?;
+        let entry = bound_person_entries(&people)?
+            .into_iter()
+            .find(|entry| entry.file_name().to_string_lossy() == filename)
+            .ok_or(PeopleError::NotFound)?;
+        bound_read_person_entry(&entry).map(|_| ())
     }
 
     #[test]
@@ -1429,6 +1494,142 @@ mod tests {
                 assert_eq!(listed[0].display_name, "Healthy Person");
             }
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn manifest_fifo_is_rejected_quickly_by_health_open_and_list() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        let Ok(directory) = directory else {
+            return;
+        };
+        let root = directory.path().join("workspace");
+        let vault = MarkdownVault::new();
+        assert!(
+            InitialiseWorkspace::new(vault.clone())
+                .execute(
+                    &root,
+                    WorkspaceId::new(),
+                    "People",
+                    WorkspaceProfile::Personal,
+                    BuildProfile::Airgap,
+                    "en-IE",
+                )
+                .is_ok()
+        );
+        let list_session = bound_session(&vault, &root);
+        let manifest = root.join(MANIFEST_PATH);
+        assert!(fs::remove_file(&manifest).is_ok());
+        create_fifo(&manifest);
+
+        let health_root = root.clone();
+        let health = run_quickly(move || MarkdownVault::new().inspect_health(&health_root));
+        assert!(matches!(
+            health,
+            Err(WorkspaceError::Storage(ref message))
+                if message == "record is not a regular file"
+        ));
+
+        let open_root = root.clone();
+        let opened = run_quickly(move || try_bound_session(&MarkdownVault::new(), &open_root));
+        assert!(matches!(
+            opened,
+            Err(WorkspaceSessionError::Workspace(WorkspaceError::Storage(ref message)))
+                if message == "record is not a regular file"
+        ));
+
+        let listed = run_quickly(move || {
+            let work = list_session
+                .begin_work()
+                .map_err(|error| PeopleError::Storage(error.to_string()))?;
+            let repository = people_repository(&work);
+            ListPeople::new(&repository).execute(false)
+        });
+        assert!(matches!(
+            listed,
+            Err(PeopleError::Storage(ref message))
+                if message.contains("record is not a regular file")
+        ));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn person_fifo_is_rejected_quickly_without_hiding_healthy_people() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        let Ok(directory) = directory else {
+            return;
+        };
+        let root = directory.path().join("workspace");
+        let vault = MarkdownVault::new();
+        assert!(
+            InitialiseWorkspace::new(vault.clone())
+                .execute(
+                    &root,
+                    WorkspaceId::new(),
+                    "People",
+                    WorkspaceProfile::Personal,
+                    BuildProfile::Airgap,
+                    "en-IE",
+                )
+                .is_ok()
+        );
+        let session = bound_session(&vault, &root);
+        {
+            let work = session
+                .begin_work()
+                .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
+            let repository = people_repository(&work);
+            assert!(
+                CreatePerson::new(&repository)
+                    .execute(PersonId::new(), "Healthy Person", None)
+                    .is_ok()
+            );
+        }
+        drop(session);
+        let fifo_name = "000-special.md";
+        create_fifo(&root.join("people").join(fifo_name));
+
+        let read_root = root.clone();
+        let rejected = run_quickly(move || read_person_entry_for_test(&read_root, fifo_name));
+        assert_eq!(
+            rejected,
+            Err(PeopleError::Storage(
+                "person record is not a regular file".to_owned()
+            ))
+        );
+
+        let health_root = root.clone();
+        let health = run_quickly(move || MarkdownVault::new().inspect_health(&health_root));
+        assert!(health.is_ok());
+        let Ok(health) = health else {
+            return;
+        };
+        assert!(health.findings.iter().any(|finding| {
+            finding.code == "people.invalid-record"
+                && finding.path == "people/000-special.md"
+                && finding.message == "person record is not a regular file"
+        }));
+
+        let open_root = root.clone();
+        let opened = run_quickly(move || try_bound_session(&MarkdownVault::new(), &open_root));
+        assert!(opened.is_ok());
+        let Ok(session) = opened else {
+            return;
+        };
+        let listed = run_quickly(move || {
+            let work = session
+                .begin_work()
+                .map_err(|error| PeopleError::Storage(error.to_string()))?;
+            let repository = people_repository(&work);
+            ListPeople::new(&repository).execute(false)
+        });
+        assert!(matches!(
+            listed,
+            Ok(ref people)
+                if people.len() == 1 && people[0].display_name == "Healthy Person"
+        ));
     }
 
     #[cfg(unix)]

@@ -89,6 +89,10 @@ broker/namespace or fails closed before opening a writer session.
   available during contention, malformed records, and parseable newer schemas.
   Desktop one-shot Health also labels its inspected folder independently of
   the active writer session.
+- Capability-bound manifest and Person reads preflight and post-validate the
+  opened object around a nonblocking no-follow open. A FIFO or other special
+  file therefore returns a typed result instead of wedging one-shot Health,
+  workspace open, or People listing.
 - Person mutation/list ports are path-free and are reached only through a live
   session work guard. The public `BoundMarkdownVault` cannot implement
   `PersonRepository`; an opaque guard-borrowed adapter is the only production
@@ -105,12 +109,18 @@ broker/namespace or fails closed before opening a writer session.
   previous selection and best-effort closes the replacement. Rust tests prove
   each close releases the corresponding real lock; browser tests prove both
   switching paths and the rollback orchestration.
+- The desktop admits one native operation at a time, disables every native
+  action and its request fields synchronously, and validates the captured
+  operation generation and session before applying a result. Delayed overlap
+  tests prove one invocation at a time, no hidden replacement lock, and no
+  Person result crossing into a later workspace.
 
 ## Traceability disposition
 
 | Record | P02 evidence | Remaining work |
 |---|---|---|
 | `T-B0-P02` | Workspace Session, environment-independent composite path/identity OS authority for ordinary unconfined processes, quiescence, session-bound repositories, lock-free Health, copy denial, and process-exit release are implemented and locally exercised. | Exact-head remote Linux, macOS, and Windows runtime qualification remains pending; sandboxed packaging needs one shared broker/namespace or explicit fail-closed proof. |
+| `LRM-WS-002` | New manifests declare a stable workspace ID, schema version, enabled `people` module, locale, and profile and pass the strict published schema; the P01 missing-module fixture reads as `people` without changing its bytes. | Exact-head manifest, Rust, and platform workflows must pass before the enclosing P02 gate is accepted. |
 | `LRM-WS-009` | Typed same-path and copied-path second-writer exclusion, read-only Health, explicit states, rename checks, both production launch orders, and process-exit release are covered for ordinary unconfined same-account processes without weakening identity authority. | Exact-head native Linux/Windows runtime evidence and the enclosing P02 gate remain pending; cross-container host/GUI authority is explicitly unsupported, not treated as a second valid namespace. |
 | `UAT-042` | The malformed-record, healthy-record, active-writer, typed-lock, and process-release portions are covered. | P03 must cover injected crashes, durable commit decisions, roll-forward, staging cleanup, and external-edit final preconditions. |
 | `FG-B0-001` | The application/session/Health portion is advanced. | The gate remains open until P03 recoverable operations and the complete fault-injection matrix pass. |
@@ -162,20 +172,33 @@ remote workflow result.
 
 The browser test used the workflow-pinned Pillow `11.3.0`, Playwright `1.57.0`,
 and Chromium build `1200`, wrote its report/screenshots outside the worktree,
-and passed workspace create/open switching, rollback, Person, Health, focus,
-mobile reflow, dark mode, and zero-external-request assertions.
+and passed globally serialised native operations, workspace create/open
+switching, rollback, stale-Person isolation, Health, focus recovery, mobile
+reflow, dark mode, and zero-external-request assertions. The final local source
+tree passed the suite three consecutive times.
 
-The workflow's generated-asset byte check did not pass on this macOS host:
+The workflow-pinned asset check initially exposed a cross-platform verifier
+defect on this macOS host:
 
 ```text
 $ python3 scripts/generate_desktop_assets.py --check
 Desktop assets differ from generator output: 32x32.png, 128x128.png, 128x128@2x.png, icon.icns
 ```
 
-`icon.ico` matched. P02 changed neither the generator nor any icon. The check
-byte-compares host-generated PNG/ICNS encodings and this is recorded as a
-pre-existing host-portability issue; the checked-in assets were deliberately
-not regenerated. The semantic desktop-shell check passed.
+Pillow `11.3.0` decoded every reported pair to the same format, dimensions,
+mode, and RGBA pixels; only the PNG/ICNS compressed byte sizes differed.
+`icon.ico`, which uses uncompressed BMP entries, remained byte-identical. P02
+therefore changed the verifier to compare rendered PNG/ICNS content while
+retaining a byte-exact ICO comparison. It did not regenerate the checked-in
+icons. The pinned command then passed:
+
+```text
+$ /private/tmp/liaison-p02-playwright-venv/bin/python scripts/generate_desktop_assets.py --check
+Desktop asset check passed
+```
+
+This is source and packaging-check evidence, not proof that a public signed or
+notarised artifact exists.
 
 The local Rust target inventory was extended with `x86_64-pc-windows-gnu`.
 `cargo check` and Clippy with warnings denied passed for the Workspace Session,
@@ -193,9 +216,17 @@ The development-only compile-boundary dependency is recorded in
 [`../dependencies/trybuild-1.0.118.md`](../dependencies/trybuild-1.0.118.md).
 The local host did not have `cargo-deny` or `cargo-audit`, so their licence and
 advisory gates were not reproduced locally; the repository does not yet
-provide those jobs, so this is an unimplemented release gate. No P02 installed
-application was built or substituted for the reviewed P01 installed-app
-evidence.
+provide those jobs, so this is an unimplemented release gate.
+
+A local, uninstalled universal P02 review application was built from
+`64dc3ee4d80d7b348ca4861e53542d90e31ac832`, verified as `x86_64` and `arm64`,
+and passed strict ad-hoc bundle signature verification. Its executable SHA-256
+was `fd995726f60eb4df2de9f92d8a92a63332163cce83c7b0ba0170356ca15e614d`.
+That artifact predates the final native-operation and special-file fixes, so it
+is retained only as integration evidence and is not final-head, installed-app,
+native-QA, or release evidence. It did not replace the reviewed P01 installed
+application. A final implementation-head P02 review bundle must be rebuilt and
+indexed separately before publication.
 
 P03 remains responsible for durable operation journals, a durable commit
 decision, directory durability, multi-target roll-forward, staged-output
