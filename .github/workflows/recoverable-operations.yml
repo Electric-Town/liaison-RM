@@ -1,0 +1,60 @@
+name: Recoverable canonical operations
+
+on:
+  pull_request:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "contexts/workspace/**"
+      - "contexts/people/**"
+      - "crates/liaison-application/**"
+      - "crates/liaison-shared-kernel/**"
+      - "adapters/vault-markdown/**"
+      - ".github/workflows/recoverable-operations.yml"
+  push:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "contexts/workspace/**"
+      - "contexts/people/**"
+      - "crates/liaison-application/**"
+      - "crates/liaison-shared-kernel/**"
+      - "adapters/vault-markdown/**"
+      - ".github/workflows/recoverable-operations.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  operation-engine:
+    name: Operation engine (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show Rust toolchain
+        run: rustc --version --verbose
+      - name: Check formatting
+        run: cargo fmt --all --check
+      - name: Check operation packages
+        run: cargo check -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-targets --all-features --locked
+      - name: Lint operation packages
+        run: cargo clippy -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-targets --all-features --locked -- -D warnings
+      - name: Test operation packages
+        run: cargo test -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-features --locked
+
+  repository-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/check_architecture.py
+      - run: python scripts/check_repository.py
+      - run: python scripts/check_spec.py
+      - run: python scripts/generate_traceability.py --check
