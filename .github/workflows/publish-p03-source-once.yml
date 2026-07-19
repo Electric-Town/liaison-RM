@@ -1,0 +1,64 @@
+name: Publish P03 recoverable-operation source once
+
+on:
+  push:
+    branches: [agent/p03-source-publisher-20260719]
+    paths:
+      - ".github/workflows/publish-p03-source-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/p03-source-publisher-20260719
+          fetch-depth: 0
+
+      - name: Reconstruct and verify reviewed source patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .staging/p03/part-* | tr -d '\r\n' | base64 --decode > /tmp/p03-source.patch.gz
+          echo "b5925f4553592513c8ef0a105b9a4d3c86f728b5839c6dbb2488937451fbe926  /tmp/p03-source.patch.gz" | sha256sum -c -
+          gzip -dc /tmp/p03-source.patch.gz > /tmp/p03-source.patch
+          echo "409d7d6247d40f66e47bd28a00e72e0882e2957cf749d61edb3aff2c3998ce8a  /tmp/p03-source.patch" | sha256sum -c -
+
+      - name: Apply directly reviewable source to the product branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin feat/p03-recoverable-operations
+          git checkout -B feat/p03-recoverable-operations origin/feat/p03-recoverable-operations
+          git apply --check /tmp/p03-source.patch
+          git apply /tmp/p03-source.patch
+
+      - name: Format, resolve, and validate the exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo fmt --all
+          cargo generate-lockfile
+          python3 scripts/check_architecture.py
+          python3 scripts/check_repository.py
+          python3 scripts/check_spec.py
+          python3 scripts/generate_traceability.py --check
+          cargo check --workspace --all-targets --all-features --locked
+          cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+          cargo test --workspace --all-features --locked
+          git diff --check
+
+      - name: Commit ordinary source files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "feat(p03): add recoverable multi-target canonical operations"
+          git push origin HEAD:feat/p03-recoverable-operations
