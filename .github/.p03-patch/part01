@@ -1,0 +1,192 @@
++conflicting external edit still fails closed and preserves the operation record.
+diff --git a/adapters/vault-markdown/src/lib.rs b/adapters/vault-markdown/src/lib.rs
+index 4d942d7d9b91ec2ec29e0f13b86bd1f613447f1d..7b6801bb73a80e0f3c4ff84df688942bf283134b 100644
+--- a/adapters/vault-markdown/src/lib.rs
++++ b/adapters/vault-markdown/src/lib.rs
+@@ -14,8 +14,10 @@ use cap_std::{
+ use liaison_people::{PeopleError, PersonProfile};
+ use liaison_shared_kernel::{PersonId, Revision};
+ use liaison_workspace::{
+-    BoundWorkspaceStore, FindingSeverity, ValidationFinding, WorkspaceError, WorkspaceManifest,
+-    WorkspaceStore, WorkspaceValidationReport,
++    BoundWorkspaceStore, CanonicalDigest, CanonicalMutationKind, CanonicalOperationContext,
++    CanonicalOperationPlan, CanonicalPrecondition, CanonicalRevisionFormat, CanonicalWrite,
++    FindingSeverity, RecoverableOperationStore, ValidationFinding, WorkspaceError,
++    WorkspaceManifest, WorkspaceOperationError, WorkspaceStore, WorkspaceValidationReport,
+ };
+ use serde::{Deserialize, Serialize};
+ use serde_yaml::Value;
+@@ -28,9 +30,10 @@ use std::{
+ use tempfile::NamedTempFile;
+ use walkdir::WalkDir;
+ 
++mod operation;
+ mod session_people;
+ 
+-pub use session_people::people_repository;
++pub use session_people::{people_repository, people_repository_for_operation};
+ 
+ const MANIFEST_PATH: &str = ".liaison/workspace.yaml";
+ const PERSON_FORMAT: &str = "liaison-person";
+@@ -459,55 +462,47 @@ fn bound_find_person(root: &Dir, id: PersonId) -> Result<(PathBuf, ParsedPerson)
+     }
+ }
+ 
+-fn bound_create_person(root: &Dir, person: &PersonProfile) -> Result<(), PeopleError> {
+-    bound_load_manifest(root).map_err(|error| PeopleError::Storage(error.to_string()))?;
+-    match bound_find_person(root, person.id) {
++fn bound_create_person(
++    vault: &BoundMarkdownVault,
++    person: &PersonProfile,
++    operation: CanonicalOperationContext,
++) -> Result<(), PeopleError> {
++    let manifest = bound_load_manifest(&vault.root)
++        .map_err(|error| PeopleError::Storage(error.to_string()))?;
++    match bound_find_person(&vault.root, person.id) {
+         Ok(_) => return Err(PeopleError::AlreadyExists),
+         Err(PeopleError::NotFound) => {}
+         Err(error) => return Err(error),
+     }
+-    let people = bound_people_directory(root)?;
+     let filename = format!("{}--{}.md", slug(&person.display_name), person.id);
+-    let temporary = format!(".person-{}.tmp", person.id);
++    let path = format!("people/{filename}");
+     let document = PersonDocument::from_domain(person, BTreeMap::new());
+     let rendered = render_person(&document, &default_person_body(person))?;
+-    let mut options = OpenOptions::new();
+-    options
+-        .write(true)
+-        .create_new(true)
+-        .follow(FollowSymlinks::No);
+-    let mut file = people
+-        .open_with(&temporary, &options)
+-        .map_err(storage_people)?;
+-    if let Err(error) = file
+-        .write_all(rendered.as_bytes())
+-        .and_then(|()| file.sync_all())
+-    {
+-        drop(file);
+-        let _ = people.remove_file(&temporary);
+-        return Err(storage_people(error));
+-    }
+-    drop(file);
+-    if let Err(error) = people.hard_link(&temporary, &people, &filename) {
+-        let _ = people.remove_file(&temporary);
+-        if error.kind() == io::ErrorKind::AlreadyExists {
+-            return Err(PeopleError::AlreadyExists);
+-        }
+-        return Err(storage_people(error));
++    let write = CanonicalWrite::create(path, rendered.into_bytes()).map_err(operation_people)?;
++    let plan = CanonicalOperationPlan::new(
++        operation.operation_id(),
++        manifest.workspace_id,
++        operation.created_at(),
++        CanonicalMutationKind::PersonCreate,
++        vec![write],
++    )
++    .map_err(operation_people)?;
++    match vault.commit_operation(plan) {
++        Ok(_) => Ok(()),
++        Err(WorkspaceOperationError::PreconditionFailed { .. }) => Err(PeopleError::AlreadyExists),
++        Err(error) => Err(operation_people(error)),
+     }
+-    // Publication is complete once the no-clobber hard link exists. A crash
+-    // before this point leaves only an ignored staging file; cleanup failure
+-    // after publication must not report a false failed creation.
+-    let _ = people.remove_file(&temporary);
+-    Ok(())
+ }
+ 
+ fn bound_save_person(
+-    root: &Dir,
++    vault: &BoundMarkdownVault,
+     person: &PersonProfile,
+     expected_revision: Revision,
++    operation: CanonicalOperationContext,
+ ) -> Result<(), PeopleError> {
+-    let (filename, existing) = bound_find_person(root, person.id)?;
++    let manifest = bound_load_manifest(&vault.root)
++        .map_err(|error| PeopleError::Storage(error.to_string()))?;
++    let (filename, existing) = bound_find_person(&vault.root, person.id)?;
+     let found = existing.document.revision;
+     if found != expected_revision {
+         return Err(PeopleError::RevisionConflict {
+@@ -524,30 +519,44 @@ fn bound_save_person(
+             found: person.revision.get(),
+         });
+     }
+-    let people = bound_people_directory(root)?;
+-    let temporary = format!(".person-{}-{}.tmp", person.id, person.revision.get());
++    let people = bound_people_directory(&vault.root)?;
++    let existing_text = bound_read_text(&people, &filename).map_err(storage_people)?;
+     let document = PersonDocument::from_domain(person, existing.document.extra);
+     let rendered = render_person(&document, &existing.body)?;
+-    let mut options = OpenOptions::new();
+-    options
+-        .write(true)
+-        .create_new(true)
+-        .follow(FollowSymlinks::No);
+-    let mut file = people
+-        .open_with(&temporary, &options)
+-        .map_err(storage_people)?;
+-    if let Err(error) = file
+-        .write_all(rendered.as_bytes())
+-        .and_then(|()| file.sync_all())
+-    {
+-        drop(file);
+-        let _ = people.remove_file(&temporary);
+-        return Err(storage_people(error));
++    let expected = CanonicalPrecondition::revisioned(
++        CanonicalDigest::sha256(existing_text.as_bytes()),
++        expected_revision,
++        CanonicalRevisionFormat::MarkdownYamlFrontMatter,
++    );
++    let path = format!("people/{}", filename.to_string_lossy());
++    let write = CanonicalWrite::replace(path, expected, rendered.into_bytes())
++        .map_err(operation_people)?;
++    let plan = CanonicalOperationPlan::new(
++        operation.operation_id(),
++        manifest.workspace_id,
++        operation.created_at(),
++        CanonicalMutationKind::PersonUpdate,
++        vec![write],
++    )
++    .map_err(operation_people)?;
++    match vault.commit_operation(plan) {
++        Ok(_) => Ok(()),
++        Err(WorkspaceOperationError::PreconditionFailed { .. }) => {
++            let found = match bound_find_person(&vault.root, person.id) {
++                Ok((_, current)) => current.document.revision.get(),
++                Err(_) => expected_revision.get(),
++            };
++            Err(PeopleError::RevisionConflict {
++                expected: expected_revision.get(),
++                found,
++            })
++        }
++        Err(error) => Err(operation_people(error)),
+     }
+-    drop(file);
+-    people
+-        .rename(&temporary, &people, &filename)
+-        .map_err(storage_people)
++}
++
++fn operation_people(error: WorkspaceOperationError) -> PeopleError {
++    PeopleError::Storage(error.to_string())
+ }
+ 
+ fn bound_validate_layout(root: &Dir) -> Result<Vec<ValidationFinding>, WorkspaceError> {
+@@ -873,7 +882,9 @@ fn storage_people(error: impl std::fmt::Display) -> PeopleError {
+ 
+ #[cfg(test)]
+ mod tests {
+-    use super::{BoundMarkdownVault, MANIFEST_PATH, MarkdownVault, people_repository, slug};
++    use super::{
++        BoundMarkdownVault, MANIFEST_PATH, MarkdownVault, people_repository_for_operation, slug,
++    };
+     #[cfg(unix)]
+     use super::{bound_people_directory, bound_person_entries, bound_read_person_entry};
+     use cap_std::{ambient_authority, fs::Dir};
+@@ -881,12 +892,14 @@ mod tests {
+     #[cf
