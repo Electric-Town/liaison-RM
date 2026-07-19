@@ -1,0 +1,93 @@
+es deliver real capabilities. Later releases add recoverable operations,
+-migration, rebuild, repair, checkpoint, and encrypted recovery services.
++work guard is the only public route to session-bound repositories. Session open
++recovers or rejects incomplete canonical operations before allowing new work.
++The Workspace context also exposes canonical-operation preview/commit ports and
++migration dry-run and backup-first execution services. Key and projection
++capabilities remain separately gated; later phases add Directory rebuild,
++guided repair, checkpoints, and encrypted recovery packages.
+ 
+ ## Outbound ports
+ 
+ `WorkspaceStore` is the bootstrap and one-shot inspection port.
+ `WorkspaceWriterAuthorityPort`, `BoundWorkspaceStore`, and
+ `BoundWorkspaceSessionPort` compose one authority-bearing binding without
+-passing a raw path into later operations. Storage adapters implement these
+-ports and expose path-free repositories only through the session work guard.
++passing a raw path into later operations. `RecoverableOperationStore` owns the
++stage/decide/publish/recover storage boundary. Migration backup and validation
++ports make rollback evidence explicit. Storage adapters implement these ports
++and expose path-free repositories only through the session work guard.
+ 
+ ## Upstream and downstream
+ 
+diff --git a/contexts/workspace/src/lib.rs b/contexts/workspace/src/lib.rs
+index 6cc961b65959b65f1352d7697929d1ad164810ea..643ebdc668e4540cf77af2ff70eab943476211f1 100644
+--- a/contexts/workspace/src/lib.rs
++++ b/contexts/workspace/src/lib.rs
+@@ -5,6 +5,25 @@
+ 
+ #![allow(clippy::module_name_repetitions, clippy::missing_errors_doc)]
+ 
++pub mod migration;
++pub mod operation;
++
++pub use migration::{
++    DryRunWorkspaceMigration, ExecuteWorkspaceMigration, MigrationId, MigrationReversibility,
++    PostMigrationValidationPort, PreMigrationBackupPort, PreMigrationBackupReceipt,
++    WorkspaceMigrationError, WorkspaceMigrationPlan, WorkspaceMigrationPreview,
++    WorkspaceMigrationReceipt,
++};
++
++pub use operation::{
++    CanonicalDigest, CanonicalMutationKind, CanonicalOperationContext, CanonicalOperationPlan,
++    CanonicalPath,
++    CanonicalPrecondition, CanonicalRevisionFormat, CanonicalTargetAction, CanonicalWrite,
++    OperationPreview, OperationReceipt, OperationRecoveryReport, OperationTargetPreview,
++    RecoverableOperationStore, WorkspaceOperationError, OPERATION_FORMAT,
++    OPERATION_SCHEMA_VERSION,
++};
++
+ use chrono::{DateTime, Utc};
+ pub use liaison_shared_kernel::WorkspaceId;
+ use liaison_shared_kernel::WorkspaceSessionId;
+@@ -411,6 +430,8 @@ pub enum WorkspaceSessionError {
+         #[source]
+         source: Box<dyn StdError + Send + Sync>,
+     },
++    #[error(transparent)]
++    Operation(#[from] WorkspaceOperationError),
+     #[error("workspace session is quiescing")]
+     Quiescing,
+     #[error("workspace session is closed")]
+@@ -451,13 +472,21 @@ pub trait BoundWorkspaceSessionPort:
+ {
+     type Repositories: BoundWorkspaceStore;
+ 
++    fn recover_pending_operations(
++        &self,
++        workspace_id: WorkspaceId,
++    ) -> Result<OperationRecoveryReport, WorkspaceOperationError>;
++
+     fn into_repositories(self) -> Self::Repositories;
+ }
+ 
+ #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+ #[serde(rename_all = "kebab-case")]
+ pub enum WorkspaceRecoveryState {
+-    UnavailableUntilRecoverableOperations,
++    Ready {
++        recovered_operations: u32,
++        discarded_uncommitted: u32,
++    },
+ }
+ 
+ #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+@@ -754,23 +783,20 @@ where
+             .acquire_writer(manifest.workspace_id, diagnostic)?;
+         let current_manifest = self.binding.load_manifest()?;
+         current_manifest.validate()?;
+-        if current_manifest.workspace_id != manifest.workspace_id {
+-            return Err(WorkspaceError::SessionIdentityChanged {
+-                expected: manifest.workspace_id,
+-                found: current_manifest.workspac
