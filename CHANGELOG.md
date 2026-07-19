@@ -76,7 +76,12 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - An Organisations and Groups bounded context adapted from the preserved organisations branch: organisations, locations, and groups as stable named records, effective-dated memberships carrying typed role, department, cost centre, location, primary flag, required provenance source, and record date, plus as-of snapshot queries so a department move creates a new membership and historical reports keep the membership that applied at the time.
 - The Editorial Ledger direction applied to the desktop review shell: the approved paper-canvas palette in light and dark with a measured contrast registry and validator (the previously rejected dark highlight pairing now measures 8.12:1), locally bundled OFL-licensed Atkinson Hyperlegible Next, Source Serif 4, and IBM Plex Mono subsets with recorded hashes and no runtime network requests, a dotted note-paper canvas that never underlies text surfaces, one hard-offset primary work surface per page, provenance typography for paths and revisions, 48-pixel primary controls, and updated desktop contrast and dark-mode gates.
 
+- A stored person profile is now reachable from the desktop People list: selecting a row opens a read-only profile panel with the display name, typed contact points, birthday, archive state, revision, and record identifier, using pressed-state row semantics, focus into the panel heading, and focus return to the originating row on close.
+
 ### Changed
+
+- The desktop shell reopens an existing workspace at the default folder on launch instead of requiring the operator to re-select it. Opening never creates: when no workspace exists there, the typed not-found result leaves the create form ready and keeps the release-evidence disclosure visible.
+- Desktop destination navigation drops the numbered wizard circles for a ledger rule marking the current section, and the workspace-profile select now resets its native appearance so it follows the semantic token palette with an inline chevron rather than system chrome.
 
 - Windows first-use registry creation now uses a cross-process initialisation
   lock so concurrent desktop or CLI launches cannot observe the directory

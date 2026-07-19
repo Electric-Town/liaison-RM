@@ -4,6 +4,7 @@
   const state = {
     workspace: null,
     people: [],
+    selectedPersonId: null,
   };
   const nativeOperation = {
     generation: 0,
@@ -174,6 +175,11 @@
     state.people.forEach((person) => {
       const row = document.createElement("li");
       row.className = "person-row";
+      const open = document.createElement("button");
+      open.type = "button";
+      open.className = "person-open";
+      open.dataset.personId = person.id;
+      open.setAttribute("aria-pressed", String(state.selectedPersonId === person.id));
       const avatar = document.createElement("span");
       avatar.className = "person-avatar";
       avatar.setAttribute("aria-hidden", "true");
@@ -187,9 +193,53 @@
       const revision = document.createElement("span");
       revision.className = "revision";
       revision.textContent = `Revision ${person.revision}`;
-      row.append(avatar, details, revision);
+      open.append(avatar, details, revision);
+      if (state.selectedPersonId === person.id) row.classList.add("is-selected");
+      row.append(open);
       list.append(row);
     });
+  };
+
+  const detailRow = (term, description) => summaryRow(term, description);
+
+  const renderPersonDetail = () => {
+    const panel = byId("person-detail");
+    const fields = byId("person-detail-fields");
+    const person = state.people.find((item) => item.id === state.selectedPersonId);
+    if (!person) {
+      panel.hidden = true;
+      fields.replaceChildren();
+      return;
+    }
+    const emails = person.emails?.length
+      ? person.emails.map((email) => `${email.value} (${email.label})`).join(", ")
+      : "None recorded";
+    const phones = person.phones?.length
+      ? person.phones.map((phone) => `${phone.value} (${phone.label})`).join(", ")
+      : "None recorded";
+    const birthday = person.birthday?.date
+      || (person.birthday ? `${person.birthday.month}-${person.birthday.day} (year unknown)` : "None recorded");
+    fields.replaceChildren(
+      detailRow("Display name", person.display_name),
+      detailRow("Email", emails),
+      detailRow("Phone", phones),
+      detailRow("Birthday", birthday),
+      detailRow("Archived", person.archived ? "Yes" : "No"),
+      detailRow("Revision", String(person.revision)),
+      detailRow("Record ID", person.id),
+    );
+    byId("person-detail-heading").textContent = `Profile: ${person.display_name}`;
+    panel.hidden = false;
+  };
+
+  const selectPerson = (personId) => {
+    state.selectedPersonId = state.selectedPersonId === personId ? null : personId;
+    renderPeople();
+    renderPersonDetail();
+    if (state.selectedPersonId) {
+      byId("person-detail-heading").focus();
+      status(`Showing the stored profile for the selected person. Records stay readable on disk.`);
+    }
   };
 
   const updateControls = () => {
@@ -305,6 +355,20 @@
 
   document.querySelectorAll("[data-route]").forEach((button) => {
     button.addEventListener("click", () => navigate(button.dataset.route));
+  });
+
+  byId("people-list").addEventListener("click", (event) => {
+    const trigger = event.target.closest?.("[data-person-id]");
+    if (trigger) selectPerson(trigger.dataset.personId);
+  });
+
+  byId("close-person-detail").addEventListener("click", () => {
+    const previous = state.selectedPersonId;
+    state.selectedPersonId = null;
+    renderPeople();
+    renderPersonDetail();
+    const restored = document.querySelector(`[data-person-id="${previous}"]`);
+    if (restored) restored.focus();
   });
 
   byId("use-default-path").addEventListener("click", async (event) => {
@@ -449,11 +513,13 @@
     renderWorkspace();
     renderPeople();
     await withNativeOperation(null, "", async (operation) => {
+      let buildStatement = "";
       try {
         const app = await invokeValue("app_status");
         if (!isCurrentOperation(operation)) return;
         byId("authority-label").textContent = `${app.product_state} · ${app.connection_state}`;
-        status(`Liaison RM ${app.version}: ${app.release_evidence}. No workspace has been opened.`);
+        buildStatement = `Liaison RM ${app.version}: ${app.release_evidence}.`;
+        status(`${buildStatement} No workspace has been opened.`);
       } catch (error) {
         if (isCurrentOperation(operation)) {
           byId("authority-label").textContent = "Native bridge unavailable";
@@ -461,13 +527,32 @@
         }
         return;
       }
+      let defaultPath = null;
       try {
-        const path = await invokeValue("default_workspace_path");
+        defaultPath = await invokeValue("default_workspace_path");
         if (!isCurrentOperation(operation)) return;
-        byId("workspace-path").value = path;
+        byId("workspace-path").value = defaultPath;
       } catch (error) {
         if (isCurrentOperation(operation)) {
           status(`A default workspace folder was not selected: ${errorText(error)}`);
+        }
+        return;
+      }
+      // Resume the usual workspace without a click. Opening is read-then-lock
+      // and creates nothing: when no workspace exists at the default path the
+      // typed failure is expected, so it leaves the create form ready instead
+      // of reporting an error the operator did not cause.
+      try {
+        const opened = await invokeValue("open_workspace", { path: defaultPath });
+        if (!isCurrentOperation(operation)) return;
+        if (await acceptWorkspace(opened, "Reopened workspace", operation)) {
+          navigate("people");
+        }
+      } catch {
+        // The build statement stays visible: an expected "nothing there yet"
+        // must not silently drop the release-evidence disclosure.
+        if (isCurrentOperation(operation)) {
+          status(`${buildStatement} No workspace opened yet — review the folder below, then create one.`);
         }
       }
     });

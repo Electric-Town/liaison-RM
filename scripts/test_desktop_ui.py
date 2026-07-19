@@ -105,6 +105,12 @@ BRIDGE = r"""
     return opened;
   };
   window.__liaisonBridgeState = {
+    // Marks a workspace as already present at a path, as if a previous launch
+    // created it, without counting an initialise_workspace invocation.
+    seedWorkspace: (path) => {
+      if (!peopleByPath.has(path)) peopleByPath.set(path, []);
+      workspace = { workspace: { path } };
+    },
     activeSessions: () => Array.from(sessions.keys()),
     closedSessions: () => closedSessions.slice(),
     currentSession: () => workspace?.workspace.session_id || null,
@@ -305,6 +311,33 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     assert page.get_by_text("alex@example.test", exact=True).count() == 1
     assert page.get_by_text("Revision 1", exact=True).count() == 1
     assert "Saved Alex Murphy" in page.locator("#live-status").inner_text()
+
+    # A stored profile is reachable from the list, exposes its record fields,
+    # and returns focus to its own row when closed.
+    assert page.locator("#person-detail").is_hidden()
+    person_open = page.locator("[data-person-id]").first
+    assert person_open.get_attribute("aria-pressed") == "false"
+    person_open.click()
+    page.get_by_role("heading", name="Profile: Alex Murphy").wait_for()
+    assert page.locator("#person-detail").is_visible()
+    assert page.locator("[data-person-id]").first.get_attribute("aria-pressed") == "true"
+    detail = page.locator("#person-detail-fields").inner_text()
+    assert "alex@example.test" in detail
+    assert "Display name" in detail and "Revision" in detail
+    assert page.get_by_role("heading", name="Profile: Alex Murphy").evaluate(
+        "el => el === document.activeElement"
+    )
+    page.get_by_role("button", name="Close profile").click()
+    assert page.locator("#person-detail").is_hidden()
+    assert page.locator("[data-person-id]").first.evaluate("el => el === document.activeElement")
+
+    # The destination menu carries labels rather than wizard step numbers, and
+    # the profile select is token-styled instead of native system chrome.
+    assert page.locator(".nav-button span[aria-hidden='true']").count() == 0
+    select_appearance = page.locator("#workspace-profile").evaluate(
+        "el => getComputedStyle(el).appearance"
+    )
+    assert select_appearance == "none"
 
     page.get_by_role("button", name="Workspace").click()
     page.get_by_label("Absolute folder path").fill("/Users/tester/Documents/needs-attention")
@@ -555,6 +588,43 @@ def test_mobile(browser, external_requests: list[str]) -> None:
     page.close()
 
 
+def test_default_workspace_resumes_without_a_click(browser, external_requests: list[str]) -> None:
+    """A workspace already at the default path reopens on launch.
+
+    The operator should not have to re-select the folder they always use. The
+    cold-start case is covered in test_desktop: with nothing at the default
+    path the typed not-found result leaves the create form ready and keeps the
+    release-evidence disclosure visible.
+    """
+    page = browser.new_page(viewport={"width": 1280, "height": 900})
+    page.set_default_timeout(8_000)
+    page.on(
+        "request",
+        lambda request: external_requests.append(request.url)
+        if not request.url.startswith("file://")
+        else None,
+    )
+    html = (UI / "index.html").read_text(encoding="utf-8")
+    css = (UI / "styles.css").read_text(encoding="utf-8")
+    javascript = (UI / "app.js").read_text(encoding="utf-8")
+    html = html.replace('<link rel="stylesheet" href="styles.css">', f"<style>{css}</style>")
+    html = html.replace('<script src="app.js" defer></script>', "")
+    page.set_content(html, wait_until="load")
+    page.evaluate(BRIDGE)
+    # Simulate the workspace the operator created on a previous launch.
+    page.evaluate("window.__liaisonBridgeState.seedWorkspace('/Users/tester/Documents/Liaison RM')")
+    page.add_script_tag(content=javascript)
+
+    page.get_by_role("heading", name="Remember useful context without scoring people").wait_for()
+    assert "Reopened workspace" in page.locator("#live-status").inner_text()
+    assert page.locator("#workspace-path-label").inner_text() == "/Users/tester/Documents/Liaison RM"
+    assert page.locator("#people-workspace-warning").is_hidden()
+    assert page.evaluate("window.__liaisonBridgeState.activeSessions().length") == 1
+    # Nothing was created: resuming must open, never initialise.
+    assert page.evaluate('window.__liaisonBridgeState.invocationCount("initialise_workspace")') == 0
+    page.close()
+
+
 def test_dark_mode(browser, external_requests: list[str]) -> None:
     page = browser.new_page(viewport={"width": 1280, "height": 900}, color_scheme="dark")
     page.set_default_timeout(8_000)
@@ -585,6 +655,7 @@ def main() -> int:
         "native_switch_serialization": False,
         "native_session_result_serialization": False,
         "mobile_reflow": False,
+        "default_workspace_resume": False,
         "dark_mode": False,
         "external_requests": [],
     }
@@ -603,6 +674,8 @@ def main() -> int:
         results["native_session_result_serialization"] = True
         test_mobile(browser, external_requests)
         results["mobile_reflow"] = True
+        test_default_workspace_resumes_without_a_click(browser, external_requests)
+        results["default_workspace_resume"] = True
         test_dark_mode(browser, external_requests)
         results["dark_mode"] = True
         assert external_requests == []

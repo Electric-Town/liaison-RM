@@ -29,13 +29,13 @@
     <aside class="sidebar" aria-label="Primary navigation">
       <nav>
         <button class="nav-button is-active" type="button" data-route="setup" aria-current="page">
-          <span aria-hidden="true">1</span> Workspace
+          Workspace
         </button>
         <button class="nav-button" type="button" data-route="people">
-          <span aria-hidden="true">2</span> People
+          People
         </button>
         <button class="nav-button" type="button" data-route="health">
-          <span aria-hidden="true">3</span> Health
+          Health
         </button>
       </nav>
       <div class="sidebar-note">
@@ -139,6 +139,15 @@
             <ul id="people-list" class="people-list">
               <li class="empty-state">No people loaded.</li>
             </ul>
+
+            <section id="person-detail" class="person-detail" aria-labelledby="person-detail-heading" hidden>
+              <div class="divider" aria-hidden="true"></div>
+              <div class="card-heading">
+                <h3 id="person-detail-heading" tabindex="-1">Profile</h3>
+                <button id="close-person-detail" class="secondary-button" type="button">Close profile</button>
+              </div>
+              <dl id="person-detail-fields" class="summary-list"></dl>
+            </section>
           </section>
         </div>
       </section>
