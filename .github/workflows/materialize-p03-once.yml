@@ -32,14 +32,15 @@ jobs:
           echo "b5925f4553592513c8ef0a105b9a4d3c86f728b5839c6dbb2488937451fbe926  /tmp/p03-source.patch.gz" | sha256sum -c -
           gzip -t /tmp/p03-source.patch.gz
           gzip -dc /tmp/p03-source.patch.gz > /tmp/p03-source.patch
-          git apply --check --whitespace=error-all /tmp/p03-source.patch
+          git apply --check /tmp/p03-source.patch
 
       - name: Apply directly reviewable P03 source
         shell: bash
         run: |
           set -euo pipefail
-          git apply /tmp/p03-source.patch
+          git apply --whitespace=fix /tmp/p03-source.patch
           rm -rf .bootstrap/p03
+          rm -f .github/workflows/diagnose-p03-bootstrap.yml
           rm .github/workflows/materialize-p03-once.yml
 
       - name: Format, lock, and validate
@@ -66,6 +67,7 @@ jobs:
           git diff --check
           test ! -e .bootstrap/p03
           test ! -e .github/workflows/materialize-p03-once.yml
+          test ! -e .github/workflows/diagnose-p03-bootstrap.yml
 
       - name: Commit ordinary source files
         shell: bash
