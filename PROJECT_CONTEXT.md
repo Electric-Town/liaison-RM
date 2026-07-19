@@ -820,10 +820,10 @@ The current merge order is P00–P11, B0 acceptance, then A0. The complete exit 
 - **P00–P03:** reconcile truth, establish one typed application and Workspace Session boundary, and route canonical mutations through recoverable multi-target operations.
 - **P03 design gate:** design consultation creates canonical `DESIGN.md`, then plan design review approves an amended P04 direction. G0 does not create `DESIGN.md`.
 - **P04:** deliver the typed accessible desktop system after design consultation and plan design review.
-- **P05-OKF/P06/P09-OKF:** after P03/P04, deliver the pinned strict People writer, tolerant Directory projection, and required recoverable OKF People normalization under `FG-B0-001`; P01/P02 do not expand.
+- **P05-OKF/P06/P06-REPAIR/P09-OKF:** after P03/P04, deliver the pinned strict People writer and tolerant Directory projection, then run `T-B0-P06-REPAIR` with preview, exact backup, failure-atomic application, exact receipt, and rollback before the required recoverable OKF People normalization; P01/P02 do not expand.
 - **P05/P07/P08:** keep G3 dietary/domain schemas separate from sensitive security and recovery ownership under their single gates.
 - **P09–P11:** complete Directory onboarding, immutable event cohorts, exact dietary readiness, least-disclosure brief delivery, and the compiled B0 interface.
-- **B0:** qualify Workplace Review Alpha in a freshly installed universal Mac review application for one trusted local workspace owner.
+- **B0:** qualify Workplace Review Alpha, including guided canonical repair, in a freshly installed universal Mac review application for one trusted local workspace owner.
 - **A0:** add quick/full capture, source-complete purpose-scoped profiles, explicit fact states, reversible identity review, a source/range unified timeline, custom profile layouts, personal interactions, commitments, distinct last-note/last-interaction context, open loops, and reason-only Review while retaining the complete B0 regression matrix.
 - **After A0:** independently gate general/third-party migrations, sharing, visible provider operations, mobile, Meitheal, CardDAV/calendars/email, facilities, optional spatial discovery, OpenAPI, MCP, staged AI proposals, and plugins.
 

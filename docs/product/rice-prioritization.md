@@ -29,15 +29,18 @@ Scores rank work only when its dependencies and safety prerequisites are already
 | P05 G3 Directory/profile/Event contracts | 10 | 3 | 0.75 | 5 | 4.50 | Keeps dietary/event schemas separate from security and the OKF acceptance owner. |
 | P05-OKF strict People schema/port | 10 | 2 | 0.90 | 3 | 6.00 | Runs after P03/P04; owns strict authoring and UAT-065 under FG-B0-001. |
 | P06 Tolerant Directory projection | 7 | 2 | 0.75 | 4 | 2.63 | Required before 10,000-person cohort workflows. |
+| P06-REPAIR Guided canonical repair | 7 | 3 | 0.85 | 3 | 5.95 | Runs after P03/P06; owns UAT-040 and closes FG-R1-002 before P09-OKF. |
 | P07 Workspace Security and local policy | 9 | 3 | 0.65 | 7 | 2.51 | Safety gate; score cannot defer it behind user-facing dietary work. |
 | P08 Checkpoint and encrypted recovery | 7 | 3 | 0.65 | 6 | 2.28 | Safety gate; B0 cannot accept sensitive data without clean recovery. |
-| P09-OKF required legacy-People normalization | 8 | 3 | 0.80 | 4 | 4.80 | Runs after P03/P05-OKF/P06; owns exact backup, recovery, rerun, rollback, and UAT-066. |
+| P09-OKF required legacy-People normalization | 8 | 3 | 0.80 | 4 | 4.80 | Runs after P03/P05-OKF/P06/P06-REPAIR; owns exact backup, recovery, rerun, rollback, and UAT-066. |
 | P09 Directory onboarding and import | 5 | 3 | 0.75 | 5 | 2.25 | Begins after the required OKF normalizer and projection foundations; general/third-party migration remains later. |
 | P10 Events core and brief delivery | 6 | 3 | 0.70 | 7 | 1.80 | Product wedge; depends on Directory, security, and recovery contracts. |
 | P11 B0 compiled interface | 6 | 3 | 0.75 | 6 | 2.25 | Uses stable commands; it is not a mock-first screen project. |
 | B0 installed-app qualification | 4 | 3 | 0.90 | 3 | 3.60 | Mandatory acceptance gate before A0. |
 | A0 Personal Memory Alpha | 5 | 2 | 0.70 | 8 | 0.88 | Explicitly starts after B0 acceptance. |
 | A0 source-complete profile qualification | 5 | 3 | 0.75 | 5 | 2.25 | Composes P01/P02/P03 and owns UAT-067–069 under FG-A0-001. |
+
+P06-REPAIR is a three-engineer-week integrity slice: P03 supplies recoverable operations, P06 supplies tolerant findings, and the task adds guided preview, exact backup and receipt, failure-atomic application, exact rollback, fault evidence, and recovery knowledge. Its 5.95 score does not let it bypass those dependencies; it makes the previously hidden repair acceptance cost explicit before P09-OKF.
 
 ## PR use
 

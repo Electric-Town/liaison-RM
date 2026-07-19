@@ -78,6 +78,23 @@ def require_fragments(
             )
 
 
+def require_ordered_fragments(
+    identifier: str, text: str, fragments: tuple[str, ...], errors: list[str]
+) -> None:
+    """Require critical delivery steps to appear in dependency order."""
+
+    lower = text.lower()
+    cursor = -1
+    for fragment in fragments:
+        position = lower.find(fragment.lower(), cursor + 1)
+        if position == -1:
+            errors.append(
+                f"{identifier}: missing ordered semantic assertion {fragment!r}"
+            )
+            return
+        cursor = position + len(fragment)
+
+
 def validate_b0_workplace_contract(
     requirements: list[dict],
     cases: list[dict],
@@ -421,6 +438,318 @@ def validate_okf_and_comparator_contract(
             relative,
             boundary,
             ("required OKF People normalization", "general and third-party migrations"),
+            errors,
+        )
+
+
+def validate_corrected_phase_ownership(
+    requirements: list[dict],
+    cases: list[dict],
+    task_blocks: dict[str, str],
+    gate_blocks: dict[str, str],
+    errors: list[str],
+) -> None:
+    """Lock the reviewed P02/P03, repair, settings, and acceptance boundaries."""
+
+    try:
+        ownership = load_json("spec/traceability-ownership.json")
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.append(f"corrected phase ownership: {exc}")
+        return
+
+    requirement_by_id = {item["id"]: item for item in requirements}
+    case_by_id = {item["id"]: item for item in cases}
+    task_requirements = inline_edges(task_blocks, "requirements")
+    task_uat = inline_edges(task_blocks, "uat")
+    task_dependencies = inline_edges(task_blocks, "depends_on")
+    task_evidence = inline_edges(task_blocks, "evidence_dependencies")
+
+    expected_task_edges = {
+        "T-B0-P02": (
+            {"LRM-WS-002", "LRM-WS-009"},
+            set(),
+        ),
+        "T-B0-P03": (
+            {"LRM-WS-004", "LRM-WS-005", "LRM-WS-007", "LRM-WS-010"},
+            {"UAT-042"},
+        ),
+        "T-B0-P06-REPAIR": (set(), {"UAT-040"}),
+    }
+    for task, (expected_requirements, expected_uat) in expected_task_edges.items():
+        if task_requirements.get(task, set()) != expected_requirements:
+            errors.append(
+                f"{task}: corrected canonical requirements must be "
+                f"{sorted(expected_requirements)}"
+            )
+        if task_uat.get(task, set()) != expected_uat:
+            errors.append(
+                f"{task}: corrected canonical UAT must be {sorted(expected_uat)}"
+            )
+
+    repair_dependencies = task_dependencies.get("T-B0-P06-REPAIR", set())
+    if repair_dependencies != {"T-B0-P03", "T-B0-P06"}:
+        errors.append(
+            "T-B0-P06-REPAIR: dependencies must be exactly T-B0-P03 and T-B0-P06"
+        )
+    if "T-B0-P06-REPAIR" not in task_dependencies.get("T-B0-P09-OKF", set()):
+        errors.append(
+            "T-B0-P09-OKF: must depend on T-B0-P06-REPAIR before normalization"
+        )
+    require_fragments(
+        "T-B0-P06-REPAIR",
+        task_blocks.get("T-B0-P06-REPAIR", ""),
+        (
+            "guided-repair-preview",
+            "exact-pre-repair-backup",
+            "backup-first-failure-atomic-repair",
+            "exact-repair-receipt",
+            "exact-rollback",
+            "recovery-knowledge",
+        ),
+        errors,
+    )
+
+    b0_accept_requirements = task_requirements.get("T-B0-ACCEPT", set())
+    b0_accept_uat = task_uat.get("T-B0-ACCEPT", set())
+    if "LRM-WS-001" not in b0_accept_requirements:
+        errors.append("T-B0-ACCEPT: must own LRM-WS-001")
+    if "UAT-001" not in b0_accept_uat:
+        errors.append("T-B0-ACCEPT: must own UAT-001")
+    if not {"UAT-001", "UAT-002"} <= task_evidence.get("T-A0-001", set()):
+        errors.append(
+            "T-A0-001: must evidence UAT-001 and UAT-002 for FG-R1-001"
+        )
+
+    a0_settings_requirements = task_requirements.get("T-A0-P01", set())
+    a0_settings_uat = task_uat.get("T-A0-P01", set())
+    if not {"LRM-WS-013", "LRM-WS-014"} <= a0_settings_requirements:
+        errors.append("T-A0-P01: must own LRM-WS-013 and LRM-WS-014")
+    if "UAT-050" not in a0_settings_uat:
+        errors.append("T-A0-P01: must own UAT-050")
+    for task in ("T-B0-P03", "T-B0-P04", "T-B0-P11"):
+        if {"LRM-WS-013", "LRM-WS-014"} & task_requirements.get(task, set()):
+            errors.append(f"{task}: B0 must not own settings-transfer requirements")
+        if "UAT-050" in task_uat.get(task, set()):
+            errors.append(f"{task}: B0 must not own settings-transfer UAT-050")
+        if "settings-preview-diff-rollback" in task_blocks.get(task, "").lower():
+            errors.append(f"{task}: B0 must not expose settings transfer")
+    for gate in ("FG-B0-001", "FG-B0-003"):
+        if "UAT-050" in gate_blocks.get(gate, ""):
+            errors.append(f"{gate}: B0 must not require settings-transfer UAT-050")
+
+    expected_edges = (
+        (
+            "LRM-WS-001",
+            ownership.get("requirement_ownership", {}),
+            {
+                "owning_task": "T-B0-ACCEPT",
+                "owning_gate": "FG-B0-003",
+                "milestone": "B0",
+                "evidence_owner": "EO-EXPERIENCE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "LRM-WS-002",
+            ownership.get("requirement_ownership", {}),
+            {
+                "owning_task": "T-B0-P02",
+                "owning_gate": "FG-B0-001",
+                "milestone": "G1",
+                "evidence_owner": "EO-WORKSPACE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "LRM-WS-009",
+            ownership.get("requirement_ownership", {}),
+            {
+                "owning_task": "T-B0-P02",
+                "owning_gate": "FG-B0-001",
+                "milestone": "G1",
+                "evidence_owner": "EO-WORKSPACE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "LRM-WS-013",
+            ownership.get("requirement_ownership", {}),
+            {
+                "owning_task": "T-A0-P01",
+                "owning_gate": "FG-A0-G2C",
+                "milestone": "G2C",
+                "evidence_owner": "EO-EXPERIENCE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "LRM-WS-014",
+            ownership.get("requirement_ownership", {}),
+            {
+                "owning_task": "T-A0-P01",
+                "owning_gate": "FG-A0-G2C",
+                "milestone": "G2C",
+                "evidence_owner": "EO-EXPERIENCE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "UAT-001",
+            ownership.get("uat_ownership", {}),
+            {
+                "owning_task": "T-B0-ACCEPT",
+                "owning_gate": "FG-B0-003",
+                "milestone": "B0",
+                "evidence_owner": "EO-EXPERIENCE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "UAT-040",
+            ownership.get("uat_ownership", {}),
+            {
+                "owning_task": "T-B0-P06-REPAIR",
+                "owning_gate": "FG-R1-002",
+                "milestone": "G1",
+                "evidence_owner": "EO-WORKSPACE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "UAT-042",
+            ownership.get("uat_ownership", {}),
+            {
+                "owning_task": "T-B0-P03",
+                "owning_gate": "FG-B0-001",
+                "milestone": "G1",
+                "evidence_owner": "EO-WORKSPACE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "UAT-050",
+            ownership.get("uat_ownership", {}),
+            {
+                "owning_task": "T-A0-P01",
+                "owning_gate": "FG-A0-G2C",
+                "milestone": "G2C",
+                "evidence_owner": "EO-EXPERIENCE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "T-B0-P06-REPAIR",
+            ownership.get("task_ownership", {}),
+            {
+                "milestone": "G1",
+                "owning_gate": "FG-R1-002",
+                "evidence_owner": "EO-WORKSPACE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "FG-R1-001",
+            ownership.get("gate_ownership", {}),
+            {
+                "acceptance_task": "T-A0-001",
+                "milestone": "A0",
+                "evidence_owner": "EO-EXPERIENCE",
+                "status": "blocked",
+            },
+        ),
+        (
+            "FG-R1-002",
+            ownership.get("gate_ownership", {}),
+            {
+                "acceptance_task": "T-B0-P06-REPAIR",
+                "milestone": "G1",
+                "evidence_owner": "EO-WORKSPACE",
+                "status": "blocked",
+            },
+        ),
+    )
+    for identifier, records, expected in expected_edges:
+        if records.get(identifier) != expected:
+            errors.append(
+                f"{identifier}: corrected ownership must be {expected}, "
+                f"not {records.get(identifier)}"
+            )
+
+    if requirement_by_id.get("LRM-WS-013", {}).get("release") != "A0":
+        errors.append("LRM-WS-013: repository release must be A0")
+    if requirement_by_id.get("LRM-WS-014", {}).get("release") != "A0":
+        errors.append("LRM-WS-014: repository release must be A0")
+    if case_by_id.get("UAT-050", {}).get("release") != "A0":
+        errors.append("UAT-050: repository release must be A0")
+
+    mandatory_sources = {
+        "SPEC.md": ("**P06 —", "`T-B0-P06-REPAIR`", "`T-B0-P09-OKF`"),
+        "AI_BUILD_INSTRUCTIONS.md": (
+            "**P05-OKF/P06",
+            "`T-B0-P06-REPAIR`",
+            "**P09-OKF/P09",
+        ),
+        "PROJECT_CONTEXT.md": (
+            "P05-OKF/P06/P06-REPAIR/P09-OKF",
+            "`T-B0-P06-REPAIR`",
+        ),
+        "docs/product/rice-prioritization.md": (
+            "| P06 Tolerant Directory projection",
+            "| P06-REPAIR Guided canonical repair",
+            "| P09-OKF required legacy-People normalization",
+        ),
+        "docs/product/roadmap.md": (
+            "## P06 — Scalable Directory reads",
+            "## P06-REPAIR — Guided canonical repair",
+            "## P09 — Required OKF normalization",
+        ),
+        "docs/product/working-state-delivery.md": (
+            "P05-OKF",
+            "P06-REPAIR",
+            "P09-OKF",
+        ),
+    }
+    for relative, ordered in mandatory_sources.items():
+        try:
+            source = (ROOT / relative).read_text(encoding="utf-8")
+        except OSError as exc:
+            errors.append(f"{relative}: cannot verify corrected delivery order: {exc}")
+            continue
+        require_ordered_fragments(relative, source, ordered, errors)
+
+    for relative, fragments in {
+        "SPEC.md": (
+            "built-in theme choice and persistence only",
+            "settings bundle transfer begins in A0",
+        ),
+        "docs/product/roadmap.md": (
+            "P02 owns the readable manifest contract and session authority only",
+        ),
+        "docs/product/working-state-delivery.md": (
+            "P02 owns the readable manifest and write-authoritative session boundary",
+        ),
+    }.items():
+        try:
+            source = (ROOT / relative).read_text(encoding="utf-8")
+        except OSError as exc:
+            errors.append(f"{relative}: cannot verify corrected boundary: {exc}")
+            continue
+        require_fragments(relative, source, fragments, errors)
+
+    try:
+        rice = (ROOT / "docs/product/rice-prioritization.md").read_text(
+            encoding="utf-8"
+        )
+    except OSError as exc:
+        errors.append(f"RICE: cannot verify P06-REPAIR evidence: {exc}")
+    else:
+        require_fragments(
+            "P06-REPAIR RICE",
+            rice,
+            (
+                "| P06-REPAIR Guided canonical repair | 7 | 3 | 0.85 | 3 | 5.95 |",
+                "three-engineer-week integrity slice",
+            ),
             errors,
         )
 
@@ -932,6 +1261,9 @@ def main() -> int:
             requirements, cases, task_blocks, gate_blocks, errors
         )
         validate_okf_and_comparator_contract(
+            requirements, cases, task_blocks, gate_blocks, errors
+        )
+        validate_corrected_phase_ownership(
             requirements, cases, task_blocks, gate_blocks, errors
         )
         validate_traceability(
