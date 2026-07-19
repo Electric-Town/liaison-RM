@@ -1,0 +1,217 @@
+:to_vec_pretty(&stored).map_err(storage)?;
++    write_new_file(&operation, MANIFEST_FILE, &manifest_bytes)?;
++    sync_directory(&operation)?;
++
++    if fault == FaultPoint::AfterStaging {
++        return Err(WorkspaceOperationError::FaultInjected(
++            "after-staging".to_owned(),
++        ));
++    }
++
++    for target in &stored.targets {
++        verify_precondition(root, target, false, stored.operation_id)?;
++        verify_stage(&staged, target)?;
++    }
++
++    write_new_file(&operation, COMMIT_FILE, b"COMMIT\n")?;
++    sync_directory(&operation)?;
++
++    if fault == FaultPoint::AfterCommitDecision {
++        return Err(WorkspaceOperationError::FaultInjected(
++            "after-commit-decision".to_owned(),
++        ));
++    }
++
++    for target in &stored.targets {
++        publish_target(root, &operation, &staged, target, stored.operation_id)?;
++        if fault == FaultPoint::AfterPublish(target.index) {
++            return Err(WorkspaceOperationError::FaultInjected(format!(
++                "after-publish-{}",
++                target.index
++            )));
++        }
++    }
++
++    if fault == FaultPoint::BeforeComplete {
++        return Err(WorkspaceOperationError::FaultInjected(
++            "before-complete".to_owned(),
++        ));
++    }
++
++    write_new_file(&operation, COMPLETE_FILE, b"COMPLETE\n")?;
++    sync_directory(&operation)?;
++    mark_projection_stale(root, &stored)?;
++    cleanup_completed_operation(&operation)?;
++
++    Ok(OperationReceipt {
++        operation_id: stored.operation_id,
++        workspace_id: stored.workspace_id,
++        committed_at: stored.created_at,
++        target_count: stored.targets.len(),
++        projection_marked_stale: true,
++    })
++}
++
++fn recover_operations(
++    root: &Dir,
++    workspace_id: WorkspaceId,
++) -> Result<OperationRecoveryReport, WorkspaceOperationError> {
++    let operations = open_or_create_directory(root, Path::new(OPERATIONS_DIRECTORY))?;
++    let mut names = operations
++        .entries()
++        .map_err(storage)?
++        .collect::<Result<Vec<_>, _>>()
++        .map_err(storage)?
++        .into_iter()
++        .filter_map(|entry| {
++            entry
++                .file_type()
++                .ok()
++                .filter(|file_type| file_type.is_dir())
++                .map(|_| entry.file_name().to_string_lossy().into_owned())
++        })
++        .collect::<Vec<_>>();
++    names.sort();
++
++    let mut report = OperationRecoveryReport::default();
++    for name in names {
++        let operation_id = OperationId::from_str(&name).map_err(|_| {
++            WorkspaceOperationError::InvalidOperationRecord(format!(
++                "unexpected operation directory name: {name}"
++            ))
++        })?;
++        let operation = operations.open_dir_nofollow(&name).map_err(storage)?;
++        let committed = control_marker_exists(&operation, COMMIT_FILE, b"COMMIT\n")?;
++        let complete = control_marker_exists(&operation, COMPLETE_FILE, b"COMPLETE\n")?;
++        if !committed {
++            operations.remove_dir_all(&name).map_err(storage)?;
++            sync_directory(&operations)?;
++            report.discarded_uncommitted.push(operation_id);
++            continue;
++        }
++
++        let stored = read_stored_manifest(&operation)?;
++        stored.validate(workspace_id)?;
++        if complete {
++            mark_projection_stale(root, &stored)?;
++            cleanup_completed_operation(&operation)?;
++            report.already_complete.push(stored.operation_id);
++            report.projection_marked_stale = true;
++            continue;
++        }
++
++        let staged = operation
++            .open_dir_nofollow(STAGED_DIRECTORY)
++            .map_err(storage)?;
++        for target in &stored.targets {
++            publish_target(root, &operation, &staged, target, stored.operation_id)?;
++        }
++        write_new_file(&operation, COMPLETE_FILE, b"COMPLETE\n")?;
++        sync_directory(&operation)?;
++        mark_projection_stale(root, &stored)?;
++        cleanup_completed_operation(&operation)?;
++        report.rolled_forward.push(stored.operation_id);
++        report.projection_marked_stale = true;
++    }
++    Ok(report)
++}
++
++fn read_stored_manifest(
++    operation: &Dir,
++) -> Result<StoredOperationManifest, WorkspaceOperationError> {
++    let bytes = read_regular_file(operation, MANIFEST_FILE)?;
++    serde_json::from_slice(&bytes).map_err(|error| {
++        WorkspaceOperationError::InvalidOperationRecord(format!(
++            "operation manifest could not be decoded: {error}"
++        ))
++    })
++}
++
++fn verify_stage(staged: &Dir, target: &StoredTarget) -> Result<(), WorkspaceOperationError> {
++    let bytes = read_regular_file(staged, &target.stage_file)?;
++    if bytes.len() as u64 != target.size_bytes
++        || CanonicalDigest::sha256(&bytes) != target.new_digest
++    {
++        return Err(WorkspaceOperationError::InvalidOperationRecord(format!(
++            "staged bytes do not match manifest for {}",
++            target.path
++        )));
++    }
++    Ok(())
++}
++
++fn publish_target(
++    root: &Dir,
++    operation: &Dir,
++    staged: &Dir,
++    target: &StoredTarget,
++    operation_id: OperationId,
++) -> Result<(), WorkspaceOperationError> {
++    let published = operation
++        .open_dir_nofollow(PUBLISHED_DIRECTORY)
++        .map_err(storage)?;
++    let marker_name = format!("{:04}.json", target.index);
++    if regular_file_exists(&published, &marker_name)? {
++        verify_target_digest(root, target, operation_id)?;
++        return Ok(());
++    }
++
++    let staged_bytes = read_regular_file(staged, &target.stage_file)?;
++    if CanonicalDigest::sha256(&staged_bytes) != target.new_digest {
++        return Err(WorkspaceOperationError::InvalidOperationRecord(format!(
++            "staged payload digest changed for {}",
++            target.path
++        )));
++    }
++
++    let current = read_target_state(root, &target.path)?;
++    if current
++        .as_ref()
++        .is_some_and(|state| state.digest == target.new_digest)
++    {
++        write_published_marker(&published, &marker_name, target)?;
++        return Ok(());
++    }
++
++    let replacing = operation
++        .open_dir_nofollow(REPLACING_DIRECTORY)
++        .map_err(storage)?;
++    let replace_marker = format!("{:04}", target.index);
++    let replacement_in_progress =
++        control_marker_exists(&replacing, &replace_marker, b"REPLACE\n")?;
++    if !(replacement_in_progress
++        && target.action == CanonicalTargetAction::Replace
++        && current.is_none())
++    {
++        verify_precondition(root, target, true, operation_id)?;
++    }
++
++    let (parent, file_name) = open_parent(root, &target.path)?;
++    let temp_name = format!(".liaison-op-{operation_id}-{:04}.tmp", target.index);
++    remove_file_if_exists(&parent, &temp_name)?;
++    write_new_file(&parent, &temp_name, &staged_bytes)?;
++    sync_directory(&parent)?;
++
++    match target.action {
++        CanonicalTargetAction::Create => {
++            parent
++                .hard_link(&temp_name, &parent, &file_name)
++                .map_err(|error| {
++                    let _ = parent.remove_file(&temp_name);
++                    if error.kind() == io::ErrorKind::AlreadyExists {
++                        WorkspaceOperationError::RecoveryConflict {
++                            operation_id,
++                            path: target.path.to_string(),
++                        }
++                    } else {
++                        storage(error)
++                    }
++                })?;
++            let _ = parent.remove_file(&temp_name);
++        }
++        CanonicalTargetAction::Replace => {
++            if let Err(error) = parent.rename(&temp_name, &parent, &file_name) {
++                // Windows does not replace an existing destination with rename.
++                // Persist an explicit replacement marker before removing the
++                // expected target; recovery may then complete a missing target.
++
