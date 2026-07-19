@@ -1,0 +1,197 @@
+{
+  "registry": "liaison-semantic-tokens/1",
+  "status": "canonical for P04 through P11; values selected by the P03D design consultation",
+  "source": "Editorial Ledger direction accepted 2026-07-19; contrast correction retained from measured candidate evidence",
+  "system_theme": "system is a preference-resolution rule selecting light or dark from the operating system, not a fourth palette; forced-colours mode overrides all values and is evidenced separately on the exact build",
+  "required_tokens": [
+    "content-on-highlight",
+    "current-step-content"
+  ],
+  "themes": {
+    "light": {
+      "canvas": "#EEE8DC",
+      "surface": "#FFFEFB",
+      "surface-subtle": "#E9E0D3",
+      "content": "#202622",
+      "content-muted": "#625D54",
+      "border": "#CBBFAE",
+      "border-strong": "#202622",
+      "action": "#1E5D73",
+      "content-on-action": "#FFFFFF",
+      "focus": "#0067C5",
+      "highlight": "#F2D98D",
+      "content-on-highlight": "#202622",
+      "current-step": "#F2D98D",
+      "current-step-content": "#202622",
+      "surface-information": "#E4F1F4",
+      "success": "#1E6B4F",
+      "surface-success": "#E1F0E8",
+      "warning": "#8A5700",
+      "surface-warning": "#F8EBC7",
+      "danger": "#A53543",
+      "surface-danger": "#F8E4E7"
+    },
+    "dark": {
+      "canvas": "#0E1714",
+      "surface": "#16231E",
+      "surface-subtle": "#22312B",
+      "content": "#F4F1E8",
+      "content-muted": "#B7C4BD",
+      "border": "#53635B",
+      "border-strong": "#DCE7E1",
+      "action": "#78C8E0",
+      "content-on-action": "#0A181A",
+      "focus": "#FFD24A",
+      "highlight": "#514819",
+      "content-on-highlight": "#F4F1E8",
+      "current-step": "#514819",
+      "current-step-content": "#F4F1E8",
+      "surface-information": "#173844",
+      "success": "#80D8AE",
+      "surface-success": "#173F31",
+      "warning": "#FFD089",
+      "surface-warning": "#493515",
+      "danger": "#FFABB5",
+      "surface-danger": "#50252B"
+    },
+    "high-contrast": {
+      "canvas": "#000000",
+      "surface": "#000000",
+      "surface-subtle": "#101010",
+      "content": "#FFFFFF",
+      "content-muted": "#E6E6E6",
+      "border": "#FFFFFF",
+      "border-strong": "#FFFFFF",
+      "action": "#00D4FF",
+      "content-on-action": "#000000",
+      "focus": "#FFD400",
+      "highlight": "#FFD400",
+      "content-on-highlight": "#000000",
+      "current-step": "#FFD400",
+      "current-step-content": "#000000",
+      "surface-information": "#101010",
+      "success": "#72FFB4",
+      "surface-success": "#101010",
+      "warning": "#FFD400",
+      "surface-warning": "#101010",
+      "danger": "#FF8A9A",
+      "surface-danger": "#101010"
+    }
+  },
+  "pairs": [
+    {
+      "foreground": "content",
+      "background": "canvas",
+      "minimum": 4.5,
+      "required": true
+    },
+    {
+      "foreground": "content",
+      "background": "surface",
+      "minimum": 4.5,
+      "required": true
+    },
+    {
+      "foreground": "content",
+      "background": "surface-subtle",
+      "minimum": 4.5,
+      "required": true
+    },
+    {
+      "foreground": "content",
+      "background": "surface-information",
+      "minimum": 4.5,
+      "required": true
+    },
+    {
+      "foreground": "content-muted",
+      "background": "surface",
+      "minimum": 4.5,
+      "required": true
+    },
+    {
+      "foreground": "content-on-action",
+      "background": "action",
+      "minimum": 4.5,
+      "required": true
+    },
+    {
+      "foreground": "content-on-highlight",
+      "background": "highlight",
+      "minimum": 4.5,
+      "required": true
+    },
+    {
+      "foreground": "current-step-content",
+      "background": "current-step",
+      "minimum": 4.5,
+      "required": true
+    },
+    {
+      "foreground": "success",
+      "background": "surface-success",
+      "minimum": 4.5,
+      "required": true
+    },
+    {
+      "foreground": "warning",
+      "background": "surface-warning",
+      "minimum": 4.5,
+      "required": true
+    },
+    {
+      "foreground": "danger",
+      "background": "surface-danger",
+      "minimum": 4.5,
+      "required": true
+    },
+    {
+      "foreground": "focus",
+      "background": "canvas",
+      "minimum": 3.0,
+      "required": true
+    },
+    {
+      "foreground": "focus",
+      "background": "surface",
+      "minimum": 3.0,
+      "required": true
+    },
+    {
+      "foreground": "action",
+      "background": "surface",
+      "minimum": 3.0,
+      "required": true
+    },
+    {
+      "foreground": "content-muted",
+      "background": "canvas",
+      "minimum": 4.5,
+      "required": false
+    },
+    {
+      "foreground": "content-muted",
+      "background": "surface-subtle",
+      "minimum": 4.5,
+      "required": false
+    },
+    {
+      "foreground": "border",
+      "background": "surface",
+      "minimum": 3.0,
+      "required": false
+    },
+    {
+      "foreground": "border-strong",
+      "background": "surface",
+      "minimum": 3.0,
+      "required": false
+    },
+    {
+      "foreground": "highlight",
+      "background": "surface",
+      "minimum": 3.0,
+      "required": false
+    }
+  ]
+}
