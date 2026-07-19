@@ -14,42 +14,39 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: feat/p03-recoverable-canonical-operations
+          fetch-depth: 0
       - name: Inspect chunks without exposing payload
         shell: bash
         run: |
-          python3 - <<'PY'
-          import base64, gzip, hashlib, json
+          set +e
+          {
+            echo "files:"
+            find .bootstrap/p03 -maxdepth 1 -type f -printf '%f %s bytes\n' | sort
+            cat .bootstrap/p03/part-* | tr -d '\r\n' > /tmp/p03-encoded.txt
+            echo "encoded bytes: $(wc -c < /tmp/p03-encoded.txt)"
+            echo "encoded sha256: $(sha256sum /tmp/p03-encoded.txt | cut -d' ' -f1)"
+            python3 - <<'PY'
+          import base64, gzip, hashlib
           from pathlib import Path
-
-          parts = sorted(Path('.bootstrap/p03').glob('part-*'))
-          report = {
-              'parts': [{'name': p.name, 'bytes': p.stat().st_size} for p in parts],
-              'part_count': len(parts),
-          }
-          encoded = ''.join(p.read_text(encoding='utf-8').split() for p in parts)
-          report['encoded_bytes'] = len(encoded)
-          report['encoded_sha256'] = hashlib.sha256(encoded.encode()).hexdigest()
-          try:
-              compressed = base64.b64decode(encoded, validate=True)
-              report['base64_valid'] = True
-              report['compressed_bytes'] = len(compressed)
-              report['compressed_sha256'] = hashlib.sha256(compressed).hexdigest()
-              try:
-                  patch = gzip.decompress(compressed)
-                  report['gzip_valid'] = True
-                  report['patch_bytes'] = len(patch)
-                  report['patch_sha256'] = hashlib.sha256(patch).hexdigest()
-              except Exception as error:
-                  report['gzip_valid'] = False
-                  report['gzip_error'] = str(error)
-          except Exception as error:
-              report['base64_valid'] = False
-              report['base64_error'] = str(error)
-          Path('p03-bootstrap-diagnostics.json').write_text(json.dumps(report, indent=2) + '\n')
-          print(json.dumps(report, indent=2))
+          encoded = Path('/tmp/p03-encoded.txt').read_text(encoding='utf-8')
+          compressed = base64.b64decode(encoded, validate=True)
+          print(f'base64 valid: true')
+          print(f'compressed bytes: {len(compressed)}')
+          print(f'compressed sha256: {hashlib.sha256(compressed).hexdigest()}')
+          patch = gzip.decompress(compressed)
+          print(f'gzip valid: true')
+          print(f'patch bytes: {len(patch)}')
+          print(f'patch sha256: {hashlib.sha256(patch).hexdigest()}')
           PY
+            echo "diagnostic exit: $?"
+          } > p03-bootstrap-diagnostics.txt 2>&1
+          cat p03-bootstrap-diagnostics.txt
+          exit 0
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: p03-bootstrap-diagnostics
-          path: p03-bootstrap-diagnostics.json
+          path: p03-bootstrap-diagnostics.txt
           retention-days: 1
