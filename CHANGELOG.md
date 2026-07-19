@@ -41,6 +41,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Windows desktop packaging: an NSIS installer target (per-user install, embedded WebView2 bootstrapper) and a `windows-2022` CI workflow that checks, lints, tests, builds, and checksums the desktop bundle.
 - A static public project site with semantic metadata, local assets, a custom 404 page, a social card, responsive layouts, and a GitHub Pages deployment workflow.
 - A public-site validator covering metadata, local asset resolution, accessibility basics, structured data, language consistency, discovery files, and copy standards.
+- An Events bounded-context domain core: event and attendee lifecycle with superseding corrections and an exact active deduplicated denominator, orthogonal dietary facts, an ordered versioned fail-closed readiness decision table that cannot derive verified none from unknown, and least-disclosure catering-brief content with deterministic preview-equals-sealed bytes, opaque-token gating, and stale marking that never rewrites history.
 
 ### Changed
 

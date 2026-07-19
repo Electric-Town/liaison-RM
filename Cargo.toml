@@ -6,6 +6,7 @@ members = [
     "adapters/provider-registry-memory",
     "adapters/vault-markdown",
     "contexts/connections",
+    "contexts/events",
     "contexts/people",
     "contexts/profiles",
     "contexts/review-attention",
