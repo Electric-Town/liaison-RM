@@ -29,7 +29,7 @@ jobs:
           git apply /tmp/p03-source.patch
           cargo fmt --all
           cargo generate-lockfile
-      - name: Capture all validation outputs
+      - name: Capture affected-package validation outputs
         shell: bash
         run: |
           set +e
@@ -45,9 +45,9 @@ jobs:
           run_check repository python3 scripts/check_repository.py
           run_check spec python3 scripts/check_spec.py
           run_check traceability python3 scripts/generate_traceability.py --check
-          run_check cargo-check cargo check --workspace --all-targets --all-features --locked
-          run_check cargo-clippy cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
-          run_check cargo-test cargo test --workspace --all-features --locked
+          run_check cargo-check cargo check -p liaison-shared-kernel -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-targets --all-features --locked
+          run_check cargo-clippy cargo clippy -p liaison-shared-kernel -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-targets --all-features --locked -- -D warnings
+          run_check cargo-test cargo test -p liaison-shared-kernel -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-features --locked
           git diff --check > /tmp/p03-validation/git-diff.log 2>&1
           echo "$?" > /tmp/p03-validation/git-diff.status
           git diff --stat > /tmp/p03-validation/diff-stat.txt
