@@ -95,6 +95,9 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - Capability-bound manifest and Person reads now preflight and post-validate
   regular files around a nonblocking no-follow open, so FIFOs and other special
   files cannot wedge one-shot Health or normal workspace access.
+- Windows identity-registry security inspection now queries file and directory
+  handles as Win32 `SE_FILE_OBJECT` values instead of using the dependency's
+  generic unknown-object helper, allowing owner/DACL checks to run natively.
 - Desktop asset verification now compares rendered PNG and ICNS content across
   platforms while retaining byte-exact checks for the uncompressed Windows ICO,
   avoiding false drift failures from host-specific compression libraries.

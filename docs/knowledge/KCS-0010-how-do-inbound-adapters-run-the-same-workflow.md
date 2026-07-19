@@ -97,6 +97,13 @@ again. The preflight provides a clear typed result; the nonblocking open and
 post-check close the replacement race without letting a FIFO wedge one-shot
 Health or an ordinary workspace command.
 
+Windows file and directory security descriptors must be requested as
+`SE_FILE_OBJECT`. Do not use `windows-permissions` 0.2.4's blanket
+`WindowsSecure::security_descriptor` implementation here because it supplies
+`SE_UNKNOWN_OBJECT_TYPE`; the identity-registry adapter calls the pinned
+wrapper with the explicit object type before applying the same owner and DACL
+checks.
+
 New version-one manifests publish `enabled_modules` and currently require the
 `people` identifier. A P01 manifest without that later field is read as
 `people` without rewriting its bytes; it remains invalid for new-writer schema
@@ -146,6 +153,9 @@ Check that:
   heuristic;
 - registry first use and hostile owner, permission, symlink/reparse,
   replacement, data, and hard-link cases fail closed on the owning platforms;
+- Windows identity-registry file and directory handles complete owner/DACL
+  inspection through `GetSecurityInfo` with `SE_FILE_OBJECT` before a session
+  opens;
 - inaccessible canonical authority returns a typed safe error without fallback,
   Flatpak is explicitly unsupported, and no App Sandbox/AppContainer pairing
   is claimed before installed packaging proves a shared authority seam;

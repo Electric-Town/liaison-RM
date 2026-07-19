@@ -208,6 +208,13 @@ Workspace, application, and CLI crates on that Windows target, including
 `windows-permissions` 0.2.4. This is compile evidence only: no Windows runtime
 or native filesystem result is claimed until the `windows-2022` job passes.
 
+The first exact-head `windows-2022` run reached native tests but every initial
+session failed while reading identity-registry security. Review of the pinned
+dependency showed that its blanket handle helper called `GetSecurityInfo` with
+`SE_UNKNOWN_OBJECT_TYPE`. Liaison now calls the same bounded wrapper with
+`SE_FILE_OBJECT`, retaining the owner/DACL checks rather than bypassing them.
+The replacement exact-head Windows runtime result remains required.
+
 ## Dependency and release limits
 
 The capability-filesystem dependency decision is recorded in

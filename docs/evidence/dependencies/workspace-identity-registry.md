@@ -59,10 +59,18 @@ typed authority-unavailable result; Liaison does not downgrade to an assumed
 safe LocalAppData path.
 
 `windows-permissions` is an older, narrowly scoped wrapper over Win32 security
-APIs. Its target-specific surface is confined to this adapter. The locally
-installed pinned Rust toolchain compiled and linted the exact dependency and
-call sites for `x86_64-pc-windows-gnu`; native semantics still require the
-repository's `windows-2022` runtime tests before P02 can close.
+APIs. Its blanket `WindowsSecure` handle implementation passes
+`SE_UNKNOWN_OBJECT_TYPE` to `GetSecurityInfo`; that is not the file/directory
+contract required by Liaison. The adapter therefore calls the crate's public
+`GetSecurityInfo` wrapper with `SE_FILE_OBJECT` explicitly, then uses the
+crate's SID, DACL, and effective-rights types for the bounded checks above.
+Microsoft documents both the object-type parameter and `SE_FILE_OBJECT` in the
+[GetSecurityInfo contract](https://learn.microsoft.com/en-us/windows/win32/api/aclapi/nf-aclapi-getsecurityinfo)
+and [`SE_OBJECT_TYPE` enumeration](https://learn.microsoft.com/en-us/windows/win32/api/accctrl/ne-accctrl-se_object_type).
+The dependency's target-specific surface remains confined to this adapter. The
+locally installed pinned Rust toolchain compiled and linted the exact call for
+`x86_64-pc-windows-gnu`; native semantics still require the repository's
+`windows-2022` runtime tests before P02 can close.
 
 Container-local data roots are deliberately not accepted as equivalent
 account authority. [Flatpak documents](https://docs.flatpak.org/en/latest/flatpak-command-reference.html)

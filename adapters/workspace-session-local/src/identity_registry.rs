@@ -769,17 +769,24 @@ fn verify_windows_security<T>(
     owner_issue: WorkspaceAuthorityPathIssue,
 ) -> Result<(), WorkspaceSessionError>
 where
-    T: windows_permissions::WindowsSecure + ?Sized,
+    T: std::os::windows::io::AsRawHandle,
 {
     use windows_permissions::{
         Sid, Trustee,
-        constants::{AccessRights, SecurityInformation},
+        constants::{AccessRights, SeObjectType, SecurityInformation},
         utilities::current_process_sid,
+        wrappers::GetSecurityInfo,
     };
 
-    let descriptor = handle
-        .security_descriptor(SecurityInformation::Owner | SecurityInformation::Dacl)
-        .map_err(|error| authority_unavailable(operation, error))?;
+    // `windows-permissions` 0.2.4's blanket `WindowsSecure` implementation
+    // queries handles as `SE_UNKNOWN_OBJECT_TYPE`. These handles always name
+    // files or directories, so Win32 requires `SE_FILE_OBJECT` explicitly.
+    let descriptor = GetSecurityInfo(
+        handle,
+        SeObjectType::SE_FILE_OBJECT,
+        SecurityInformation::Owner | SecurityInformation::Dacl,
+    )
+    .map_err(|error| authority_unavailable(operation, error))?;
     let process_sid =
         current_process_sid().map_err(|error| authority_unavailable(operation, error))?;
     if descriptor.owner() != Some(&*process_sid) {
