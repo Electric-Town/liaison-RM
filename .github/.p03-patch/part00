@@ -1,0 +1,167 @@
+diff --git a/.github/workflows/recoverable-operations.yml b/.github/workflows/recoverable-operations.yml
+new file mode 100644
+index 0000000000000000000000000000000000000000..b9f782cb2fb244508ae1155ea488fc982cb34767
+--- /dev/null
++++ b/.github/workflows/recoverable-operations.yml
+@@ -0,0 +1,82 @@
++name: Recoverable canonical operations
++
++on:
++  pull_request:
++    paths:
++      - "contexts/workspace/**"
++      - "contexts/people/**"
++      - "adapters/vault-markdown/**"
++      - "adapters/workspace-session-local/**"
++      - "crates/liaison-application/**"
++      - "crates/liaison-shared-kernel/**"
++      - "Cargo.toml"
++      - "Cargo.lock"
++      - "spec/traceability-ownership.json"
++      - "spec/traceability-report.json"
++      - "docs/evidence/application/p02-workspace-session.md"
++      - "docs/evidence/application/p03-recoverable-operations.md"
++      - "docs/knowledge/KCS-0012-how-do-I-recover-a-canonical-operation-conflict.md"
++      - "scripts/check_architecture.py"
++      - "scripts/check_repository.py"
++      - "scripts/check_spec.py"
++      - "scripts/generate_traceability.py"
++      - ".github/workflows/recoverable-operations.yml"
++  push:
++    branches: [main]
++    paths:
++      - "contexts/workspace/**"
++      - "contexts/people/**"
++      - "adapters/vault-markdown/**"
++      - "adapters/workspace-session-local/**"
++      - "crates/liaison-application/**"
++      - "crates/liaison-shared-kernel/**"
++      - "Cargo.toml"
++      - "Cargo.lock"
++      - "spec/traceability-ownership.json"
++      - "spec/traceability-report.json"
++      - "docs/evidence/application/p02-workspace-session.md"
++      - "docs/evidence/application/p03-recoverable-operations.md"
++      - "docs/knowledge/KCS-0012-how-do-I-recover-a-canonical-operation-conflict.md"
++      - "scripts/check_architecture.py"
++      - "scripts/check_repository.py"
++      - "scripts/check_spec.py"
++      - "scripts/generate_traceability.py"
++      - ".github/workflows/recoverable-operations.yml"
++
++permissions:
++  contents: read
++
++jobs:
++  contracts:
++    runs-on: ubuntu-24.04
++    steps:
++      - uses: actions/checkout@v4
++      - uses: actions/setup-python@v5
++        with:
++          python-version: "3.12"
++      - name: Check architecture and repository contracts
++        run: |
++          python3 scripts/check_architecture.py
++          python3 scripts/check_repository.py
++          python3 scripts/check_spec.py
++          python3 scripts/generate_traceability.py --check
++
++  platform:
++    name: Canonical operations (${{ matrix.os }})
++    strategy:
++      fail-fast: false
++      matrix:
++        os: [ubuntu-24.04, macos-15, windows-2022]
++    runs-on: ${{ matrix.os }}
++    steps:
++      - uses: actions/checkout@v4
++      - name: Show toolchain
++        run: rustc --version --verbose
++      - name: Check formatting
++        run: cargo fmt --all --check
++      - name: Check operation packages
++        run: cargo check -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-targets --all-features --locked
++      - name: Lint operation packages
++        run: cargo clippy -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-targets --all-features --locked -- -D warnings
++      - name: Test operation packages
++        run: cargo test -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-features --locked
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index ae8ee5c3a01cb7204ee1fef77e92c428285ad603..9a91cd64088699e57a9d1ad9dd446b2d11b7dc45 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -6,6 +6,10 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
+ 
+ ### Added
+ 
++- A Workspace-owned recoverable canonical-operation engine with staged multi-target writes, final digest/revision preconditions, a durable `COMMIT` decision, per-target progress, `COMPLETE`, directory flushes, roll-forward recovery, external-edit conflict preservation, and projection-stale marking.
++- Canonical Person create and update mutations routed through live Workspace work guards and runtime-injected operation identity rather than direct file replacement.
++- Migration dry-run, pre-migration backup, post-migration validation, restoration, and explicit irreversibility contracts.
++- P03 fault-injection coverage and KCS-0012 for safe canonical-operation conflict recovery.
+ - A write-authoritative, `Arc`-owned Workspace Session that retains one
+   capability root, workspace identity/schema, path-free repositories, an
+   operating-system writer lock, quiescence, and explicit unavailable recovery,
+diff --git a/adapters/vault-markdown/Cargo.toml b/adapters/vault-markdown/Cargo.toml
+index f044bc80418a5a7b9eb7ce01d2708b5fee116476..70838e6b904fcf6b6febdaaa9d86f05bdef2eabc 100644
+--- a/adapters/vault-markdown/Cargo.toml
++++ b/adapters/vault-markdown/Cargo.toml
+@@ -8,11 +8,13 @@ rust-version.workspace = true
+ 
+ [dependencies]
+ cap-fs-ext.workspace = true
++chrono.workspace = true
+ cap-std.workspace = true
+ liaison-people = { path = "../../contexts/people" }
+ liaison-shared-kernel = { path = "../../crates/liaison-shared-kernel" }
+ liaison-workspace = { path = "../../contexts/workspace" }
+ serde.workspace = true
++serde_json.workspace = true
+ serde_yaml.workspace = true
+ tempfile.workspace = true
+ walkdir.workspace = true
+diff --git a/adapters/vault-markdown/README.md b/adapters/vault-markdown/README.md
+index bd593bb00ae81be1dcf0d0abe02bc60440c739b3..9d9d007400220480bc7c983ac52abcc53fc3d65f 100644
+--- a/adapters/vault-markdown/README.md
++++ b/adapters/vault-markdown/README.md
+@@ -8,7 +8,12 @@ This adapter implements Workspace and People repository ports using the open Lia
+ - serialise and parse versioned person Markdown records;
+ - preserve unknown YAML properties and human-authored body sections;
+ - use stable ID-bearing filenames;
+-- apply revision preconditions before replacement;
++- apply digest and revision preconditions immediately before the durable commit decision;
++- stage multi-target writes under `.liaison/operations/`;
++- persist `COMMIT`, per-target progress, and `COMPLETE` control records with directory flushes;
++- discard uncommitted staging and roll committed operations forward on session open;
++- stop recovery without overwriting external edits;
++- mark disposable projections stale after successful canonical mutation;
+ - retain a capability-bound root for all open-session manifest and Person access;
+ - return validation findings without deleting invalid files;
+ - keep healthy People readable while Health reports malformed sibling records;
+@@ -20,15 +25,18 @@ The adapter does not define person, relationship, event, provider, or sharing ru
+ 
+ ## Current limitations
+ 
+-This R1 draft establishes the vertical slice. The following remain gated before release:
++The adapter now implements the version-one recoverable operation protocol and
++routes production Person create/update mutations through it. The following
++remain gated before release:
+ 
+-- durable write journal and directory flush behaviour on every supported filesystem;
+-- cross-platform atomic-replacement fallback and fault injection;
++- exact-head Linux, macOS, and Windows validation for the P03 source;
++- guided repair for an external-edit recovery conflict;
+ - complete unknown Markdown-section round-trip tests;
+-- duplicate-ID validation across all records;
+-- schema-generated format validation;
+-- projection rebuild and migration services.
+-
+-Local P02 tests exercise the bound-root behavior. Exact-head remote Linux,
+-macOS, and Windows matrices and the remaining release dependencies are still
+-required before a release claim.
++- duplicate-ID validation across all record types;
++- schema-generated validation for every canonical format;
++- Directory projection rebuild;
++- checkpoint and encrypted recovery-package services.
++
++The Windows replacement fallback uses an explicit replacement-in-progress
++marker so recovery can complete a target that was removed after `COMMIT`. A
