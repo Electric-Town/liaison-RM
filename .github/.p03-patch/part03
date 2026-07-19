@@ -1,0 +1,214 @@
+ cap_std::fs::{Dir, OpenOptions};
++use chrono::{DateTime, Utc};
++use liaison_shared_kernel::{OperationId, Revision, WorkspaceId};
++use liaison_workspace::{
++    CanonicalDigest, CanonicalMutationKind, CanonicalOperationPlan, CanonicalPath,
++    CanonicalPrecondition, CanonicalRevisionFormat, CanonicalTargetAction, OperationPreview,
++    OperationReceipt, OperationRecoveryReport, RecoverableOperationStore, WorkspaceOperationError,
++    OPERATION_FORMAT, OPERATION_SCHEMA_VERSION,
++};
++use serde::{Deserialize, Serialize};
++use serde_json::Value as JsonValue;
++use std::{
++    collections::BTreeSet,
++    io::{self, Read, Write},
++    path::{Component, Path, PathBuf},
++    str::FromStr,
++};
++
++const OPERATIONS_DIRECTORY: &str = ".liaison/operations";
++const PROJECTIONS_DIRECTORY: &str = ".liaison/projections";
++const PROJECTION_STALE_FILE: &str = "stale.json";
++const MANIFEST_FILE: &str = "manifest.json";
++const COMMIT_FILE: &str = "COMMIT";
++const COMPLETE_FILE: &str = "COMPLETE";
++const STAGED_DIRECTORY: &str = "staged";
++const PUBLISHED_DIRECTORY: &str = "published";
++const REPLACING_DIRECTORY: &str = "replacing";
++
++#[derive(Debug, Clone, Serialize, Deserialize)]
++struct StoredOperationManifest {
++    format: String,
++    schema_version: u32,
++    operation_id: OperationId,
++    workspace_id: WorkspaceId,
++    created_at: DateTime<Utc>,
++    mutation_kind: CanonicalMutationKind,
++    targets: Vec<StoredTarget>,
++}
++
++#[derive(Debug, Clone, Serialize, Deserialize)]
++struct StoredTarget {
++    index: usize,
++    path: CanonicalPath,
++    action: CanonicalTargetAction,
++    precondition: CanonicalPrecondition,
++    new_digest: CanonicalDigest,
++    size_bytes: u64,
++    stage_file: String,
++}
++
++impl StoredOperationManifest {
++    fn from_plan(plan: &CanonicalOperationPlan) -> Self {
++        let targets = plan
++            .targets()
++            .iter()
++            .enumerate()
++            .map(|(index, target)| StoredTarget {
++                index,
++                path: target.path().clone(),
++                action: match target.precondition() {
++                    CanonicalPrecondition::Absent => CanonicalTargetAction::Create,
++                    CanonicalPrecondition::Present { .. } => CanonicalTargetAction::Replace,
++                },
++                precondition: target.precondition().clone(),
++                new_digest: target.digest().clone(),
++                size_bytes: target.content().len() as u64,
++                stage_file: format!("{index:04}.payload"),
++            })
++            .collect();
++        Self {
++            format: OPERATION_FORMAT.to_owned(),
++            schema_version: OPERATION_SCHEMA_VERSION,
++            operation_id: plan.operation_id(),
++            workspace_id: plan.workspace_id(),
++            created_at: plan.created_at(),
++            mutation_kind: plan.mutation_kind(),
++            targets,
++        }
++    }
++
++    fn validate(&self, expected_workspace: WorkspaceId) -> Result<(), WorkspaceOperationError> {
++        if self.format != OPERATION_FORMAT || self.schema_version != OPERATION_SCHEMA_VERSION {
++            return Err(WorkspaceOperationError::InvalidOperationRecord(
++                "unsupported operation format or schema".to_owned(),
++            ));
++        }
++        if self.workspace_id != expected_workspace {
++            return Err(WorkspaceOperationError::WorkspaceIdentityMismatch {
++                operation_id: self.operation_id,
++            });
++        }
++        if self.targets.is_empty() {
++            return Err(WorkspaceOperationError::InvalidOperationRecord(
++                "operation target list is empty".to_owned(),
++            ));
++        }
++        let mut paths = BTreeSet::new();
++        for (position, target) in self.targets.iter().enumerate() {
++            target.path.validate()?;
++            target.new_digest.validate()?;
++            if !paths.insert(target.path.clone()) || target.index != position {
++                return Err(WorkspaceOperationError::InvalidOperationRecord(
++                    "operation repeats a target path or has a non-contiguous index".to_owned(),
++                ));
++            }
++            if target.stage_file != format!("{:04}.payload", target.index) {
++                return Err(WorkspaceOperationError::InvalidOperationRecord(
++                    "operation stage filename does not match its index".to_owned(),
++                ));
++            }
++            match (&target.precondition, target.action) {
++                (CanonicalPrecondition::Absent, CanonicalTargetAction::Create)
++                | (CanonicalPrecondition::Present { .. }, CanonicalTargetAction::Replace) => {}
++                _ => {
++                    return Err(WorkspaceOperationError::InvalidOperationRecord(
++                        "operation action does not match its precondition".to_owned(),
++                    ));
++                }
++            }
++            target.precondition.validate(&target.path)?;
++        }
++        Ok(())
++    }
++}
++
++#[derive(Debug, Clone, Serialize, Deserialize)]
++struct ProjectionStaleMarker {
++    format: String,
++    schema_version: u32,
++    operation_id: OperationId,
++    workspace_id: WorkspaceId,
++    mutation_kind: CanonicalMutationKind,
++}
++
++#[derive(Debug, Clone, Copy, PartialEq, Eq)]
++enum FaultPoint {
++    None,
++    AfterStaging,
++    AfterCommitDecision,
++    AfterPublish(usize),
++    BeforeComplete,
++}
++
++impl RecoverableOperationStore for super::BoundMarkdownVault {
++    fn preview_operation(
++        &self,
++        plan: &CanonicalOperationPlan,
++    ) -> Result<OperationPreview, WorkspaceOperationError> {
++        validate_plan_workspace(&self.root, plan)?;
++        Ok(OperationPreview::from(plan))
++    }
++
++    fn commit_operation(
++        &self,
++        plan: CanonicalOperationPlan,
++    ) -> Result<OperationReceipt, WorkspaceOperationError> {
++        commit_operation_with_fault(&self.root, plan, FaultPoint::None)
++    }
++
++    fn recover_operations(
++        &self,
++        workspace_id: WorkspaceId,
++    ) -> Result<OperationRecoveryReport, WorkspaceOperationError> {
++        recover_operations(&self.root, workspace_id)
++    }
++}
++
++pub(super) fn recover_bound_operations(
++    root: &Dir,
++    workspace_id: WorkspaceId,
++) -> Result<OperationRecoveryReport, WorkspaceOperationError> {
++    recover_operations(root, workspace_id)
++}
++
++fn validate_plan_workspace(
++    root: &Dir,
++    plan: &CanonicalOperationPlan,
++) -> Result<(), WorkspaceOperationError> {
++    let manifest = super::bound_load_manifest(root)
++        .map_err(|error| WorkspaceOperationError::Storage(error.to_string()))?;
++    if manifest.workspace_id != plan.workspace_id() {
++        return Err(WorkspaceOperationError::WorkspaceIdentityMismatch {
++            operation_id: plan.operation_id(),
++        });
++    }
++    Ok(())
++}
++
++fn commit_operation_with_fault(
++    root: &Dir,
++    plan: CanonicalOperationPlan,
++    fault: FaultPoint,
++) -> Result<OperationReceipt, WorkspaceOperationError> {
++    validate_plan_workspace(root, &plan)?;
++    let operations = open_or_create_directory(root, Path::new(OPERATIONS_DIRECTORY))?;
++    let operation_name = plan.operation_id().to_string();
++    create_directory(&operations, Path::new(&operation_name))?;
++    let operation = operations
++        .open_dir_nofollow(&operation_name)
++        .map_err(storage)?;
++    create_directory(&operation, Path::new(STAGED_DIRECTORY))?;
++    create_directory(&operation, Path::new(PUBLISHED_DIRECTORY))?;
++    create_directory(&operation, Path::new(REPLACING_DIRECTORY))?;
++    let staged = operation
++        .open_dir_nofollow(STAGED_DIRECTORY)
++        .map_err(storage)?;
++
++    for (index, target) in plan.targets().iter().enumerate() {
++        write_new_file(&staged, &format!("{index:04}.payload"), target.content())?;
++    }
++    sync_directory(&staged)?;
++
++    let stored = StoredOperationManifest::from_plan(&plan);
++    let manifest_bytes = serde_json:
