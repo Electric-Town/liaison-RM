@@ -1,0 +1,226 @@
+         if !matches!(
++                    error.kind(),
++                    io::ErrorKind::AlreadyExists | io::ErrorKind::PermissionDenied
++                ) {
++                    let _ = parent.remove_file(&temp_name);
++                    return Err(storage(error));
++                }
++                write_new_file(&replacing, &replace_marker, b"REPLACE\n")?;
++                sync_directory(&replacing)?;
++                verify_precondition(root, target, true, operation_id)?;
++                parent.remove_file(&file_name).map_err(storage)?;
++                sync_directory(&parent)?;
++                parent
++                    .rename(&temp_name, &parent, &file_name)
++                    .map_err(storage)?;
++            }
++        }
++    }
++    sync_directory(&parent)?;
++    verify_target_digest(root, target, operation_id)?;
++    write_published_marker(&published, &marker_name, target)?;
++    remove_file_if_exists(&replacing, &replace_marker)?;
++    sync_directory(&replacing)?;
++    Ok(())
++}
++
++fn write_published_marker(
++    published: &Dir,
++    marker_name: &str,
++    target: &StoredTarget,
++) -> Result<(), WorkspaceOperationError> {
++    if regular_file_exists(published, marker_name)? {
++        return Ok(());
++    }
++    let marker = serde_json::json!({
++        "path": target.path,
++        "digest": target.new_digest,
++        "size_bytes": target.size_bytes,
++    });
++    let bytes = serde_json::to_vec(&marker).map_err(storage)?;
++    write_new_file(published, marker_name, &bytes)?;
++    sync_directory(published)
++}
++
++#[derive(Debug)]
++struct CurrentTarget {
++    digest: CanonicalDigest,
++    bytes: Vec<u8>,
++}
++
++fn verify_precondition(
++    root: &Dir,
++    target: &StoredTarget,
++    recovery: bool,
++    operation_id: OperationId,
++) -> Result<(), WorkspaceOperationError> {
++    let current = read_target_state(root, &target.path)?;
++    match (&target.precondition, current) {
++        (CanonicalPrecondition::Absent, None) => Ok(()),
++        (CanonicalPrecondition::Absent, Some(state)) if state.digest == target.new_digest => Ok(()),
++        (CanonicalPrecondition::Absent, Some(_)) => conflict_or_precondition(
++            recovery,
++            operation_id,
++            &target.path,
++            "target already exists",
++        ),
++        (
++            CanonicalPrecondition::Present {
++                digest,
++                revision,
++                revision_format,
++            },
++            Some(state),
++        ) => {
++            if &state.digest == &target.new_digest {
++                return Ok(());
++            }
++            if &state.digest != digest {
++                return conflict_or_precondition(
++                    recovery,
++                    operation_id,
++                    &target.path,
++                    "content digest changed",
++                );
++            }
++            if let (Some(expected_revision), Some(format)) = (revision, revision_format) {
++                let found = extract_revision(&state.bytes, *format).map_err(|reason| {
++                    WorkspaceOperationError::PreconditionFailed {
++                        path: target.path.to_string(),
++                        reason,
++                    }
++                })?;
++                if found != *expected_revision {
++                    return conflict_or_precondition(
++                        recovery,
++                        operation_id,
++                        &target.path,
++                        "record revision changed",
++                    );
++                }
++            }
++            Ok(())
++        }
++        (CanonicalPrecondition::Present { .. }, None) => conflict_or_precondition(
++            recovery,
++            operation_id,
++            &target.path,
++            "target is missing",
++        ),
++    }
++}
++
++fn conflict_or_precondition(
++    recovery: bool,
++    operation_id: OperationId,
++    path: &CanonicalPath,
++    reason: &str,
++) -> Result<(), WorkspaceOperationError> {
++    if recovery {
++        Err(WorkspaceOperationError::RecoveryConflict {
++            operation_id,
++            path: path.to_string(),
++        })
++    } else {
++        Err(WorkspaceOperationError::PreconditionFailed {
++            path: path.to_string(),
++            reason: reason.to_owned(),
++        })
++    }
++}
++
++fn verify_target_digest(
++    root: &Dir,
++    target: &StoredTarget,
++    operation_id: OperationId,
++) -> Result<(), WorkspaceOperationError> {
++    let current = read_target_state(root, &target.path)?;
++    if current
++        .as_ref()
++        .is_some_and(|state| state.digest == target.new_digest)
++    {
++        Ok(())
++    } else {
++        Err(WorkspaceOperationError::RecoveryConflict {
++            operation_id,
++            path: target.path.to_string(),
++        })
++    }
++}
++
++fn read_target_state(
++    root: &Dir,
++    path: &CanonicalPath,
++) -> Result<Option<CurrentTarget>, WorkspaceOperationError> {
++    let (parent, file_name) = open_parent(root, path)?;
++    match parent.symlink_metadata(&file_name) {
++        Ok(metadata) => {
++            if metadata.file_type().is_symlink() || !metadata.is_file() {
++                return Err(WorkspaceOperationError::PreconditionFailed {
++                    path: path.to_string(),
++                    reason: "target is not a regular non-symlink file".to_owned(),
++                });
++            }
++        }
++        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
++        Err(error) => return Err(storage(error)),
++    }
++    let bytes = read_regular_file(&parent, &file_name)?;
++    let digest = CanonicalDigest::sha256(&bytes);
++    Ok(Some(CurrentTarget { digest, bytes }))
++}
++
++fn extract_revision(
++    bytes: &[u8],
++    format: CanonicalRevisionFormat,
++) -> Result<Revision, String> {
++    let value = match format {
++        CanonicalRevisionFormat::MarkdownYamlFrontMatter => {
++            let text = std::str::from_utf8(bytes)
++                .map_err(|_| "record is not valid UTF-8".to_owned())?;
++            let mut lines = text.split_inclusive('\n');
++            if lines.next().map(str::trim_end) != Some("---") {
++                return Err("record has no YAML front matter".to_owned());
++            }
++            let mut yaml = String::new();
++            let mut closed = false;
++            for line in lines {
++                if line.trim_end() == "---" {
++                    closed = true;
++                    break;
++                }
++                yaml.push_str(line);
++            }
++            if !closed {
++                return Err("record front matter is not closed".to_owned());
++            }
++            serde_yaml::from_str::<serde_yaml::Value>(&yaml)
++                .map_err(|_| "record front matter is invalid".to_owned())?
++        }
++        CanonicalRevisionFormat::YamlDocument => serde_yaml::from_slice(bytes)
++            .map_err(|_| "YAML record is invalid".to_owned())?,
++        CanonicalRevisionFormat::JsonDocument => {
++            let value: JsonValue = serde_json::from_slice(bytes)
++                .map_err(|_| "JSON record is invalid".to_owned())?;
++            let found = value
++                .get("revision")
++                .and_then(JsonValue::as_u64)
++                .ok_or_else(|| "record revision is missing".to_owned())?;
++            return Revision::new(found)
++                .ok_or_else(|| "record revision must be positive".to_owned());
++        }
++    };
++    let found = value
++        .get("revision")
++        .and_then(serde_yaml::Value::as_u64)
++        .ok_or_else(|| "record revision is missing".to_owned())?;
++    Revision::new(found).ok_or_else(|| "record revision must be positive".to_owned())
++}
++
++fn mark_projection_stale(
++    root: &Dir,
++    operation: &StoredOperationManifest,
++) -> Result<(), WorkspaceOperationError> {
++    let projections = open_or_create_directory(root, Path::new(PROJECTIONS_DIRECTORY))?;
++    let marker = ProjectionStaleMarker {
++      
