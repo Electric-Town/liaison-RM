@@ -444,6 +444,20 @@
     });
   });
 
+  const applyTheme = (themeName) => {
+    if (themeName === "system") {
+      document.documentElement.removeAttribute("data-theme");
+    } else {
+      document.documentElement.setAttribute("data-theme", themeName);
+    }
+  };
+
+  byId("theme-select")?.addEventListener("change", (event) => {
+    const selected = event.target.value;
+    applyTheme(selected);
+    status(`Applied ${selected} theme.`);
+  });
+
   const start = async () => {
     updateControls();
     renderWorkspace();

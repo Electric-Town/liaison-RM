@@ -117,6 +117,43 @@ cargo run --locked -p liaison-cli -- \
 
 Use `--output json` before the command group for structured output. See [`apps/cli/README.md`](apps/cli/README.md) for the full current command set and error contract.
 
+## Local Installation & Build Guide
+
+### 1. Self-Installing the `liaison` CLI
+
+To compile and install the canonical `liaison` CLI executable into your local system Cargo binary path (`~/.cargo/bin/liaison`):
+
+```bash
+cargo install --path apps/cli --locked
+```
+
+Once installed, verify the installation with:
+
+```bash
+liaison --version
+```
+
+### 2. Building the Native Desktop Application
+
+To build the native desktop application bundle (`.app` / `.dmg` on macOS, `.exe` / NSIS installer on Windows):
+
+```bash
+cargo tauri build
+```
+
+The compiled release artifact will be generated in `apps/desktop/src-tauri/target/release/bundle/`.
+
+### 3. Appearance & Theming
+
+Liaison RM implements the [Editorial Ledger design contract](DESIGN.md) with four built-in themes:
+
+- **System Theme** (Follows operating system preference)
+- **Editorial Light** (Warm paper canvas `#EEE8DC`, surface `#FFFEFB`, action `#1E5D73`)
+- **Editorial Dark** (Quiet dark canvas `#0E1714`, surface `#16231E`, action `#78C8E0`)
+- **High Contrast** (Accessible `#000000` canvas, `#00D4FF` high-contrast action)
+
+Select your preferred theme directly via the **Appearance Theme** picker in the topbar or settings view.
+
 ## The relationship model
 
 Liaison RM does not collapse a relationship into one number.
