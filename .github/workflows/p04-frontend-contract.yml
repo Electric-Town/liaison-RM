@@ -1,0 +1,59 @@
+name: P04 typed frontend contract
+
+on:
+  pull_request:
+    paths:
+      - "apps/desktop/ui-react/**"
+      - "DESIGN.md"
+      - "design/**"
+      - "scripts/check_frontend_contract.py"
+      - ".github/workflows/p04-frontend-contract.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/desktop/ui-react/**"
+      - "DESIGN.md"
+      - "design/**"
+      - "scripts/check_frontend_contract.py"
+      - ".github/workflows/p04-frontend-contract.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 scripts/check_design_contract.py
+      - run: python3 scripts/check_frontend_contract.py
+
+  frontend:
+    name: Frontend (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2025]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: apps/desktop/ui-react
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/desktop/ui-react/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build
+      - name: Prove build output stays separate from the active legacy shell
+        shell: bash
+        run: |
+          test -f ../ui-react-dist/index.html
+          test -f ../ui/index.html
