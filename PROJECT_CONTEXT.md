@@ -49,6 +49,14 @@ The accepted P02 source state adds one Rust application composition root shared 
 
 The installed macOS alpha launches and renders the local workspace interface. Native QA on 2026-07-18 found that desktop person creation fails at the Tauri argument contract because the frontend request uses camel-case `workspacePath` and `displayName` fields while the Rust request deserializer expects `workspace_path` and `display_name`. CLI Person tests do not prove the installed desktop path. The merged P01 source repairs and retests that bridge in an exact source build, but the separately installed application remains the old failing build until a later release gate installs and verifies a replacement.
 
+Events is not a current desktop capability. A 2026-07-21 browser reproduction
+against an unmerged prototype found cross-workspace attendee leakage, static
+fallback totals, an undefined-list failure before workspace open, and inert
+filters and history controls. The repository review build keeps the Events
+destination absent until `T-B0-P11` completes. The implementation and evidence
+handoff is [KCS-0014](docs/knowledge/KCS-0014-when-may-the-events-destination-be-enabled.md),
+and `scripts/check_desktop_shell.py` rejects premature visible navigation.
+
 Do not claim any of the following without exact-head evidence:
 
 - that Liaison RM is ready for daily use;

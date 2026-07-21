@@ -96,6 +96,10 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Fixed
 
+- Review-build policy now prevents an Events destination before
+  `T-B0-P11` completes, and contributor guidance records the domain,
+  application, persistence, privacy, interaction, and installed-artifact work
+  required before Events can be enabled.
 - Desktop native operations now share one synchronous busy boundary with
   generation/session checks, stale-result rejection, and explicit cleanup of
   superseded workspace sessions, preventing overlapping switches or Person

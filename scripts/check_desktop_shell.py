@@ -22,6 +22,7 @@ class InterfaceParser(HTMLParser):
         self.ids: list[str] = []
         self.labels: list[str] = []
         self.inputs: list[str] = []
+        self.route_controls: list[str] = []
         self.landmarks: set[str] = set()
         self.inline_handlers: list[str] = []
         self.external_urls: list[str] = []
@@ -34,6 +35,8 @@ class InterfaceParser(HTMLParser):
             self.labels.append(target)
         if tag in {"input", "select", "textarea"} and (element_id := values.get("id")):
             self.inputs.append(element_id)
+        if route := values.get("data-route"):
+            self.route_controls.append(route)
         if tag in {"main", "nav", "header", "footer", "aside"}:
             self.landmarks.add(tag)
         for name, value in attrs:
@@ -103,8 +106,57 @@ def check_text_contrast(css: str, errors: list[str]) -> None:
                 )
 
 
+def check_events_navigation_boundary(
+    route_controls: list[str], p11_status: str, errors: list[str]
+) -> None:
+    """Keep Events out of the DOM until its complete workflow is evidenced."""
+
+    if p11_status == "complete":
+        return
+    if "events" in route_controls:
+        errors.append(
+            "desktop HTML includes an Events destination while T-B0-P11 is "
+            f"{p11_status!r}; keep it absent until the complete workflow is evidenced"
+        )
+
+
+def self_test_events_navigation_boundary(errors: list[str]) -> None:
+    """Prove that the policy rejects the broken premature-navigation shape."""
+
+    visible_parser = InterfaceParser()
+    visible_parser.feed(
+        '<nav><button type="button" data-route="events">Events</button></nav>'
+    )
+    visible_errors: list[str] = []
+    check_events_navigation_boundary(
+        visible_parser.route_controls, "blocked", visible_errors
+    )
+    if not visible_errors:
+        errors.append(
+            "Events navigation boundary self-test did not reject a visible blocked route"
+        )
+
+    unrelated_parser = InterfaceParser()
+    unrelated_parser.feed('<button type="button" data-route="people">People</button>')
+    unrelated_errors: list[str] = []
+    check_events_navigation_boundary(
+        unrelated_parser.route_controls, "blocked", unrelated_errors
+    )
+    if unrelated_errors:
+        errors.append(
+            "Events navigation boundary self-test rejected an unrelated route"
+        )
+
+    complete_errors: list[str] = []
+    check_events_navigation_boundary(["events"], "complete", complete_errors)
+    if complete_errors:
+        errors.append("Events navigation boundary self-test rejected a completed P11 route")
+
+
 def main() -> int:
     errors: list[str] = []
+
+    self_test_events_navigation_boundary(errors)
 
     root_cargo = tomllib.loads(load_text(ROOT / "Cargo.toml", errors) or "{}")
     members = root_cargo.get("workspace", {}).get("members", [])
@@ -209,6 +261,22 @@ def main() -> int:
         errors.append("desktop HTML is missing skip navigation")
     if 'role="status" aria-live="polite"' not in html:
         errors.append("desktop HTML is missing a polite live status region")
+
+    traceability_text = load_text(ROOT / "spec" / "traceability-ownership.json", errors)
+    try:
+        traceability = json.loads(traceability_text)
+    except json.JSONDecodeError as error:
+        errors.append(f"traceability-ownership.json is invalid JSON: {error}")
+        traceability = {}
+    p11_status = (
+        traceability.get("task_ownership", {})
+        .get("T-B0-P11", {})
+        .get("status")
+    )
+    if not isinstance(p11_status, str):
+        errors.append("traceability is missing the T-B0-P11 delivery status")
+    else:
+        check_events_navigation_boundary(parser.route_controls, p11_status, errors)
 
     javascript = load_text(UI / "app.js", errors)
     for forbidden in ["fetch(", "XMLHttpRequest", "WebSocket", "EventSource", "sendBeacon", "localStorage", "indexedDB"]:
