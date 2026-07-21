@@ -1,0 +1,65 @@
+name: Finalize P04 components once
+
+on:
+  push:
+    branches: [feat/p04-accessible-component-system]
+    paths:
+      - ".github/workflows/finalize-p04-components-once.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: finalize-p04-components-once
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p04-accessible-component-system
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Lock, test, and document the component system
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd apps/desktop/ui-react
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run typecheck
+          npm run test
+          npm run build
+          cd ../../..
+          python3 scripts/check_design_contract.py
+          python3 scripts/check_frontend_contract.py
+          python3 scripts/check_component_contract.py
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("CHANGELOG.md")
+          text = path.read_text(encoding="utf-8")
+          entry = "- Accessible Editorial Ledger React component system with semantic buttons, fields, route navigation, operation status and recovery banners, work surfaces, token-only styling, 48-pixel targets, forced-colours support, reduced motion, and component contract tests.\n"
+          if entry not in text:
+              marker = "### Added\n\n"
+              if marker not in text:
+                  raise SystemExit("Unreleased Added section is missing")
+              path.write_text(text.replace(marker, marker + entry, 1), encoding="utf-8")
+          PY
+          rm .github/workflows/finalize-p04-components-once.yml
+          git diff --check
+      - name: Commit ordinary component source and lockfile
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "chore(p04): validate and record the accessible component system"
+          git push origin HEAD:feat/p04-accessible-component-system
