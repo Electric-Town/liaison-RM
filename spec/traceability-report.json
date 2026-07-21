@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "active",
-  "source_sha256": "67b768f029f2352e147802a6aa3a9857d634f89589c97a10238e47e679509f57",
+  "source_sha256": "99a168fe9d9c6e606e5fe1746f623a08cbaeaebd15afbaab6ff713880bbebb71",
   "delivery_boundary": "B0 Workplace Review Alpha before A0 Personal Memory Alpha; provider, mobile, AI, MCP, and theme packages remain later.",
   "design_sequence": "After T-B0-P03, T-B0-P03D runs design consultation to create DESIGN.md and plan design review; T-B0-P04 cannot start before that gate. G0 does not create DESIGN.md.",
   "approved_strategy": {
@@ -207,7 +207,7 @@
       "owning_gate": "FG-B0-001",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "current",
+      "status": "complete",
       "supporting_tasks": [
         "T-B0-P02",
         "T-R1-002"
@@ -240,7 +240,7 @@
       "owning_gate": "FG-B0-001",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "blocked",
+      "status": "current",
       "supporting_tasks": [
         "T-B0-P03",
         "T-R1-003"
@@ -256,7 +256,7 @@
       "owning_gate": "FG-B0-001",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "blocked",
+      "status": "current",
       "supporting_tasks": [
         "T-B0-P03",
         "T-R1-005"
@@ -291,7 +291,7 @@
       "owning_gate": "FG-B0-001",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "blocked",
+      "status": "current",
       "supporting_tasks": [
         "T-B0-P03",
         "T-B0-P06-REPAIR"
@@ -1572,7 +1572,7 @@
       "owning_gate": "FG-B0-001",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "current",
+      "status": "complete",
       "supporting_tasks": [
         "T-B0-P02"
       ]
@@ -1587,7 +1587,7 @@
       "owning_gate": "FG-B0-001",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "blocked",
+      "status": "current",
       "supporting_tasks": [
         "T-B0-P03",
         "T-B0-P06-REPAIR"
@@ -3366,7 +3366,7 @@
       "owning_gate": "FG-B0-001",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "blocked",
+      "status": "current",
       "supporting_tasks": [
         "T-B0-ACCEPT",
         "T-B0-P01",
@@ -4889,7 +4889,7 @@
       "milestone": "G1",
       "owning_gate": "FG-B0-001",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "current"
+      "status": "complete"
     },
     {
       "id": "T-B0-P03",
@@ -4898,7 +4898,7 @@
       "milestone": "G1",
       "owning_gate": "FG-B0-001",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "blocked"
+      "status": "current"
     },
     {
       "id": "T-B0-P03D",

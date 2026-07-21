@@ -1,0 +1,84 @@
+name: Apply P03 validation fixes once
+
+on:
+  push:
+    branches: [feat/p03-recoverable-canonical-operations]
+    paths:
+      - ".github/workflows/apply-p03-validation-fixes.yml"
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-p03-validation-fixes
+  cancel-in-progress: true
+
+jobs:
+  apply:
+    if: github.event_name == 'push' || github.head_ref == 'feat/p03-recoverable-canonical-operations'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p03-recoverable-canonical-operations
+          fetch-depth: 0
+      - name: Apply reviewed source corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          lib = Path('adapters/vault-markdown/src/lib.rs')
+          text = lib.read_text(encoding='utf-8')
+          old = '''                let current = bound_find_person(root, person.id)
+                    .ok()
+                    .map(|(_, parsed)| parsed.document.revision.get())
+                    .unwrap_or(expected_revision.get());'''
+          new = '''                let current = bound_find_person(root, person.id)
+                    .ok()
+                    .map_or(expected_revision.get(), |(_, parsed)| {
+                        parsed.document.revision.get()
+                    });'''
+          if old in text:
+              text = text.replace(old, new, 1)
+              lib.write_text(text, encoding='utf-8')
+
+          operations = Path('adapters/vault-markdown/src/operations.rs')
+          text = operations.read_text(encoding='utf-8')
+          marker = '''    let projections = root
+        .open_dir_nofollow(".liaison/projections")
+        .map_err(|error| map_io("open projection directory", &error).with_operation(operation_id))?;
+    let bytes = format!("operation_id: {operation_id}\\n").into_bytes();'''
+          replacement = '''    let projections = root
+        .open_dir_nofollow(".liaison/projections")
+        .map_err(|error| map_io("open projection directory", &error).with_operation(operation_id))?;
+    // A pre-existing regular marker already proves every projection is stale.
+    // Leaving it in place avoids a platform-dependent replace operation and
+    // ensures there is no crash window in which the marker disappears.
+    if file_exists(&projections, "stale")? {
+        return Ok(());
+    }
+    let bytes = format!("operation_id: {operation_id}\\n").into_bytes();'''
+          if marker in text:
+              text = text.replace(marker, replacement, 1)
+              operations.write_text(text, encoding='utf-8')
+          PY
+          cargo fmt --all
+      - name: Commit source corrections when needed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo 'P03 validation fixes are already present.'
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add adapters/vault-markdown/src/lib.rs adapters/vault-markdown/src/operations.rs
+          git diff --cached --check
+          git commit -m "fix(workspace): preserve stale projection evidence across operations"
+          git push origin HEAD:feat/p03-recoverable-canonical-operations

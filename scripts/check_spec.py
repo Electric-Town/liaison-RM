@@ -573,7 +573,7 @@ def validate_corrected_phase_ownership(
                 "owning_gate": "FG-B0-001",
                 "milestone": "G1",
                 "evidence_owner": "EO-WORKSPACE",
-                "status": "current",
+                "status": "complete",
             },
         ),
         (
@@ -584,7 +584,7 @@ def validate_corrected_phase_ownership(
                 "owning_gate": "FG-B0-001",
                 "milestone": "G1",
                 "evidence_owner": "EO-WORKSPACE",
-                "status": "current",
+                "status": "complete",
             },
         ),
         (
@@ -639,7 +639,7 @@ def validate_corrected_phase_ownership(
                 "owning_gate": "FG-B0-001",
                 "milestone": "G1",
                 "evidence_owner": "EO-WORKSPACE",
-                "status": "blocked",
+                "status": "current",
             },
         ),
         (
@@ -754,13 +754,13 @@ def validate_corrected_phase_ownership(
         "T-R0-003": (ownership.get("task_ownership", {}), "complete"),
         "T-B0-P00": (ownership.get("task_ownership", {}), "complete"),
         "T-B0-P01": (ownership.get("task_ownership", {}), "complete"),
-        "T-B0-P02": (ownership.get("task_ownership", {}), "current"),
+        "T-B0-P02": (ownership.get("task_ownership", {}), "complete"),
         "LRM-PK-007": (ownership.get("requirement_ownership", {}), "complete"),
         "LRM-PK-009": (ownership.get("requirement_ownership", {}), "complete"),
         "LRM-AP-001": (ownership.get("requirement_ownership", {}), "complete"),
         "LRM-WS-011": (ownership.get("requirement_ownership", {}), "complete"),
-        "LRM-WS-002": (ownership.get("requirement_ownership", {}), "current"),
-        "LRM-WS-009": (ownership.get("requirement_ownership", {}), "current"),
+        "LRM-WS-002": (ownership.get("requirement_ownership", {}), "complete"),
+        "LRM-WS-009": (ownership.get("requirement_ownership", {}), "complete"),
         "FG-R0-002": (ownership.get("gate_ownership", {}), "complete"),
     }
     milestone_status = {
@@ -887,8 +887,8 @@ def validate_corrected_phase_ownership(
             "close `FG-B0-001`",
         ),
         "PROJECT_CONTEXT.md": (
-            "G0, P00, and P01 are complete",
-            "G1 is current and P02 Workspace Session authority is the active package",
+            "G0, P00, P01, and P02 are complete",
+            "G1 is current and P03 recoverable canonical operations are the active package",
             "without a reverse milestone dependency",
         ),
         "docs/product/roadmap.md": (
@@ -898,7 +898,7 @@ def validate_corrected_phase_ownership(
         ),
         "docs/product/working-state-delivery.md": (
             "P02 owns the readable manifest and write-authoritative session boundary",
-            "G0, P00, and P01 are complete",
+            "G0, P00, P01, and P02 are complete",
             "Compiled-out Airgap proof remains exclusively `UAT-024` under `FG-R2-005`",
         ),
     }.items():

@@ -520,13 +520,13 @@
       "milestone": "G1",
       "owning_gate": "FG-B0-001",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "current"
+      "status": "complete"
     },
     "T-B0-P03": {
       "milestone": "G1",
       "owning_gate": "FG-B0-001",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "blocked"
+      "status": "current"
     },
     "T-B0-P03D": {
       "milestone": "G1",
@@ -710,14 +710,14 @@
       "owning_gate": "FG-B0-001",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "current"
+      "status": "complete"
     },
     "LRM-WS-009": {
       "owning_task": "T-B0-P02",
       "owning_gate": "FG-B0-001",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "current"
+      "status": "complete"
     },
     "LRM-WS-003": {
       "owning_task": "T-B0-P06",
@@ -752,28 +752,28 @@
       "owning_gate": "FG-B0-001",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "blocked"
+      "status": "current"
     },
     "LRM-WS-005": {
       "owning_task": "T-B0-P03",
       "owning_gate": "FG-B0-001",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "blocked"
+      "status": "current"
     },
     "LRM-WS-007": {
       "owning_task": "T-B0-P03",
       "owning_gate": "FG-B0-001",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "blocked"
+      "status": "current"
     },
     "LRM-WS-010": {
       "owning_task": "T-B0-P03",
       "owning_gate": "FG-B0-001",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "blocked"
+      "status": "current"
     },
     "LRM-WS-008": {
       "owning_task": "T-B0-P11",
@@ -2210,7 +2210,7 @@
       "owning_gate": "FG-B0-001",
       "milestone": "G1",
       "evidence_owner": "EO-WORKSPACE",
-      "status": "blocked"
+      "status": "current"
     },
     "UAT-041": {
       "owning_task": "T-B0-ACCEPT",

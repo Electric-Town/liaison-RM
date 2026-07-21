@@ -18,6 +18,16 @@ use std::{
 };
 use thiserror::Error;
 
+mod operations;
+
+pub use operations::{
+    CanonicalDigest, CanonicalOperationManifest, CanonicalOperationTarget, CanonicalPath,
+    CanonicalPrecondition, CanonicalWrite, FaultPoint, OPERATION_FORMAT, OPERATION_SCHEMA_VERSION,
+    OperationContext, OperationContractError, OperationPhase, OperationReceipt,
+    OperationRecoveryReport, RecoverableOperationError, RecoverableOperationErrorKind,
+    RecoverableOperationStore,
+};
+
 pub const WORKSPACE_FORMAT: &str = "liaison-workspace";
 pub const CURRENT_SCHEMA_VERSION: u32 = 1;
 pub const WRITER_DIAGNOSTIC_FORMAT: &str = "liaison-workspace-writer-diagnostic";
@@ -395,6 +405,8 @@ impl fmt::Display for WorkspaceAuthorityFailureKind {
 pub enum WorkspaceSessionError {
     #[error(transparent)]
     Workspace(#[from] WorkspaceError),
+    #[error("workspace recovery failed: {0}")]
+    Recovery(RecoverableOperationError),
     #[error("another workspace writer is active")]
     WriterAlreadyActive {
         /// Untrusted diagnostics observed only after the OS rejected the lock.
@@ -441,6 +453,13 @@ pub trait WorkspaceWriterAuthorityPort: fmt::Debug + Send + Sync {
 pub trait BoundWorkspaceStore: fmt::Debug + Send + Sync {
     fn load_manifest(&self) -> Result<WorkspaceManifest, WorkspaceError>;
     fn validate_layout(&self) -> Result<Vec<ValidationFinding>, WorkspaceError>;
+
+    fn recover_pending_operations(
+        &self,
+        _workspace_id: WorkspaceId,
+    ) -> Result<OperationRecoveryReport, RecoverableOperationError> {
+        Ok(OperationRecoveryReport::default())
+    }
 }
 
 /// One composition-time binding for writer authority and all session-bound
@@ -457,7 +476,10 @@ pub trait BoundWorkspaceSessionPort:
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum WorkspaceRecoveryState {
-    UnavailableUntilRecoverableOperations,
+    Ready {
+        recovered_operations: u32,
+        discarded_before_commit: u32,
+    },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -666,6 +688,11 @@ where
         &self.session.repositories
     }
 
+    #[must_use]
+    pub const fn workspace_id(&self) -> WorkspaceId {
+        self.session.manifest.workspace_id
+    }
+
     pub fn verify_identity(&self) -> Result<(), WorkspaceError> {
         let manifest = self.session.repositories.load_manifest()?;
         manifest.validate()?;
@@ -752,6 +779,10 @@ where
         let writer_authority = self
             .binding
             .acquire_writer(manifest.workspace_id, diagnostic)?;
+        let recovery = self
+            .binding
+            .recover_pending_operations(manifest.workspace_id)
+            .map_err(WorkspaceSessionError::Recovery)?;
         let current_manifest = self.binding.load_manifest()?;
         current_manifest.validate()?;
         if current_manifest.workspace_id != manifest.workspace_id {
@@ -778,7 +809,10 @@ where
                 in_flight: 0,
             }),
             lifecycle_changed: Condvar::new(),
-            recovery_state: WorkspaceRecoveryState::UnavailableUntilRecoverableOperations,
+            recovery_state: WorkspaceRecoveryState::Ready {
+                recovered_operations: recovery.rolled_forward,
+                discarded_before_commit: recovery.discarded_before_commit,
+            },
             key_state: WorkspaceKeyState::UnavailableUntilWorkspaceSecurity,
             projection_state: WorkspaceProjectionState::UnavailableUntilDirectoryProjection,
         })
@@ -1103,7 +1137,10 @@ mod tests {
         ));
         assert_eq!(
             session.recovery_state(),
-            WorkspaceRecoveryState::UnavailableUntilRecoverableOperations
+            WorkspaceRecoveryState::Ready {
+                recovered_operations: 0,
+                discarded_before_commit: 0,
+            }
         );
         assert_eq!(
             session.key_state(),
