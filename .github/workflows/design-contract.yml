@@ -1,0 +1,38 @@
+name: Design contract
+
+on:
+  pull_request:
+    paths:
+      - "DESIGN.md"
+      - "design/**"
+      - "docs/evidence/design/**"
+      - "docs/product/p04-amended-plan.md"
+      - "scripts/check_design_contract.py"
+      - ".github/workflows/design-contract.yml"
+  push:
+    branches: [main]
+    paths:
+      - "DESIGN.md"
+      - "design/**"
+      - "docs/evidence/design/**"
+      - "docs/product/p04-amended-plan.md"
+      - "scripts/check_design_contract.py"
+      - ".github/workflows/design-contract.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate canonical design contract
+        run: python3 scripts/check_design_contract.py
+      - name: Validate repository policy
+        run: python3 scripts/check_repository.py
+      - name: Validate product specification
+        run: python3 scripts/check_spec.py
