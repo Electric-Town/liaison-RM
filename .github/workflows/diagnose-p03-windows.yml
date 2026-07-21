@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/diagnose-p03-windows.yml"
-      - "crates/liaison-application/tests/windows_operation_diagnostic.rs"
+      - "adapters/vault-markdown/tests/windows_directory_sync_probe.rs"
 
 permissions:
   contents: read
@@ -17,12 +17,11 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Capture the first canonical mutation state
+      - name: Capture capability-directory sync probe
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path diagnostics | Out-Null
-          Copy-Item adapters/vault-markdown/src/operations.rs diagnostics/operations.rs
-          cargo test -p liaison-application --test windows_operation_diagnostic --all-features --locked -- --nocapture *> diagnostics/p03-windows-tests.txt
+          cargo test -p liaison-vault-markdown --test windows_directory_sync_probe --all-features --locked -- --nocapture *> diagnostics/p03-windows-tests.txt
           $status = $LASTEXITCODE
           Set-Content -Path diagnostics/status.txt -Value $status
           exit 0
