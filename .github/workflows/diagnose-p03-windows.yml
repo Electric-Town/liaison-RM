@@ -21,6 +21,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path diagnostics | Out-Null
+          Copy-Item adapters/vault-markdown/src/operations.rs diagnostics/operations.rs
           cargo test -p liaison-application --test windows_operation_diagnostic --all-features --locked -- --nocapture *> diagnostics/p03-windows-tests.txt
           $status = $LASTEXITCODE
           Set-Content -Path diagnostics/status.txt -Value $status
