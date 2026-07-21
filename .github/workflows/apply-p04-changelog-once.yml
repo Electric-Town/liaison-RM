@@ -1,0 +1,48 @@
+name: Apply P04 foundation changelog once
+
+on:
+  push:
+    branches: [feat/p04-typed-react-foundation]
+    paths:
+      - ".github/workflows/apply-p04-changelog-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p04-typed-react-foundation
+          fetch-depth: 0
+      - name: Record the typed frontend foundation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("CHANGELOG.md")
+          text = path.read_text(encoding="utf-8")
+          entry = "- Parallel P04 typed React foundation with an exact-version toolchain, versioned application-response contract, injected Tauri transport seam, stable B0 routes and Events stages, explicit P03 operation phases, cross-platform tests, and no browser-storage or network authority.\n"
+          if entry not in text:
+              marker = "### Added\n\n"
+              if marker not in text:
+                  raise SystemExit("Unreleased Added section is missing")
+              path.write_text(text.replace(marker, marker + entry, 1), encoding="utf-8")
+          PY
+      - name: Commit changelog
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git diff --cached --check
+          git commit -m "docs(changelog): record the typed P04 frontend foundation"
+          git push origin HEAD:feat/p04-typed-react-foundation
