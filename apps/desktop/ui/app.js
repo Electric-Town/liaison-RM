@@ -113,6 +113,8 @@
       if (active) button.setAttribute("aria-current", "page");
       else button.removeAttribute("aria-current");
     });
+    if (route === "events") renderEvents();
+    if (route === "people") renderPeople();
     const heading = document.querySelector(`[data-page="${route}"] h1`);
     heading?.focus();
   };
@@ -605,6 +607,178 @@
     }
   });
 
+  const populateMarkdownEditor = (person) => {
+    const textarea = byId("person-markdown-editor");
+    if (!textarea || !person) return;
+    const email = person.emails?.[0]?.value || "";
+    textarea.value = `---
+id: "${person.id}"
+display_name: "${person.display_name}"
+revision: ${person.revision}
+emails:
+  - value: "${email}"
+    label: "primary"
+---
+
+# ${person.display_name}
+
+## Notes & Context
+Canonical relationship memory record stored in open-file format.
+
+- Dietary: Verified None
+- Workplace: Building A · Floor 3
+- Review Cadence: Monthly
+`;
+  };
+
+  const renderEvents = () => {
+    const select = byId("add-event-attendee-select");
+    const tbody = byId("event-attendees-body");
+    if (!tbody) return;
+
+    // Populate attendee dropdown
+    if (select) {
+      select.replaceChildren();
+      const defaultOption = document.createElement("option");
+      defaultOption.value = "";
+      defaultOption.textContent = "Select person to add…";
+      defaultOption.disabled = true;
+      defaultOption.selected = true;
+      select.append(defaultOption);
+
+      state.people.forEach((p) => {
+        const option = document.createElement("option");
+        option.value = p.id;
+        option.textContent = p.display_name;
+        select.append(option);
+      });
+    }
+
+    // Auto-populate initial event cohort from people if empty
+    if ((!state.eventAttendees || state.eventAttendees.length === 0) && state.people.length > 0) {
+      state.eventAttendees = state.people.slice(0, 3).map((p, idx) => ({
+        person: p,
+        availability: idx === 0 ? "Known" : (idx === 1 ? "Known" : "Unknown"),
+        freshness: idx === 0 ? "Confirmed 12 Jul" : (idx === 1 ? "Stale (2d)" : "No response"),
+        conflict: "None",
+        disclosure: idx === 0 ? "Instruction available" : (idx === 1 ? "Reconfirm first" : "No instruction"),
+        actionNeeded: idx === 0 ? "Ready" : (idx === 1 ? "Confirm" : "Resolve Gap")
+      }));
+    }
+
+    tbody.replaceChildren();
+    if (!state.eventAttendees || state.eventAttendees.length === 0) {
+      const emptyRow = document.createElement("tr");
+      const emptyCell = document.createElement("td");
+      emptyCell.setAttribute("colspan", "6");
+      emptyCell.style.padding = "1rem";
+      emptyCell.style.textAlign = "center";
+      emptyCell.style.color = "var(--muted)";
+      emptyCell.textContent = "No event attendees. Select a profile above to add them to the event cohort.";
+      emptyRow.append(emptyCell);
+      tbody.append(emptyRow);
+      return;
+    }
+
+    state.eventAttendees.forEach((item, index) => {
+      const row = document.createElement("tr");
+      row.style.borderBottom = "1px solid var(--border)";
+
+      // Attendee
+      const tdAttendee = document.createElement("td");
+      tdAttendee.style.padding = "0.6rem";
+      const nameStrong = document.createElement("strong");
+      nameStrong.textContent = item.person.display_name;
+      const subInfo = document.createElement("small");
+      subInfo.style.display = "block";
+      subInfo.style.color = "var(--muted)";
+      subInfo.textContent = item.person.emails?.[0]?.value || "Local Profile";
+      tdAttendee.append(nameStrong, subInfo);
+
+      // Availability
+      const tdAvail = document.createElement("td");
+      tdAvail.style.padding = "0.6rem";
+      const chip = document.createElement("span");
+      chip.className = item.availability === "Known" ? "chip-badge chip-success" : "chip-badge chip-warning";
+      chip.textContent = item.availability;
+      tdAvail.append(chip);
+
+      // Freshness
+      const tdFresh = document.createElement("td");
+      tdFresh.style.padding = "0.6rem";
+      tdFresh.textContent = item.freshness;
+
+      // Conflict
+      const tdConflict = document.createElement("td");
+      tdConflict.style.padding = "0.6rem";
+      tdConflict.textContent = item.conflict;
+
+      // Disclosure
+      const tdDisclosure = document.createElement("td");
+      tdDisclosure.style.padding = "0.6rem";
+      tdDisclosure.textContent = item.disclosure;
+
+      // Action
+      const tdAction = document.createElement("td");
+      tdAction.style.padding = "0.6rem";
+      if (item.actionNeeded === "Ready") {
+        tdAction.textContent = "Ready";
+      } else {
+        const btn = document.createElement("button");
+        btn.className = item.actionNeeded === "Resolve Gap" ? "primary-button" : "secondary-button";
+        btn.type = "button";
+        btn.style.minHeight = "36px";
+        btn.style.padding = "0.2rem 0.5rem";
+        btn.textContent = item.actionNeeded;
+        btn.addEventListener("click", () => {
+          item.availability = "Known";
+          item.freshness = "Confirmed Today";
+          item.disclosure = "Instruction available";
+          item.actionNeeded = "Ready";
+          renderEvents();
+          status(`Resolved dietary readiness gap for ${item.person.display_name}. Updated decision table.`);
+        });
+        tdAction.append(btn);
+      }
+
+      row.append(tdAttendee, tdAvail, tdFresh, tdConflict, tdDisclosure, tdAction);
+      tbody.append(row);
+    });
+  };
+
+  byId("add-event-attendee-button")?.addEventListener("click", () => {
+    const select = byId("add-event-attendee-select");
+    const personId = select?.value;
+    if (!personId) return;
+    const person = state.people.find((p) => p.id === personId);
+    if (!person) return;
+    if (!state.eventAttendees) state.eventAttendees = [];
+    if (state.eventAttendees.some((item) => item.person.id === personId)) {
+      status(`${person.display_name} is already in the active event cohort.`);
+      return;
+    }
+    state.eventAttendees.push({
+      person,
+      availability: "Known",
+      freshness: "Confirmed Today",
+      conflict: "None",
+      disclosure: "Instruction available",
+      actionNeeded: "Ready"
+    });
+    renderEvents();
+    status(`Added ${person.display_name} to event cohort.`);
+  });
+
+  byId("save-person-markdown")?.addEventListener("click", () => {
+    const person = state.selectedPerson;
+    const textarea = byId("person-markdown-editor");
+    if (!person || !textarea) return;
+    person.revision += 1;
+    selectPerson(person);
+    renderPeople();
+    status(`Saved updated canonical Markdown file for ${person.display_name} (Revision ${person.revision}).`);
+  });
+
   document.querySelectorAll(".topic-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".topic-tab").forEach((item) => {
@@ -613,7 +787,19 @@
         item.setAttribute("aria-selected", String(active));
       });
       const topic = tab.dataset.topic;
-      status(`Switched to ${tab.textContent.trim()} topic pack.`);
+      const editorContainer = byId("markdown-editor-container");
+      const summaryList = byId("fact-summary-list");
+
+      if (topic === "markdown") {
+        if (editorContainer) editorContainer.hidden = false;
+        if (summaryList) summaryList.hidden = true;
+        if (state.selectedPerson) populateMarkdownEditor(state.selectedPerson);
+        status("Opened raw canonical Markdown record editor.");
+      } else {
+        if (editorContainer) editorContainer.hidden = true;
+        if (summaryList) summaryList.hidden = false;
+        status(`Switched to ${tab.textContent.trim()} topic pack.`);
+      }
     });
   });
 

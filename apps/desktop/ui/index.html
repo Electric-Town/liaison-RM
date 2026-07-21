@@ -196,8 +196,6 @@
                 <option value="catering" selected>Catering Brief</option>
                 <option value="workplace">Workplace Review</option>
                 <option value="general">General Memory</option>
-              </select>
-              <button id="export-brief-button" class="secondary-button" type="button" data-native-operation="session">Export Brief</button>
             </div>
           </div>
 
@@ -206,6 +204,7 @@
             <button role="tab" aria-selected="false" class="topic-tab" type="button" data-topic="dietary">Dietary & Hospitality</button>
             <button role="tab" aria-selected="false" class="topic-tab" type="button" data-topic="workplace">Accessibility & Workplace</button>
             <button role="tab" aria-selected="false" class="topic-tab" type="button" data-topic="dates">Promises & Commitments</button>
+            <button role="tab" aria-selected="false" class="topic-tab" type="button" data-topic="markdown">Raw Markdown Record</button>
           </div>
 
           <div class="two-column" style="margin-top:1rem;">
@@ -217,6 +216,12 @@
                 <div><dt>Dietary Facts</dt><dd id="fact-dietary">Verified None</dd></div>
                 <div><dt>Workplace Location</dt><dd id="fact-location">Building A · Floor 3</dd></div>
               </dl>
+
+              <div id="markdown-editor-container" hidden style="margin-top:1rem;">
+                <label for="person-markdown-editor"><strong>Canonical Markdown File (.md)</strong></label>
+                <textarea id="person-markdown-editor" rows="10" style="width:100%; font-family:var(--font-mono); font-size:0.85rem; padding:0.5rem; border:1px solid var(--border); border-radius:4px; margin-top:0.4rem;" spellcheck="false"></textarea>
+                <button id="save-person-markdown" class="primary-button" type="button" style="margin-top:0.5rem;" data-native-operation="session">Save Markdown Record</button>
+              </div>
             </div>
 
             <div>
@@ -241,7 +246,14 @@
             <h1 id="events-heading" tabindex="-1">Account for every attendee</h1>
             <p>Resolve information gaps before generating least-disclosure catering instructions.</p>
           </div>
-          <button id="refresh-events" class="secondary-button" type="button" data-native-operation="session">Refresh cohort</button>
+          <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+            <label for="add-event-attendee-select" class="visually-hidden">Add person to event</label>
+            <select id="add-event-attendee-select" style="min-height:40px; padding:0.4rem 0.6rem;">
+              <option value="" selected disabled>Select person to add…</option>
+            </select>
+            <button id="add-event-attendee-button" class="primary-button" type="button" data-native-operation="session">Add Attendee</button>
+            <button id="refresh-events" class="secondary-button" type="button" data-native-operation="session">Refresh cohort</button>
+          </div>
         </div>
 
         <ol class="stepper" aria-label="Event preparation steps" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:0; list-style:none; padding:0; border:1px solid var(--border); background:var(--surface); margin-bottom:1.2rem;">
@@ -254,7 +266,7 @@
 
         <section class="card" aria-label="Attendee reconciliation" style="margin-bottom:1.2rem;">
           <h2>Active Attendee Cohort</h2>
-          <p style="color:var(--muted); font-size:0.9rem;">45 active attendees · exact denominator preserved · fail-closed decision table</p>
+          <p style="color:var(--muted); font-size:0.9rem;">Deduplicated active denominator · fail-closed decision table</p>
           <div style="overflow-x:auto; margin-top:1rem;">
             <table style="width:100%; border-collapse:collapse;">
               <thead>
@@ -267,34 +279,12 @@
                   <th style="padding:0.6rem;">Next Action</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="event-attendees-body">
                 <tr style="border-bottom:1px solid var(--border);">
-                  <td style="padding:0.6rem;"><strong>Aisling O’Connor</strong><br><small style="color:var(--muted);">Operations · Dublin</small></td>
-                  <td style="padding:0.6rem;"><span class="chip-badge chip-success">Known</span></td>
-                  <td style="padding:0.6rem;">Confirmed 12 Jul</td>
-                  <td style="padding:0.6rem;">None</td>
-                  <td style="padding:0.6rem;">Instruction available</td>
-                  <td style="padding:0.6rem;">Ready</td>
-                </tr>
-                <tr style="border-bottom:1px solid var(--border);">
-                  <td style="padding:0.6rem;"><strong>Ravi Patel</strong><br><small style="color:var(--muted);">Engineering · Dublin</small></td>
-                  <td style="padding:0.6rem;"><span class="chip-badge chip-success">Known</span></td>
-                  <td style="padding:0.6rem;"><span class="chip-badge chip-warning">Stale (2d)</span></td>
-                  <td style="padding:0.6rem;">None</td>
-                  <td style="padding:0.6rem;">Reconfirm first</td>
-                  <td style="padding:0.6rem;"><button class="secondary-button" style="min-height:36px; padding:0.2rem 0.5rem;" type="button">Confirm</button></td>
-                </tr>
-                <tr style="border-bottom:1px solid var(--border); background:var(--accent-soft);">
-                  <td style="padding:0.6rem;"><strong>Jordan Chen</strong><br><small style="color:var(--muted);">Community guest</small></td>
-                  <td style="padding:0.6rem;"><span class="chip-badge chip-warning">Unknown</span></td>
-                  <td style="padding:0.6rem;">No response</td>
-                  <td style="padding:0.6rem;">None</td>
-                  <td style="padding:0.6rem;">No instruction</td>
-                  <td style="padding:0.6rem;"><button class="primary-button" style="min-height:36px; padding:0.2rem 0.5rem;" type="button">Resolve gap</button></td>
+                  <td colspan="6" style="padding:1rem; text-align:center; color:var(--muted);">No event attendees. Select a profile above to add them to the event cohort.</td>
                 </tr>
               </tbody>
             </table>
-          </div>
         </section>
       </section>
 
