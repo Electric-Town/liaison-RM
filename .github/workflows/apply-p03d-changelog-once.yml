@@ -1,0 +1,50 @@
+name: Apply P03D changelog once
+
+on:
+  push:
+    branches: [feat/p03d-canonical-design-contract]
+    paths:
+      - ".github/workflows/apply-p03d-changelog-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p03d-canonical-design-contract
+          fetch-depth: 0
+      - name: Record the canonical design contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("CHANGELOG.md")
+          text = path.read_text(encoding="utf-8")
+          entry = "- Canonical P03D Editorial Ledger experience contract with versioned semantic tokens, typed operation-state presentation, five B0 routes, five-stage Events flow, accessibility and localization evidence requirements, and the reviewed six-slice P04 migration plan.\n"
+          if entry not in text:
+              marker = "### Added\n\n"
+              if marker not in text:
+                  raise SystemExit("Unreleased Added section is missing")
+              text = text.replace(marker, marker + entry, 1)
+              path.write_text(text, encoding="utf-8")
+          PY
+      - name: Commit the changelog entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          if git diff --cached --quiet; then
+            echo "P03D changelog entry already present."
+            exit 0
+          fi
+          git diff --cached --check
+          git commit -m "docs(changelog): record the canonical P03D design contract"
+          git push origin HEAD:feat/p03d-canonical-design-contract
