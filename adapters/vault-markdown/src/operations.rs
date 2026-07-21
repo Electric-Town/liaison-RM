@@ -229,6 +229,9 @@ pub(crate) fn recover(
                     "committed operation is missing its manifest",
                 ));
             }
+            // Windows directory capabilities do not share deletion access.
+            // Release the child handle before removing the operation itself.
+            drop(operation);
             operations
                 .remove_dir_all(&name)
                 .map_err(|error| map_io("discard incomplete uncommitted operation", error))?;
@@ -251,6 +254,9 @@ pub(crate) fn recover(
             continue;
         }
         if !file_exists(&operation, COMMIT_FILE)? {
+            // The operation directory itself is the removal target, so its
+            // capability must be released before Windows can discard it.
+            drop(operation);
             operations.remove_dir_all(&name).map_err(|error| {
                 map_io("discard uncommitted operation", error).with_operation(manifest.operation_id)
             })?;
@@ -761,6 +767,24 @@ mod tests {
         let report = recover(&root, workspace_id())?;
         assert_eq!(report.discarded_before_commit, 1);
         assert!(!temporary.path().join("people/a.md").exists());
+        Ok(())
+    }
+
+    #[test]
+    fn incomplete_operation_without_manifest_is_discarded() -> Result<(), Box<dyn std::error::Error>>
+    {
+        let (temporary, root) = setup()?;
+        let operation = context(7).operation_id.to_string();
+        let operation_path = temporary
+            .path()
+            .join(".liaison/operations")
+            .join(&operation);
+        fs::create_dir(&operation_path)?;
+
+        let report = recover(&root, workspace_id())?;
+
+        assert_eq!(report.discarded_before_commit, 1);
+        assert!(!operation_path.exists());
         Ok(())
     }
 
