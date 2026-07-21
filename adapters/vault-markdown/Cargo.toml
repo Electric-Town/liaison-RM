@@ -8,6 +8,7 @@ rust-version.workspace = true
 
 [dependencies]
 cap-fs-ext.workspace = true
+chrono.workspace = true
 cap-std.workspace = true
 liaison-people = { path = "../../contexts/people" }
 liaison-shared-kernel = { path = "../../crates/liaison-shared-kernel" }

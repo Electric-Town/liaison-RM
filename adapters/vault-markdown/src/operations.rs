@@ -302,11 +302,12 @@ fn publish_manifest_targets(
         }
 
         verify_precondition(root, target)?;
-        let bytes = read_file(&staged, &staged_name(target.ordinal)).map_err(|error| {
-            map_io("read staged target", error)
-                .with_operation(manifest.operation_id)
-                .with_path(target.path.clone())
-        })?;
+        let bytes =
+            read_file(&staged, Path::new(&staged_name(target.ordinal))).map_err(|error| {
+                error
+                    .with_operation(manifest.operation_id)
+                    .with_path(target.path.clone())
+            })?;
         if digest_bytes(&bytes)? != target.content_digest {
             return Err(operation_error(
                 RecoverableOperationErrorKind::RecoveryConflict,
