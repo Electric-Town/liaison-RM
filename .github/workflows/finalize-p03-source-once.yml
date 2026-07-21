@@ -1,0 +1,152 @@
+name: Finalize P03 source once
+
+on:
+  push:
+    branches: [feat/p03-recoverable-canonical-operations]
+    paths:
+      - ".github/workflows/finalize-p03-source-once.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: finalize-p03-source-once
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p03-recoverable-canonical-operations
+          fetch-depth: 0
+
+      - name: Apply source corrections and remove temporary automation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          lib = Path("adapters/vault-markdown/src/lib.rs")
+          text = lib.read_text(encoding="utf-8")
+          pattern = re.compile(
+              r"(?P<i>[ \t]*)let current = bound_find_person\(root, person\.id\)\n"
+              r"(?P=i)    \.ok\(\)\n"
+              r"(?P=i)    \.map\(\|\(_, parsed\)\| parsed\.document\.revision\.get\(\)\)\n"
+              r"(?P=i)    \.unwrap_or\(expected_revision\.get\(\)\);"
+          )
+          def replacement(match: re.Match[str]) -> str:
+              indent = match.group("i")
+              return (
+                  f"{indent}let current = bound_find_person(root, person.id)\n"
+                  f"{indent}    .ok()\n"
+                  f"{indent}    .map_or(expected_revision.get(), |(_, parsed)| {{\n"
+                  f"{indent}        parsed.document.revision.get()\n"
+                  f"{indent}    }});"
+              )
+          text, changed = pattern.subn(replacement, text, count=1)
+          if changed == 0 and ".map_or(expected_revision.get(), |(_, parsed)|" not in text:
+              raise SystemExit("Person revision fallback pattern is missing")
+          lib.write_text(text, encoding="utf-8")
+
+          operations = Path("adapters/vault-markdown/src/operations.rs")
+          text = operations.read_text(encoding="utf-8")
+          if 'if file_exists(&projections, "stale")?' not in text:
+              anchor = '    let bytes = format!("operation_id: {operation_id}\\n").into_bytes();'
+              if anchor not in text:
+                  raise SystemExit("projection stale marker anchor is missing")
+              guarded = '''    // An existing regular marker already proves every projection is stale.
+    // Keep it in place so repeated operations are idempotent and no crash
+    // interval can temporarily make a stale projection appear current.
+    if file_exists(&projections, "stale")? {
+        return Ok(());
+    }
+    let bytes = format!("operation_id: {operation_id}\\n").into_bytes();'''
+              text = text.replace(anchor, guarded, 1)
+          operations.write_text(text, encoding="utf-8")
+          PY
+
+          cat > .github/workflows/recoverable-operations.yml <<'YAML'
+          name: Recoverable canonical operations
+
+          on:
+            pull_request:
+              paths:
+                - "Cargo.toml"
+                - "Cargo.lock"
+                - "contexts/workspace/**"
+                - "contexts/people/**"
+                - "crates/liaison-application/**"
+                - "crates/liaison-shared-kernel/**"
+                - "adapters/vault-markdown/**"
+                - ".github/workflows/recoverable-operations.yml"
+            push:
+              branches: [main]
+              paths:
+                - "Cargo.toml"
+                - "Cargo.lock"
+                - "contexts/workspace/**"
+                - "contexts/people/**"
+                - "crates/liaison-application/**"
+                - "crates/liaison-shared-kernel/**"
+                - "adapters/vault-markdown/**"
+                - ".github/workflows/recoverable-operations.yml"
+            workflow_dispatch:
+
+          permissions:
+            contents: read
+
+          jobs:
+            operation-engine:
+              name: Operation engine (${{ matrix.os }})
+              strategy:
+                fail-fast: false
+                matrix:
+                  os: [ubuntu-latest, macos-latest, windows-latest]
+              runs-on: ${{ matrix.os }}
+              steps:
+                - uses: actions/checkout@v4
+                - name: Show Rust toolchain
+                  run: rustc --version --verbose
+                - name: Check formatting
+                  run: cargo fmt --all --check
+                - name: Check operation packages
+                  run: cargo check -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-targets --all-features --locked
+                - name: Lint operation packages
+                  run: cargo clippy -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-targets --all-features --locked -- -D warnings
+                - name: Test operation packages
+                  run: cargo test -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-features --locked
+
+            repository-contracts:
+              runs-on: ubuntu-latest
+              steps:
+                - uses: actions/checkout@v4
+                - uses: actions/setup-python@v5
+                  with:
+                    python-version: "3.12"
+                - run: python scripts/check_architecture.py
+                - run: python scripts/check_repository.py
+                - run: python scripts/check_spec.py
+                - run: python scripts/generate_traceability.py --check
+          YAML
+
+          rm -f .github/workflows/apply-p03-validation-fixes.yml
+          rm -f .github/workflows/apply-p03-source-fixes-once.yml
+          rm -f .github/workflows/apply-p03-source-corrections-commit-once.yml
+          rm -f .github/workflows/finalize-p03-source-once.yml
+          cargo fmt --all
+          cargo generate-lockfile
+
+      - name: Commit the final ordinary source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "fix(workspace): make repeated recovery operations idempotent"
+          git push origin HEAD:feat/p03-recoverable-canonical-operations
