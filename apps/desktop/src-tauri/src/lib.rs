@@ -11,10 +11,12 @@
 )]
 
 use liaison_application::{
-    AppStatusDto, ApplicationError, BuildProfile, CommandResult, CreatePersonCommand,
-    InitialiseWorkspaceCommand, InspectWorkspaceHealthQuery, LiaisonApplication, ListPeopleQuery,
-    OpenWorkspaceCommand, PersonDto, WorkspaceClosedDto, WorkspaceOpenDto, WorkspaceProfile,
-    WorkspaceSessionCommand, WorkspaceSessionId, WorkspaceValidationDto,
+    AddEventAttendeeCommand, AppStatusDto, ApplicationError, ArchivePersonCommand,
+    BuildProfile, CommandResult, CreateEventCommand, CreatePersonCommand, EmailDto, EventDto,
+    EventId, InitialiseWorkspaceCommand, InspectWorkspaceHealthQuery, LiaisonApplication,
+    ListEventsQuery, ListPeopleQuery, NaiveDate, OpenWorkspaceCommand, PersonDto, PhoneDto,
+    ResolveAttendeeGapCommand, UpdatePersonCommand, WorkspaceClosedDto, WorkspaceOpenDto,
+    WorkspaceProfile, WorkspaceSessionCommand, WorkspaceSessionId, WorkspaceValidationDto,
 };
 use serde::Deserialize;
 use tauri::State;
@@ -35,6 +37,51 @@ struct CreatePersonRequest {
     session_id: WorkspaceSessionId,
     display_name: String,
     email: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct UpdatePersonRequest {
+    session_id: WorkspaceSessionId,
+    person_id: liaison_application::PersonId,
+    expected_revision: liaison_application::Revision,
+    display_name: String,
+    emails: Vec<EmailDto>,
+    phones: Vec<PhoneDto>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ArchivePersonRequest {
+    session_id: WorkspaceSessionId,
+    person_id: liaison_application::PersonId,
+    expected_revision: liaison_application::Revision,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CreateEventRequest {
+    session_id: WorkspaceSessionId,
+    name: String,
+    date: NaiveDate,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::struct_field_names)]
+struct AddEventAttendeeRequest {
+    session_id: WorkspaceSessionId,
+    event_id: EventId,
+    person_id: liaison_application::PersonId,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ResolveAttendeeGapRequest {
+    session_id: WorkspaceSessionId,
+    event_id: EventId,
+    row_id: u32,
+    action: String,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize)]
@@ -64,7 +111,6 @@ fn initialise_workspace(
 }
 
 #[tauri::command]
-#[allow(clippy::needless_pass_by_value)] // Tauri commands own deserialized arguments.
 fn open_workspace(
     application: State<'_, LiaisonApplication>,
     path: String,
@@ -89,6 +135,80 @@ fn create_person(
 }
 
 #[tauri::command]
+fn update_person(
+    application: State<'_, LiaisonApplication>,
+    request: UpdatePersonRequest,
+) -> Result<CommandResult<PersonDto>, ApplicationError> {
+    application.update_person(UpdatePersonCommand {
+        session_id: request.session_id,
+        person_id: request.person_id,
+        expected_revision: request.expected_revision,
+        display_name: request.display_name,
+        emails: request.emails,
+        phones: request.phones,
+    })
+}
+
+#[tauri::command]
+fn archive_person(
+    application: State<'_, LiaisonApplication>,
+    request: ArchivePersonRequest,
+) -> Result<CommandResult<PersonDto>, ApplicationError> {
+    application.archive_person(ArchivePersonCommand {
+        session_id: request.session_id,
+        person_id: request.person_id,
+        expected_revision: request.expected_revision,
+    })
+}
+
+#[tauri::command]
+fn create_event(
+    application: State<'_, LiaisonApplication>,
+    request: CreateEventRequest,
+) -> Result<CommandResult<EventDto>, ApplicationError> {
+    application.create_event(CreateEventCommand {
+        session_id: request.session_id,
+        name: request.name,
+        date: request.date,
+    })
+}
+
+#[tauri::command]
+fn list_events(
+    application: State<'_, LiaisonApplication>,
+    request: WorkspaceSessionRequest,
+) -> Result<CommandResult<Vec<EventDto>>, ApplicationError> {
+    application.list_events(ListEventsQuery {
+        session_id: request.session_id,
+    })
+}
+
+#[tauri::command]
+fn add_event_attendee(
+    application: State<'_, LiaisonApplication>,
+    request: AddEventAttendeeRequest,
+) -> Result<CommandResult<EventDto>, ApplicationError> {
+    application.add_event_attendee(AddEventAttendeeCommand {
+        session_id: request.session_id,
+        event_id: request.event_id,
+        person_id: request.person_id,
+    })
+}
+
+#[tauri::command]
+fn resolve_attendee_gap(
+    application: State<'_, LiaisonApplication>,
+    request: ResolveAttendeeGapRequest,
+) -> Result<CommandResult<EventDto>, ApplicationError> {
+    application.resolve_attendee_gap(ResolveAttendeeGapCommand {
+        session_id: request.session_id,
+        event_id: request.event_id,
+        row_id: request.row_id,
+        action: request.action,
+    })
+}
+
+#[tauri::command]
 fn validate_workspace(
     application: State<'_, LiaisonApplication>,
     request: WorkspaceSessionRequest,
@@ -97,7 +217,6 @@ fn validate_workspace(
 }
 
 #[tauri::command]
-#[allow(clippy::needless_pass_by_value)] // Tauri commands own deserialized arguments.
 fn inspect_workspace_health(
     application: State<'_, LiaisonApplication>,
     path: String,
@@ -190,6 +309,12 @@ pub fn run() {
             open_workspace,
             list_people,
             create_person,
+            update_person,
+            archive_person,
+            create_event,
+            list_events,
+            add_event_attendee,
+            resolve_attendee_gap,
             validate_workspace,
             inspect_workspace_health,
             close_workspace

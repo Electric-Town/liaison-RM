@@ -9,6 +9,7 @@ rust-version.workspace = true
 [dependencies]
 chrono.workspace = true
 getrandom.workspace = true
+liaison-events = { path = "../../contexts/events" }
 liaison-people = { path = "../../contexts/people" }
 liaison-shared-kernel = { path = "../liaison-shared-kernel" }
 liaison-vault-markdown = { path = "../../adapters/vault-markdown" }
