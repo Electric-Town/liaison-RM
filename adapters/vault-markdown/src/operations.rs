@@ -39,6 +39,10 @@ pub(crate) fn execute(
     execute_with_fault(root, workspace_id, context, writes, FaultPoint::None)
 }
 
+// The staged commit runs as one sequential procedure — stage, flush, record
+// the durable commit decision, publish, finish — that is clearer read top to
+// bottom than split across helpers whose only caller is this function.
+#[allow(clippy::too_many_lines)]
 pub(crate) fn execute_with_fault(
     root: &Dir,
     workspace_id: WorkspaceId,
@@ -651,6 +655,9 @@ fn progress_name(ordinal: u32) -> String {
     format!("{ordinal:08}.published")
 }
 
+// Takes the io::Error by value so callers can pass it straight out of a
+// `map_err` closure; it is only formatted, never retained.
+#[allow(clippy::needless_pass_by_value)]
 fn map_io(action: &str, error: io::Error) -> RecoverableOperationError {
     operation_error(
         RecoverableOperationErrorKind::Storage,

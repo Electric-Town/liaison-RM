@@ -847,6 +847,9 @@ fn workspace_error(error: &WorkspaceError, correlation_id: CommandId) -> Applica
     }
 }
 
+// One exhaustive match translating every session error into a stable
+// application error; it reads more clearly whole than split across helpers.
+#[allow(clippy::too_many_lines)]
 fn workspace_session_error(
     error: WorkspaceSessionError,
     correlation_id: CommandId,

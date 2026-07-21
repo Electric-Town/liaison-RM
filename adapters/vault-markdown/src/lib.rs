@@ -564,8 +564,9 @@ fn bound_save_person(
             if error.kind == RecoverableOperationErrorKind::Precondition {
                 let current = bound_find_person(root, person.id)
                     .ok()
-                    .map(|(_, parsed)| parsed.document.revision.get())
-                    .unwrap_or(expected_revision.get());
+                    .map_or(expected_revision.get(), |(_, parsed)| {
+                        parsed.document.revision.get()
+                    });
                 PeopleError::RevisionConflict {
                     expected: expected_revision.get(),
                     found: current,
@@ -1166,9 +1167,8 @@ mod tests {
             let work = session
                 .begin_work()
                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
-            let bound = people_mutation_repository(&work, operation_context());
-            let create = CreatePerson::new(&bound);
-            let person = create.execute(PersonId::new(), "Alex Murphy", None);
+            let person = CreatePerson::new(&people_mutation_repository(&work, operation_context()))
+                .execute(PersonId::new(), "Alex Murphy", None);
             assert!(person.is_ok());
             if let Ok(mut person) = person {
                 let path = MarkdownVault::find_person_path(root, person.id);
@@ -1185,7 +1185,11 @@ mod tests {
                         assert!(fs::write(&path, changed).is_ok());
                         let expected = person.revision;
                         assert!(person.rename("Alex M. Murphy").is_ok());
-                        assert!(bound.save(&person, expected).is_ok());
+                        assert!(
+                            people_mutation_repository(&work, operation_context())
+                                .save(&person, expected)
+                                .is_ok()
+                        );
                         let saved = fs::read_to_string(&path);
                         assert!(saved.is_ok());
                         if let Ok(saved) = saved {
@@ -1220,19 +1224,21 @@ mod tests {
             let work = session
                 .begin_work()
                 .unwrap_or_else(|error| unreachable!("test work must begin: {error}"));
-            let bound = people_mutation_repository(&work, operation_context());
-            let create = CreatePerson::new(&bound);
+            // Each canonical mutation is its own recoverable operation with a
+            // fresh operation context, as the application builds one per command.
             assert!(
-                create
+                CreatePerson::new(&people_mutation_repository(&work, operation_context()))
                     .execute(PersonId::new(), "Zara Example", None)
                     .is_ok()
             );
             assert!(
-                create
+                CreatePerson::new(&people_mutation_repository(&work, operation_context()))
                     .execute(PersonId::new(), "Alex Example", None)
                     .is_ok()
             );
-            let people = ListPeople::new(&bound).execute(false);
+            let people =
+                ListPeople::new(&people_mutation_repository(&work, operation_context()))
+                    .execute(false);
             assert!(people.is_ok());
             if let Ok(people) = people {
                 let names: Vec<&str> = people
