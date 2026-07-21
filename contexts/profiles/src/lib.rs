@@ -5,10 +5,15 @@
 
 #![allow(clippy::missing_errors_doc, clippy::module_name_repetitions)]
 
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter};
 use thiserror::Error;
+
+/// Field-id namespaces reserved for canonical identity and contact facts.
+/// A user-defined custom field cannot shadow, retype, or replace them.
+pub const RESERVED_FIELD_NAMESPACES: [&str; 4] = ["identity", "contact", "name", "dietary"];
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(transparent)]
@@ -119,6 +124,149 @@ pub enum FieldType {
     List,
 }
 
+impl FieldType {
+    /// Selection types constrain a value to an explicit option set.
+    #[must_use]
+    pub const fn is_selection(self) -> bool {
+        matches!(self, Self::Enum | Self::MultiSelect)
+    }
+
+    /// A calculated field is derived and read-only; a user never sets it.
+    #[must_use]
+    pub const fn is_user_writable(self) -> bool {
+        !matches!(self, Self::Calculated)
+    }
+
+    /// Validates one non-empty payload against this type and, for selection
+    /// types, the field's options. The payload is already trimmed and known
+    /// non-empty when this runs.
+    pub fn validate_payload(
+        self,
+        payload: &str,
+        options: Option<&FieldOptions>,
+    ) -> Result<(), ProfileError> {
+        let invalid = |reason: &'static str| Err(ProfileError::InvalidValue { kind: self, reason });
+        match self {
+            Self::ShortText => {
+                if payload
+                    .chars()
+                    .any(|character| character == '\n' || character == '\r')
+                {
+                    return invalid("short text must be a single line");
+                }
+                Ok(())
+            }
+            Self::Number | Self::Measurement => {
+                let number = payload.split_whitespace().next().unwrap_or(payload);
+                if number.parse::<f64>().is_err() {
+                    return invalid("must begin with a number");
+                }
+                Ok(())
+            }
+            Self::Boolean => match payload {
+                "true" | "false" => Ok(()),
+                _ => invalid("must be exactly true or false"),
+            },
+            Self::Date => match NaiveDate::parse_from_str(payload, "%Y-%m-%d") {
+                Ok(_) => Ok(()),
+                Err(_) => invalid("must be a real ISO date, YYYY-MM-DD"),
+            },
+            Self::PartialDate | Self::RecurringDate => {
+                if parse_partial_date(payload) {
+                    Ok(())
+                } else {
+                    invalid("must be YYYY-MM-DD or MM-DD with real month and day")
+                }
+            }
+            Self::Enum => {
+                let options = options.ok_or(ProfileError::OptionsRequired(self))?;
+                if options.contains(payload) {
+                    Ok(())
+                } else {
+                    invalid("value is not one of the field's options")
+                }
+            }
+            Self::MultiSelect => {
+                let options = options.ok_or(ProfileError::OptionsRequired(self))?;
+                let mut seen = BTreeSet::new();
+                let mut any = false;
+                for line in payload
+                    .lines()
+                    .map(str::trim)
+                    .filter(|line| !line.is_empty())
+                {
+                    any = true;
+                    if !options.contains(line) {
+                        return invalid("a selected value is not one of the field's options");
+                    }
+                    if !seen.insert(line.to_owned()) {
+                        return invalid("a value is selected more than once");
+                    }
+                }
+                if any {
+                    Ok(())
+                } else {
+                    invalid("select at least one option")
+                }
+            }
+            // Free-form and reference types accept any non-empty payload; the
+            // reference targets themselves are resolved by their owning context.
+            Self::LongText
+            | Self::Markdown
+            | Self::Address
+            | Self::Location
+            | Self::EntityReference
+            | Self::EntityReferenceList
+            | Self::ResourceReference
+            | Self::ResourceReferenceList
+            | Self::List
+            | Self::Sealed
+            | Self::Calculated => Ok(()),
+        }
+    }
+}
+
+/// The explicit, ordered option set for a selection field. Options are
+/// non-empty, unique, and single-line so a value can be matched exactly.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FieldOptions {
+    values: Vec<String>,
+}
+
+impl FieldOptions {
+    pub fn new(values: impl IntoIterator<Item = impl Into<String>>) -> Result<Self, ProfileError> {
+        let mut cleaned = Vec::new();
+        let mut seen = BTreeSet::new();
+        for value in values {
+            let value = value.into().trim().to_owned();
+            if value.is_empty() {
+                return Err(ProfileError::EmptyOption);
+            }
+            if value.contains('\n') || value.contains('\r') {
+                return Err(ProfileError::MultilineOption);
+            }
+            if !seen.insert(value.clone()) {
+                return Err(ProfileError::DuplicateOption(value));
+            }
+            cleaned.push(value);
+        }
+        if cleaned.is_empty() {
+            return Err(ProfileError::NoOptions);
+        }
+        Ok(Self { values: cleaned })
+    }
+
+    #[must_use]
+    pub fn contains(&self, value: &str) -> bool {
+        self.values.iter().any(|option| option == value)
+    }
+
+    #[must_use]
+    pub fn values(&self) -> &[String] {
+        &self.values
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Classification {
@@ -175,6 +323,7 @@ pub struct FieldDefinitionSpec {
     pub required_for: BTreeSet<PurposeId>,
     pub stale_after_days: Option<u32>,
     pub sealed_by_default: bool,
+    pub options: Option<FieldOptions>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -186,6 +335,7 @@ pub struct FieldDefinition {
     required_for: BTreeSet<PurposeId>,
     stale_after_days: Option<u32>,
     sealed_by_default: bool,
+    options: Option<FieldOptions>,
 }
 
 impl FieldDefinition {
@@ -197,6 +347,13 @@ impl FieldDefinition {
         if spec.stale_after_days == Some(0) {
             return Err(ProfileError::InvalidStaleness);
         }
+        // Options belong to selection types and to no others.
+        if spec.field_type.is_selection() && spec.options.is_none() {
+            return Err(ProfileError::OptionsRequired(spec.field_type));
+        }
+        if !spec.field_type.is_selection() && spec.options.is_some() {
+            return Err(ProfileError::OptionsNotAllowed(spec.field_type));
+        }
         Ok(Self {
             id: spec.id,
             label,
@@ -205,7 +362,25 @@ impl FieldDefinition {
             required_for: spec.required_for,
             stale_after_days: spec.stale_after_days,
             sealed_by_default: spec.sealed_by_default,
+            options: spec.options,
         })
+    }
+
+    /// A user-defined field. Everything `new` checks, plus the rule that a
+    /// custom field cannot occupy a reserved canonical namespace, so it can
+    /// never shadow, retype, or replace identity, contact, name, or the
+    /// constrained dietary facts.
+    pub fn new_custom(spec: FieldDefinitionSpec) -> Result<Self, ProfileError> {
+        let namespace = spec.id.as_str().split('.').next().unwrap_or_default();
+        if RESERVED_FIELD_NAMESPACES.contains(&namespace) {
+            return Err(ProfileError::ReservedFieldNamespace(spec.id));
+        }
+        Self::new(spec)
+    }
+
+    #[must_use]
+    pub const fn options(&self) -> Option<&FieldOptions> {
+        self.options.as_ref()
     }
 
     #[must_use]
@@ -325,6 +500,16 @@ impl FieldValue {
         }
         if state.forbids_payload() && payload.is_some() {
             return Err(ProfileError::StateForbidsValue(state));
+        }
+        if !definition.field_type().is_user_writable() && payload.is_some() {
+            return Err(ProfileError::CalculatedFieldIsReadOnly(
+                definition.id().clone(),
+            ));
+        }
+        if let Some(value) = payload.as_deref() {
+            definition
+                .field_type()
+                .validate_payload(value, definition.options())?;
         }
         if definition.classification().requires_sealed_storage() && !sealed {
             return Err(ProfileError::SensitiveValueIsNotSealed(
@@ -524,6 +709,44 @@ pub enum ProfileError {
     PurposeHasNoRequiredFields(PurposeId),
     #[error("purpose {0} must define at least one acceptable information state")]
     PurposeHasNoAcceptableStates(PurposeId),
+    #[error("value for a {kind:?} field is invalid: {reason}")]
+    InvalidValue {
+        kind: FieldType,
+        reason: &'static str,
+    },
+    #[error("a {0:?} field requires an option set")]
+    OptionsRequired(FieldType),
+    #[error("a {0:?} field must not define an option set")]
+    OptionsNotAllowed(FieldType),
+    #[error("an option must not be empty")]
+    EmptyOption,
+    #[error("an option must be a single line")]
+    MultilineOption,
+    #[error("duplicate option: {0}")]
+    DuplicateOption(String),
+    #[error("a selection field must define at least one option")]
+    NoOptions,
+    #[error("a calculated field {0} is read-only and cannot be set by a user")]
+    CalculatedFieldIsReadOnly(FieldId),
+    #[error("custom field {0} uses a reserved canonical namespace")]
+    ReservedFieldNamespace(FieldId),
+}
+
+/// Accepts `YYYY-MM-DD` or `MM-DD` (year unknown), rejecting impossible
+/// month/day combinations without inventing a year.
+fn parse_partial_date(value: &str) -> bool {
+    if NaiveDate::parse_from_str(value, "%Y-%m-%d").is_ok() {
+        return true;
+    }
+    let parts: Vec<&str> = value.split('-').filter(|part| !part.is_empty()).collect();
+    if parts.len() != 2 {
+        return false;
+    }
+    let (Ok(month), Ok(day)) = (parts[0].parse::<u32>(), parts[1].parse::<u32>()) else {
+        return false;
+    };
+    // A leap year makes 29 February valid when the year is unknown.
+    NaiveDate::from_ymd_opt(2024, month, day).is_some()
 }
 
 fn normalized_required(
@@ -567,9 +790,9 @@ fn valid_id_segment(value: &str, allow_underscore: bool) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        Classification, FieldDefinition, FieldDefinitionSpec, FieldId, FieldType, FieldValue,
-        InformationState, ProfileError, ProfileSnapshot, PurposeDefinition, PurposeId, TopicPack,
-        TopicPackId,
+        Classification, FieldDefinition, FieldDefinitionSpec, FieldId, FieldOptions, FieldType,
+        FieldValue, InformationState, ProfileError, ProfileSnapshot, PurposeDefinition, PurposeId,
+        TopicPack, TopicPackId,
     };
     use std::collections::BTreeSet;
 
@@ -586,6 +809,24 @@ mod tests {
             required_for: BTreeSet::new(),
             stale_after_days: None,
             sealed_by_default,
+            options: None,
+        })
+    }
+
+    fn typed_field(
+        id: &str,
+        field_type: FieldType,
+        options: Option<FieldOptions>,
+    ) -> Result<FieldDefinition, ProfileError> {
+        FieldDefinition::new(FieldDefinitionSpec {
+            id: FieldId::parse(id)?,
+            label: "Typed fixture".to_owned(),
+            field_type,
+            classification: Classification::Public,
+            required_for: BTreeSet::new(),
+            stale_after_days: None,
+            sealed_by_default: false,
+            options,
         })
     }
 
@@ -716,5 +957,173 @@ mod tests {
             vec![first.clone(), first],
         );
         assert_eq!(pack, Err(ProfileError::DuplicateFieldId));
+    }
+
+    fn value(definition: &FieldDefinition, payload: &str) -> Result<FieldValue, ProfileError> {
+        FieldValue::new(
+            definition,
+            InformationState::Known,
+            Some(payload.to_owned()),
+            false,
+        )
+    }
+
+    #[test]
+    fn typed_values_are_validated_against_their_field_type() {
+        let Ok(number) = typed_field("health.resting_rate", FieldType::Number, None) else {
+            return;
+        };
+        assert!(value(&number, "58").is_ok());
+        assert!(value(&number, "58 bpm").is_ok());
+        assert!(matches!(
+            value(&number, "fast"),
+            Err(ProfileError::InvalidValue { .. })
+        ));
+
+        let Ok(flag) = typed_field("travel.window_seat", FieldType::Boolean, None) else {
+            return;
+        };
+        assert!(value(&flag, "true").is_ok());
+        assert!(matches!(
+            value(&flag, "yes"),
+            Err(ProfileError::InvalidValue { .. })
+        ));
+
+        let Ok(date) = typed_field("dates.joined_on", FieldType::Date, None) else {
+            return;
+        };
+        assert!(
+            value(&date, "2026-02-29").is_err(),
+            "2026 is not a leap year"
+        );
+        assert!(value(&date, "2024-02-29").is_ok());
+        assert!(matches!(
+            value(&date, "the fifth"),
+            Err(ProfileError::InvalidValue { .. })
+        ));
+    }
+
+    #[test]
+    fn a_partial_date_accepts_a_month_and_day_without_a_year() {
+        let Ok(birthday) = typed_field("dates.birthday", FieldType::PartialDate, None) else {
+            return;
+        };
+        assert!(value(&birthday, "08-14").is_ok());
+        assert!(value(&birthday, "02-29").is_ok());
+        assert!(value(&birthday, "1990-08-14").is_ok());
+        assert!(matches!(
+            value(&birthday, "13-40"),
+            Err(ProfileError::InvalidValue { .. })
+        ));
+    }
+
+    #[test]
+    fn selection_fields_require_options_and_constrain_the_value() {
+        // A non-selection type must not carry options.
+        assert!(matches!(
+            typed_field(
+                "notes.free",
+                FieldType::ShortText,
+                FieldOptions::new(["a"]).ok(),
+            ),
+            Err(ProfileError::OptionsNotAllowed(_))
+        ));
+        // A selection type must carry options.
+        assert!(matches!(
+            typed_field("food.style", FieldType::Enum, None),
+            Err(ProfileError::OptionsRequired(_))
+        ));
+
+        let Ok(options) = FieldOptions::new(["vegetarian", "vegan", "omnivore"]) else {
+            return;
+        };
+        let Ok(style) = typed_field("food.style", FieldType::Enum, Some(options)) else {
+            return;
+        };
+        assert!(value(&style, "vegan").is_ok());
+        assert!(matches!(
+            value(&style, "pescatarian"),
+            Err(ProfileError::InvalidValue { .. })
+        ));
+
+        let Ok(multi_options) = FieldOptions::new(["nuts", "gluten", "dairy"]) else {
+            return;
+        };
+        let Ok(avoids) = typed_field("food.avoids", FieldType::MultiSelect, Some(multi_options))
+        else {
+            return;
+        };
+        assert!(value(&avoids, "nuts\ndairy").is_ok());
+        assert!(matches!(
+            value(&avoids, "nuts\nshellfish"),
+            Err(ProfileError::InvalidValue { .. })
+        ));
+        assert!(matches!(
+            value(&avoids, "nuts\nnuts"),
+            Err(ProfileError::InvalidValue { .. })
+        ));
+    }
+
+    #[test]
+    fn field_options_reject_empty_and_duplicate_values() {
+        assert!(matches!(
+            FieldOptions::new([" "]),
+            Err(ProfileError::EmptyOption)
+        ));
+        assert!(matches!(
+            FieldOptions::new(["a", "a"]),
+            Err(ProfileError::DuplicateOption(_))
+        ));
+        assert!(matches!(
+            FieldOptions::new(Vec::<String>::new()),
+            Err(ProfileError::NoOptions)
+        ));
+    }
+
+    #[test]
+    fn a_custom_field_cannot_shadow_a_reserved_canonical_namespace() {
+        let reserved = FieldDefinition::new_custom(FieldDefinitionSpec {
+            id: match FieldId::parse("contact.email") {
+                Ok(id) => id,
+                Err(_) => return,
+            },
+            label: "My email".to_owned(),
+            field_type: FieldType::ShortText,
+            classification: Classification::Public,
+            required_for: BTreeSet::new(),
+            stale_after_days: None,
+            sealed_by_default: false,
+            options: None,
+        });
+        assert!(matches!(
+            reserved,
+            Err(ProfileError::ReservedFieldNamespace(_))
+        ));
+
+        let allowed = FieldDefinition::new_custom(FieldDefinitionSpec {
+            id: match FieldId::parse("hobbies.instrument") {
+                Ok(id) => id,
+                Err(_) => return,
+            },
+            label: "Instrument".to_owned(),
+            field_type: FieldType::ShortText,
+            classification: Classification::Public,
+            required_for: BTreeSet::new(),
+            stale_after_days: None,
+            sealed_by_default: false,
+            options: None,
+        });
+        assert!(allowed.is_ok());
+    }
+
+    #[test]
+    fn a_calculated_field_rejects_a_user_supplied_value() {
+        let Ok(derived) = typed_field("stats.age", FieldType::Calculated, None) else {
+            return;
+        };
+        assert!(matches!(
+            value(&derived, "34"),
+            Err(ProfileError::CalculatedFieldIsReadOnly(_))
+        ));
     }
 }

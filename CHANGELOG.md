@@ -78,6 +78,8 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - The Editorial Ledger direction applied to the desktop review shell: the approved paper-canvas palette in light and dark with a measured contrast registry and validator (the previously rejected dark highlight pairing now measures 8.12:1), locally bundled OFL-licensed Atkinson Hyperlegible Next, Source Serif 4, and IBM Plex Mono subsets with recorded hashes and no runtime network requests, a dotted note-paper canvas that never underlies text surfaces, one hard-offset primary work surface per page, provenance typography for paths and revisions, 48-pixel primary controls, and updated desktop contrast and dark-mode gates.
 - An Events bounded-context domain core: event and attendee lifecycle with superseding corrections and an exact active deduplicated denominator, orthogonal dietary facts, an ordered versioned fail-closed readiness decision table that cannot derive verified none from unknown, and least-disclosure catering-brief content with deterministic preview-equals-sealed bytes, opaque-token gating, and stale marking that never rewrites history.
 
+- Typed custom-field values in the Profiles context: each field value is now validated against its field type — numbers, booleans, ISO and partial dates (a month and day without a year), and single/multi-select options — with an explicit, ordered, unique option set required for selection fields and forbidden for others. Calculated fields are read-only, and a user-defined custom field cannot occupy a reserved canonical namespace (identity, contact, name, dietary), so it can never shadow, retype, or replace those facts.
+
 ### Changed
 
 - Windows first-use registry creation now uses a cross-process initialisation

@@ -1887,7 +1887,7 @@ dependencies = [
  "liaison-shared-kernel",
  "serde",
  "sha2",
- "thiserror 2.0.18",
+ "thiserror 2.0.19",
  "uuid",
 ]
 
@@ -1926,7 +1926,9 @@ dependencies = [
 name = "liaison-profiles"
 version = "0.1.0-alpha.1"
 dependencies = [
+ "chrono",
  "serde",
+ "serde_json",
  "thiserror 2.0.19",
 ]
 
