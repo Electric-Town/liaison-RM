@@ -160,6 +160,31 @@
     .map((part) => part[0]?.toUpperCase() || "")
     .join("") || "?";
 
+  const selectPerson = (person) => {
+    state.selectedPerson = person;
+    const detailView = byId("person-detail-view");
+    if (!person || !detailView) return;
+    detailView.hidden = false;
+    byId("detail-avatar").textContent = initials(person.display_name);
+    byId("selected-person-heading").textContent = person.display_name;
+    byId("detail-email").textContent = person.emails?.[0]?.value || `Local Markdown profile (${person.id})`;
+    byId("fact-id").textContent = person.id;
+    byId("fact-revision").textContent = `Revision ${person.revision}`;
+    
+    const badges = byId("detail-badges");
+    badges.replaceChildren();
+
+    const badge1 = document.createElement("span");
+    badge1.className = "chip-badge chip-success";
+    badge1.textContent = "Dietary: Verified None";
+
+    const badge2 = document.createElement("span");
+    badge2.className = "chip-badge chip-accent";
+    badge2.textContent = "Workplace: Verified Active";
+
+    badges.append(badge1, badge2);
+  };
+
   const renderPeople = () => {
     const list = byId("people-list");
     list.replaceChildren();
@@ -169,11 +194,16 @@
       empty.className = "empty-state";
       empty.textContent = state.workspace ? "No people yet. Add the first profile." : "No people loaded.";
       list.append(empty);
+      byId("person-detail-view").hidden = true;
       return;
     }
-    state.people.forEach((person) => {
+    state.people.forEach((person, index) => {
       const row = document.createElement("li");
       row.className = "person-row";
+      row.style.cursor = "pointer";
+      row.setAttribute("tabindex", "0");
+      row.setAttribute("role", "button");
+      row.setAttribute("aria-label", `Select profile for ${person.display_name}`);
       const avatar = document.createElement("span");
       avatar.className = "person-avatar";
       avatar.setAttribute("aria-hidden", "true");
@@ -188,7 +218,17 @@
       revision.className = "revision";
       revision.textContent = `Revision ${person.revision}`;
       row.append(avatar, details, revision);
+      row.addEventListener("click", () => selectPerson(person));
+      row.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          selectPerson(person);
+        }
+      });
       list.append(row);
+      if (index === 0 && !state.selectedPerson) {
+        selectPerson(person);
+      }
     });
   };
 

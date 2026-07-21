@@ -148,6 +148,59 @@
             </ul>
           </section>
         </div>
+
+        <section id="person-detail-view" class="profile-card" aria-labelledby="selected-person-heading" style="margin-top:1.25rem;" hidden>
+          <div class="profile-header">
+            <div class="profile-identity">
+              <div id="detail-avatar" class="profile-avatar-large" aria-hidden="true">--</div>
+              <div>
+                <h2 id="selected-person-heading" style="margin:0; font-family:var(--font-title); font-size:1.5rem;">Select a person</h2>
+                <p id="detail-email" style="margin:0.2rem 0 0; color:var(--muted); font-size:0.9rem;">Select a profile to view structured Topic Packs, dietary facts, and commitment timeline.</p>
+                <div id="detail-badges" class="chip-badges"></div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+              <label for="purpose-select" class="visually-hidden">Assessment Purpose</label>
+              <select id="purpose-select" style="width:auto; min-height:40px; padding:0.4rem 0.6rem;">
+                <option value="catering" selected>Catering Brief</option>
+                <option value="workplace">Workplace Review</option>
+                <option value="general">General Memory</option>
+              </select>
+              <button id="export-brief-button" class="secondary-button" type="button" data-native-operation="session">Export Brief</button>
+            </div>
+          </div>
+
+          <div role="tablist" aria-label="Topic Packs" class="topic-tabs">
+            <button role="tab" aria-selected="true" class="topic-tab is-active" type="button" data-topic="identity">Identity & Contact</button>
+            <button role="tab" aria-selected="false" class="topic-tab" type="button" data-topic="dietary">Dietary & Hospitality</button>
+            <button role="tab" aria-selected="false" class="topic-tab" type="button" data-topic="workplace">Accessibility & Workplace</button>
+            <button role="tab" aria-selected="false" class="topic-tab" type="button" data-topic="dates">Promises & Commitments</button>
+          </div>
+
+          <div class="two-column" style="margin-top:1rem;">
+            <div id="topic-pack-content">
+              <h3>Structured Facts</h3>
+              <dl id="fact-summary-list" class="summary-list">
+                <div><dt>Canonical ID</dt><dd id="fact-id">—</dd></div>
+                <div><dt>Revision</dt><dd id="fact-revision">—</dd></div>
+                <div><dt>Dietary Facts</dt><dd id="fact-dietary">Verified None</dd></div>
+                <div><dt>Workplace Location</dt><dd id="fact-location">Building A · Floor 3</dd></div>
+              </dl>
+            </div>
+
+            <div>
+              <h3>Timeline & Reason-Only Queue</h3>
+              <div class="timeline-card">
+                <strong>Promise: Venue shortlist</strong>
+                <p>Promised for Friday. Last note: keep the room step-free.</p>
+              </div>
+              <div class="timeline-card" style="border-left-color:var(--warning);">
+                <strong>Review Reason</strong>
+                <p>Dietary facts last confirmed 180 days ago. Reason-only review queued (no score assigned).</p>
+              </div>
+            </div>
+          </div>
+        </section>
       </section>
 
       <section class="page" data-page="health" aria-labelledby="health-heading" hidden>

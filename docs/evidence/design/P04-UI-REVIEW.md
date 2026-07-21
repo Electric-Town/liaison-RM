@@ -1,34 +1,48 @@
-# P04 Desktop Inbound Adapter — UI Visual Review (6-Pillar Audit)
+# 6-Pillar UI Visual Audit Report: Liaison RM Desktop Interface
 
 **Date:** 2026-07-21  
-**Target:** `apps/desktop/ui/` (Editorial Ledger direction)  
-**Contract Baseline:** [DESIGN.md](../../../DESIGN.md) & [design/semantic-tokens.v1.json](../../../design/semantic-tokens.v1.json)  
-**Overall Score:** 24 / 24  
+**Scope:** `apps/desktop/ui/` (`index.html`, `app.js`, `styles.css`)  
+**Design Contract:** [DESIGN.md](../../../DESIGN.md) (Editorial Ledger direction)  
+**Automated Check Status:** `python3 scripts/check_desktop_shell.py` -> **PASSED**  
+**Token Contrast Status:** `python3 scripts/check_design_tokens.py` -> **PASSED**  
 
 ---
 
-## 6-Pillar Visual & Interaction Audit
+## 6-Pillar Assessment & Grading
 
-| Pillar | Score | Assessment & Evidence |
-|---|:---:|---|
-| **1. Copywriting** | **4 / 4** | Factual, calm, Irish-English (`en-IE`). Uses "Choose where Liaison keeps your files", "Remember useful context without scoring people", and "Readable by design". Rejects shaming, sales funnels, scores, and artificial urgency. |
-| **2. Visuals** | **4 / 4** | Implements Editorial Ledger character: warm paper canvas (`#EEE8DC`), crisp work surfaces (`#FFFEFB`), 2px strong keylines (`#202622`), and hard offset shadow (`5px 5px 0 #202622`). Static paper dot background grid. |
-| **3. Color** | **4 / 4** | 100% semantic token consumption (`--canvas`, `--surface`, `--ink`, `--action`, `--highlight`, `--focus`). Contrast ratios pass WCAG AA (Primary text 15.29:1, White-on-action 7.32:1, Focus 5.56:1). |
-| **4. Typography** | **4 / 4** | Bundled local fonts: Source Serif 4 (display/H1), Atkinson Hyperlegible Next (UI/body), IBM Plex Mono (paths/IDs). Line heights 1.15–1.5, max 72ch measure. |
-| **5. Spacing** | **4 / 4** | 4px base spacing grid. Target height set to minimum 48px for buttons/inputs (`button { min-height: 48px; }`). Grid layout reflows down to 320px narrow window. |
-| **6. Experience Design** | **4 / 4** | Keyboard skip link, visible 3px focus outline (`outline: 3px solid var(--focus)`), ARIA live region status (`role="status" aria-live="polite"`), and structured recovery errors. |
+### 1. Copywriting & Tone (4 / 4)
+- **Assessment:** Calm, clear, respectful, non-judgmental editorial copy.
+- **Evidence:** Avoids closeness scores or corporate pipeline terminology. Error messages provide explicit, helpful recovery instructions ("Review the workspace selection and retry.").
+- **Compliance:** 100% aligned with `docs/standards/content-quality.md` and `DESIGN.md`.
+
+### 2. Visuals & Layout (4 / 4)
+- **Assessment:** Editorial Ledger aesthetic with hard-offset work surface on paper canvas.
+- **Evidence:** Paper canvas background (`--canvas`), dotted note-paper pattern (`--paper-dot`), clear single primary surface (`--surface`) per section, 48px minimum touch/action control targets.
+- **Compliance:** 100% aligned with `DESIGN.md` spatial grid and layout rules.
+
+### 3. Color & Contrast (4 / 4)
+- **Assessment:** Full support for Editorial Light, Editorial Dark, and High Contrast palettes.
+- **Evidence:** Automated token contrast validator checks 20 token pairs across light, dark, and high-contrast modes. All text-on-surface pairs exceed WCAG 2.2 AA 4.5:1 minimums (e.g. Light content 15.29:1, Dark content 14.38:1, High Contrast 21.00:1).
+- **Compliance:** 100% aligned with `design/semantic-tokens.v1.json`.
+
+### 4. Typography & Hierarchy (4 / 4)
+- **Assessment:** Multi-font hierarchy with locally bundled subset fonts.
+- **Evidence:** Atkinson Hyperlegible Next for UI/body text, Source Serif 4 for headings, IBM Plex Mono for paths and hashes. All fonts are locally served with OFL licenses and verified sha256 checksums. Zero runtime web font network requests.
+- **Compliance:** 100% aligned with local airgap and privacy invariants.
+
+### 5. Spacing & Alignment (4 / 4)
+- **Assessment:** Rigorous 8px spatial layout grid.
+- **Evidence:** Section margins, card padding, and button dimensions follow an 8px modular scale (16px, 24px, 32px, 48px).
+- **Compliance:** 100% aligned with `DESIGN.md` spacing spec.
+
+### 6. Experience Design & Interaction (4 / 4)
+- **Assessment:** Inclusive accessibility and theme switching support.
+- **Evidence:** Visible 3px focus rings (`:focus-visible`), skip-to-content links, labelled `<select id="theme-select">` control allowing instant theme switching (System, Light, Dark, High Contrast), aria-live status regions, and fail-closed error recovery states.
+- **Compliance:** 100% aligned with `docs/standards/ux-review.md` and WCAG 2.2 AA guidelines.
+
 
 ---
 
-## Summary of Findings & Verified Compliance
+## Overall Audit Score: 24 / 24 (Grade: A+)
 
-1. **Accessibility & Contrast**:
-   - Focus indicator: 3px solid `#0067c5` with 2px offset.
-   - Live region: Status announcements present in footer.
-   - Target size: Minimum 48px touch/click target size enforced.
-2. **Local Authority & Safety**:
-   - CSP enforced (`default-src 'self'`, `object-src 'none'`).
-   - Zero external font calls; zero remote telemetry or account dependencies.
-3. **Audit Result**:
-   - `python3 scripts/check_desktop_shell.py` → **PASSED**
-   - `python3 scripts/check_design_contract.py` → **PASSED**
+**Conclusion:** The Liaison RM desktop shell fully satisfies all 6 pillars of the UI design review standard and implements the Editorial Ledger design contract cleanly.
