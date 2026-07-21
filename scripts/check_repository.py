@@ -36,7 +36,7 @@ VAGUE_TERMS = {
     "revolutionary",
 }
 
-EXCLUDED_DIRS = {".git", "target", "node_modules", "dist", "vendor"}
+EXCLUDED_DIRS = {".git", "target", "node_modules", "dist", "vendor", ".claude", ".gstack", ".gemini"}
 
 
 def text_files() -> list[Path]:

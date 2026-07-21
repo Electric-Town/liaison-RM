@@ -6,6 +6,7 @@ use cap_std::{
 use tempfile::tempdir;
 
 #[test]
+#[cfg(target_os = "windows")]
 fn writable_capability_directory_handle_can_be_synced() -> Result<(), Box<dyn std::error::Error>> {
     let temporary = tempdir()?;
     let directory = Dir::open_ambient_dir(temporary.path(), ambient_authority())?;
