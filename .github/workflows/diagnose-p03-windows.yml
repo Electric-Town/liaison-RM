@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/diagnose-p03-windows.yml"
+      - "crates/liaison-application/tests/windows_operation_diagnostic.rs"
 
 permissions:
   contents: read
@@ -16,11 +17,11 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Capture repeated-mutation integration test
+      - name: Capture the first canonical mutation state
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path diagnostics | Out-Null
-          cargo test -p liaison-application --test repeated_canonical_mutations --all-features --locked -- --nocapture *> diagnostics/p03-windows-tests.txt
+          cargo test -p liaison-application --test windows_operation_diagnostic --all-features --locked -- --nocapture *> diagnostics/p03-windows-tests.txt
           $status = $LASTEXITCODE
           Set-Content -Path diagnostics/status.txt -Value $status
           exit 0
