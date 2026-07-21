@@ -76,6 +76,8 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 - An Organisations and Groups bounded context adapted from the preserved organisations branch: organisations, locations, and groups as stable named records, effective-dated memberships carrying typed role, department, cost centre, location, primary flag, required provenance source, and record date, plus as-of snapshot queries so a department move creates a new membership and historical reports keep the membership that applied at the time.
 - The Editorial Ledger direction applied to the desktop review shell: the approved paper-canvas palette in light and dark with a measured contrast registry and validator (the previously rejected dark highlight pairing now measures 8.12:1), locally bundled OFL-licensed Atkinson Hyperlegible Next, Source Serif 4, and IBM Plex Mono subsets with recorded hashes and no runtime network requests, a dotted note-paper canvas that never underlies text surfaces, one hard-offset primary work surface per page, provenance typography for paths and revisions, 48-pixel primary controls, and updated desktop contrast and dark-mode gates.
 
+- Typed custom-field values in the Profiles context: each field value is now validated against its field type — numbers, booleans, ISO and partial dates (a month and day without a year), and single/multi-select options — with an explicit, ordered, unique option set required for selection fields and forbidden for others. Calculated fields are read-only, and a user-defined custom field cannot occupy a reserved canonical namespace (identity, contact, name, dietary), so it can never shadow, retype, or replace those facts.
+
 ### Changed
 
 - Windows first-use registry creation now uses a cross-process initialisation
