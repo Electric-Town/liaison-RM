@@ -1,0 +1,31 @@
+name: Diagnose P03 Windows tests once
+
+on:
+  push:
+    branches: [fix/p03-post-merge-hardening]
+    paths:
+      - ".github/workflows/diagnose-p03-windows.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: windows-2025
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture operation-package tests
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path diagnostics | Out-Null
+          cargo test -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-features --locked -- --nocapture *> diagnostics/p03-windows-tests.txt
+          $status = $LASTEXITCODE
+          Set-Content -Path diagnostics/status.txt -Value $status
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p03-windows-test-diagnostics
+          path: diagnostics
+          if-no-files-found: error
+          retention-days: 1
