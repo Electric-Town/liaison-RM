@@ -1,0 +1,97 @@
+name: Apply P03 source fixes once
+
+on:
+  push:
+    branches: [feat/p03-recoverable-canonical-operations]
+    paths:
+      - ".github/workflows/apply-p03-source-fixes-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p03-recoverable-canonical-operations
+          fetch-depth: 0
+
+      - name: Apply reviewed Rust corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          lib = Path("adapters/vault-markdown/src/lib.rs")
+          text = lib.read_text(encoding="utf-8")
+          fallback = re.compile(
+              r"(?P<i>[ \t]*)let current = bound_find_person\(root, person\.id\)\n"
+              r"(?P=i)    \.ok\(\)\n"
+              r"(?P=i)    \.map\(\|\(_, parsed\)\| parsed\.document\.revision\.get\(\)\)\n"
+              r"(?P=i)    \.unwrap_or\(expected_revision\.get\(\)\);"
+          )
+          def replace_fallback(match: re.Match[str]) -> str:
+              indent = match.group("i")
+              return (
+                  f"{indent}let current = bound_find_person(root, person.id)\n"
+                  f"{indent}    .ok()\n"
+                  f"{indent}    .map_or(expected_revision.get(), |(_, parsed)| {{\n"
+                  f"{indent}        parsed.document.revision.get()\n"
+                  f"{indent}    }});"
+              )
+          text, count = fallback.subn(replace_fallback, text, count=1)
+          if count == 0 and ".map_or(expected_revision.get(), |(_, parsed)|" not in text:
+              raise SystemExit("Person revision fallback pattern was not found")
+          lib.write_text(text, encoding="utf-8")
+
+          operations = Path("adapters/vault-markdown/src/operations.rs")
+          text = operations.read_text(encoding="utf-8")
+          if 'if file_exists(&projections, "stale")?' not in text:
+              marker = re.compile(
+                  r'(?P<prefix>let projections = root\n'
+                  r'(?:(?!let bytes =).)*?'
+                  r')(?P<i>[ \t]*)let bytes = format!\("operation_id: \{operation_id\}\\n"\)\.into_bytes\(\);',
+                  re.DOTALL,
+              )
+              match = marker.search(text)
+              if match is None:
+                  raise SystemExit("projection stale-marker publication block was not found")
+              indent = match.group("i")
+              replacement = (
+                  match.group("prefix")
+                  + f'{indent}// An existing regular marker already proves all projections are stale.\n'
+                  + f'{indent}// Keep it in place so repeated committed operations are idempotent and\n'
+                  + f'{indent}// there is no crash window in which stale evidence disappears.\n'
+                  + f'{indent}if file_exists(&projections, "stale")? {{\n'
+                  + f'{indent}    return Ok(());\n'
+                  + f'{indent}}}\n'
+                  + f'{indent}let bytes = format!("operation_id: {{operation_id}}\\n").into_bytes();'
+              )
+              text = text[: match.start()] + replacement + text[match.end() :]
+          operations.write_text(text, encoding="utf-8")
+          PY
+          cargo fmt --all
+          cargo generate-lockfile
+          cargo check -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-targets --all-features --locked
+          cargo clippy -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-targets --all-features --locked -- -D warnings
+          cargo test -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-features --locked
+
+      - name: Commit ordinary source corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add adapters/vault-markdown/src/lib.rs adapters/vault-markdown/src/operations.rs Cargo.lock
+          if git diff --cached --quiet; then
+            echo "P03 source corrections are already present."
+            exit 0
+          fi
+          git diff --cached --check
+          git commit -m "fix(workspace): make recovery idempotent across repeated operations"
+          git push origin HEAD:feat/p03-recoverable-canonical-operations
