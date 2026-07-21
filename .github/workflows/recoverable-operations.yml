@@ -45,7 +45,20 @@ jobs:
       - name: Lint operation packages
         run: cargo clippy -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-targets --all-features --locked -- -D warnings
       - name: Test operation packages
-        run: cargo test -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-features --locked
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p target/operation-test-logs
+          cargo test -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-features --locked -- --nocapture 2>&1 \
+            | tee "target/operation-test-logs/${{ runner.os }}.log"
+      - name: Upload operation test diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: operation-test-${{ runner.os }}
+          path: target/operation-test-logs/${{ runner.os }}.log
+          if-no-files-found: error
+          retention-days: 7
 
   repository-contracts:
     runs-on: ubuntu-latest
