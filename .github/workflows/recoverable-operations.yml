@@ -44,21 +44,36 @@ jobs:
         run: cargo check -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-targets --all-features --locked
       - name: Lint operation packages
         run: cargo clippy -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-targets --all-features --locked -- -D warnings
+      - name: Test repeated canonical mutations
+        id: focused-tests
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p target/operation-test-logs
+          cargo test -p liaison-application --test repeated_canonical_mutations --all-features --locked -- --nocapture 2>&1 \
+            | tee "target/operation-test-logs/${{ runner.os }}-focused.log"
       - name: Test operation packages
+        id: package-tests
+        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
           mkdir -p target/operation-test-logs
           cargo test -p liaison-workspace -p liaison-vault-markdown -p liaison-application --all-features --locked -- --nocapture 2>&1 \
-            | tee "target/operation-test-logs/${{ runner.os }}.log"
+            | tee "target/operation-test-logs/${{ runner.os }}-packages.log"
       - name: Upload operation test diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: operation-test-${{ runner.os }}
-          path: target/operation-test-logs/${{ runner.os }}.log
+          path: target/operation-test-logs/*.log
           if-no-files-found: error
           retention-days: 7
+      - name: Enforce test results
+        if: steps.focused-tests.outcome == 'failure' || steps.package-tests.outcome == 'failure'
+        shell: bash
+        run: exit 1
 
   repository-contracts:
     runs-on: ubuntu-latest
