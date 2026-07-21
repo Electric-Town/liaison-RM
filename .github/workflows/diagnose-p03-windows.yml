@@ -17,7 +17,7 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - name: Capture the operation state after the Windows directory-flush fix
+      - name: Validate Windows directory durability and handle release
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path diagnostics | Out-Null
@@ -54,7 +54,24 @@ jobs:
           }'''
           if old not in text:
               raise SystemExit("expected directory-sync function was not found")
-          source.write_text(text.replace(old, new, 1), encoding="utf-8")
+          text = text.replace(old, new, 1)
+
+          old_release = '''    sync_directory(&staged).map_err(|error| {
+              map_io("flush staged directory", error).with_operation(context.operation_id)
+          })?;
+
+          let manifest_bytes ='''
+          new_release = '''    sync_directory(&staged).map_err(|error| {
+              map_io("flush staged directory", error).with_operation(context.operation_id)
+          })?;
+          // Windows does not allow the staged directory to be removed while this
+          // capability handle remains open. Release it before completion cleanup.
+          drop(staged);
+
+          let manifest_bytes ='''
+          if old_release not in text:
+              raise SystemExit("expected staged-directory flush block was not found")
+          source.write_text(text.replace(old_release, new_release, 1), encoding="utf-8")
           '@ | Set-Content -Path diagnostics/patch_operations.py
           python diagnostics/patch_operations.py
           cargo fmt --all
