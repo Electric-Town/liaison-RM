@@ -35,9 +35,8 @@ reject copied workspaces with the same identity even when `HOME`/XDG values
 differ. Flatpak, macOS App Sandbox, and Windows AppContainer host/GUI pairings
 remain explicitly unsupported until a shared authority broker/namespace exists
 and are not treated as valid fallback registries. `T-B0-P02` is complete with accepted exact-head platform evidence.
-pending exact-head native Linux, macOS, and Windows evidence.
 
-The application also does not yet provide a complete event workflow, encrypted recovery, recoverable multi-target writes, final mutation preconditions, pinned OKF People authoring or normalization, Directory projection, supported Airgap proof, or Personal Memory Alpha. Recovery, key, and projection capabilities remain explicitly unavailable until their owning phases land. Local P02 source-worktree evidence is recorded, but exact-head remote Linux, macOS, and Windows matrices and installed-artifact requalification remain pending. Documentation and prototypes describing later features are plans until exact-head implementation evidence exists.
+The application also does not yet provide a complete event workflow, encrypted recovery, recoverable multi-target writes, final mutation preconditions, pinned OKF People authoring or normalization, Directory projection, supported Airgap proof, or Personal Memory Alpha. Recovery, key, and projection capabilities remain explicitly unavailable until their owning phases land. Exact-head P02 Linux, macOS, and Windows evidence is accepted, but installed-artifact requalification remains pending. Documentation and prototypes describing later features are plans until exact-head implementation evidence exists.
 
 The current review-build navigation therefore keeps Events absent until
 `T-B0-P11` delivers the complete compiled workflow. A route placeholder,
