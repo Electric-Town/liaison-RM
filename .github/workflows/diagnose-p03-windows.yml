@@ -5,7 +5,6 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/diagnose-p03-windows.yml"
-      - "adapters/vault-markdown/tests/windows_directory_sync_probe.rs"
 
 permissions:
   contents: read
@@ -14,14 +13,53 @@ jobs:
   diagnose:
     if: github.head_ref == 'fix/p03-post-merge-hardening'
     runs-on: windows-2025
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - name: Capture capability-directory sync probe
+      - name: Validate the capability-safe Windows directory flush
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path diagnostics | Out-Null
-          cargo test -p liaison-vault-markdown --test windows_directory_sync_probe --all-features --locked -- --nocapture *> diagnostics/p03-windows-tests.txt
+          @'
+          from pathlib import Path
+
+          source = Path("adapters/vault-markdown/src/operations.rs")
+          text = source.read_text(encoding="utf-8")
+          import_line = "use cap_fs_ext::{DirExt, FollowSymlinks, OpenOptionsFollowExt};\n"
+          replacement_import = (
+              "#[cfg(windows)]\n"
+              "use cap_fs_ext::OpenOptionsMaybeDirExt;\n"
+              "use cap_fs_ext::{DirExt, FollowSymlinks, OpenOptionsFollowExt};\n"
+          )
+          if import_line not in text:
+              raise SystemExit("expected cap-fs-ext import was not found")
+          text = text.replace(import_line, replacement_import, 1)
+
+          old = '''fn sync_directory(directory: &Dir) -> io::Result<()> {
+              let file = directory.open(".")?;
+              file.sync_all()
+          }'''
+          new = '''#[cfg(not(windows))]
+          fn sync_directory(directory: &Dir) -> io::Result<()> {
+              let file = directory.open(".")?;
+              file.sync_all()
+          }
+
+          #[cfg(windows)]
+          fn sync_directory(directory: &Dir) -> io::Result<()> {
+              let mut options = OpenOptions::new();
+              options.read(true).write(true).maybe_dir(true);
+              directory.open_with(".", &options)?.sync_all()
+          }'''
+          if old not in text:
+              raise SystemExit("expected directory-sync function was not found")
+          source.write_text(text.replace(old, new, 1), encoding="utf-8")
+          '@ | Set-Content -Path diagnostics/patch_operations.py
+          python diagnostics/patch_operations.py
+          Remove-Item crates/liaison-application/tests/windows_operation_diagnostic.rs
+          cargo fmt --all
+          Copy-Item adapters/vault-markdown/src/operations.rs diagnostics/patched-operations.rs
+          cargo test -p liaison-vault-markdown -p liaison-application --all-features --locked -- --nocapture *> diagnostics/p03-windows-tests.txt
           $status = $LASTEXITCODE
           Set-Content -Path diagnostics/status.txt -Value $status
           exit 0
