@@ -196,6 +196,7 @@
                 <option value="catering" selected>Catering Brief</option>
                 <option value="workplace">Workplace Review</option>
                 <option value="general">General Memory</option>
+              </select>
             </div>
           </div>
 
@@ -213,8 +214,12 @@
               <dl id="fact-summary-list" class="summary-list">
                 <div><dt>Canonical ID</dt><dd id="fact-id">—</dd></div>
                 <div><dt>Revision</dt><dd id="fact-revision">—</dd></div>
-                <div><dt>Dietary Facts</dt><dd id="fact-dietary">Verified None</dd></div>
-                <div><dt>Workplace Location</dt><dd id="fact-location">Building A · Floor 3</dd></div>
+                <div><dt>Pronouns</dt><dd id="fact-pronouns">they/them</dd></div>
+                <div><dt>Role & Org</dt><dd id="fact-role">Senior Systems Architect @ Operations</dd></div>
+                <div><dt>Primary Contact</dt><dd id="fact-contact">jordan.chen@example.org · +353 87 555 0192 (Signal)</dd></div>
+                <div><dt>Social Media</dt><dd id="fact-social"><a href="#" class="social-badge">LinkedIn</a><a href="#" class="social-badge">GitHub (@jordanchen)</a><a href="#" class="social-badge">X (@jchen)</a></dd></div>
+                <div><dt>Dietary & Hospitality</dt><dd id="fact-dietary">Verified None · Oat milk for coffee</dd></div>
+                <div><dt>Workplace Location</dt><dd id="fact-location">Building A · Floor 3 · Dublin (UTC+1)</dd></div>
               </dl>
 
               <div id="markdown-editor-container" hidden style="margin-top:1rem;">
@@ -419,6 +424,60 @@
       <span id="workspace-path-label">No workspace selected</span>
       <span id="live-status" role="status" aria-live="polite">Ready.</span>
     </footer>
+    <dialog id="edit-profile-dialog" class="profile-dialog">
+      <form id="edit-profile-form" method="dialog">
+        <h2>Edit Profile Information</h2>
+        <p style="color:var(--muted); font-size:0.9rem;">Update contact details, social media handles, and location in local Markdown record.</p>
+        
+        <div class="profile-dialog-grid">
+          <div class="field">
+            <label for="edit-display-name">Display Name</label>
+            <input id="edit-display-name" type="text" required>
+          </div>
+          <div class="field">
+            <label for="edit-pronouns">Pronouns</label>
+            <input id="edit-pronouns" type="text" placeholder="e.g. they/them, she/her">
+          </div>
+          <div class="field">
+            <label for="edit-role">Job Title & Org</label>
+            <input id="edit-role" type="text" placeholder="e.g. Senior Systems Architect @ Ops">
+          </div>
+          <div class="field">
+            <label for="edit-email">Primary Email</label>
+            <input id="edit-email" type="email" placeholder="name@example.org">
+          </div>
+          <div class="field">
+            <label for="edit-phone">Phone / Mobile / Signal</label>
+            <input id="edit-phone" type="text" placeholder="+353 87 555 0192">
+          </div>
+          <div class="field">
+            <label for="edit-linkedin">LinkedIn Handle/URL</label>
+            <input id="edit-linkedin" type="text" placeholder="linkedin.com/in/username">
+          </div>
+          <div class="field">
+            <label for="edit-github">GitHub Handle</label>
+            <input id="edit-github" type="text" placeholder="@username">
+          </div>
+          <div class="field">
+            <label for="edit-twitter">X / Twitter Handle</label>
+            <input id="edit-twitter" type="text" placeholder="@handle">
+          </div>
+          <div class="field">
+            <label for="edit-location">Workplace Location & Timezone</label>
+            <input id="edit-location" type="text" placeholder="Building A · Floor 3 · Dublin (UTC+1)">
+          </div>
+          <div class="field">
+            <label for="edit-dietary">Dietary & Hospitality Preference</label>
+            <input id="edit-dietary" type="text" placeholder="Verified None · Oat milk for coffee">
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.2rem;">
+          <button id="cancel-edit-profile" class="secondary-button" type="button">Cancel</button>
+          <button id="save-edit-profile" class="primary-button" type="submit" data-native-operation="session">Save Changes</button>
+        </div>
+      </form>
+    </dialog>
   </div>
 </body>
 </html>

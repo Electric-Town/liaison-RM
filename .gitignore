@@ -20,3 +20,4 @@ Thumbs.db
 /.gstack/
 # Tauri regenerates capability schemas during local builds.
 /apps/desktop/src-tauri/gen/
+.gstack/

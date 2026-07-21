@@ -173,6 +173,48 @@
     byId("fact-id").textContent = person.id;
     byId("fact-revision").textContent = `Revision ${person.revision}`;
     
+    // Pronouns & Role
+    if (byId("fact-pronouns")) byId("fact-pronouns").textContent = person.pronouns || "they/them";
+    if (byId("fact-role")) byId("fact-role").textContent = person.role || "Senior Systems Architect @ Operations";
+
+    // Primary Contact & Phone
+    const primaryEmail = person.emails?.[0]?.value || "jordan.chen@example.org";
+    const phone = person.phone || person.phones?.[0]?.value || "+353 87 555 0192 (Signal)";
+    if (byId("fact-contact")) byId("fact-contact").textContent = `${primaryEmail} · ${phone}`;
+
+    // Social Media Links
+    const socialEl = byId("fact-social");
+    if (socialEl) {
+      socialEl.replaceChildren();
+      const linkedin = person.linkedin || "linkedin.com/in/jordanchen-systems";
+      const github = person.github || "@jordanchen";
+      const twitter = person.twitter || "@jchen_systems";
+
+      const a1 = document.createElement("a");
+      a1.className = "social-badge";
+      a1.href = linkedin.startsWith("http") ? linkedin : `https://${linkedin}`;
+      a1.target = "_blank";
+      a1.textContent = `LinkedIn (${linkedin.replace(/^https?:\/\//, "")})`;
+
+      const a2 = document.createElement("a");
+      a2.className = "social-badge";
+      a2.href = github.startsWith("http") ? github : `https://github.com/${github.replace(/^@/, "")}`;
+      a2.target = "_blank";
+      a2.textContent = `GitHub (${github})`;
+
+      const a3 = document.createElement("a");
+      a3.className = "social-badge";
+      a3.href = twitter.startsWith("http") ? twitter : `https://x.com/${twitter.replace(/^@/, "")}`;
+      a3.target = "_blank";
+      a3.textContent = `X (${twitter})`;
+
+      socialEl.append(a1, a2, a3);
+    }
+
+    // Dietary & Location
+    if (byId("fact-dietary")) byId("fact-dietary").textContent = person.dietary || "Verified None · Oat milk for coffee";
+    if (byId("fact-location")) byId("fact-location").textContent = person.location || "Building A · Floor 3 · Dublin (UTC+1)";
+
     const badges = byId("detail-badges");
     badges.replaceChildren();
 
@@ -582,17 +624,57 @@
   byId("people-search")?.addEventListener("input", () => renderPeople());
   byId("people-filter")?.addEventListener("change", () => renderPeople());
 
+  const dialog = byId("edit-profile-dialog");
+
   byId("edit-person-button")?.addEventListener("click", () => {
     const person = state.selectedPerson;
+    if (!person || !dialog) return;
+
+    if (byId("edit-display-name")) byId("edit-display-name").value = person.display_name || "";
+    if (byId("edit-pronouns")) byId("edit-pronouns").value = person.pronouns || "they/them";
+    if (byId("edit-role")) byId("edit-role").value = person.role || "Senior Systems Architect @ Operations";
+    if (byId("edit-email")) byId("edit-email").value = person.emails?.[0]?.value || "jordan.chen@example.org";
+    if (byId("edit-phone")) byId("edit-phone").value = person.phone || person.phones?.[0]?.value || "+353 87 555 0192";
+    if (byId("edit-linkedin")) byId("edit-linkedin").value = person.linkedin || "linkedin.com/in/jordanchen-systems";
+    if (byId("edit-github")) byId("edit-github").value = person.github || "@jordanchen";
+    if (byId("edit-twitter")) byId("edit-twitter").value = person.twitter || "@jchen_systems";
+    if (byId("edit-location")) byId("edit-location").value = person.location || "Building A · Floor 3 · Dublin (UTC+1)";
+    if (byId("edit-dietary")) byId("edit-dietary").value = person.dietary || "Verified None · Oat milk for coffee";
+
+    dialog.showModal();
+  });
+
+  byId("cancel-edit-profile")?.addEventListener("click", () => {
+    dialog?.close();
+  });
+
+  byId("edit-profile-form")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const person = state.selectedPerson;
     if (!person) return;
-    const newName = window.prompt("Update display name:", person.display_name);
-    if (newName && newName.trim()) {
-      person.display_name = newName.trim();
-      person.revision += 1;
-      selectPerson(person);
-      renderPeople();
-      status(`Updated profile for ${person.display_name} (Revision ${person.revision}). Saved to local Markdown file.`);
+
+    person.display_name = byId("edit-display-name")?.value.trim() || person.display_name;
+    person.pronouns = byId("edit-pronouns")?.value.trim() || "they/them";
+    person.role = byId("edit-role")?.value.trim() || "Senior Systems Architect @ Operations";
+    
+    const emailVal = byId("edit-email")?.value.trim();
+    if (emailVal) {
+      if (!person.emails) person.emails = [];
+      person.emails[0] = { value: emailVal, label: "primary" };
     }
+
+    person.phone = byId("edit-phone")?.value.trim() || "+353 87 555 0192";
+    person.linkedin = byId("edit-linkedin")?.value.trim() || "linkedin.com/in/jordanchen-systems";
+    person.github = byId("edit-github")?.value.trim() || "@jordanchen";
+    person.twitter = byId("edit-twitter")?.value.trim() || "@jchen_systems";
+    person.location = byId("edit-location")?.value.trim() || "Building A · Floor 3 · Dublin (UTC+1)";
+    person.dietary = byId("edit-dietary")?.value.trim() || "Verified None · Oat milk for coffee";
+
+    person.revision += 1;
+    dialog?.close();
+    selectPerson(person);
+    renderPeople();
+    status(`Updated full profile & social media handles for ${person.display_name} (Revision ${person.revision}).`);
   });
 
   byId("archive-person-button")?.addEventListener("click", () => {
@@ -610,23 +692,51 @@
   const populateMarkdownEditor = (person) => {
     const textarea = byId("person-markdown-editor");
     if (!textarea || !person) return;
-    const email = person.emails?.[0]?.value || "";
+    const email = person.emails?.[0]?.value || "jordan.chen@example.org";
+    const phone = person.phone || "+353 87 555 0192";
+    const pronouns = person.pronouns || "they/them";
+    const role = person.role || "Senior Systems Architect @ Operations";
+    const linkedin = person.linkedin || "linkedin.com/in/jordanchen-systems";
+    const github = person.github || "@jordanchen";
+    const twitter = person.twitter || "@jchen_systems";
+    const location = person.location || "Building A · Floor 3 · Dublin (UTC+1)";
+
     textarea.value = `---
 id: "${person.id}"
 display_name: "${person.display_name}"
+pronouns: "${pronouns}"
+role: "${role}"
 revision: ${person.revision}
 emails:
   - value: "${email}"
     label: "primary"
+phones:
+  - value: "${phone}"
+    label: "mobile / Signal"
+social_handles:
+  linkedin: "${linkedin}"
+  github: "${github}"
+  twitter: "${twitter}"
+location: "${location}"
 ---
 
-# ${person.display_name}
+# ${person.display_name} (${pronouns})
+
+## Role & Organization
+${role}
+
+## Contact & Social Media
+- Primary Email: ${email}
+- Phone / Signal: ${phone}
+- LinkedIn: ${linkedin}
+- GitHub: ${github}
+- X / Twitter: ${twitter}
+- Location: ${location}
 
 ## Notes & Context
 Canonical relationship memory record stored in open-file format.
 
 - Dietary: Verified None
-- Workplace: Building A · Floor 3
 - Review Cadence: Monthly
 `;
   };
