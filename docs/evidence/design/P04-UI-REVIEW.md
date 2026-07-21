@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-21  
 **Target:** `apps/desktop/ui/` (Editorial Ledger direction)  
-**Contract Baseline:** [DESIGN.md](file:///Users/winks/liaison-rm/DESIGN.md) & [design/semantic-tokens.v1.json](file:///Users/winks/liaison-rm/design/semantic-tokens.v1.json)  
+**Contract Baseline:** [DESIGN.md](../../../DESIGN.md) & [design/semantic-tokens.v1.json](../../../design/semantic-tokens.v1.json)  
 **Overall Score:** 24 / 24  
 
 ---
