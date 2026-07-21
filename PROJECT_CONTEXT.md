@@ -55,7 +55,7 @@ fallback totals, an undefined-list failure before workspace open, and inert
 filters and history controls. The repository review build keeps the Events
 destination absent until `T-B0-P11` completes. The implementation and evidence
 handoff is [KCS-0014](docs/knowledge/KCS-0014-when-may-the-events-destination-be-enabled.md),
-and `scripts/check_desktop_shell.py` rejects premature visible navigation.
+and `scripts/check_desktop_shell.py` rejects any premature Events route control.
 
 Do not claim any of the following without exact-head evidence:
 
