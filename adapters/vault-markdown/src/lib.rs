@@ -1236,9 +1236,8 @@ mod tests {
                     .execute(PersonId::new(), "Alex Example", None)
                     .is_ok()
             );
-            let people =
-                ListPeople::new(&people_mutation_repository(&work, operation_context()))
-                    .execute(false);
+            let people = ListPeople::new(&people_mutation_repository(&work, operation_context()))
+                .execute(false);
             assert!(people.is_ok());
             if let Ok(people) = people {
                 let names: Vec<&str> = people
