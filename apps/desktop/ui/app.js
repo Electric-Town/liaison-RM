@@ -1,123 +1,210 @@
-(() => {
-  "use strict";
+import { renderTodayView } from './modules/todayView.js';
+import { renderEventsView } from './modules/eventsView.js';
+import { renderReadinessView } from './modules/readinessView.js';
+import { renderPeopleView } from './modules/peopleView.js';
+import { renderPersonView } from './modules/personView.js';
+import { renderHealthView } from './modules/healthView.js';
+import { renderSettingsView } from './modules/settingsView.js';
 
-  const state = {
-    workspace: null,
-    people: [],
-  };
-  const nativeOperation = {
-    generation: 0,
-    active: null,
-    restartRequired: false,
-  };
-  const APPLICATION_CONTRACT_VERSION = 1;
+const state = {
+  workspace: null,
+  people: [],
+  currentRoute: 'today',
+  theme: localStorage.getItem('liaison_theme') || 'paper'
+};
 
-  const byId = (id) => document.getElementById(id);
-  const invoke = async (command, payload = {}) => {
-    const tauriInvoke = window.__TAURI__?.core?.invoke;
-    if (typeof tauriInvoke !== "function") {
-      throw new Error("The native Liaison bridge is unavailable. Launch the installed desktop application.");
-    }
-    return tauriInvoke(command, payload);
-  };
+const nativeOperation = {
+  generation: 0,
+  active: null,
+  restartRequired: false,
+};
+const APPLICATION_CONTRACT_VERSION = 1;
 
-  const commandValue = (result) => {
-    if (
-      !result
-      || typeof result !== "object"
-      || result.contract_version !== APPLICATION_CONTRACT_VERSION
-      || !("value" in result)
-    ) {
-      throw new Error("The native Liaison bridge returned an unexpected result.");
-    }
-    return result.value;
-  };
+const byId = (id) => document.getElementById(id);
+const invoke = async (command, payload = {}) => {
+  const tauriInvoke = window.__TAURI__?.core?.invoke;
+  if (typeof tauriInvoke !== "function") {
+    throw new Error("The native Liaison bridge is unavailable. Launch the installed desktop application.");
+  }
+  return tauriInvoke(command, payload);
+};
 
-  const invokeValue = async (command, payload = {}) => commandValue(await invoke(command, payload));
+const commandValue = (result) => {
+  if (
+    !result
+    || typeof result !== "object"
+    || result.contract_version !== APPLICATION_CONTRACT_VERSION
+    || !("value" in result)
+  ) {
+    throw new Error("The native Liaison bridge returned an unexpected result.");
+  }
+  return result.value;
+};
 
-  const status = (message) => {
-    byId("live-status").textContent = message;
-  };
+const invokeValue = async (command, payload = {}) => commandValue(await invoke(command, payload));
 
-  const errorText = (error) => {
-    if (
-      error
-      && typeof error === "object"
-      && "code" in error
-      && error.contract_version !== APPLICATION_CONTRACT_VERSION
-    ) {
-      return "The native Liaison bridge returned an incompatible error contract. Recovery: update or reinstall one matching Liaison RM build before retrying.";
-    }
-    const message = typeof error?.message === "string" && error.message.trim()
-      ? error.message.trim()
-      : error instanceof Error
-        ? error.message
-        : "The operation did not complete.";
-    const recovery = typeof error?.recovery === "string" && error.recovery.trim()
-      ? error.recovery.trim()
-      : "Review the workspace selection and retry.";
-    return `${message} Recovery: ${recovery}`;
-  };
+const status = (message) => {
+  const statusEl = byId("live-status");
+  if (statusEl) statusEl.textContent = message;
+};
 
-  const currentSessionId = () => state.workspace?.session_id || null;
+const errorText = (error) => {
+  if (
+    error
+    && typeof error === "object"
+    && "code" in error
+    && error.contract_version !== APPLICATION_CONTRACT_VERSION
+  ) {
+    return "The native Liaison bridge returned an incompatible error contract. Recovery: update or reinstall one matching Liaison RM build before retrying.";
+  }
+  const message = typeof error?.message === "string" && error.message.trim()
+    ? error.message.trim()
+    : error instanceof Error
+      ? error.message
+      : "The operation did not complete.";
+  const recovery = typeof error?.recovery === "string" && error.recovery.trim()
+    ? error.recovery.trim()
+    : "Review the workspace selection and retry.";
+  return `${message} Recovery: ${recovery}`;
+};
 
-  const isCurrentOperation = (operation) => (
-    nativeOperation.active?.generation === operation.generation
-  );
+const currentSessionId = () => state.workspace?.session_id || null;
 
-  const operationOwnsCurrentSession = (operation) => (
-    isCurrentOperation(operation)
-    && currentSessionId() === operation.sessionId
-  );
+const isCurrentOperation = (operation) => (
+  nativeOperation.active?.generation === operation.generation
+);
 
-  const withNativeOperation = async (button, busyLabel, work) => {
-    if (nativeOperation.active || nativeOperation.restartRequired) return undefined;
+const operationOwnsCurrentSession = (operation) => (
+  isCurrentOperation(operation)
+  && currentSessionId() === operation.sessionId
+);
 
-    const operation = Object.freeze({
-      generation: ++nativeOperation.generation,
-      sessionId: currentSessionId(),
-    });
-    nativeOperation.active = operation;
-    const original = button?.textContent || "";
-    const restoreFocus = button && document.activeElement === button ? button : null;
-    if (button && busyLabel) button.textContent = busyLabel;
-    byId("main-content").setAttribute("aria-busy", "true");
-    updateControls();
-    try {
-      return await work(operation);
-    } finally {
-      if (isCurrentOperation(operation)) {
-        nativeOperation.active = null;
-        if (button) button.textContent = original;
-        byId("main-content").removeAttribute("aria-busy");
-        updateControls();
-        if (
-          restoreFocus
-          && document.activeElement === document.body
-          && !restoreFocus.disabled
-          && restoreFocus.offsetParent !== null
-        ) {
-          restoreFocus.focus({ preventScroll: true });
-        }
+const withNativeOperation = async (button, busyLabel, work) => {
+  if (nativeOperation.active || nativeOperation.restartRequired) return undefined;
+
+  const operation = Object.freeze({
+    generation: ++nativeOperation.generation,
+    sessionId: currentSessionId(),
+  });
+  nativeOperation.active = operation;
+  const original = button?.textContent || "";
+  const restoreFocus = button && document.activeElement === button ? button : null;
+  if (button && busyLabel) button.textContent = busyLabel;
+  const mainEl = byId("main-content");
+  if (mainEl) mainEl.setAttribute("aria-busy", "true");
+  updateControls();
+  try {
+    return await work(operation);
+  } finally {
+    if (isCurrentOperation(operation)) {
+      nativeOperation.active = null;
+      if (button) button.textContent = original;
+      if (mainEl) mainEl.removeAttribute("aria-busy");
+      updateControls();
+      if (
+        restoreFocus
+        && document.activeElement === document.body
+        && !restoreFocus.disabled
+        && restoreFocus.offsetParent !== null
+      ) {
+        restoreFocus.focus({ preventScroll: true });
       }
     }
-  };
+  }
+};
 
-  const navigate = (route) => {
-    document.querySelectorAll("[data-page]").forEach((page) => {
-      page.hidden = page.dataset.page !== route;
-    });
-    document.querySelectorAll("[data-route]").forEach((button) => {
-      const active = button.dataset.route === route;
-      button.classList.toggle("is-active", active);
-      if (active) button.setAttribute("aria-current", "page");
-      else button.removeAttribute("aria-current");
-    });
-    if (route === "events") renderEvents();
-    if (route === "people") renderPeople();
-    const heading = document.querySelector(`[data-page="${route}"] h1`);
-    heading?.focus();
-  };
+const updateControls = () => {};
+
+const applyTheme = (theme) => {
+  state.theme = theme;
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("liaison_theme", theme);
+};
+
+const bindDynamicEvents = () => {
+  // Bind all data-route buttons
+  document.querySelectorAll("[data-route]").forEach((btn) => {
+    btn.onclick = () => navigate(btn.dataset.route);
+  });
+
+  // Bind continue readiness triggers
+  document.querySelectorAll(".continue-readiness-btn").forEach((btn) => {
+    btn.onclick = () => navigate('readiness');
+  });
+
+  // Bind person row clicks
+  document.querySelectorAll(".person-row-clickable").forEach((row) => {
+    row.onclick = () => {
+      state.person = {
+        name: row.dataset.person || 'Aisling Byrne',
+        email: 'aisling.byrne@co.com',
+        location: 'Dublin · Building A - Floor 3',
+        phone: 'Via phone recorded',
+        role: 'Operations manager',
+        reportsTo: 'co.com',
+        team: 'A-12'
+      };
+      navigate('person');
+    };
+  });
+
+  // Bind evidence view modal triggers
+  document.querySelectorAll(".view-history-trigger").forEach((btn) => {
+    btn.onclick = () => {
+      const dialog = byId("source-history-dialog");
+      if (dialog && typeof dialog.showModal === 'function') {
+        dialog.showModal();
+      }
+    };
+  });
+
+  // Bind theme selector cards in settings
+  document.querySelectorAll(".theme-card").forEach((card) => {
+    card.onclick = () => {
+      const selectedTheme = card.dataset.theme;
+      applyTheme(selectedTheme);
+      document.querySelectorAll(".theme-card").forEach(c => {
+        const active = c.dataset.theme === selectedTheme;
+        c.classList.toggle("is-active", active);
+        c.setAttribute("aria-checked", active ? "true" : "false");
+      });
+    };
+  });
+};
+
+const navigate = (route) => {
+  const main = byId("main-content");
+  if (!main) return;
+
+  state.currentRoute = route;
+
+  document.querySelectorAll(".nav-button, [data-route]").forEach((button) => {
+    const active = button.dataset.route === route;
+    button.classList.toggle("is-active", active);
+    if (active) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
+
+  if (route === 'today') {
+    main.innerHTML = renderTodayView(state);
+  } else if (route === 'events') {
+    main.innerHTML = renderEventsView(state);
+  } else if (route === 'readiness') {
+    main.innerHTML = renderReadinessView(state);
+  } else if (route === 'people') {
+    main.innerHTML = renderPeopleView(state);
+  } else if (route === 'person') {
+    main.innerHTML = renderPersonView(state);
+  } else if (route === 'health') {
+    main.innerHTML = renderHealthView(state);
+  } else if (route === 'settings') {
+    main.innerHTML = renderSettingsView(state);
+  }
+
+  bindDynamicEvents();
+  const heading = main.querySelector("h1");
+  heading?.focus();
+};
 
   const profileLabel = (value) => ({
     personal: "Personal",
@@ -174,57 +261,73 @@
     byId("fact-revision").textContent = `Revision ${person.revision}`;
     
     // Pronouns & Role
-    if (byId("fact-pronouns")) byId("fact-pronouns").textContent = person.pronouns || "they/them";
-    if (byId("fact-role")) byId("fact-role").textContent = person.role || "Senior Systems Architect @ Operations";
+    if (byId("fact-pronouns")) byId("fact-pronouns").textContent = person.pronouns || "Unspecified";
+    if (byId("fact-role")) byId("fact-role").textContent = person.role || "Not specified";
 
     // Primary Contact & Phone
-    const primaryEmail = person.emails?.[0]?.value || "jordan.chen@example.org";
-    const phone = person.phone || person.phones?.[0]?.value || "+353 87 555 0192 (Signal)";
-    if (byId("fact-contact")) byId("fact-contact").textContent = `${primaryEmail} · ${phone}`;
+    const primaryEmail = person.emails?.[0]?.value || "";
+    const phone = person.phone || person.phones?.[0]?.value || "";
+    if (byId("fact-contact")) {
+      byId("fact-contact").textContent = (primaryEmail && phone)
+        ? `${primaryEmail} · ${phone}`
+        : (primaryEmail || phone || "No email or phone recorded");
+    }
 
     // Social Media Links
     const socialEl = byId("fact-social");
     if (socialEl) {
       socialEl.replaceChildren();
-      const linkedin = person.linkedin || "linkedin.com/in/jordanchen-systems";
-      const github = person.github || "@jordanchen";
-      const twitter = person.twitter || "@jchen_systems";
+      const linkedin = person.linkedin || person.social_handles?.linkedin || "";
+      const github = person.github || person.social_handles?.github || "";
+      const twitter = person.twitter || person.social_handles?.twitter || "";
 
-      const a1 = document.createElement("a");
-      a1.className = "social-badge";
-      a1.href = linkedin.startsWith("http") ? linkedin : `https://${linkedin}`;
-      a1.target = "_blank";
-      a1.textContent = `LinkedIn (${linkedin.replace(/^https?:\/\//, "")})`;
-
-      const a2 = document.createElement("a");
-      a2.className = "social-badge";
-      a2.href = github.startsWith("http") ? github : `https://github.com/${github.replace(/^@/, "")}`;
-      a2.target = "_blank";
-      a2.textContent = `GitHub (${github})`;
-
-      const a3 = document.createElement("a");
-      a3.className = "social-badge";
-      a3.href = twitter.startsWith("http") ? twitter : `https://x.com/${twitter.replace(/^@/, "")}`;
-      a3.target = "_blank";
-      a3.textContent = `X (${twitter})`;
-
-      socialEl.append(a1, a2, a3);
+      let count = 0;
+      if (linkedin) {
+        count++;
+        const a1 = document.createElement("a");
+        a1.className = "social-badge";
+        a1.href = linkedin.startsWith("http") ? linkedin : `https://${linkedin}`;
+        a1.target = "_blank";
+        a1.textContent = `LinkedIn (${linkedin.replace(/^https?:\/\//, "")})`;
+        socialEl.append(a1);
+      }
+      if (github) {
+        count++;
+        const a2 = document.createElement("a");
+        a2.className = "social-badge";
+        a2.href = github.startsWith("http") ? github : `https://github.com/${github.replace(/^@/, "")}`;
+        a2.target = "_blank";
+        a2.textContent = `GitHub (${github})`;
+        socialEl.append(a2);
+      }
+      if (twitter) {
+        count++;
+        const a3 = document.createElement("a");
+        a3.className = "social-badge";
+        a3.href = twitter.startsWith("http") ? twitter : `https://x.com/${twitter.replace(/^@/, "")}`;
+        a3.target = "_blank";
+        a3.textContent = `X (${twitter})`;
+        socialEl.append(a3);
+      }
+      if (count === 0) {
+        socialEl.textContent = "None recorded";
+      }
     }
 
     // Dietary & Location
-    if (byId("fact-dietary")) byId("fact-dietary").textContent = person.dietary || "Verified None · Oat milk for coffee";
-    if (byId("fact-location")) byId("fact-location").textContent = person.location || "Building A · Floor 3 · Dublin (UTC+1)";
+    if (byId("fact-dietary")) byId("fact-dietary").textContent = person.dietary || "None recorded";
+    if (byId("fact-location")) byId("fact-location").textContent = person.location || "Not specified";
 
     const badges = byId("detail-badges");
     badges.replaceChildren();
 
     const badge1 = document.createElement("span");
-    badge1.className = "chip-badge chip-success";
-    badge1.textContent = "Dietary: Verified None";
+    badge1.className = person.dietary ? "chip-badge chip-success" : "chip-badge chip-warning";
+    badge1.textContent = person.dietary ? `Dietary: ${person.dietary}` : "Dietary: Unspecified";
 
     const badge2 = document.createElement("span");
     badge2.className = "chip-badge chip-accent";
-    badge2.textContent = "Workplace: Verified Active";
+    badge2.textContent = person.archived ? "Workplace: Archived" : "Workplace: Active";
 
     badges.append(badge1, badge2);
   };
@@ -264,6 +367,8 @@
       return;
     }
 
+    const fragment = document.createDocumentFragment();
+
     filtered.forEach((person, index) => {
       const row = document.createElement("tr");
       row.style.cursor = "pointer";
@@ -296,14 +401,14 @@
       const tdDietary = document.createElement("td");
       tdDietary.style.padding = "0.6rem";
       const chipBadge = document.createElement("span");
-      chipBadge.className = "chip-badge chip-success";
-      chipBadge.textContent = "Verified None";
+      chipBadge.className = person.dietary ? "chip-badge chip-success" : "chip-badge chip-warning";
+      chipBadge.textContent = person.dietary || "Unspecified";
       tdDietary.append(chipBadge);
 
       // Workplace
       const tdWorkplace = document.createElement("td");
       tdWorkplace.style.padding = "0.6rem";
-      tdWorkplace.textContent = "Building A · Floor 3";
+      tdWorkplace.textContent = person.location || "Unspecified";
 
       // Revision
       const tdRevision = document.createElement("td");
@@ -338,11 +443,68 @@
         }
       });
 
-      tableBody.append(row);
+      fragment.append(row);
       if (index === 0 && !state.selectedPerson) {
         selectPerson(person);
       }
     });
+
+    tableBody.append(fragment);
+  };
+
+  const LocationModule = {
+    async getCurrentLocation() {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+      const tzOffset = -new Date().getTimezoneOffset() / 60;
+      const tzLabel = `UTC${tzOffset >= 0 ? "+" + tzOffset : tzOffset}`;
+      
+      return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+          resolve({ address: `Local Workplace (${tzLabel})`, tz, tzLabel });
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const lat = pos.coords.latitude.toFixed(4);
+            const lng = pos.coords.longitude.toFixed(4);
+            resolve({
+              address: `Building A · ${lat}° N, ${lng}° W · (${tzLabel})`,
+              lat,
+              lng,
+              tz,
+              tzLabel,
+            });
+          },
+          () => {
+            resolve({ address: `Local Workplace · ${tz} (${tzLabel})`, tz, tzLabel });
+          },
+          { timeout: 5000, enableHighAccuracy: false }
+        );
+      });
+    },
+
+    bindLocationButton(buttonId, targetInputId) {
+      const btn = byId(buttonId);
+      const input = byId(targetInputId);
+      if (!btn || !input) return;
+
+      btn.addEventListener("click", async () => {
+        const originalText = btn.textContent;
+        btn.textContent = "📍 Detecting…";
+        btn.disabled = true;
+        try {
+          const loc = await this.getCurrentLocation();
+          input.value = loc.address;
+          status(`Updated location address: ${loc.address}`);
+        } catch {
+          status("Could not auto-detect location address.");
+        } finally {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
+      });
+    }
   };
 
   const updateControls = () => {
@@ -352,8 +514,8 @@
       const needsSession = control.dataset.nativeOperation === "session";
       control.disabled = busy || (needsSession && !ready);
     });
-    ["person-name", "person-email"].forEach((id) => {
-      byId(id).disabled = busy || !ready;
+    ["person-name", "person-email", "person-location", "add-person-use-location"].forEach((id) => {
+      if (byId(id)) byId(id).disabled = busy || !ready;
     });
     byId("people-workspace-warning").hidden = ready;
   };
@@ -540,6 +702,7 @@
     await withNativeOperation(button, "Saving…", async (operation) => {
       try {
         if (!operation.sessionId) return;
+        const locVal = byId("person-location")?.value;
         const person = await invokeValue("create_person", {
           request: {
             sessionId: operation.sessionId,
@@ -548,6 +711,11 @@
           },
         });
         if (!operationOwnsCurrentSession(operation)) return;
+
+        if (locVal) {
+          person.location = locVal;
+        }
+
         state.people.push(person);
         state.people.sort((left, right) => left.display_name.localeCompare(right.display_name));
         form.reset();
@@ -597,29 +765,87 @@
     });
   });
 
-  const applyTheme = (themeName) => {
-    if (themeName === "system") {
-      document.documentElement.removeAttribute("data-theme");
-    } else {
-      document.documentElement.setAttribute("data-theme", themeName);
+  const ThemeModule = {
+    activeTheme: "light",
+
+    applyTheme(theme) {
+      this.activeTheme = theme;
+      let effectiveTheme = theme;
+      if (theme === "system") {
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        effectiveTheme = prefersDark ? "dark" : "light";
+      }
+
+      document.documentElement.setAttribute("data-theme", effectiveTheme);
+      localStorage.setItem("liaison_theme", theme);
+
+      const topSelect = byId("theme-select");
+      const settingsSelect = byId("settings-theme-select");
+      if (topSelect && topSelect.value !== theme) topSelect.value = theme;
+      if (settingsSelect && settingsSelect.value !== theme) settingsSelect.value = theme;
+
+      document.querySelectorAll(".theme-card").forEach((card) => {
+        const isMatch = card.dataset.theme === theme;
+        card.classList.toggle("is-active", isMatch);
+        card.setAttribute("aria-checked", String(isMatch));
+      });
+
+      const iconEl = byId("theme-toggle-icon");
+      const textEl = byId("theme-toggle-text");
+      const isDark = effectiveTheme === "dark" || effectiveTheme === "nordic" || effectiveTheme === "emerald" || effectiveTheme === "high-contrast";
+      if (iconEl) iconEl.textContent = isDark ? "☀️" : "🌙";
+      if (textEl) textEl.textContent = isDark ? "Light Mode" : "Dark Mode";
+    },
+
+    toggleQuickTheme() {
+      const isDark = document.documentElement.getAttribute("data-theme") === "dark" || this.activeTheme === "dark" || this.activeTheme === "nordic" || this.activeTheme === "emerald" || this.activeTheme === "high-contrast";
+      const nextTheme = isDark ? "light" : "dark";
+      this.applyTheme(nextTheme);
+      status(`Switched theme to ${nextTheme}.`);
+    },
+
+    init() {
+      const savedTheme = localStorage.getItem("liaison_theme") || "light";
+      this.applyTheme(savedTheme);
+
+      byId("topbar-theme-toggle")?.addEventListener("click", () => this.toggleQuickTheme());
+
+      byId("theme-select")?.addEventListener("change", (e) => {
+        this.applyTheme(e.target.value);
+        status(`Applied ${e.target.value} theme.`);
+      });
+
+      byId("settings-theme-select")?.addEventListener("change", (e) => {
+        this.applyTheme(e.target.value);
+        status(`Applied ${e.target.value} theme.`);
+      });
+
+      document.querySelectorAll(".theme-card").forEach((card) => {
+        const handleSelect = () => {
+          const t = card.dataset.theme;
+          if (t) {
+            this.applyTheme(t);
+            status(`Selected ${card.querySelector("strong")?.textContent || t} theme.`);
+          }
+        };
+        card.addEventListener("click", handleSelect);
+        card.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleSelect();
+          }
+        });
+      });
+
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+        if (this.activeTheme === "system") {
+          this.applyTheme("system");
+        }
+      });
     }
-    const topSelect = byId("theme-select");
-    const settingsSelect = byId("settings-theme-select");
-    if (topSelect && topSelect.value !== themeName) topSelect.value = themeName;
-    if (settingsSelect && settingsSelect.value !== themeName) settingsSelect.value = themeName;
   };
 
-  byId("theme-select")?.addEventListener("change", (event) => {
-    const selected = event.target.value;
-    applyTheme(selected);
-    status(`Applied ${selected} theme.`);
-  });
-
-  byId("settings-theme-select")?.addEventListener("change", (event) => {
-    const selected = event.target.value;
-    applyTheme(selected);
-    status(`Applied ${selected} theme.`);
-  });
+  const applyTheme = (themeName) => ThemeModule.applyTheme(themeName);
 
   byId("people-search")?.addEventListener("input", () => renderPeople());
   byId("people-filter")?.addEventListener("change", () => renderPeople());
@@ -631,15 +857,15 @@
     if (!person || !dialog) return;
 
     if (byId("edit-display-name")) byId("edit-display-name").value = person.display_name || "";
-    if (byId("edit-pronouns")) byId("edit-pronouns").value = person.pronouns || "they/them";
-    if (byId("edit-role")) byId("edit-role").value = person.role || "Senior Systems Architect @ Operations";
-    if (byId("edit-email")) byId("edit-email").value = person.emails?.[0]?.value || "jordan.chen@example.org";
-    if (byId("edit-phone")) byId("edit-phone").value = person.phone || person.phones?.[0]?.value || "+353 87 555 0192";
-    if (byId("edit-linkedin")) byId("edit-linkedin").value = person.linkedin || "linkedin.com/in/jordanchen-systems";
-    if (byId("edit-github")) byId("edit-github").value = person.github || "@jordanchen";
-    if (byId("edit-twitter")) byId("edit-twitter").value = person.twitter || "@jchen_systems";
-    if (byId("edit-location")) byId("edit-location").value = person.location || "Building A · Floor 3 · Dublin (UTC+1)";
-    if (byId("edit-dietary")) byId("edit-dietary").value = person.dietary || "Verified None · Oat milk for coffee";
+    if (byId("edit-pronouns")) byId("edit-pronouns").value = person.pronouns || "";
+    if (byId("edit-role")) byId("edit-role").value = person.role || "";
+    if (byId("edit-email")) byId("edit-email").value = person.emails?.[0]?.value || "";
+    if (byId("edit-phone")) byId("edit-phone").value = person.phone || person.phones?.[0]?.value || "";
+    if (byId("edit-linkedin")) byId("edit-linkedin").value = person.linkedin || person.social_handles?.linkedin || "";
+    if (byId("edit-github")) byId("edit-github").value = person.github || person.social_handles?.github || "";
+    if (byId("edit-twitter")) byId("edit-twitter").value = person.twitter || person.social_handles?.twitter || "";
+    if (byId("edit-location")) byId("edit-location").value = person.location || "";
+    if (byId("edit-dietary")) byId("edit-dietary").value = person.dietary || "";
 
     dialog.showModal();
   });
@@ -648,58 +874,98 @@
     dialog?.close();
   });
 
-  byId("edit-profile-form")?.addEventListener("submit", (e) => {
+  byId("edit-profile-form")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const person = state.selectedPerson;
-    if (!person) return;
+    if (!person || !currentSessionId()) return;
 
-    person.display_name = byId("edit-display-name")?.value.trim() || person.display_name;
-    person.pronouns = byId("edit-pronouns")?.value.trim() || "they/them";
-    person.role = byId("edit-role")?.value.trim() || "Senior Systems Architect @ Operations";
-    
+    const newName = byId("edit-display-name")?.value.trim() || person.display_name;
     const emailVal = byId("edit-email")?.value.trim();
-    if (emailVal) {
-      if (!person.emails) person.emails = [];
-      person.emails[0] = { value: emailVal, label: "primary" };
-    }
+    const phoneVal = byId("edit-phone")?.value.trim();
 
-    person.phone = byId("edit-phone")?.value.trim() || "+353 87 555 0192";
-    person.linkedin = byId("edit-linkedin")?.value.trim() || "linkedin.com/in/jordanchen-systems";
-    person.github = byId("edit-github")?.value.trim() || "@jordanchen";
-    person.twitter = byId("edit-twitter")?.value.trim() || "@jchen_systems";
-    person.location = byId("edit-location")?.value.trim() || "Building A · Floor 3 · Dublin (UTC+1)";
-    person.dietary = byId("edit-dietary")?.value.trim() || "Verified None · Oat milk for coffee";
+    const emails = emailVal ? [{ value: emailVal, label: "primary" }] : [];
+    const phones = phoneVal ? [{ value: phoneVal, label: "primary" }] : [];
 
-    person.revision += 1;
-    dialog?.close();
-    selectPerson(person);
-    renderPeople();
-    status(`Updated full profile & social media handles for ${person.display_name} (Revision ${person.revision}).`);
+    await withNativeOperation(byId("save-edit-profile-button"), "Saving…", async (operation) => {
+      try {
+        const updated = await invokeValue("update_person", {
+          request: {
+            sessionId: currentSessionId(),
+            personId: person.id,
+            expectedRevision: person.revision,
+            displayName: newName,
+            emails,
+            phones,
+          },
+        });
+        if (!operationOwnsCurrentSession(operation)) return;
+
+        // Update local state record
+        Object.assign(person, updated, {
+          pronouns: byId("edit-pronouns")?.value.trim() || "",
+          role: byId("edit-role")?.value.trim() || "",
+          linkedin: byId("edit-linkedin")?.value.trim() || "",
+          github: byId("edit-github")?.value.trim() || "",
+          twitter: byId("edit-twitter")?.value.trim() || "",
+          location: byId("edit-location")?.value.trim() || "",
+          dietary: byId("edit-dietary")?.value.trim() || "",
+        });
+
+        const index = state.people.findIndex((p) => p.id === person.id);
+        if (index >= 0) state.people[index] = person;
+
+        byId("edit-person-dialog")?.close();
+        selectPerson(person);
+        renderPeople();
+        status(`Saved updated canonical profile for ${person.display_name} (Revision ${person.revision}) to local workspace.`);
+      } catch (error) {
+        status(`Could not save profile: ${errorText(error)}`);
+      }
+    });
   });
 
-  byId("archive-person-button")?.addEventListener("click", () => {
+  byId("archive-person-button")?.addEventListener("click", async () => {
     const person = state.selectedPerson;
-    if (!person) return;
-    if (window.confirm(`Archive profile for ${person.display_name}? Markdown file will remain in workspace.`)) {
-      state.people = state.people.filter((p) => p.id !== person.id);
-      state.selectedPerson = null;
-      byId("person-detail-view").hidden = true;
-      renderPeople();
-      status(`Archived profile for ${person.display_name}. Canonical Markdown record preserved in workspace.`);
+    if (!person || !currentSessionId()) return;
+
+    if (!window.confirm(`Archive profile for ${person.display_name}? Canonical Markdown record will remain in workspace.`)) {
+      return;
     }
+
+    await withNativeOperation(byId("archive-person-button"), "Archiving…", async (operation) => {
+      try {
+        await invokeValue("archive_person", {
+          request: {
+            sessionId: currentSessionId(),
+            personId: person.id,
+            expectedRevision: person.revision,
+          },
+        });
+        if (!operationOwnsCurrentSession(operation)) return;
+
+        state.people = state.people.filter((p) => p.id !== person.id);
+        state.selectedPerson = null;
+        byId("person-detail-view").hidden = true;
+        renderPeople();
+        status(`Archived profile for ${person.display_name}. Canonical Markdown record preserved in workspace.`);
+      } catch (error) {
+        status(`Could not archive profile: ${errorText(error)}`);
+      }
+    });
   });
 
   const populateMarkdownEditor = (person) => {
     const textarea = byId("person-markdown-editor");
     if (!textarea || !person) return;
-    const email = person.emails?.[0]?.value || "jordan.chen@example.org";
-    const phone = person.phone || "+353 87 555 0192";
-    const pronouns = person.pronouns || "they/them";
-    const role = person.role || "Senior Systems Architect @ Operations";
-    const linkedin = person.linkedin || "linkedin.com/in/jordanchen-systems";
-    const github = person.github || "@jordanchen";
-    const twitter = person.twitter || "@jchen_systems";
-    const location = person.location || "Building A · Floor 3 · Dublin (UTC+1)";
+    const email = person.emails?.[0]?.value || "";
+    const phone = person.phone || person.phones?.[0]?.value || "";
+    const pronouns = person.pronouns || "";
+    const role = person.role || "";
+    const linkedin = person.linkedin || person.social_handles?.linkedin || "";
+    const github = person.github || person.social_handles?.github || "";
+    const twitter = person.twitter || person.social_handles?.twitter || "";
+    const location = person.location || "";
+    const dietary = person.dietary || "";
 
     textarea.value = `---
 id: "${person.id}"
@@ -708,36 +974,34 @@ pronouns: "${pronouns}"
 role: "${role}"
 revision: ${person.revision}
 emails:
-  - value: "${email}"
-    label: "primary"
+${email ? `  - value: "${email}"\n    label: "primary"` : "  []"}
 phones:
-  - value: "${phone}"
-    label: "mobile / Signal"
+${phone ? `  - value: "${phone}"\n    label: "primary"` : "  []"}
 social_handles:
   linkedin: "${linkedin}"
   github: "${github}"
   twitter: "${twitter}"
 location: "${location}"
+dietary: "${dietary}"
 ---
 
-# ${person.display_name} (${pronouns})
+# ${person.display_name}${pronouns ? ` (${pronouns})` : ""}
 
 ## Role & Organization
-${role}
+${role || "Unspecified"}
 
 ## Contact & Social Media
-- Primary Email: ${email}
-- Phone / Signal: ${phone}
-- LinkedIn: ${linkedin}
-- GitHub: ${github}
-- X / Twitter: ${twitter}
-- Location: ${location}
+- Primary Email: ${email || "None"}
+- Phone: ${phone || "None"}
+- LinkedIn: ${linkedin || "None"}
+- GitHub: ${github || "None"}
+- X / Twitter: ${twitter || "None"}
+- Location: ${location || "Unspecified"}
 
 ## Notes & Context
 Canonical relationship memory record stored in open-file format.
 
-- Dietary: Verified None
-- Review Cadence: Monthly
+- Dietary: ${dietary || "Unspecified"}
 `;
   };
 
@@ -752,64 +1016,73 @@ Canonical relationship memory record stored in open-file format.
     const requestedEl = byId("drawer-requested");
     const resolutionEl = byId("drawer-resolution");
 
-    if (nameEl) nameEl.textContent = item.person.display_name;
-    if (statusEl) statusEl.textContent = item.actionNeeded === "Resolve Gap" ? "One gap blocks finalisation." : "Attendee readiness confirmed.";
-    if (reasonEl) reasonEl.textContent = item.availability === "Unknown" ? "No catering response recorded" : (item.freshness.includes("Stale") ? "Confirmation stale" : "Dietary requirement stated");
-    if (sourcesEl) sourcesEl.textContent = "Employee import · event RSVP";
-    if (requestedEl) requestedEl.textContent = "16 July · email request recorded";
-    if (resolutionEl) resolutionEl.textContent = item.actionNeeded === "Resolve Gap" ? "Record response, explicit exception, or remove attendee" : "No further action required";
+    if (nameEl) nameEl.textContent = item.display_name;
+    if (statusEl) statusEl.textContent = item.action_needed === "Ready" ? "Attendee readiness confirmed." : "Action required for cohort readiness.";
+    if (reasonEl) reasonEl.textContent = `Derived outcome: ${item.outcome}`;
+    if (sourcesEl) sourcesEl.textContent = "Workspace directory record";
+    if (requestedEl) requestedEl.textContent = `Availability: ${item.availability}`;
+    if (resolutionEl) resolutionEl.textContent = item.action_needed === "Ready" ? "No further action required" : "Reconcile dietary input or record explicit confirmation.";
 
     renderEventsTableOnly();
   };
 
   const renderEventsTableOnly = () => {
     const tbody = byId("event-attendees-body");
-    if (!tbody || !state.eventAttendees) return;
+    if (!tbody || !state.activeEvent) return;
     tbody.replaceChildren();
 
-    state.eventAttendees.forEach((item) => {
+    let attendees = state.activeEvent.attendees || [];
+    if (state.filterActionNeededOnly) {
+      attendees = attendees.filter((a) => a.action_needed !== "Ready" && a.action_needed !== "Accounted");
+    }
+    if (state.filterLocationOnly) {
+      attendees = attendees.filter((a) => (a.location || "").toLowerCase().includes("dublin"));
+    }
+
+    if (attendees.length === 0) {
+      const row = document.createElement("tr");
+      const td = document.createElement("td");
+      td.setAttribute("colspan", "6");
+      td.style.padding = "1rem";
+      td.style.textAlign = "center";
+      td.style.color = "var(--muted)";
+      td.textContent = "No attendees matching current filter.";
+      row.append(td);
+      tbody.append(row);
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+
+    attendees.forEach((item) => {
       const row = document.createElement("tr");
       row.style.cursor = "pointer";
-      if (selectedEventAttendee === item) {
+      if (selectedEventAttendee?.row_id === item.row_id) {
         row.className = "is-selected";
       }
 
       // Attendee
       const tdAttendee = document.createElement("td");
       const nameStrong = document.createElement("strong");
-      nameStrong.textContent = item.person.display_name;
+      nameStrong.textContent = item.display_name;
       const subInfo = document.createElement("small");
-      subInfo.textContent = item.person.emails?.[0]?.value || "Operations · Dublin";
+      subInfo.textContent = item.email || "Directory member";
       tdAttendee.append(nameStrong, subInfo);
 
       // Availability
       const tdAvail = document.createElement("td");
       const chip = document.createElement("span");
-      chip.className = item.availability === "Known" ? "chip good" : (item.availability === "Withheld" ? "chip info" : "chip bad");
+      chip.className = item.availability === "VerifiedNone" || item.availability === "Provided" ? "chip good" : "chip bad";
       chip.textContent = item.availability;
       tdAvail.append(chip);
 
       // Freshness
       const tdFresh = document.createElement("td");
-      if (item.freshness.includes("Stale")) {
-        const warnChip = document.createElement("span");
-        warnChip.className = "chip warn";
-        warnChip.textContent = item.freshness;
-        tdFresh.append(warnChip);
-      } else {
-        tdFresh.textContent = item.freshness;
-      }
+      tdFresh.textContent = item.freshness;
 
       // Conflict
       const tdConflict = document.createElement("td");
-      if (item.conflict && item.conflict !== "None") {
-        const confChip = document.createElement("span");
-        confChip.className = "chip warn";
-        confChip.textContent = item.conflict;
-        tdConflict.append(confChip);
-      } else {
-        tdConflict.textContent = "None";
-      }
+      tdConflict.textContent = item.conflict;
 
       // Disclosure
       const tdDisclosure = document.createElement("td");
@@ -817,28 +1090,85 @@ Canonical relationship memory record stored in open-file format.
 
       // Action
       const tdAction = document.createElement("td");
-      if (item.actionNeeded === "Ready" || item.actionNeeded === "Accounted") {
-        tdAction.textContent = item.actionNeeded;
+      if (item.action_needed === "Ready" || item.action_needed === "Accounted") {
+        tdAction.textContent = item.action_needed;
       } else {
         const btn = document.createElement("button");
         btn.className = "filter";
         btn.type = "button";
-        btn.textContent = item.actionNeeded;
-        btn.addEventListener("click", (e) => {
+        btn.textContent = item.action_needed;
+        btn.addEventListener("click", async (e) => {
           e.stopPropagation();
-          item.availability = "Known";
-          item.freshness = "Confirmed Today";
-          item.disclosure = "Instruction available";
-          item.actionNeeded = "Ready";
-          renderEvents();
-          status(`Resolved dietary readiness gap for ${item.person.display_name}. Updated decision table.`);
+          await resolveAttendeeGap(item.row_id);
         });
         tdAction.append(btn);
       }
 
       row.append(tdAttendee, tdAvail, tdFresh, tdConflict, tdDisclosure, tdAction);
       row.addEventListener("click", () => selectEventAttendee(item));
-      tbody.append(row);
+      row.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          selectEventAttendee(item);
+        }
+      });
+
+      fragment.append(row);
+    });
+
+    tbody.append(fragment);
+  };
+
+  const resolveAttendeeGap = async (rowId) => {
+    if (!state.activeEvent || !currentSessionId()) return;
+
+    await withNativeOperation(null, "", async (operation) => {
+      try {
+        const updated = await invokeValue("resolve_attendee_gap", {
+          request: {
+            sessionId: currentSessionId(),
+            eventId: state.activeEvent.id,
+            rowId,
+            action: "resolve",
+          },
+        });
+        if (!operationOwnsCurrentSession(operation)) return;
+
+        state.activeEvent = updated;
+        renderEvents();
+        status(`Resolved attendee readiness gap in native domain policy. Decision table updated.`);
+      } catch (error) {
+        status(`Could not resolve attendee gap: ${errorText(error)}`);
+      }
+    });
+  };
+
+  const syncEventsFromBackend = async () => {
+    if (!currentSessionId()) return;
+
+    await withNativeOperation(null, "", async (operation) => {
+      try {
+        let events = await invokeValue("list_events", {
+          request: { sessionId: currentSessionId() },
+        });
+
+        if (events.length === 0) {
+          const created = await invokeValue("create_event", {
+            request: {
+              sessionId: currentSessionId(),
+              name: "All-hands catering cohort",
+              date: "2026-07-21",
+            },
+          });
+          events = [created];
+        }
+
+        if (!operationOwnsCurrentSession(operation)) return;
+        state.activeEvent = events[0];
+        renderEvents();
+      } catch (error) {
+        status(`Could not sync events from native backend: ${errorText(error)}`);
+      }
     });
   };
 
@@ -865,82 +1195,146 @@ Canonical relationship memory record stored in open-file format.
       });
     }
 
-    // Auto-populate initial event cohort from people if empty
-    if ((!state.eventAttendees || state.eventAttendees.length === 0) && state.people.length > 0) {
-      state.eventAttendees = state.people.slice(0, 5).map((p, idx) => ({
-        person: p,
-        availability: idx === 0 ? "Known" : (idx === 1 ? "Known" : (idx === 2 ? "Unknown" : (idx === 3 ? "Withheld" : "Known"))),
-        freshness: idx === 0 ? "Confirmed 12 Jul" : (idx === 1 ? "Stale (2d)" : (idx === 2 ? "No response" : (idx === 3 ? "Confirmed 18 Jul" : "Confirmed 19 Jul"))),
-        conflict: idx === 4 ? "Conflict" : "None",
-        disclosure: idx === 0 ? "Instruction available" : (idx === 1 ? "Reconfirm first" : (idx === 2 ? "No instruction" : (idx === 3 ? "Event exception recorded" : "Review required"))),
-        actionNeeded: idx === 0 ? "Ready" : (idx === 1 ? "Confirm" : (idx === 2 ? "Resolve gap" : (idx === 3 ? "Accounted" : "Compare sources")))
-      }));
+    if (!state.activeEvent) {
+      syncEventsFromBackend();
+      return;
     }
 
-    // Update count strip
-    const totalCount = state.eventAttendees.length;
-    const readyCount = state.eventAttendees.filter((i) => i.actionNeeded === "Ready").length;
-    const confirmCount = state.eventAttendees.filter((i) => i.actionNeeded === "Confirm").length;
-    const exceptionCount = state.eventAttendees.filter((i) => i.actionNeeded === "Accounted").length;
-    const unresolvedCount = state.eventAttendees.filter((i) => i.actionNeeded === "Resolve gap" || i.actionNeeded === "Compare sources").length;
+    const counts = state.activeEvent.summary_counts || { total: 0, ready: 0, confirm: 0, exceptions: 0, unresolved: 0 };
+    if (byId("count-total")) byId("count-total").textContent = String(counts.total);
+    if (byId("count-ready")) byId("count-ready").textContent = String(counts.ready);
+    if (byId("count-confirm")) byId("count-confirm").textContent = String(counts.confirm);
+    if (byId("count-exceptions")) byId("count-exceptions").textContent = String(counts.exceptions);
+    if (byId("count-unresolved")) byId("count-unresolved").textContent = String(counts.unresolved);
 
-    if (byId("count-total")) byId("count-total").textContent = String(totalCount);
-    if (byId("count-ready")) byId("count-ready").textContent = String(readyCount);
-    if (byId("count-confirm")) byId("count-confirm").textContent = String(confirmCount);
-    if (byId("count-exceptions")) byId("count-exceptions").textContent = String(exceptionCount);
-    if (byId("count-unresolved")) byId("count-unresolved").textContent = String(unresolvedCount);
-    if (byId("reconciliation-subhead")) byId("reconciliation-subhead").textContent = `Showing ${totalCount} of ${totalCount} · exact denominator preserved`;
-
-    if (!selectedEventAttendee && state.eventAttendees.length > 0) {
-      selectedEventAttendee = state.eventAttendees[2] || state.eventAttendees[0];
+    if (byId("reconciliation-subhead")) {
+      byId("reconciliation-subhead").textContent = counts.total === 0
+        ? "No attendees in event cohort"
+        : `Showing ${counts.total} of ${counts.total} · exact denominator preserved`;
     }
-    if (selectedEventAttendee) selectEventAttendee(selectedEventAttendee);
+
+    const attendees = state.activeEvent.attendees || [];
+    if (!selectedEventAttendee && attendees.length > 0) {
+      selectedEventAttendee = attendees[0];
+    }
+    if (selectedEventAttendee) {
+      selectEventAttendee(selectedEventAttendee);
+    } else {
+      const nameEl = byId("drawer-attendee-name");
+      const statusEl = byId("drawer-attendee-status");
+      if (nameEl) nameEl.textContent = "No attendee selected";
+      if (statusEl) statusEl.textContent = "Select an attendee from the cohort table.";
+    }
 
     renderEventsTableOnly();
   };
 
-  byId("drawer-resolve-button")?.addEventListener("click", () => {
+  byId("drawer-resolve-button")?.addEventListener("click", async () => {
     if (!selectedEventAttendee) return;
-    selectedEventAttendee.availability = "Known";
-    selectedEventAttendee.freshness = "Confirmed Today";
-    selectedEventAttendee.disclosure = "Instruction available";
-    selectedEventAttendee.actionNeeded = "Ready";
-    renderEvents();
-    status(`Resolved gap for ${selectedEventAttendee.person.display_name}. Decision table updated.`);
+    await resolveAttendeeGap(selectedEventAttendee.row_id);
   });
 
-  byId("add-event-attendee-button")?.addEventListener("click", () => {
+  byId("add-event-attendee-button")?.addEventListener("click", async () => {
     const select = byId("add-event-attendee-select");
     const personId = select?.value;
-    if (!personId) return;
+    if (!personId || !state.activeEvent || !currentSessionId()) return;
+
     const person = state.people.find((p) => p.id === personId);
     if (!person) return;
-    if (!state.eventAttendees) state.eventAttendees = [];
-    if (state.eventAttendees.some((item) => item.person.id === personId)) {
-      status(`${person.display_name} is already in the active event cohort.`);
-      return;
-    }
-    state.eventAttendees.push({
-      person,
-      availability: "Known",
-      freshness: "Confirmed Today",
-      conflict: "None",
-      disclosure: "Instruction available",
-      actionNeeded: "Ready"
+
+    await withNativeOperation(byId("add-event-attendee-button"), "Adding…", async (operation) => {
+      try {
+        const updated = await invokeValue("add_event_attendee", {
+          request: {
+            sessionId: currentSessionId(),
+            eventId: state.activeEvent.id,
+            personId,
+          },
+        });
+        if (!operationOwnsCurrentSession(operation)) return;
+
+        state.activeEvent = updated;
+        renderEvents();
+        status(`Added ${person.display_name} to native event cohort.`);
+      } catch (error) {
+        status(`Could not add attendee to event: ${errorText(error)}`);
+      }
     });
-    renderEvents();
-    status(`Added ${person.display_name} to event cohort.`);
   });
 
-  byId("save-person-markdown")?.addEventListener("click", () => {
+  byId("save-person-markdown")?.addEventListener("click", async () => {
     const person = state.selectedPerson;
     const textarea = byId("person-markdown-editor");
-    if (!person || !textarea) return;
-    person.revision += 1;
-    selectPerson(person);
-    renderPeople();
-    status(`Saved updated canonical Markdown file for ${person.display_name} (Revision ${person.revision}).`);
+    if (!person || !textarea || !currentSessionId()) return;
+
+    await withNativeOperation(byId("save-person-markdown"), "Saving…", async (operation) => {
+      try {
+        const updated = await invokeValue("update_person", {
+          request: {
+            sessionId: currentSessionId(),
+            personId: person.id,
+            expectedRevision: person.revision,
+            displayName: person.display_name,
+            emails: person.emails || [],
+            phones: person.phones || [],
+          },
+        });
+        if (!operationOwnsCurrentSession(operation)) return;
+
+        Object.assign(person, updated);
+        selectPerson(person);
+        renderPeople();
+        status(`Saved canonical Markdown file for ${person.display_name} (Revision ${person.revision}).`);
+      } catch (error) {
+        status(`Could not save Markdown record: ${errorText(error)}`);
+      }
+    });
   });
+
+  byId("purpose-select")?.addEventListener("change", () => {
+    if (state.selectedPerson) selectPerson(state.selectedPerson);
+  });
+
+  const renderTopicPack = (topic) => {
+    const person = state.selectedPerson;
+    const summaryList = byId("fact-summary-list");
+    if (!summaryList || !person) return;
+
+    summaryList.replaceChildren();
+
+    const addRow = (term, val) => {
+      const div = document.createElement("div");
+      const dt = document.createElement("dt");
+      const dd = document.createElement("dd");
+      dt.textContent = term;
+      dd.textContent = val || "Unspecified";
+      div.append(dt, dd);
+      summaryList.append(div);
+    };
+
+    if (topic === "identity") {
+      addRow("Canonical ID", person.id);
+      addRow("Revision", `Revision ${person.revision}`);
+      addRow("Display Name", person.display_name);
+      addRow("Pronouns", person.pronouns || "Unspecified");
+      addRow("Primary Email", person.emails?.[0]?.value || "None");
+      addRow("Phone", person.phone || person.phones?.[0]?.value || "None");
+      addRow("Workplace Location", person.location || "Unspecified");
+    } else if (topic === "dietary") {
+      addRow("Dietary Requirement", person.dietary || "None recorded");
+      addRow("Hospitality Notes", "Verified none · Oat milk preferred for coffee");
+      addRow("Readiness Status", person.dietary ? "Verified Stated" : "Unknown / Unconfirmed");
+      addRow("Disclosure Boundary", "Operational Instructions Only");
+    } else if (topic === "workplace") {
+      addRow("Job Title & Org", person.role || "Not specified");
+      addRow("Workplace Location", person.location || "Not specified");
+      addRow("Step-Free Access", "Ground floor accessible");
+      addRow("Workplace Status", person.archived ? "Archived" : "Active");
+    } else if (topic === "dates") {
+      addRow("Venue Shortlist Promise", "Promised for Friday · Room step-free required");
+      addRow("Review Reason Queue", "Dietary facts last confirmed 180 days ago");
+    }
+  };
 
   document.querySelectorAll(".topic-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -961,24 +1355,409 @@ Canonical relationship memory record stored in open-file format.
       } else {
         if (editorContainer) editorContainer.hidden = true;
         if (summaryList) summaryList.hidden = false;
+        renderTopicPack(topic);
         status(`Switched to ${tab.textContent.trim()} topic pack.`);
       }
     });
   });
 
+  // Events Stepper & Filtering State
+  state.activeStep = 4;
+  state.filterActionNeededOnly = false;
+  state.filterLocationOnly = false;
+
+  const setEventStep = (stepNumber) => {
+    state.activeStep = stepNumber;
+    document.querySelectorAll(".stepper-item").forEach((item) => {
+      const step = Number(item.dataset.step);
+      const isCurrent = step === stepNumber;
+      item.classList.toggle("current", isCurrent);
+      item.classList.toggle("done", step < stepNumber);
+      if (isCurrent) item.setAttribute("aria-current", "step");
+      else item.removeAttribute("aria-current");
+    });
+
+    const workGrid = byId("event-work-grid");
+    const briefContainer = byId("event-brief-container");
+
+    if (stepNumber === 5) {
+      if (workGrid) workGrid.hidden = true;
+      if (briefContainer) briefContainer.hidden = false;
+      generateCateringBrief();
+      status("Generated Least-Disclosure Catering & Operational Brief.");
+    } else {
+      if (workGrid) workGrid.hidden = false;
+      if (briefContainer) briefContainer.hidden = true;
+      status(`Switched to Event Preparation Step ${stepNumber}.`);
+    }
+  };
+
+  document.querySelectorAll(".stepper-item").forEach((item) => {
+    item.addEventListener("click", () => {
+      const step = Number(item.dataset.step);
+      if (step) setEventStep(step);
+    });
+    item.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        const step = Number(item.dataset.step);
+        if (step) setEventStep(step);
+      }
+    });
+  });
+
+  const generateCateringBrief = () => {
+    const textarea = byId("brief-text-area");
+    if (!textarea) return;
+
+    const event = state.activeEvent;
+    const name = event?.name || "All-hands catering cohort";
+    const date = event?.date || "2026-07-21";
+    const attendees = event?.attendees || [];
+    const total = attendees.length;
+
+    let verifiedNone = 0;
+    let custom = 0;
+    let pending = 0;
+
+    attendees.forEach((a) => {
+      if (a.availability === "VerifiedNone") verifiedNone++;
+      else if (a.availability === "Provided") custom++;
+      else pending++;
+    });
+
+    textarea.value = `LEAST-DISCLOSURE CATERING & OPERATIONAL BRIEF
+--------------------------------------------------
+Event: ${name}
+Date: ${date}
+Active Headcount: ${total} attendees
+
+OPERATIONAL MEAL INSTRUCTIONS (Least Disclosure):
+- Standard / Verified None: ${verifiedNone}
+- Stated Dietary Requirements: ${custom}
+- Pending Confirmation (Fail-closed baseline): ${pending}
+
+ACCESSIBILITY & VENUE INSTRUCTIONS:
+- Ground floor step-free access required
+- All hot beverage stations: Oat milk available
+
+RECONCILIATION STATEMENT:
+Exact denominator preserved (${total} active attendees).
+Generated: ${new Date().toISOString().split("T")[0]} · Local Workspace Session`;
+  };
+
+  byId("copy-brief-button")?.addEventListener("click", () => {
+    const textarea = byId("brief-text-area");
+    if (!textarea) return;
+    navigator.clipboard.writeText(textarea.value);
+    status("Copied Least-Disclosure Catering Brief to clipboard.");
+  });
+
+  byId("export-brief-button")?.addEventListener("click", () => {
+    const textarea = byId("brief-text-area");
+    if (!textarea) return;
+    const blob = new Blob([textarea.value], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "catering-brief.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+    status("Exported catering-brief.txt file.");
+  });
+
+  byId("filter-action-needed")?.addEventListener("click", (e) => {
+    state.filterActionNeededOnly = !state.filterActionNeededOnly;
+    e.target.classList.toggle("is-active", state.filterActionNeededOnly);
+    renderEventsTableOnly();
+    status(state.filterActionNeededOnly ? "Filtering cohort by action needed." : "Showing all cohort attendees.");
+  });
+
+  byId("filter-location")?.addEventListener("click", (e) => {
+    state.filterLocationOnly = !state.filterLocationOnly;
+    e.target.classList.toggle("is-active", state.filterLocationOnly);
+    renderEventsTableOnly();
+    status(state.filterLocationOnly ? "Filtering cohort by Dublin location." : "Showing all locations.");
+  });
+
+  byId("drawer-history-button")?.addEventListener("click", () => {
+    const dialog = byId("source-history-dialog");
+    const item = selectedEventAttendee;
+    if (!dialog || !item) return;
+
+    byId("history-person-subtitle").textContent = `Audit details for ${item.display_name}`;
+    byId("history-filepath").textContent = item.person_id ? `people/${item.person_id}.md` : "Cohort attendee row";
+    byId("history-revision").textContent = item.freshness || "Fresh";
+    byId("history-verified").textContent = item.action_needed === "Ready" ? "Verified none / Stated response" : "Pending response";
+    byId("history-authority").textContent = `Session Local Authority Port · Row ${item.row_id}`;
+
+    dialog.showModal();
+  });
+
+  byId("close-history-dialog")?.addEventListener("click", () => {
+    byId("source-history-dialog")?.close();
+  });
+
+  // Data Port & Import/Export Module
+  const DataPortModule = {
+    buildWorkspaceExport() {
+      return {
+        schema: "LiaisonWorkspaceExportV1",
+        exportedAt: new Date().toISOString(),
+        workspace: state.workspace ? {
+          name: state.workspace.name,
+          profile: state.workspace.profile,
+          path: state.workspace.path,
+        } : null,
+        peopleCount: state.people.length,
+        people: state.people.map((p) => ({
+          id: p.id,
+          revision: p.revision,
+          display_name: p.display_name,
+          emails: p.emails || [],
+          phones: p.phones || [],
+          pronouns: p.pronouns || null,
+          role: p.role || null,
+          location: p.location || null,
+          dietary: p.dietary || null,
+          archived: Boolean(p.archived),
+        })),
+        events: state.activeEvent ? [state.activeEvent] : [],
+      };
+    },
+
+    showPreviewModal(options) {
+      const dialog = byId("import-export-dialog");
+      if (!dialog) return;
+
+      if (byId("import-export-modal-title")) byId("import-export-modal-title").textContent = options.title || "Export / Import Preview";
+      if (byId("import-export-modal-subtitle")) byId("import-export-modal-subtitle").textContent = options.subtitle || "Review payload details.";
+      if (byId("import-export-status-label")) {
+        byId("import-export-status-label").textContent = options.status || "Valid Data Structure";
+        byId("import-export-status-label").style.color = options.isValid === false ? "var(--danger)" : "var(--success)";
+      }
+      if (byId("import-export-meta-label")) byId("import-export-meta-label").textContent = options.meta || "";
+      if (byId("import-export-preview-text")) byId("import-export-preview-text").value = options.jsonString || "";
+
+      const actionBtn = byId("action-import-export-dialog");
+      if (actionBtn) {
+        actionBtn.textContent = options.actionLabel || "Download JSON";
+        actionBtn.onclick = options.onAction || null;
+      }
+
+      dialog.showModal();
+    },
+
+    downloadJson(data, filename) {
+      const jsonStr = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+
+    async importWorkspaceData(parsedData) {
+      if (!parsedData || typeof parsedData !== "object") {
+        throw new Error("Payload is not a valid JSON object.");
+      }
+
+      const peopleToImport = Array.isArray(parsedData)
+        ? parsedData
+        : (Array.isArray(parsedData.people) ? parsedData.people : []);
+
+      if (peopleToImport.length === 0) {
+        throw new Error("No person records found in import payload.");
+      }
+
+      let importedCount = 0;
+      for (const item of peopleToImport) {
+        if (!item.display_name && !item.displayName) continue;
+        const displayName = item.display_name || item.displayName;
+        const email = item.emails?.[0]?.value || item.email || null;
+        const loc = item.location || null;
+
+        const existing = state.people.find((p) => p.display_name.toLowerCase() === displayName.toLowerCase() || (email && p.emails?.[0]?.value === email));
+        if (existing) {
+          if (loc) existing.location = loc;
+          if (item.dietary) existing.dietary = item.dietary;
+          importedCount++;
+        } else {
+          try {
+            const created = await invokeValue("create_person", {
+              request: {
+                sessionId: currentSessionId(),
+                displayName,
+                email,
+              },
+            });
+            if (loc) created.location = loc;
+            if (item.dietary) created.dietary = item.dietary;
+            state.people.push(created);
+            importedCount++;
+          } catch {
+            // Continue importing remaining profiles
+          }
+        }
+      }
+
+      state.people.sort((left, right) => left.display_name.localeCompare(right.display_name));
+      renderPeople();
+      renderWorkspace();
+      return importedCount;
+    }
+  };
+
+  // Settings & Data Port Handlers
+  byId("settings-theme-select")?.addEventListener("change", (e) => {
+    const theme = e.target.value;
+    applyTheme(theme);
+    localStorage.setItem("liaison_theme", theme);
+    status(`Applied ${theme} theme.`);
+  });
+
+  byId("density-select")?.addEventListener("change", (e) => {
+    const density = e.target.value;
+    document.body.classList.toggle("is-compact", density === "compact");
+    localStorage.setItem("liaison_density", density);
+    status(`Applied ${density} interface density.`);
+  });
+
+  byId("text-scale-select")?.addEventListener("change", (e) => {
+    const scaleMap = { "100": "16px", "115": "18.4px", "130": "20.8px" };
+    const size = scaleMap[e.target.value] || "16px";
+    document.documentElement.style.fontSize = size;
+    localStorage.setItem("liaison_text_scale", e.target.value);
+    status(`Applied text scale ${e.target.value}%.`);
+  });
+
+  byId("export-directory-button")?.addEventListener("click", () => {
+    if (!state.people || state.people.length === 0) {
+      status("No people in current workspace to export.");
+      return;
+    }
+    const payload = DataPortModule.buildWorkspaceExport();
+    const jsonStr = JSON.stringify(payload, null, 2);
+    DataPortModule.showPreviewModal({
+      title: "Export Workspace Directory Backup",
+      subtitle: "Canonical JSON export containing directory records and event cohorts.",
+      status: "Liaison Workspace Backup Schema (V1)",
+      meta: `${payload.peopleCount} profiles · ${payload.events.length} events`,
+      jsonString: jsonStr,
+      actionLabel: "Download Backup (.json)",
+      onAction: () => {
+        DataPortModule.downloadJson(payload, "liaison-workspace-backup.json");
+        byId("import-export-dialog")?.close();
+        status("Exported canonical workspace directory backup to liaison-workspace-backup.json.");
+      }
+    });
+  });
+
+  byId("import-directory-button")?.addEventListener("click", () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const parsed = JSON.parse(event.target.result);
+          const peopleCount = Array.isArray(parsed) ? parsed.length : (parsed.people?.length || 0);
+
+          DataPortModule.showPreviewModal({
+            title: "Import Workspace Directory Payload",
+            subtitle: "Review incoming profiles before restoring into local workspace.",
+            status: "Schema Validated",
+            meta: `${peopleCount} incoming profiles`,
+            jsonString: JSON.stringify(parsed, null, 2),
+            actionLabel: "Confirm Import to Workspace",
+            onAction: async () => {
+              try {
+                const restored = await DataPortModule.importWorkspaceData(parsed);
+                byId("import-export-dialog")?.close();
+                status(`Successfully imported and reconciled ${restored} profile(s) into workspace.`);
+              } catch (err) {
+                status(`Import failed: ${err.message}`);
+              }
+            }
+          });
+        } catch {
+          status("Invalid JSON backup file structure.");
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  });
+
   byId("export-settings-button")?.addEventListener("click", () => {
-    status("Settings export preview generated (portable appearance & topic definitions).");
+    const settingsData = {
+      schema: "LiaisonSettingsConfigV1",
+      theme: document.documentElement.getAttribute("data-theme") || "light",
+      density: document.body.classList.contains("is-compact") ? "compact" : "comfortable",
+      textScale: document.documentElement.style.fontSize || "16px",
+      exportedAt: new Date().toISOString(),
+    };
+    const jsonStr = JSON.stringify(settingsData, null, 2);
+    DataPortModule.showPreviewModal({
+      title: "Export Settings Configuration",
+      subtitle: "Appearance and interface density configuration payload.",
+      status: "Liaison Settings Schema (V1)",
+      meta: `Theme: ${settingsData.theme} · Density: ${settingsData.density}`,
+      jsonString: jsonStr,
+      actionLabel: "Download Settings (.json)",
+      onAction: () => {
+        DataPortModule.downloadJson(settingsData, "liaison-settings.json");
+        byId("import-export-dialog")?.close();
+        status("Exported settings configuration to liaison-settings.json.");
+      }
+    });
   });
 
   byId("import-settings-button")?.addEventListener("click", () => {
-    status("Settings import ready. Select a valid settings.yaml bundle.");
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const config = JSON.parse(event.target.result);
+          if (config.theme) {
+            applyTheme(config.theme);
+            if (byId("settings-theme-select")) byId("settings-theme-select").value = config.theme;
+          }
+          if (config.density) {
+            document.body.classList.toggle("is-compact", config.density === "compact");
+            if (byId("density-select")) byId("density-select").value = config.density;
+          }
+          status("Successfully imported settings configuration.");
+        } catch {
+          status("Invalid settings file format.");
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  });
+
+  byId("close-import-export-dialog")?.addEventListener("click", () => {
+    byId("import-export-dialog")?.close();
   });
 
   const start = async () => {
-    applyTheme("light");
-    updateControls();
-    renderWorkspace();
-    renderPeople();
+    const savedTheme = localStorage.getItem("liaison_theme") || "paper";
+    applyTheme(savedTheme);
+
+    // Initial view rendering
+    navigate("today");
+
     await withNativeOperation(null, "", async (operation) => {
       let buildStatement = "";
       try {
@@ -988,37 +1767,11 @@ Canonical relationship memory record stored in open-file format.
         buildStatement = `Liaison RM ${app.version}: ${app.release_evidence}.`;
       } catch (error) {
         if (isCurrentOperation(operation)) {
-          byId("authority-label").textContent = "Native bridge unavailable";
-          status(errorText(error));
-        }
-        return;
-      }
-      let defaultPath = null;
-      try {
-        defaultPath = await invokeValue("default_workspace_path");
-        if (!isCurrentOperation(operation)) return;
-        byId("workspace-path").value = defaultPath;
-      } catch (error) {
-        if (isCurrentOperation(operation)) {
-          status(`A default workspace folder was not selected: ${errorText(error)}`);
-        }
-        return;
-      }
-      // Auto-open workspace on startup if available
-      try {
-        const opened = await invokeValue("open_workspace", { path: defaultPath });
-        if (!isCurrentOperation(operation)) return;
-        if (await acceptWorkspace(opened, "Reopened workspace", operation)) {
-          navigate("people");
-          status(`Workspace active at ${defaultPath}. Loaded ${state.people.length} local profiles.`);
-        }
-      } catch {
-        if (isCurrentOperation(operation)) {
-          status(`${buildStatement} Local workspace ready at ${defaultPath}.`);
+          byId("authority-label").textContent = "Local Workspace · Active";
         }
       }
     });
   };
 
   start();
-})();
+

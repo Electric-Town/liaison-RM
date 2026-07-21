@@ -7,7 +7,7 @@
   <meta name="description" content="Liaison RM local relationship memory and attention system.">
   <title>Liaison RM</title>
   <link rel="stylesheet" href="styles.css">
-  <script src="app.js" defer></script>
+  <script type="module" src="app.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to main content</a>
@@ -20,16 +20,21 @@
           <small>Local relationship memory</small>
         </span>
       </div>
-      <div class="local-status" aria-label="Storage status">
-        <span class="status-dot" aria-hidden="true"></span>
-        <span id="authority-label">Local Workspace · Active</span>
+      <div style="display:flex; align-items:center; gap:0.75rem;">
+        <button id="topbar-theme-toggle" class="secondary-button" type="button" title="Quick toggle Light/Dark Theme" style="min-height:38px; padding:0.3rem 0.65rem; display:flex; align-items:center; gap:0.4rem;">
+          <span id="theme-toggle-icon">🌙</span> <span id="theme-toggle-text">Dark Mode</span>
+        </button>
+        <div class="local-status" aria-label="Storage status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="authority-label">Local Workspace · Active</span>
+        </div>
       </div>
     </header>
 
     <aside class="sidebar" aria-label="Primary navigation">
       <nav>
-        <button class="nav-button is-active" type="button" data-route="setup" aria-current="page">
-          <span aria-hidden="true">1</span> Workspace
+        <button class="nav-button is-active" type="button" data-route="today" aria-current="page">
+          <span aria-hidden="true">1</span> Today
         </button>
         <button class="nav-button" type="button" data-route="people">
           <span aria-hidden="true">2</span> People
@@ -134,6 +139,13 @@
               <label for="person-email">Email <span class="optional">optional</span></label>
               <input id="person-email" name="email" type="email" autocomplete="email" disabled>
             </div>
+            <div class="field">
+              <label for="person-location">Workplace Location & Address <span class="optional">optional</span></label>
+              <div class="input-with-action">
+                <input id="person-location" name="location" type="text" placeholder="Building A · Dublin (UTC+1)" disabled>
+                <button id="add-person-use-location" class="secondary-button" type="button" style="min-height:48px; white-space:nowrap;" disabled>📍 Use My Location</button>
+              </div>
+            </div>
             <button id="create-person" class="primary-button" type="submit" data-native-operation="session" disabled>Save Markdown profile</button>
           </form>
 
@@ -214,12 +226,12 @@
               <dl id="fact-summary-list" class="summary-list">
                 <div><dt>Canonical ID</dt><dd id="fact-id">—</dd></div>
                 <div><dt>Revision</dt><dd id="fact-revision">—</dd></div>
-                <div><dt>Pronouns</dt><dd id="fact-pronouns">they/them</dd></div>
-                <div><dt>Role & Org</dt><dd id="fact-role">Senior Systems Architect @ Operations</dd></div>
-                <div><dt>Primary Contact</dt><dd id="fact-contact">jordan.chen@example.org · +353 87 555 0192 (Signal)</dd></div>
-                <div><dt>Social Media</dt><dd id="fact-social"><a href="#" class="social-badge">LinkedIn</a><a href="#" class="social-badge">GitHub (@jordanchen)</a><a href="#" class="social-badge">X (@jchen)</a></dd></div>
-                <div><dt>Dietary & Hospitality</dt><dd id="fact-dietary">Verified None · Oat milk for coffee</dd></div>
-                <div><dt>Workplace Location</dt><dd id="fact-location">Building A · Floor 3 · Dublin (UTC+1)</dd></div>
+                <div><dt>Pronouns</dt><dd id="fact-pronouns">Unspecified</dd></div>
+                <div><dt>Role & Org</dt><dd id="fact-role">Not specified</dd></div>
+                <div><dt>Primary Contact</dt><dd id="fact-contact">No email or phone recorded</dd></div>
+                <div><dt>Social Media</dt><dd id="fact-social">None recorded</dd></div>
+                <div><dt>Dietary & Hospitality</dt><dd id="fact-dietary">None recorded</dd></div>
+                <div><dt>Workplace Location</dt><dd id="fact-location">Not specified</dd></div>
               </dl>
 
               <div id="markdown-editor-container" hidden style="margin-top:1rem;">
@@ -257,27 +269,27 @@
         </div>
 
         <ol class="stepper" aria-label="Event preparation steps">
-          <li class="done"><b>✓</b>Details</li>
-          <li class="done"><b>✓</b>Cohort</li>
-          <li class="done"><b>✓</b>Attendees</li>
-          <li class="current" aria-current="step"><b>4</b>Readiness</li>
-          <li><b>5</b>Brief</li>
+          <li class="stepper-item done" data-step="1" tabindex="0" role="button" aria-label="Step 1: Details"><b>✓</b>Details</li>
+          <li class="stepper-item done" data-step="2" tabindex="0" role="button" aria-label="Step 2: Cohort"><b>✓</b>Cohort</li>
+          <li class="stepper-item done" data-step="3" tabindex="0" role="button" aria-label="Step 3: Attendees"><b>✓</b>Attendees</li>
+          <li class="stepper-item current" data-step="4" tabindex="0" role="button" aria-current="step" aria-label="Step 4: Readiness"><b>4</b>Readiness</li>
+          <li class="stepper-item" data-step="5" tabindex="0" role="button" aria-label="Step 5: Brief"><b>5</b>Brief</li>
         </ol>
 
         <section class="count-strip" aria-label="Exact readiness counts">
-          <div class="count-item"><strong id="count-total">45</strong><span>active attendees</span></div>
-          <div class="count-item"><strong id="count-ready">36</strong><span>ready</span></div>
-          <div class="count-item"><strong id="count-confirm">5</strong><span>need confirmation</span></div>
-          <div class="count-item"><strong id="count-exceptions">3</strong><span>accounted exceptions</span></div>
-          <div class="count-item unresolved"><strong id="count-unresolved">1</strong><span>unresolved gap</span></div>
+          <div class="count-item"><strong id="count-total">0</strong><span>active attendees</span></div>
+          <div class="count-item"><strong id="count-ready">0</strong><span>ready</span></div>
+          <div class="count-item"><strong id="count-confirm">0</strong><span>need confirmation</span></div>
+          <div class="count-item"><strong id="count-exceptions">0</strong><span>accounted exceptions</span></div>
+          <div class="count-item unresolved"><strong id="count-unresolved">0</strong><span>unresolved gaps</span></div>
         </section>
 
-        <div class="work-grid">
+        <div id="event-work-grid" class="work-grid">
           <section class="panel">
             <div class="panel-head">
               <div>
                 <h2>Attendee reconciliation</h2>
-                <small id="reconciliation-subhead">Showing 5 of 45 · exact denominator preserved</small>
+                <small id="reconciliation-subhead">No attendees in event cohort</small>
               </div>
               <div class="filters">
                 <button id="filter-action-needed" class="filter" type="button">Status: action needed</button>
@@ -313,26 +325,26 @@
           <aside class="panel drawer" aria-label="Selected attendee evidence">
             <div class="person-block">
               <p class="eyebrow">Selected attendee</p>
-              <h2 id="drawer-attendee-name">Jordan Chen</h2>
-              <p id="drawer-attendee-status">One gap blocks finalisation.</p>
+              <h2 id="drawer-attendee-name">No attendee selected</h2>
+              <p id="drawer-attendee-status">Select an attendee from the cohort table.</p>
             </div>
             <div class="panel-body">
               <dl>
                 <div>
                   <dt>Reason surfaced</dt>
-                  <dd id="drawer-reason">No catering response recorded</dd>
+                  <dd id="drawer-reason">None</dd>
                 </div>
                 <div>
                   <dt>Sources checked</dt>
-                  <dd id="drawer-sources">Employee import · event RSVP</dd>
+                  <dd id="drawer-sources">None</dd>
                 </div>
                 <div>
                   <dt>Requested</dt>
-                  <dd id="drawer-requested">16 July · email request recorded</dd>
+                  <dd id="drawer-requested">None</dd>
                 </div>
                 <div>
                   <dt>Allowed resolution</dt>
-                  <dd id="drawer-resolution">Record response, explicit exception, or remove attendee</dd>
+                  <dd id="drawer-resolution">Select an attendee to review readiness.</dd>
                 </div>
               </dl>
               <div class="actions">
@@ -341,6 +353,20 @@
               </div>
             </div>
           </aside>
+        </div>
+
+        <div id="event-brief-container" class="card" hidden style="margin-top:1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+            <div>
+              <h2 style="margin:0;">Least Disclosure Catering & Operational Brief</h2>
+              <small style="color:var(--muted);">Aggregated operational instructions without personal identifiers</small>
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+              <button id="copy-brief-button" class="primary-button" type="button">Copy Brief to Clipboard</button>
+              <button id="export-brief-button" class="secondary-button" type="button">Export Brief (.txt)</button>
+            </div>
+          </div>
+          <textarea id="brief-text-area" rows="12" style="width:100%; font-family:var(--font-mono); font-size:0.88rem; padding:0.75rem; border:1px solid var(--border); border-radius:6px; background:var(--sidebar-background); color:var(--foreground);" readonly></textarea>
         </div>
 
         <aside class="callout">
@@ -383,16 +409,80 @@
 
         <div class="two-column">
           <section class="card form-card">
-            <h2>Theme & Comfort</h2>
+            <h2>Theme & Visual Aesthetics</h2>
             <div class="field">
-              <label for="settings-theme-select">Theme Selection</label>
+              <label for="settings-theme-select">Theme Selection Palette</label>
               <select id="settings-theme-select">
-                <option value="light" selected>Editorial Light (Default)</option>
-                <option value="dark">Editorial Dark</option>
-                <option value="high-contrast">High Contrast</option>
-                <option value="system">System Theme</option>
+                <option value="light" selected>Editorial Light (Paper Ledger)</option>
+                <option value="dark">Editorial Dark (Emerald Slate)</option>
+                <option value="high-contrast">High Contrast OLED</option>
+                <option value="nordic">Nordic Midnight (Indigo & Ice)</option>
+                <option value="amber">Warm Amber (Solarized Sepia)</option>
+                <option value="emerald">Emerald Forest (Deep Mint)</option>
+                <option value="system">System Preference</option>
               </select>
             </div>
+
+            <div class="field">
+              <label>Interactive Palette Swatches</label>
+              <div id="theme-grid" class="theme-grid" role="radiogroup" aria-label="Visual theme choices">
+                <div class="theme-card is-active" data-theme="light" tabindex="0" role="radio" aria-checked="true">
+                  <div class="theme-swatch">
+                    <span style="background:#eee8dc;"></span>
+                    <span style="background:#202622;"></span>
+                    <span style="background:#1e5d73;"></span>
+                    <span style="background:#f2d98d;"></span>
+                  </div>
+                  <strong>Editorial Light</strong>
+                </div>
+                <div class="theme-card" data-theme="dark" tabindex="0" role="radio" aria-checked="false">
+                  <div class="theme-swatch">
+                    <span style="background:#0e1714;"></span>
+                    <span style="background:#f4f1e8;"></span>
+                    <span style="background:#78c8e0;"></span>
+                    <span style="background:#514819;"></span>
+                  </div>
+                  <strong>Editorial Dark</strong>
+                </div>
+                <div class="theme-card" data-theme="nordic" tabindex="0" role="radio" aria-checked="false">
+                  <div class="theme-swatch">
+                    <span style="background:#0f172a;"></span>
+                    <span style="background:#f8fafc;"></span>
+                    <span style="background:#6366f1;"></span>
+                    <span style="background:#38bdf8;"></span>
+                  </div>
+                  <strong>Nordic Midnight</strong>
+                </div>
+                <div class="theme-card" data-theme="amber" tabindex="0" role="radio" aria-checked="false">
+                  <div class="theme-swatch">
+                    <span style="background:#fdf6e3;"></span>
+                    <span style="background:#433422;"></span>
+                    <span style="background:#c85a17;"></span>
+                    <span style="background:#b58900;"></span>
+                  </div>
+                  <strong>Warm Amber</strong>
+                </div>
+                <div class="theme-card" data-theme="emerald" tabindex="0" role="radio" aria-checked="false">
+                  <div class="theme-swatch">
+                    <span style="background:#061a14;"></span>
+                    <span style="background:#e6f4f0;"></span>
+                    <span style="background:#10b981;"></span>
+                    <span style="background:#84cc16;"></span>
+                  </div>
+                  <strong>Emerald Forest</strong>
+                </div>
+                <div class="theme-card" data-theme="high-contrast" tabindex="0" role="radio" aria-checked="false">
+                  <div class="theme-swatch">
+                    <span style="background:#000000;"></span>
+                    <span style="background:#ffffff;"></span>
+                    <span style="background:#00d4ff;"></span>
+                    <span style="background:#ffd400;"></span>
+                  </div>
+                  <strong>High Contrast</strong>
+                </div>
+              </div>
+            </div>
+
             <div class="field">
               <label for="density-select">Interface Density</label>
               <select id="density-select">
@@ -411,10 +501,15 @@
           </section>
 
           <section class="card">
-            <h2>Portable Settings</h2>
-            <p>Export or import workspace layouts, topic packs, and appearance configurations.</p>
-            <button id="export-settings-button" class="primary-button full-width" type="button">Preview Settings Export</button>
-            <button id="import-settings-button" class="secondary-button full-width" type="button">Import Settings</button>
+            <h2>Portable Data & Backup Options</h2>
+            <p>Export or import local profile directories, event cohorts, and workspace preferences in canonical open-file formats.</p>
+            <div style="display:grid; gap:0.6rem;">
+              <button id="export-directory-button" class="primary-button full-width" type="button" data-native-operation="session">Export Workspace Backup (.json)</button>
+              <button id="import-directory-button" class="secondary-button full-width" type="button" data-native-operation="session">Import Directory Data (.json)</button>
+              <div class="divider" style="margin:0.4rem 0;"></div>
+              <button id="export-settings-button" class="secondary-button full-width" type="button">Export Settings Config (.json)</button>
+              <button id="import-settings-button" class="secondary-button full-width" type="button">Import Settings Config (.json)</button>
+            </div>
           </section>
         </div>
       </section>
@@ -462,11 +557,15 @@
             <label for="edit-twitter">X / Twitter Handle</label>
             <input id="edit-twitter" type="text" placeholder="@handle">
           </div>
-          <div class="field">
-            <label for="edit-location">Workplace Location & Timezone</label>
-            <input id="edit-location" type="text" placeholder="Building A · Floor 3 · Dublin (UTC+1)">
+          <div class="field" style="grid-column: 1 / -1;">
+            <label for="edit-location">Workplace Location & Address</label>
+            <div class="input-with-action">
+              <input id="edit-location" type="text" placeholder="Building A · Floor 3 · Dublin, Ireland (UTC+1)">
+              <button id="edit-profile-use-location" class="secondary-button" type="button" style="min-height:48px; white-space:nowrap;">📍 Use My Location</button>
+            </div>
+            <small class="field-help">Click to detect physical address and timezone automatically, or type custom address.</small>
           </div>
-          <div class="field">
+          <div class="field" style="grid-column: 1 / -1;">
             <label for="edit-dietary">Dietary & Hospitality Preference</label>
             <input id="edit-dietary" type="text" placeholder="Verified None · Oat milk for coffee">
           </div>
@@ -475,6 +574,41 @@
         <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.2rem;">
           <button id="cancel-edit-profile" class="secondary-button" type="button">Cancel</button>
           <button id="save-edit-profile" class="primary-button" type="submit" data-native-operation="session">Save Changes</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="source-history-dialog" class="profile-dialog">
+      <form method="dialog" style="padding:1rem;">
+        <h2>Attendee Source & Provenance History</h2>
+        <p id="history-person-subtitle" style="color:var(--muted); font-size:0.9rem;">Provenance audit for local record.</p>
+        <div class="card" style="background:var(--sidebar-background); margin:1rem 0;">
+          <dl id="history-details-list" class="summary-list">
+            <div><dt>Canonical File Path</dt><dd id="history-filepath">people/person-01J4.md</dd></div>
+            <div><dt>Current Revision</dt><dd id="history-revision">Revision 1</dd></div>
+            <div><dt>Last Verified</dt><dd id="history-verified">Today (Direct User Confirmation)</dd></div>
+            <div><dt>Writer Authority</dt><dd id="history-authority">Session Local Authority Port</dd></div>
+          </dl>
+        </div>
+        <div style="display:flex; justify-content:flex-end;">
+          <button id="close-history-dialog" class="secondary-button" type="button">Close Audit View</button>
+        </div>
+      </form>
+    <dialog id="import-export-dialog" class="profile-dialog">
+      <form method="dialog" style="padding:1rem;">
+        <h2 id="import-export-modal-title">Export / Import Preview</h2>
+        <p id="import-export-modal-subtitle" style="color:var(--muted); font-size:0.9rem;">Review data payload before saving or importing into local workspace.</p>
+        
+        <div class="card" style="background:var(--sidebar-background); margin:1rem 0; padding:0.75rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; flex-wrap:wrap; gap:0.4rem;">
+            <strong id="import-export-status-label" style="color:var(--success);">Valid Payload Structure</strong>
+            <span id="import-export-meta-label" class="chip-badge chip-accent">0 items</span>
+          </div>
+          <textarea id="import-export-preview-text" rows="11" style="width:100%; font-family:var(--font-mono); font-size:0.84rem; padding:0.6rem; border:1px solid var(--border); border-radius:4px; background:var(--surface); color:var(--ink);" readonly></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+          <button id="close-import-export-dialog" class="secondary-button" type="button">Close</button>
+          <button id="action-import-export-dialog" class="primary-button" type="button">Save Export (.json)</button>
         </div>
       </form>
     </dialog>
