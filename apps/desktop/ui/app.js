@@ -490,6 +490,10 @@
     } else {
       document.documentElement.setAttribute("data-theme", themeName);
     }
+    const topSelect = byId("theme-select");
+    const settingsSelect = byId("settings-theme-select");
+    if (topSelect && topSelect.value !== themeName) topSelect.value = themeName;
+    if (settingsSelect && settingsSelect.value !== themeName) settingsSelect.value = themeName;
   };
 
   byId("theme-select")?.addEventListener("change", (event) => {
@@ -498,7 +502,34 @@
     status(`Applied ${selected} theme.`);
   });
 
+  byId("settings-theme-select")?.addEventListener("change", (event) => {
+    const selected = event.target.value;
+    applyTheme(selected);
+    status(`Applied ${selected} theme.`);
+  });
+
+  document.querySelectorAll(".topic-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".topic-tab").forEach((item) => {
+        const active = item === tab;
+        item.classList.toggle("is-active", active);
+        item.setAttribute("aria-selected", String(active));
+      });
+      const topic = tab.dataset.topic;
+      status(`Switched to ${tab.textContent.trim()} topic pack.`);
+    });
+  });
+
+  byId("export-settings-button")?.addEventListener("click", () => {
+    status("Settings export preview generated (portable appearance & topic definitions).");
+  });
+
+  byId("import-settings-button")?.addEventListener("click", () => {
+    status("Settings import ready. Select a valid settings.yaml bundle.");
+  });
+
   const start = async () => {
+    applyTheme("light");
     updateControls();
     renderWorkspace();
     renderPeople();

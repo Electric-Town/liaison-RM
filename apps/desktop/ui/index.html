@@ -41,8 +41,14 @@
         <button class="nav-button" type="button" data-route="people">
           <span aria-hidden="true">2</span> People
         </button>
+        <button class="nav-button" type="button" data-route="events">
+          <span aria-hidden="true">3</span> Events
+        </button>
         <button class="nav-button" type="button" data-route="health">
-          <span aria-hidden="true">3</span> Health
+          <span aria-hidden="true">4</span> Health
+        </button>
+        <button class="nav-button" type="button" data-route="settings">
+          <span aria-hidden="true">5</span> Settings
         </button>
       </nav>
       <div class="sidebar-note">
@@ -203,6 +209,70 @@
         </section>
       </section>
 
+      <section class="page" data-page="events" aria-labelledby="events-heading" hidden>
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">All-hands lunch · 24 July 2026</p>
+            <h1 id="events-heading" tabindex="-1">Account for every attendee</h1>
+            <p>Resolve information gaps before generating least-disclosure catering instructions.</p>
+          </div>
+          <button id="refresh-events" class="secondary-button" type="button" data-native-operation="session">Refresh cohort</button>
+        </div>
+
+        <ol class="stepper" aria-label="Event preparation steps" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:0; list-style:none; padding:0; border:1px solid var(--border); background:var(--surface); margin-bottom:1.2rem;">
+          <li style="padding:0.7rem; border-right:1px solid var(--border); color:var(--success);"><b>✓</b> Details</li>
+          <li style="padding:0.7rem; border-right:1px solid var(--border); color:var(--success);"><b>✓</b> Cohort</li>
+          <li style="padding:0.7rem; border-right:1px solid var(--border); color:var(--success);"><b>✓</b> Attendees</li>
+          <li style="padding:0.7rem; border-right:1px solid var(--border); background:var(--highlight); color:var(--ink); font-weight:700;"><b>4</b> Readiness</li>
+          <li style="padding:0.7rem; color:var(--muted);"><b>5</b> Brief</li>
+        </ol>
+
+        <section class="card" aria-label="Attendee reconciliation" style="margin-bottom:1.2rem;">
+          <h2>Active Attendee Cohort</h2>
+          <p style="color:var(--muted); font-size:0.9rem;">45 active attendees · exact denominator preserved · fail-closed decision table</p>
+          <div style="overflow-x:auto; margin-top:1rem;">
+            <table style="width:100%; border-collapse:collapse;">
+              <thead>
+                <tr style="background:var(--sidebar-background); text-align:left;">
+                  <th style="padding:0.6rem;">Attendee</th>
+                  <th style="padding:0.6rem;">Availability</th>
+                  <th style="padding:0.6rem;">Freshness</th>
+                  <th style="padding:0.6rem;">Conflict</th>
+                  <th style="padding:0.6rem;">Disclosure</th>
+                  <th style="padding:0.6rem;">Next Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom:1px solid var(--border);">
+                  <td style="padding:0.6rem;"><strong>Aisling O’Connor</strong><br><small style="color:var(--muted);">Operations · Dublin</small></td>
+                  <td style="padding:0.6rem;"><span class="chip-badge chip-success">Known</span></td>
+                  <td style="padding:0.6rem;">Confirmed 12 Jul</td>
+                  <td style="padding:0.6rem;">None</td>
+                  <td style="padding:0.6rem;">Instruction available</td>
+                  <td style="padding:0.6rem;">Ready</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border);">
+                  <td style="padding:0.6rem;"><strong>Ravi Patel</strong><br><small style="color:var(--muted);">Engineering · Dublin</small></td>
+                  <td style="padding:0.6rem;"><span class="chip-badge chip-success">Known</span></td>
+                  <td style="padding:0.6rem;"><span class="chip-badge chip-warning">Stale (2d)</span></td>
+                  <td style="padding:0.6rem;">None</td>
+                  <td style="padding:0.6rem;">Reconfirm first</td>
+                  <td style="padding:0.6rem;"><button class="secondary-button" style="min-height:36px; padding:0.2rem 0.5rem;" type="button">Confirm</button></td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border); background:var(--accent-soft);">
+                  <td style="padding:0.6rem;"><strong>Jordan Chen</strong><br><small style="color:var(--muted);">Community guest</small></td>
+                  <td style="padding:0.6rem;"><span class="chip-badge chip-warning">Unknown</span></td>
+                  <td style="padding:0.6rem;">No response</td>
+                  <td style="padding:0.6rem;">None</td>
+                  <td style="padding:0.6rem;">No instruction</td>
+                  <td style="padding:0.6rem;"><button class="primary-button" style="min-height:36px; padding:0.2rem 0.5rem;" type="button">Resolve gap</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
       <section class="page" data-page="health" aria-labelledby="health-heading" hidden>
         <div class="page-heading">
           <div>
@@ -225,6 +295,53 @@
           </div>
           <ul id="validation-findings" class="finding-list"></ul>
         </section>
+      </section>
+
+      <section class="page" data-page="settings" aria-labelledby="settings-heading" hidden>
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Appearance & Settings</p>
+            <h1 id="settings-heading" tabindex="-1">Appearance and comfort options</h1>
+            <p>Configure theme preferences, density, and local settings export/import.</p>
+          </div>
+        </div>
+
+        <div class="two-column">
+          <section class="card form-card">
+            <h2>Theme & Comfort</h2>
+            <div class="field">
+              <label for="settings-theme-select">Theme Selection</label>
+              <select id="settings-theme-select">
+                <option value="light" selected>Editorial Light (Default)</option>
+                <option value="dark">Editorial Dark</option>
+                <option value="high-contrast">High Contrast</option>
+                <option value="system">System Theme</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="density-select">Interface Density</label>
+              <select id="density-select">
+                <option value="comfortable" selected>Comfortable (48px targets)</option>
+                <option value="compact">Compact</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="text-scale-select">Text Scale</label>
+              <select id="text-scale-select">
+                <option value="100" selected>100% (Standard)</option>
+                <option value="115">115%</option>
+                <option value="130">130%</option>
+              </select>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2>Portable Settings</h2>
+            <p>Export or import workspace layouts, topic packs, and appearance configurations.</p>
+            <button id="export-settings-button" class="primary-button full-width" type="button">Preview Settings Export</button>
+            <button id="import-settings-button" class="secondary-button full-width" type="button">Import Settings</button>
+          </section>
+        </div>
       </section>
     </main>
 
