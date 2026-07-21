@@ -1,3 +1,6 @@
+#![cfg(target_os = "windows")]
+#![allow(clippy::expect_used, clippy::panic, clippy::collapsible_if)]
+
 use liaison_application::{
     BuildProfile, CreatePersonCommand, InitialiseWorkspaceCommand, LiaisonApplication,
     WorkspaceProfile,
@@ -7,7 +10,12 @@ use tempfile::tempdir;
 
 fn describe_tree(path: &Path, indent: usize) {
     let Ok(entries) = fs::read_dir(path) else {
-        eprintln!("{:indent$}<unreadable {}>", "", path.display(), indent = indent);
+        eprintln!(
+            "{:indent$}<unreadable {}>",
+            "",
+            path.display(),
+            indent = indent
+        );
         return;
     };
     let mut entries = entries.flatten().collect::<Vec<_>>();
