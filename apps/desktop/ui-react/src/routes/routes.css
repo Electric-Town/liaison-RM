@@ -1,0 +1,244 @@
+.settings-form,
+.person-form {
+  display: grid;
+  gap: 1rem;
+  margin-block: 1.5rem;
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.metric-grid,
+.record-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-block: 1.5rem;
+}
+
+.metric-grid div,
+.record-summary div {
+  min-width: 0;
+  padding-block-start: 0.65rem;
+  border-block-start: 2px solid var(--rule);
+}
+
+.metric-grid dt,
+.record-summary dt {
+  color: var(--muted-ink);
+  font-weight: 700;
+}
+
+.metric-grid dd,
+.record-summary dd {
+  margin: 0.35rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.metric-grid dd {
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  font-weight: 700;
+}
+
+.bounded-note,
+.health-clear {
+  padding: 0.9rem 1rem;
+  background: var(--canvas);
+  border-inline-start: 0.35rem solid var(--rule);
+}
+
+.directory-layout {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1fr) minmax(18rem, 1fr);
+  gap: 1.5rem;
+  margin-block-start: 2rem;
+}
+
+.directory-layout h3,
+.profile-panel h3 {
+  margin-block-start: 0;
+  font-family: "Source Serif 4", Georgia, serif;
+}
+
+.result-count {
+  min-height: 1.5em;
+  color: var(--muted-ink);
+}
+
+.person-list,
+.finding-list,
+.stage-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.person-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.person-row {
+  display: grid;
+  gap: 0.2rem;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.75rem;
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  background: var(--surface);
+  border: 2px solid var(--rule);
+  cursor: pointer;
+}
+
+.person-row[aria-pressed="true"] {
+  color: var(--content-on-highlight);
+  background: var(--highlight);
+  border-color: var(--content-on-highlight);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+.person-row span {
+  font-weight: 700;
+}
+
+.person-row small {
+  color: inherit;
+}
+
+.profile-panel {
+  align-self: start;
+  padding: 1rem;
+  background: var(--canvas);
+  border: 2px solid var(--rule);
+}
+
+.profile-panel--empty {
+  color: var(--muted-ink);
+  border-style: dashed;
+}
+
+.profile-panel__heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.finding-list {
+  display: grid;
+  gap: 1rem;
+  margin-block-start: 1.5rem;
+}
+
+.finding {
+  padding: 1rem;
+  background: var(--surface);
+  border: 2px solid var(--rule);
+  border-inline-start-width: 0.5rem;
+}
+
+.finding--error {
+  border-inline-start-color: var(--danger);
+}
+
+.finding--warning {
+  border-inline-start-color: var(--highlight);
+}
+
+.finding--information {
+  border-inline-start-color: var(--focus);
+}
+
+.finding__heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.finding__heading span {
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.finding dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.finding dl div {
+  min-width: 0;
+}
+
+.finding dt {
+  color: var(--muted-ink);
+  font-weight: 700;
+}
+
+.finding dd {
+  margin: 0.25rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.stage-list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.5rem;
+  counter-reset: stage;
+  margin-block-start: 1.5rem;
+}
+
+.stage-list li {
+  min-width: 0;
+  padding: 0.75rem;
+  border-block-start: 3px solid var(--rule);
+  counter-increment: stage;
+}
+
+.stage-list li::before {
+  display: block;
+  color: var(--muted-ink);
+  content: counter(stage, decimal-leading-zero);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+@media (max-width: 47.5rem) {
+  .metric-grid,
+  .record-summary,
+  .directory-layout,
+  .finding dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stage-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stage-list li {
+    border-block-start: 0;
+    border-inline-start: 3px solid var(--rule);
+  }
+}
+
+@media (forced-colors: active) {
+  .person-row,
+  .profile-panel,
+  .finding,
+  .bounded-note,
+  .health-clear {
+    color: CanvasText;
+    background: Canvas;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+}
