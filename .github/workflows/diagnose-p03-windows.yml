@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/diagnose-p03-windows.yml"
+      - "crates/liaison-application/tests/windows_operation_diagnostic.rs"
 
 permissions:
   contents: read
@@ -16,7 +17,7 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - name: Validate the capability-safe Windows directory flush
+      - name: Capture the operation state after the Windows directory-flush fix
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path diagnostics | Out-Null
@@ -56,10 +57,9 @@ jobs:
           source.write_text(text.replace(old, new, 1), encoding="utf-8")
           '@ | Set-Content -Path diagnostics/patch_operations.py
           python diagnostics/patch_operations.py
-          Remove-Item crates/liaison-application/tests/windows_operation_diagnostic.rs
           cargo fmt --all
           Copy-Item adapters/vault-markdown/src/operations.rs diagnostics/patched-operations.rs
-          cargo test -p liaison-vault-markdown -p liaison-application --all-features --locked -- --nocapture *> diagnostics/p03-windows-tests.txt
+          cargo test -p liaison-application --test windows_operation_diagnostic --all-features --locked -- --nocapture *> diagnostics/p03-windows-tests.txt
           $status = $LASTEXITCODE
           Set-Content -Path diagnostics/status.txt -Value $status
           exit 0
