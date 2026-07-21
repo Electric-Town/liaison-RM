@@ -96,6 +96,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Fixed
 
+- P03 validation workflows are read-only again, the one-shot source-mutation job is removed, and repeated canonical mutations retain existing projection-stale evidence instead of replacing it.
 - Desktop native operations now share one synchronous busy boundary with
   generation/session checks, stale-result rejection, and explicit cleanup of
   superseded workspace sessions, preventing overlapping switches or Person
