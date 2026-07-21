@@ -6,6 +6,7 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Added
 
+- A canonical P03D Editorial Ledger design contract, semantic-token registry, documented design consultation, amended P04 delivery plan, and deterministic design-contract validator for the typed React/Tauri migration.
 - Recoverable canonical multi-target operations with staged and flushed targets, exact digest/revision preconditions, a durable commit decision, per-target progress, roll-forward recovery, external-edit refusal, projection-stale marking, and fault-injection coverage.
 - A write-authoritative, `Arc`-owned Workspace Session that retains one
   capability root, workspace identity/schema, path-free repositories, an
