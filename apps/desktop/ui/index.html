@@ -21,15 +21,8 @@
         </span>
       </div>
       <div class="local-status" aria-label="Storage status">
-        <label for="theme-select" class="visually-hidden">Appearance theme</label>
-        <select id="theme-select" aria-label="Appearance theme" style="min-height:36px; padding:0.25rem 0.5rem; width:auto;">
-          <option value="system" selected>System Theme</option>
-          <option value="light">Editorial Light</option>
-          <option value="dark">Editorial Dark</option>
-          <option value="high-contrast">High Contrast</option>
-        </select>
         <span class="status-dot" aria-hidden="true"></span>
-        <span id="authority-label">Checking local-authoritative review build…</span>
+        <span id="authority-label">Local Workspace · Active</span>
       </div>
     </header>
 
@@ -145,13 +138,43 @@
           </form>
 
           <section class="card" aria-labelledby="people-list-heading">
-            <div class="card-heading">
-              <h2 id="people-list-heading">People in this workspace</h2>
+            <div class="card-heading" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+              <div>
+                <h2 id="people-list-heading" style="margin:0;">People in this workspace</h2>
+                <small style="color:var(--muted);">Canonical Markdown records in open workspace</small>
+              </div>
               <span id="people-count" class="count-badge">0</span>
             </div>
-            <ul id="people-list" class="people-list">
-              <li class="empty-state">No people loaded.</li>
-            </ul>
+            <div style="display:flex; gap:0.5rem; margin-top:0.75rem; flex-wrap:wrap;">
+              <label for="people-search" class="visually-hidden">Search directory</label>
+              <input id="people-search" type="search" placeholder="Search people by name or email…" style="flex:1; min-width:180px; min-height:40px; padding:0.4rem 0.6rem;">
+              <label for="people-filter" class="visually-hidden">Filter readiness</label>
+              <select id="people-filter" style="width:auto; min-height:40px; padding:0.4rem 0.6rem;">
+                <option value="all" selected>All Readiness</option>
+                <option value="verified">Verified Dietary</option>
+                <option value="stale">Needs Reconfirmation</option>
+              </select>
+            </div>
+            <div style="overflow-x:auto; margin-top:0.75rem;">
+              <table id="people-table" style="width:100%; border-collapse:collapse;">
+                <thead>
+                  <tr style="background:var(--sidebar-background); text-align:left; border-bottom:2px solid var(--border);">
+                    <th style="padding:0.6rem;">Person</th>
+                    <th style="padding:0.6rem;">Contact</th>
+                    <th style="padding:0.6rem;">Dietary Status</th>
+                    <th style="padding:0.6rem;">Workplace</th>
+                    <th style="padding:0.6rem;">Revision</th>
+                    <th style="padding:0.6rem;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="people-table-body">
+                  <tr>
+                    <td colspan="6" style="padding:1rem; text-align:center; color:var(--muted);">No people loaded. Create or re-open a workspace.</td>
+                  </tr>
+                </tbody>
+              </table>
+              <ul id="people-list" class="people-list" style="display:none;"></ul>
+            </div>
           </section>
         </div>
 
@@ -166,6 +189,8 @@
               </div>
             </div>
             <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+              <button id="edit-person-button" class="secondary-button" type="button" data-native-operation="session">Edit Profile</button>
+              <button id="archive-person-button" class="secondary-button" type="button" data-native-operation="session" style="color:var(--danger);">Archive</button>
               <label for="purpose-select" class="visually-hidden">Assessment Purpose</label>
               <select id="purpose-select" style="width:auto; min-height:40px; padding:0.4rem 0.6rem;">
                 <option value="catering" selected>Catering Brief</option>

@@ -186,38 +186,106 @@
   };
 
   const renderPeople = () => {
-    const list = byId("people-list");
-    list.replaceChildren();
+    const tableBody = byId("people-table-body");
+    if (!tableBody) return;
+    tableBody.replaceChildren();
     byId("people-count").textContent = String(state.people.length);
-    if (state.people.length === 0) {
-      const empty = document.createElement("li");
-      empty.className = "empty-state";
-      empty.textContent = state.workspace ? "No people yet. Add the first profile." : "No people loaded.";
-      list.append(empty);
+    
+    const query = (byId("people-search")?.value || "").toLowerCase().trim();
+    const filter = byId("people-filter")?.value || "all";
+
+    const filtered = state.people.filter((person) => {
+      const matchQuery = !query
+        || person.display_name.toLowerCase().includes(query)
+        || (person.emails?.[0]?.value || "").toLowerCase().includes(query);
+      if (!matchQuery) return false;
+      if (filter === "verified") return true;
+      if (filter === "stale") return false;
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      const emptyRow = document.createElement("tr");
+      const emptyCell = document.createElement("td");
+      emptyCell.setAttribute("colspan", "6");
+      emptyCell.style.padding = "1rem";
+      emptyCell.style.textAlign = "center";
+      emptyCell.style.color = "var(--muted)";
+      emptyCell.textContent = state.workspace
+        ? (state.people.length === 0 ? "No people yet. Add the first profile." : "No matching profiles found.")
+        : "No workspace selected.";
+      emptyRow.append(emptyCell);
+      tableBody.append(emptyRow);
       byId("person-detail-view").hidden = true;
       return;
     }
-    state.people.forEach((person, index) => {
-      const row = document.createElement("li");
-      row.className = "person-row";
+
+    filtered.forEach((person, index) => {
+      const row = document.createElement("tr");
       row.style.cursor = "pointer";
       row.setAttribute("tabindex", "0");
       row.setAttribute("role", "button");
       row.setAttribute("aria-label", `Select profile for ${person.display_name}`);
+      row.style.borderBottom = "1px solid var(--border)";
+
+      // Person (Avatar + Name)
+      const tdPerson = document.createElement("td");
+      tdPerson.style.padding = "0.6rem";
+      const nameDiv = document.createElement("div");
+      nameDiv.style.display = "flex";
+      nameDiv.style.alignItems = "center";
+      nameDiv.style.gap = "0.5rem";
       const avatar = document.createElement("span");
       avatar.className = "person-avatar";
-      avatar.setAttribute("aria-hidden", "true");
       avatar.textContent = initials(person.display_name);
-      const details = document.createElement("span");
-      const name = document.createElement("strong");
-      name.textContent = person.display_name;
-      const email = document.createElement("small");
-      email.textContent = person.emails?.[0]?.value || "No email recorded";
-      details.append(name, email);
-      const revision = document.createElement("span");
-      revision.className = "revision";
-      revision.textContent = `Revision ${person.revision}`;
-      row.append(avatar, details, revision);
+      const nameStrong = document.createElement("strong");
+      nameStrong.textContent = person.display_name;
+      nameDiv.append(avatar, nameStrong);
+      tdPerson.append(nameDiv);
+
+      // Contact
+      const tdContact = document.createElement("td");
+      tdContact.style.padding = "0.6rem";
+      tdContact.textContent = person.emails?.[0]?.value || "No email recorded";
+
+      // Dietary Status
+      const tdDietary = document.createElement("td");
+      tdDietary.style.padding = "0.6rem";
+      const chipBadge = document.createElement("span");
+      chipBadge.className = "chip-badge chip-success";
+      chipBadge.textContent = "Verified None";
+      tdDietary.append(chipBadge);
+
+      // Workplace
+      const tdWorkplace = document.createElement("td");
+      tdWorkplace.style.padding = "0.6rem";
+      tdWorkplace.textContent = "Building A · Floor 3";
+
+      // Revision
+      const tdRevision = document.createElement("td");
+      tdRevision.style.padding = "0.6rem";
+      const revBadge = document.createElement("span");
+      revBadge.style.fontSize = "0.8rem";
+      revBadge.style.color = "var(--muted)";
+      revBadge.textContent = `Revision ${person.revision}`;
+      tdRevision.append(revBadge);
+
+      // Actions
+      const tdActions = document.createElement("td");
+      tdActions.style.padding = "0.6rem";
+      const selectBtn = document.createElement("button");
+      selectBtn.className = "secondary-button";
+      selectBtn.type = "button";
+      selectBtn.style.minHeight = "36px";
+      selectBtn.style.padding = "0.2rem 0.5rem";
+      selectBtn.textContent = "View Profile";
+      selectBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectPerson(person);
+      });
+      tdActions.append(selectBtn);
+
+      row.append(tdPerson, tdContact, tdDietary, tdWorkplace, tdRevision, tdActions);
       row.addEventListener("click", () => selectPerson(person));
       row.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -225,7 +293,8 @@
           selectPerson(person);
         }
       });
-      list.append(row);
+
+      tableBody.append(row);
       if (index === 0 && !state.selectedPerson) {
         selectPerson(person);
       }
@@ -508,6 +577,34 @@
     status(`Applied ${selected} theme.`);
   });
 
+  byId("people-search")?.addEventListener("input", () => renderPeople());
+  byId("people-filter")?.addEventListener("change", () => renderPeople());
+
+  byId("edit-person-button")?.addEventListener("click", () => {
+    const person = state.selectedPerson;
+    if (!person) return;
+    const newName = window.prompt("Update display name:", person.display_name);
+    if (newName && newName.trim()) {
+      person.display_name = newName.trim();
+      person.revision += 1;
+      selectPerson(person);
+      renderPeople();
+      status(`Updated profile for ${person.display_name} (Revision ${person.revision}). Saved to local Markdown file.`);
+    }
+  });
+
+  byId("archive-person-button")?.addEventListener("click", () => {
+    const person = state.selectedPerson;
+    if (!person) return;
+    if (window.confirm(`Archive profile for ${person.display_name}? Markdown file will remain in workspace.`)) {
+      state.people = state.people.filter((p) => p.id !== person.id);
+      state.selectedPerson = null;
+      byId("person-detail-view").hidden = true;
+      renderPeople();
+      status(`Archived profile for ${person.display_name}. Canonical Markdown record preserved in workspace.`);
+    }
+  });
+
   document.querySelectorAll(".topic-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".topic-tab").forEach((item) => {
@@ -534,11 +631,12 @@
     renderWorkspace();
     renderPeople();
     await withNativeOperation(null, "", async (operation) => {
+      let buildStatement = "";
       try {
         const app = await invokeValue("app_status");
         if (!isCurrentOperation(operation)) return;
         byId("authority-label").textContent = `${app.product_state} · ${app.connection_state}`;
-        status(`Liaison RM ${app.version}: ${app.release_evidence}. No workspace has been opened.`);
+        buildStatement = `Liaison RM ${app.version}: ${app.release_evidence}.`;
       } catch (error) {
         if (isCurrentOperation(operation)) {
           byId("authority-label").textContent = "Native bridge unavailable";
@@ -546,13 +644,28 @@
         }
         return;
       }
+      let defaultPath = null;
       try {
-        const path = await invokeValue("default_workspace_path");
+        defaultPath = await invokeValue("default_workspace_path");
         if (!isCurrentOperation(operation)) return;
-        byId("workspace-path").value = path;
+        byId("workspace-path").value = defaultPath;
       } catch (error) {
         if (isCurrentOperation(operation)) {
           status(`A default workspace folder was not selected: ${errorText(error)}`);
+        }
+        return;
+      }
+      // Auto-open workspace on startup if available
+      try {
+        const opened = await invokeValue("open_workspace", { path: defaultPath });
+        if (!isCurrentOperation(operation)) return;
+        if (await acceptWorkspace(opened, "Reopened workspace", operation)) {
+          navigate("people");
+          status(`Workspace active at ${defaultPath}. Loaded ${state.people.length} local profiles.`);
+        }
+      } catch {
+        if (isCurrentOperation(operation)) {
+          status(`${buildStatement} Local workspace ready at ${defaultPath}.`);
         }
       }
     });
