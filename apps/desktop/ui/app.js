@@ -631,6 +631,107 @@ Canonical relationship memory record stored in open-file format.
 `;
   };
 
+  let selectedEventAttendee = null;
+
+  const selectEventAttendee = (item) => {
+    selectedEventAttendee = item;
+    const nameEl = byId("drawer-attendee-name");
+    const statusEl = byId("drawer-attendee-status");
+    const reasonEl = byId("drawer-reason");
+    const sourcesEl = byId("drawer-sources");
+    const requestedEl = byId("drawer-requested");
+    const resolutionEl = byId("drawer-resolution");
+
+    if (nameEl) nameEl.textContent = item.person.display_name;
+    if (statusEl) statusEl.textContent = item.actionNeeded === "Resolve Gap" ? "One gap blocks finalisation." : "Attendee readiness confirmed.";
+    if (reasonEl) reasonEl.textContent = item.availability === "Unknown" ? "No catering response recorded" : (item.freshness.includes("Stale") ? "Confirmation stale" : "Dietary requirement stated");
+    if (sourcesEl) sourcesEl.textContent = "Employee import · event RSVP";
+    if (requestedEl) requestedEl.textContent = "16 July · email request recorded";
+    if (resolutionEl) resolutionEl.textContent = item.actionNeeded === "Resolve Gap" ? "Record response, explicit exception, or remove attendee" : "No further action required";
+
+    renderEventsTableOnly();
+  };
+
+  const renderEventsTableOnly = () => {
+    const tbody = byId("event-attendees-body");
+    if (!tbody || !state.eventAttendees) return;
+    tbody.replaceChildren();
+
+    state.eventAttendees.forEach((item) => {
+      const row = document.createElement("tr");
+      row.style.cursor = "pointer";
+      if (selectedEventAttendee === item) {
+        row.className = "is-selected";
+      }
+
+      // Attendee
+      const tdAttendee = document.createElement("td");
+      const nameStrong = document.createElement("strong");
+      nameStrong.textContent = item.person.display_name;
+      const subInfo = document.createElement("small");
+      subInfo.textContent = item.person.emails?.[0]?.value || "Operations · Dublin";
+      tdAttendee.append(nameStrong, subInfo);
+
+      // Availability
+      const tdAvail = document.createElement("td");
+      const chip = document.createElement("span");
+      chip.className = item.availability === "Known" ? "chip good" : (item.availability === "Withheld" ? "chip info" : "chip bad");
+      chip.textContent = item.availability;
+      tdAvail.append(chip);
+
+      // Freshness
+      const tdFresh = document.createElement("td");
+      if (item.freshness.includes("Stale")) {
+        const warnChip = document.createElement("span");
+        warnChip.className = "chip warn";
+        warnChip.textContent = item.freshness;
+        tdFresh.append(warnChip);
+      } else {
+        tdFresh.textContent = item.freshness;
+      }
+
+      // Conflict
+      const tdConflict = document.createElement("td");
+      if (item.conflict && item.conflict !== "None") {
+        const confChip = document.createElement("span");
+        confChip.className = "chip warn";
+        confChip.textContent = item.conflict;
+        tdConflict.append(confChip);
+      } else {
+        tdConflict.textContent = "None";
+      }
+
+      // Disclosure
+      const tdDisclosure = document.createElement("td");
+      tdDisclosure.textContent = item.disclosure;
+
+      // Action
+      const tdAction = document.createElement("td");
+      if (item.actionNeeded === "Ready" || item.actionNeeded === "Accounted") {
+        tdAction.textContent = item.actionNeeded;
+      } else {
+        const btn = document.createElement("button");
+        btn.className = "filter";
+        btn.type = "button";
+        btn.textContent = item.actionNeeded;
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          item.availability = "Known";
+          item.freshness = "Confirmed Today";
+          item.disclosure = "Instruction available";
+          item.actionNeeded = "Ready";
+          renderEvents();
+          status(`Resolved dietary readiness gap for ${item.person.display_name}. Updated decision table.`);
+        });
+        tdAction.append(btn);
+      }
+
+      row.append(tdAttendee, tdAvail, tdFresh, tdConflict, tdDisclosure, tdAction);
+      row.addEventListener("click", () => selectEventAttendee(item));
+      tbody.append(row);
+    });
+  };
+
   const renderEvents = () => {
     const select = byId("add-event-attendee-select");
     const tbody = byId("event-attendees-body");
@@ -641,7 +742,7 @@ Canonical relationship memory record stored in open-file format.
       select.replaceChildren();
       const defaultOption = document.createElement("option");
       defaultOption.value = "";
-      defaultOption.textContent = "Select person to add…";
+      defaultOption.textContent = "Add attendee…";
       defaultOption.disabled = true;
       defaultOption.selected = true;
       select.append(defaultOption);
@@ -656,95 +757,47 @@ Canonical relationship memory record stored in open-file format.
 
     // Auto-populate initial event cohort from people if empty
     if ((!state.eventAttendees || state.eventAttendees.length === 0) && state.people.length > 0) {
-      state.eventAttendees = state.people.slice(0, 3).map((p, idx) => ({
+      state.eventAttendees = state.people.slice(0, 5).map((p, idx) => ({
         person: p,
-        availability: idx === 0 ? "Known" : (idx === 1 ? "Known" : "Unknown"),
-        freshness: idx === 0 ? "Confirmed 12 Jul" : (idx === 1 ? "Stale (2d)" : "No response"),
-        conflict: "None",
-        disclosure: idx === 0 ? "Instruction available" : (idx === 1 ? "Reconfirm first" : "No instruction"),
-        actionNeeded: idx === 0 ? "Ready" : (idx === 1 ? "Confirm" : "Resolve Gap")
+        availability: idx === 0 ? "Known" : (idx === 1 ? "Known" : (idx === 2 ? "Unknown" : (idx === 3 ? "Withheld" : "Known"))),
+        freshness: idx === 0 ? "Confirmed 12 Jul" : (idx === 1 ? "Stale (2d)" : (idx === 2 ? "No response" : (idx === 3 ? "Confirmed 18 Jul" : "Confirmed 19 Jul"))),
+        conflict: idx === 4 ? "Conflict" : "None",
+        disclosure: idx === 0 ? "Instruction available" : (idx === 1 ? "Reconfirm first" : (idx === 2 ? "No instruction" : (idx === 3 ? "Event exception recorded" : "Review required"))),
+        actionNeeded: idx === 0 ? "Ready" : (idx === 1 ? "Confirm" : (idx === 2 ? "Resolve gap" : (idx === 3 ? "Accounted" : "Compare sources")))
       }));
     }
 
-    tbody.replaceChildren();
-    if (!state.eventAttendees || state.eventAttendees.length === 0) {
-      const emptyRow = document.createElement("tr");
-      const emptyCell = document.createElement("td");
-      emptyCell.setAttribute("colspan", "6");
-      emptyCell.style.padding = "1rem";
-      emptyCell.style.textAlign = "center";
-      emptyCell.style.color = "var(--muted)";
-      emptyCell.textContent = "No event attendees. Select a profile above to add them to the event cohort.";
-      emptyRow.append(emptyCell);
-      tbody.append(emptyRow);
-      return;
+    // Update count strip
+    const totalCount = state.eventAttendees.length;
+    const readyCount = state.eventAttendees.filter((i) => i.actionNeeded === "Ready").length;
+    const confirmCount = state.eventAttendees.filter((i) => i.actionNeeded === "Confirm").length;
+    const exceptionCount = state.eventAttendees.filter((i) => i.actionNeeded === "Accounted").length;
+    const unresolvedCount = state.eventAttendees.filter((i) => i.actionNeeded === "Resolve gap" || i.actionNeeded === "Compare sources").length;
+
+    if (byId("count-total")) byId("count-total").textContent = String(totalCount);
+    if (byId("count-ready")) byId("count-ready").textContent = String(readyCount);
+    if (byId("count-confirm")) byId("count-confirm").textContent = String(confirmCount);
+    if (byId("count-exceptions")) byId("count-exceptions").textContent = String(exceptionCount);
+    if (byId("count-unresolved")) byId("count-unresolved").textContent = String(unresolvedCount);
+    if (byId("reconciliation-subhead")) byId("reconciliation-subhead").textContent = `Showing ${totalCount} of ${totalCount} · exact denominator preserved`;
+
+    if (!selectedEventAttendee && state.eventAttendees.length > 0) {
+      selectedEventAttendee = state.eventAttendees[2] || state.eventAttendees[0];
     }
+    if (selectedEventAttendee) selectEventAttendee(selectedEventAttendee);
 
-    state.eventAttendees.forEach((item, index) => {
-      const row = document.createElement("tr");
-      row.style.borderBottom = "1px solid var(--border)";
-
-      // Attendee
-      const tdAttendee = document.createElement("td");
-      tdAttendee.style.padding = "0.6rem";
-      const nameStrong = document.createElement("strong");
-      nameStrong.textContent = item.person.display_name;
-      const subInfo = document.createElement("small");
-      subInfo.style.display = "block";
-      subInfo.style.color = "var(--muted)";
-      subInfo.textContent = item.person.emails?.[0]?.value || "Local Profile";
-      tdAttendee.append(nameStrong, subInfo);
-
-      // Availability
-      const tdAvail = document.createElement("td");
-      tdAvail.style.padding = "0.6rem";
-      const chip = document.createElement("span");
-      chip.className = item.availability === "Known" ? "chip-badge chip-success" : "chip-badge chip-warning";
-      chip.textContent = item.availability;
-      tdAvail.append(chip);
-
-      // Freshness
-      const tdFresh = document.createElement("td");
-      tdFresh.style.padding = "0.6rem";
-      tdFresh.textContent = item.freshness;
-
-      // Conflict
-      const tdConflict = document.createElement("td");
-      tdConflict.style.padding = "0.6rem";
-      tdConflict.textContent = item.conflict;
-
-      // Disclosure
-      const tdDisclosure = document.createElement("td");
-      tdDisclosure.style.padding = "0.6rem";
-      tdDisclosure.textContent = item.disclosure;
-
-      // Action
-      const tdAction = document.createElement("td");
-      tdAction.style.padding = "0.6rem";
-      if (item.actionNeeded === "Ready") {
-        tdAction.textContent = "Ready";
-      } else {
-        const btn = document.createElement("button");
-        btn.className = item.actionNeeded === "Resolve Gap" ? "primary-button" : "secondary-button";
-        btn.type = "button";
-        btn.style.minHeight = "36px";
-        btn.style.padding = "0.2rem 0.5rem";
-        btn.textContent = item.actionNeeded;
-        btn.addEventListener("click", () => {
-          item.availability = "Known";
-          item.freshness = "Confirmed Today";
-          item.disclosure = "Instruction available";
-          item.actionNeeded = "Ready";
-          renderEvents();
-          status(`Resolved dietary readiness gap for ${item.person.display_name}. Updated decision table.`);
-        });
-        tdAction.append(btn);
-      }
-
-      row.append(tdAttendee, tdAvail, tdFresh, tdConflict, tdDisclosure, tdAction);
-      tbody.append(row);
-    });
+    renderEventsTableOnly();
   };
+
+  byId("drawer-resolve-button")?.addEventListener("click", () => {
+    if (!selectedEventAttendee) return;
+    selectedEventAttendee.availability = "Known";
+    selectedEventAttendee.freshness = "Confirmed Today";
+    selectedEventAttendee.disclosure = "Instruction available";
+    selectedEventAttendee.actionNeeded = "Ready";
+    renderEvents();
+    status(`Resolved gap for ${selectedEventAttendee.person.display_name}. Decision table updated.`);
+  });
 
   byId("add-event-attendee-button")?.addEventListener("click", () => {
     const select = byId("add-event-attendee-select");

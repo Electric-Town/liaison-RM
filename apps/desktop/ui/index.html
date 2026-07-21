@@ -244,48 +244,103 @@
           <div>
             <p class="eyebrow">All-hands lunch · 24 July 2026</p>
             <h1 id="events-heading" tabindex="-1">Account for every attendee</h1>
-            <p>Resolve information gaps before generating least-disclosure catering instructions.</p>
+            <p class="lede">Resolve one remaining information gap before creating the least-disclosure catering brief.</p>
           </div>
-          <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-            <label for="add-event-attendee-select" class="visually-hidden">Add person to event</label>
-            <select id="add-event-attendee-select" style="min-height:40px; padding:0.4rem 0.6rem;">
-              <option value="" selected disabled>Select person to add…</option>
-            </select>
-            <button id="add-event-attendee-button" class="primary-button" type="button" data-native-operation="session">Add Attendee</button>
-            <button id="refresh-events" class="secondary-button" type="button" data-native-operation="session">Refresh cohort</button>
+          <div class="save-state">
+            Saved locally · 14:32:08<br><span class="mono">event-01J4…R8D</span>
           </div>
         </div>
 
-        <ol class="stepper" aria-label="Event preparation steps" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:0; list-style:none; padding:0; border:1px solid var(--border); background:var(--surface); margin-bottom:1.2rem;">
-          <li style="padding:0.7rem; border-right:1px solid var(--border); color:var(--success);"><b>✓</b> Details</li>
-          <li style="padding:0.7rem; border-right:1px solid var(--border); color:var(--success);"><b>✓</b> Cohort</li>
-          <li style="padding:0.7rem; border-right:1px solid var(--border); color:var(--success);"><b>✓</b> Attendees</li>
-          <li style="padding:0.7rem; border-right:1px solid var(--border); background:var(--highlight); color:var(--ink); font-weight:700;"><b>4</b> Readiness</li>
-          <li style="padding:0.7rem; color:var(--muted);"><b>5</b> Brief</li>
+        <ol class="stepper" aria-label="Event preparation steps">
+          <li class="done"><b>✓</b>Details</li>
+          <li class="done"><b>✓</b>Cohort</li>
+          <li class="done"><b>✓</b>Attendees</li>
+          <li class="current" aria-current="step"><b>4</b>Readiness</li>
+          <li><b>5</b>Brief</li>
         </ol>
 
-        <section class="card" aria-label="Attendee reconciliation" style="margin-bottom:1.2rem;">
-          <h2>Active Attendee Cohort</h2>
-          <p style="color:var(--muted); font-size:0.9rem;">Deduplicated active denominator · fail-closed decision table</p>
-          <div style="overflow-x:auto; margin-top:1rem;">
-            <table style="width:100%; border-collapse:collapse;">
-              <thead>
-                <tr style="background:var(--sidebar-background); text-align:left;">
-                  <th style="padding:0.6rem;">Attendee</th>
-                  <th style="padding:0.6rem;">Availability</th>
-                  <th style="padding:0.6rem;">Freshness</th>
-                  <th style="padding:0.6rem;">Conflict</th>
-                  <th style="padding:0.6rem;">Disclosure</th>
-                  <th style="padding:0.6rem;">Next Action</th>
-                </tr>
-              </thead>
-              <tbody id="event-attendees-body">
-                <tr style="border-bottom:1px solid var(--border);">
-                  <td colspan="6" style="padding:1rem; text-align:center; color:var(--muted);">No event attendees. Select a profile above to add them to the event cohort.</td>
-                </tr>
-              </tbody>
-            </table>
+        <section class="count-strip" aria-label="Exact readiness counts">
+          <div class="count-item"><strong id="count-total">45</strong><span>active attendees</span></div>
+          <div class="count-item"><strong id="count-ready">36</strong><span>ready</span></div>
+          <div class="count-item"><strong id="count-confirm">5</strong><span>need confirmation</span></div>
+          <div class="count-item"><strong id="count-exceptions">3</strong><span>accounted exceptions</span></div>
+          <div class="count-item unresolved"><strong id="count-unresolved">1</strong><span>unresolved gap</span></div>
         </section>
+
+        <div class="work-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Attendee reconciliation</h2>
+                <small id="reconciliation-subhead">Showing 5 of 45 · exact denominator preserved</small>
+              </div>
+              <div class="filters">
+                <button id="filter-action-needed" class="filter" type="button">Status: action needed</button>
+                <button id="filter-location" class="filter" type="button">Location: Dublin</button>
+                <label for="add-event-attendee-select" class="visually-hidden">Add person to event cohort</label>
+                <select id="add-event-attendee-select" class="filter">
+                  <option value="" selected disabled>Add attendee…</option>
+                </select>
+                <button id="add-event-attendee-button" class="filter" type="button" style="background:var(--highlight); font-weight:700;">Add</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Attendee</th>
+                    <th>Availability</th>
+                    <th>Freshness</th>
+                    <th>Conflict</th>
+                    <th>Disclosure</th>
+                    <th>Next action</th>
+                  </tr>
+                </thead>
+                <tbody id="event-attendees-body">
+                  <tr>
+                    <td colspan="6" style="padding:1rem; text-align:center; color:var(--muted);">No event attendees loaded. Add an attendee above.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <aside class="panel drawer" aria-label="Selected attendee evidence">
+            <div class="person-block">
+              <p class="eyebrow">Selected attendee</p>
+              <h2 id="drawer-attendee-name">Jordan Chen</h2>
+              <p id="drawer-attendee-status">One gap blocks finalisation.</p>
+            </div>
+            <div class="panel-body">
+              <dl>
+                <div>
+                  <dt>Reason surfaced</dt>
+                  <dd id="drawer-reason">No catering response recorded</dd>
+                </div>
+                <div>
+                  <dt>Sources checked</dt>
+                  <dd id="drawer-sources">Employee import · event RSVP</dd>
+                </div>
+                <div>
+                  <dt>Requested</dt>
+                  <dd id="drawer-requested">16 July · email request recorded</dd>
+                </div>
+                <div>
+                  <dt>Allowed resolution</dt>
+                  <dd id="drawer-resolution">Record response, explicit exception, or remove attendee</dd>
+                </div>
+              </dl>
+              <div class="actions">
+                <button id="drawer-resolve-button" class="primary-button" type="button" style="width:100%;">Resolve this gap</button>
+                <button id="drawer-history-button" class="secondary-button" type="button" style="width:100%; margin-top:0.4rem;">View source history</button>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <aside class="callout">
+          <strong>Least disclosure stays visible.</strong>The catering recipient receives operational meal instructions and totals—not diagnoses, private profile notes, source history, hidden-row counts, or relationship information.
+        </aside>
       </section>
 
       <section class="page" data-page="health" aria-labelledby="health-heading" hidden>
