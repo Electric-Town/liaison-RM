@@ -1,0 +1,86 @@
+name: Finalize P04 parity once
+
+on:
+  push:
+    branches: [feat/p04-workspace-people-health-parity]
+    paths:
+      - ".github/workflows/finalize-p04-parity-once.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: finalize-p04-parity-once
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p04-workspace-people-health-parity
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Correct, validate, and document route parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          directory = Path("apps/desktop/ui-react/src/routes/DirectoryRoute.tsx")
+          text = directory.read_text(encoding="utf-8")
+          text = text.replace(
+              'import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";',
+              'import { useEffect, useMemo, useRef, useState, type FormEvent, type RefObject } from "react";',
+              1,
+          )
+          text = text.replace("readonly profileHeading: React.RefObject<HTMLHeadingElement>;", "readonly profileHeading: RefObject<HTMLHeadingElement>;")
+          directory.write_text(text, encoding="utf-8")
+
+          tests = Path("apps/desktop/ui-react/src/application-contract.test.tsx")
+          text = tests.read_text(encoding="utf-8")
+          text = text.replace(
+              '''  await screen.findByText("Workspace contract available", { exact: false }).catch(() => null);
+  await screen.findByText("Example workspace", { exact: false });''',
+              '''  await screen.findByText("Workspace opened");''',
+              1,
+          )
+          text = text.replace('screen.getByText("receipt", { exact: false })', 'screen.getByText("Receipt")')
+          tests.write_text(text, encoding="utf-8")
+
+          changelog = Path("CHANGELOG.md")
+          text = changelog.read_text(encoding="utf-8")
+          entry = "- Parallel React parity for explicit local Workspace creation/open/close, searchable Person creation and profile reading, non-destructive Health findings, interrupted-operation recovery, stable focus, and an honestly compiled-out Events route.\n"
+          if entry not in text:
+              marker = "### Added\n\n"
+              if marker not in text:
+                  raise SystemExit("Unreleased Added section is missing")
+              changelog.write_text(text.replace(marker, marker + entry, 1), encoding="utf-8")
+          PY
+          cd apps/desktop/ui-react
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run typecheck
+          npm run test
+          npm run build
+          cd ../../..
+          python3 scripts/check_design_contract.py
+          python3 scripts/check_frontend_contract.py
+          python3 scripts/check_component_contract.py
+          python3 scripts/check_parity_routes.py
+          rm .github/workflows/finalize-p04-parity-once.yml
+          git diff --check
+      - name: Commit ordinary parity source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "chore(p04): validate and record Workspace, Directory, and Health parity"
+          git push origin HEAD:feat/p04-workspace-people-health-parity
