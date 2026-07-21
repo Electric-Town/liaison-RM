@@ -1,0 +1,88 @@
+name: Diagnose P03 Windows tests once
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/diagnose-p03-windows.yml"
+      - "crates/liaison-application/tests/windows_operation_diagnostic.rs"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    if: github.head_ref == 'fix/p03-post-merge-hardening'
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Windows directory durability and handle release
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path diagnostics | Out-Null
+          @'
+          from pathlib import Path
+
+          source = Path("adapters/vault-markdown/src/operations.rs")
+          text = source.read_text(encoding="utf-8")
+          import_line = "use cap_fs_ext::{DirExt, FollowSymlinks, OpenOptionsFollowExt};\n"
+          replacement_import = (
+              "#[cfg(windows)]\n"
+              "use cap_fs_ext::OpenOptionsMaybeDirExt;\n"
+              "use cap_fs_ext::{DirExt, FollowSymlinks, OpenOptionsFollowExt};\n"
+          )
+          if import_line not in text:
+              raise SystemExit("expected cap-fs-ext import was not found")
+          text = text.replace(import_line, replacement_import, 1)
+
+          old = '''fn sync_directory(directory: &Dir) -> io::Result<()> {
+              let file = directory.open(".")?;
+              file.sync_all()
+          }'''
+          new = '''#[cfg(not(windows))]
+          fn sync_directory(directory: &Dir) -> io::Result<()> {
+              let file = directory.open(".")?;
+              file.sync_all()
+          }
+
+          #[cfg(windows)]
+          fn sync_directory(directory: &Dir) -> io::Result<()> {
+              let mut options = OpenOptions::new();
+              options.read(true).write(true).maybe_dir(true);
+              directory.open_with(".", &options)?.sync_all()
+          }'''
+          if old not in text:
+              raise SystemExit("expected directory-sync function was not found")
+          text = text.replace(old, new, 1)
+
+          old_release = '''    sync_directory(&staged).map_err(|error| {
+              map_io("flush staged directory", error).with_operation(context.operation_id)
+          })?;
+
+          let manifest_bytes ='''
+          new_release = '''    sync_directory(&staged).map_err(|error| {
+              map_io("flush staged directory", error).with_operation(context.operation_id)
+          })?;
+          // Windows does not allow the staged directory to be removed while this
+          // capability handle remains open. Release it before completion cleanup.
+          drop(staged);
+
+          let manifest_bytes ='''
+          if old_release not in text:
+              raise SystemExit("expected staged-directory flush block was not found")
+          source.write_text(text.replace(old_release, new_release, 1), encoding="utf-8")
+          '@ | Set-Content -Path diagnostics/patch_operations.py
+          python diagnostics/patch_operations.py
+          cargo fmt --all
+          Copy-Item adapters/vault-markdown/src/operations.rs diagnostics/patched-operations.rs
+          cargo test -p liaison-application --test windows_operation_diagnostic --all-features --locked -- --nocapture *> diagnostics/p03-windows-tests.txt
+          $status = $LASTEXITCODE
+          Set-Content -Path diagnostics/status.txt -Value $status
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p03-windows-test-diagnostics
+          path: diagnostics
+          if-no-files-found: error
+          retention-days: 1

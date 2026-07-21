@@ -489,6 +489,12 @@ fn mark_projection_stale(
     let projections = root
         .open_dir_nofollow(".liaison/projections")
         .map_err(|error| map_io("open projection directory", error).with_operation(operation_id))?;
+    // A pre-existing regular marker already proves every projection is stale.
+    // Retaining it avoids a platform-dependent replacement and any interval in
+    // which stale evidence disappears between committed operations.
+    if file_exists(&projections, "stale")? {
+        return Ok(());
+    }
     let bytes = format!("operation_id: {operation_id}\n").into_bytes();
     let temporary = format!(".stale-{operation_id}.tmp");
     write_new_file(&projections, &temporary, &bytes).map_err(|error| {
