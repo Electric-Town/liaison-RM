@@ -1,148 +1,191 @@
-# People directory design review evidence
+# People directory design-review evidence
 
-**Date:** 2026-07-22  
-**Surface:** `apps/desktop/ui/` People tab  
-**Branch:** `vscode/production-readiness-audit-20260722`  
-**Implementation commits:** `85ee0b9`, `a309f89`, `d9a2866`, `353e358`  
-**Claim boundary:** complete reconciliation of the current P03 Person create/list
-review surface with the approved People directory treatment. This is not P04,
-B0, installed-Mac, screen-reader, packaging, or release qualification.
+**Date:** 2026-07-22
+**Surface:** `apps/desktop/ui/` People and read-only Person record surfaces
+**Branch:** `vscode/production-readiness-audit-20260722`
+**Source fixes:** `da3e753`, `2b13143`
+**Evidence class:** candidate source and deterministic browser evidence only
 
-## Problem and authority
+This document replaces the earlier split-detail assessment. The earlier review
+used the route-sized atlas export as the People interaction target and therefore
+accepted the wrong composition. The user identified the mismatch and supplied
+the original approved board. Rechecking the approval provenance shows that the
+approved hybrid assigns the People foundation to Option C: a full-canvas table
+directory and a separate Person screen.
 
-At baseline commit `06b16f0`, the populated People tab was a two-card setup
-scaffold. A permanent create form and a large principle statement dominated the
-page; the passive record cards had no search, selection, or inspectable
-canonical detail. At 768 CSS pixels the two columns collapsed into unreadable
-character-width content.
+The historical exact-artifact review at `3499a6e` and its P03O observation remain
+useful evidence of what that artifact contained. A later security audit found a
+real recoverability defect in the same source: `COMPLETE` could become durable
+before projection invalidation, recovery could therefore skip a missing effect,
+and completion/recovery receipts were dropped before the application boundary.
+P03 is consequently reopened. Machine truth on this branch is `T-B0-P03`
+current, with `T-B0-P03D`, `T-B0-P04`, and A0 blocked. This newer candidate
+remediates that reopened invariant but still requires new exact-head and artifact
+evidence. It is not accepted P03/P03O/P03D/P04/B0, installed-Mac, packaging,
+screen-reader, or release evidence.
 
-The approved shotgun direction is the hybrid C+B+A decision recorded in the
-full-screen atlas. For People, the C treatment supplies the visual hierarchy:
-a full-canvas directory, compact title and count, search-first results, a flat
-semantic table, and selected-record detail. The atlas is a visual reference,
-not authority to expose later capabilities.
+## Approval provenance and conflict resolution
 
-Authority order used for this reconciliation:
+The source decision is:
 
-1. current traceability and P03/P04 delivery boundary;
-2. `DESIGN.md` and `docs/standards/ux-review.md`;
-3. active application/Tauri Person create/list contract and KCS-0010;
-4. the approved shotgun atlas.
+- board: `http://127.0.0.1:63492/boards/b-20260721-211849-re4u0i/`;
+- decision record:
+  `/Users/winks/.gstack/projects/Electric-Town-liaison-RM/designs/full-app-remix-20260721-round2/approved.json`;
+- approved direction: `hybrid-C+B+A`;
+- People assignment: Option C supplies the application shell and
+  **full-canvas People directory**;
+- user confirmation recorded by the decision: `yep exactly, agreed`;
+- Option C image SHA-256:
+  `f6fd5d3ef54fbf6aac816daa9749b95d81184d7b80b8267d2dd826748c1ab0fe`.
 
-The approved atlas image has SHA-256
+The later route-sized atlas contains a conflicting split-detail
+`people/directory.png`, SHA-256
 `0c8e826a5152464fa28f69b2a2436b9cc7f802c9ea0a1a9e987b61ad7b702b9f`.
+Its manifest explicitly says `implementation_authority: false`. The atlas README
+also says the rasters are not implementation or WCAG evidence. The source
+approval therefore governs the composition: Option C's table-first Directory
+and separate Person screen. The atlas remains useful for typography, palette,
+responsive mood, and future route references.
 
-## Before, approved, and implemented
+## Before, approved, and corrected
 
-| Baseline | Approved visual target | Implemented P03 surface |
+| Earlier split implementation | Approved Option C | Corrected candidate directory |
 |---|---|---|
-| ![Two-card People scaffold](screenshots/people-directory-before-2026-07-22.png) | ![Approved shotgun People directory](screenshots/people-directory-approved-shotgun-2026-07-21.png) | ![Implemented People directory](screenshots/people-directory-after-2026-07-22.png) |
+| The directory reserved a permanent right column for an automatically selected record. At narrow widths it changed into a detail dialog. | ![Approved Option C full-application board](screenshots/people-directory-approved-shotgun-2026-07-21.png) | ![Corrected full-canvas People directory](screenshots/people-directory-after-2026-07-22.png) |
 
-The implementation adopts the approved composition without fabricating
-capabilities:
+The corrected implementation now follows the approved information architecture:
 
-- the page now leads with `People`, a live record count, and concise local-file
-  copy;
-- client-side search covers display name, aliases, email addresses, and phone
-  numbers already returned by the active workspace session;
-- results use a semantic table with keyboard-operable selected rows and a
-  read-only canonical detail region;
-- the detail exposes only fields present in the current Person projection and
-  labels missing values `Unknown in current profile` rather than inferring
-  verified none;
-- Person creation is a deliberate native dialog rather than a permanent
-  populated-state card; native autofocus is applied synchronously so rapid
-  keyboard input cannot be redirected into the wrong field;
-- no-workspace, empty, loading, no-result, success, form-error, and native-busy
-  states retain a visible next action or recovery direction;
-- at 900 CSS pixels the shell becomes a named `Sections` control and record
-  detail moves to a focused dialog; at 620 CSS pixels the table reflows into
-  labelled summary rows without changing its semantic source order.
+- People is a full-width, table-first data workspace;
+- search, Add person, and Refresh share one compact task toolbar;
+- the directory no longer auto-selects a record or reserves a split panel;
+- the semantic table exposes only fields returned by the current workspace
+  contract: Person, email, phone, active/archived record state, and revision;
+- opening a row goes to a separate read-only Person record surface;
+- Back to People restores focus to the originating row and retains stable
+  selected-row semantics;
+- the separate surface exposes only current projection fields: display name,
+  every labelled email and phone, aliases, birthday, archived state, revision,
+  identifier, and local Markdown source;
+- absent fields say `Unknown in current profile`; they are never converted to a
+  factual none state;
+- the Add person dialog remains the only current mutation and still uses the
+  existing session-scoped `create_person` command;
+- a failed Refresh preserves the last successfully loaded rows but labels them
+  stale inline, associates the warning with the table, and names Retry Refresh;
+- page-local operation status remains next to the active work at narrow reflow,
+  and Person navigation replaces stale prior-operation copy;
+- the read-only mode is programmatically described by the focused Person H1,
+  while provenance typography is applied explicitly to revision and identifier
+  values rather than by row position.
 
-The atlas's edit, quick note, column choice, advanced filters, CSV filtering,
-import, export, saved views, organisation, role, interaction history, and
-custom profile content remain absent. Events, Today, Settings, and browser
-`localStorage` theme persistence also remain absent. Those are not current P03
-People capabilities. The active workspace identity remains visible without
-repeating its sensitive absolute path in every view, as required by
-`DESIGN.md`.
+## Capability redline
 
-## Responsive evidence
+The approved visual direction spans later delivery packages. The following
+controls or content remain structurally absent because no current owning service
+backs them:
 
-| 320 CSS-pixel directory | 320 CSS-pixel selected detail |
-|---|---|
-| ![People directory reflow at 320 CSS pixels](screenshots/people-directory-320-2026-07-22.png) | ![Selected Person detail dialog at 320 CSS pixels](screenshots/people-detail-dialog-320-2026-07-22.png) |
+- configurable columns, compound filters, Filter by CSV, import, export, saved
+  views, and pagination services;
+- organisation/location, role, interaction history, notes, important dates,
+  commitments, workplace memberships, custom fields, and personal user manual;
+- edit profile, quick note, archive/restore, relationship status, and profile
+  customisation;
+- Today, Events, Settings, provider, account, and browser-storage theme
+  capabilities.
 
-Rendered measurements from the deterministic local bridge harness:
+Their absence is an authority constraint, not a visual omission to paper over
+with disabled or non-functional controls.
 
-- 1440×900: no horizontal overflow; no visible target under 44×44 CSS pixels;
-  minimum visible target height 47 pixels;
-- 320×900: no horizontal overflow; no visible target under 44×44 CSS pixels;
-  minimum visible target height 47 pixels;
-- 200% root text size at 1440 CSS pixels: document width remained 1440 with no
-  horizontal overflow;
-- the 320 CSS-pixel layout is the 1280-pixel desktop-width proxy for 400% zoom;
-- selected detail opened with its heading focused, had no horizontal overflow,
-  and Escape returned focus to the originating row;
-- the exact local Atkinson Hyperlegible Next, Source Serif 4, and IBM Plex Mono
-  subsets loaded successfully; there were no console errors or non-file
-  network requests.
+## Responsive and interaction evidence
+
+| 320 CSS-pixel Directory | Desktop Person record | 320 CSS-pixel Person record |
+|---|---|---|
+| ![Directory at 320 CSS pixels](screenshots/people-directory-320-2026-07-22.png) | ![Separate read-only Person record](screenshots/people-record-after-2026-07-22.png) | ![Person record at 320 CSS pixels](screenshots/people-record-320-2026-07-22.png) |
+
+Deterministic local-bridge measurements:
+
+- 1440×900 Directory: document width equals the 1440-pixel viewport;
+- directory surface width: 1146 pixels; results width: 1144 pixels, confirming
+  the table owns the complete inner work surface;
+- no visible interactive element measured below 44×44 CSS pixels;
+- 768×900 Directory: no horizontal overflow and rows reflow to labelled
+  summaries;
+- 320×900 Directory and Person: no horizontal overflow;
+- Person heading receives focus on open;
+- Person navigation resets to the top before heading focus, including when the
+  originating row was near the end of a long 320-pixel Directory;
+- Back to People restores focus to the originating row;
+- the three bundled local fonts are the only rendered font families;
+- the deterministic harness recorded no console errors and no external network
+  requests.
+
+Evidence-image SHA-256 values:
+
+- approved Option C: `f6fd5d3ef54fbf6aac816daa9749b95d81184d7b80b8267d2dd826748c1ab0fe`;
+- corrected 1440-pixel Directory: `8818bf9da4e7e13abda2fcb72842d41146bdc8a6a66e683da39845e2d237a22d`;
+- corrected 320-pixel Directory: `422ca2f8ce4ebd143eedffa4e704b4efde6696ff56e223779717e45fd3f3f513`;
+- corrected 1440-pixel Person: `9debfc33add861e469da1ad3d2b4d1a39a272553167cca4803407bb9b28bc18a`;
+- corrected 320-pixel Person: `b30142ba5437395187b4d54ec116ca26092bb55a1c3b08a94cb381dd028df2e3`.
 
 ## UX review
 
 ### ADHD, AuDHD, AskTog, and Gestalt
 
-The current location, record count, search state, selected record, native busy
-state, and last operation status are visible. Search and selection do not
-change canonical files. Create is progressively disclosed, names one outcome,
-and restores focus when dismissed. Stable navigation and a single flat work
-surface reduce mode and card noise. Proximity groups search with results and
-selected detail with its provenance; selected state is communicated by
-`aria-pressed`, a border, and background rather than colour alone. There is no
-timer, auto-advance, drag interaction, graph-only view, relationship score, or
-surprise reordering.
+The current location, record count, active search, selected record, native busy
+state, stale-directory warning, and page-local operation status remain visible.
+The top task is no longer
+obscured by a permanently open detail mode. Opening a record is a deliberate
+spatial transition with an obvious Back action, and focus continuity means an
+interruption does not force the user to rediscover the row. Search and
+inspection remain non-mutating; creation is progressively disclosed.
+
+The layout groups search and actions above one flat dataset. Person facts and
+record provenance are separate, named regions. There is no timer, auto-advance,
+drag interaction, graph-only view, relationship score, surprise reorder, or
+colour-only selected state.
 
 ### Nielsen's ten heuristics
 
-| Heuristic | Evidence |
+| Heuristic | Candidate evidence |
 |---|---|
-| Visibility of system status | Live Person count, result count, selected state, `aria-busy`, local-authority state, and operation status |
-| Match with the real world | `People`, `local profile`, `workspace`, `revision`, and `source` match the canonical file model |
-| User control and freedom | Clear search, Cancel, Close details, Escape, and focus return are verified |
-| Consistency and standards | Native table, search input, buttons, description list, and dialogs use platform semantics |
+| Visibility of system status | People count, filtered result count, `aria-busy`, selected row, stale Refresh state, local-authority label, and page-local operation status |
+| Match with the real world | People, Person record, Contact, Record state, Revision, and Source match current local-file vocabulary |
+| User control and freedom | Clear search, Cancel, Back to People, and deterministic focus return |
+| Consistency and standards | Semantic table, labelled controls, description lists, one native creation dialog, and one separate detail surface |
 | Error prevention | Required name, email input type, disabled session actions, and globally serialised native operations |
-| Recognition rather than recall | Visible labels, selected row, field names, count, and source/provenance; no icon-only actions |
-| Flexibility and efficiency | Search narrows the already-loaded directory and row selection exposes detail without navigation |
-| Aesthetic and minimalist design | One directory surface; create form, duplicate no-result action, and implementation notices removed |
-| Error recovery | Workspace, form, native bridge, no-results, and validation states name a recovery direction |
-| Help and documentation | Local-authority note and canonical-source detail explain storage; KCS-0010 documents the shared application workflow |
+| Recognition rather than recall | Visible labels, count, current row, field names, and source; no icon-only primary actions |
+| Flexibility and efficiency | Search narrows already-loaded records; row activation and Back preserve context |
+| Aesthetic and minimalist design | One directory workspace; no permanent split inspector or fabricated toolbar controls |
+| Error recovery | Workspace, form, bridge, empty, loading, and no-results states name a next action |
+| Help and documentation | Local-authority and source copy explain storage without claiming P04 or release maturity |
 
 ### Accessibility and content checks
 
-- The accessibility snapshot exposes one People H1, the local-directory H2,
-  semantic table caption and headers, pressed state, named search, and named
-  row buttons.
-- Keyboard creation, row selection, narrow-detail dialog operation, Escape,
-  and focus restoration are browser-tested.
-- Reduced-motion and dark-mode checks remain in the full desktop suite; forced
-  colours receive explicit borders and selected-row treatment.
-- The semantic-token validator passes all text/action pairs. Its low-contrast
-  flags are decorative surface borders/highlight adjacency, not the sole
-  carrier of state or action.
-- The focused regression includes a deliberately long Person name and email,
-  the 320 CSS-pixel no-overflow assertion, and an active-search no-results
-  state.
-- Copy says `Unknown in current profile` for absent fields and never converts
-  absence into a factual none state.
-- The current hard-coded review strings are not represented as completed P04
-  localisation. An installed macOS VoiceOver run was not performed, so this
-  evidence must not be reused as screen-reader or release qualification.
+- The accessibility tree exposes one visible People H1, an All people H2, a
+  captioned table with five column headers, named row buttons, and a distinct
+  Person H1 after navigation.
+- Keyboard creation, search across name/email/phone/alias, Refresh success and
+  recovery, row activation, separate-page navigation, and focus return are
+  browser-tested.
+- The Person heading is described by the read-only badge and record summary;
+  all labelled contact values returned by the current DTO remain inspectable.
+- The table converts to an equivalent labelled summary at the narrow breakpoint;
+  it does not require primary horizontal scrolling.
+- Reduced-motion, dark-mode, forced-colours, and local-only asset rules remain
+  in the shared shell.
+- Long Person names and emails are included in the responsive render.
+- An installed macOS VoiceOver run, translated catalogues, and installed 400%
+  zoom evidence were not performed here and remain unclaimed.
 
-## Exact verification
+The applicable workflow boundary is documented in
+`docs/knowledge/KCS-0010-how-do-inbound-adapters-run-the-same-workflow.md`:
+the fake bridge is interaction evidence, not native WebKit, filesystem,
+recoverability, or release proof.
 
-The following checks passed on the shared worktree after `353e358`; concurrent
-Events/domain changes were present but were neither edited nor staged by this
-work:
+## Verification at exact source head `2b13143`
+
+The following passed after `2b13143`; concurrent Events/domain work remained
+outside this task:
 
 ```text
 node --check apps/desktop/ui/app.js
@@ -153,28 +196,27 @@ python3 scripts/check_design_tokens.py
 /private/tmp/liaison-design-pw-venv/bin/python scripts/test_desktop_ui.py
 ```
 
-Results:
+The focused test verifies full-width table ownership; every backed search field;
+Add focus and non-selection; Refresh busy, success, failure, stale, and retry
+states; structural absence of the old split/detail dialog and later controls;
+all labelled contacts; separate read-only Person navigation; page-local status;
+explicit provenance styling; long-content 320-pixel reflow; Back focus/context
+return; and zero external requests. The full suite retains operation
+serialisation, workspace switch and rollback, stale-Person isolation,
+validation, narrow reflow, dark mode, and zero-external-request coverage.
 
-- focused People regression: search, selected canonical detail, no-results,
-  long content, exact created-row identity, 320 CSS-pixel reflow, dialog focus
-  return, and zero external requests passed in ten consecutive runs;
-- full desktop suite: native-operation serialisation, workspace
-  switching/rollback, dual-close restart recovery, stale-Person isolation,
-  validation, focus recovery, mobile reflow, dark mode, and zero external
-  requests passed;
-- static desktop shell and design-token checks passed;
-- deterministic rendered harness loaded in 12 ms with only the HTML and three
-  bundled font files requested.
+## Assessment
 
-## Final assessment
+- **Design score: D → A- within the current candidate capability set.** The
+  incorrect split interaction was polished but contradicted the approved
+  composition. The corrected surface now follows the full-canvas Directory and
+  separate Person information architecture.
+- **AI-slop score: A → A.** Both versions avoided generic marketing patterns;
+  the correction improves product-specific task hierarchy rather than adding
+  decoration.
+- **Goodwill: 68 → 88.** The largest gain is that People now behaves like a
+  directory and record opening has a predictable destination and return path.
 
-- **Design: A-** — the current capability set now has the approved directory
-  hierarchy, interaction model, and responsive treatment. It intentionally
-  lacks later atlas functions.
-- **AI-slop check: A** — the stacked-card app-UI hard rejection is removed;
-  the result uses a flat data workspace, purposeful typography, restrained
-  palette, and domain-specific provenance.
-- **Goodwill: 90/100** — trust gains come from immediate search, inspectable
-  local provenance, honest unknown states, keyboard continuity, and clear
-  capability limits. The remaining ten points are reserved for the future
-  installed-app, localisation, VoiceOver, and P04/B0 qualification gates.
+Status: **DONE_WITH_CONCERNS** — the People candidate source is corrected and
+browser verified. Repository machine truth remains P03 current; P03D, P04, B0,
+installed-app, localisation, and VoiceOver gates remain separate and closed.

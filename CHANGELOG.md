@@ -84,6 +84,13 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Changed
 
+- Corrected the People design-review provenance: the approved C+B+A decision
+  assigns People to Option C's full-canvas table directory and separate Person
+  screen. The later split-detail atlas export remains a non-authoritative visual
+  reference. New desktop source and browser renders are candidate evidence only.
+  The historical `3499a6e`/P03O observation remains evidence of that artifact,
+  but a recoverability defect found in the same source reopened P03; branch
+  machine truth is P03 current with P03D, P04, and B0 still closed.
 - Corrected generated planning and P04 evidence that had falsely described B0,
   all requirements/UAT, WCAG, an installed app, and a DMG as complete. The
   records now preserve those statements as invalidated history, restore the
@@ -108,12 +115,18 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 ### Fixed
 
 - Rebuilt the desktop People tab from a permanent create-form/card scaffold
-  into the approved full-canvas directory treatment: search across loaded
-  local profiles, a semantic selectable table, read-only canonical detail,
+  into the approved Option C treatment: search across loaded local profiles, a
+  full-width semantic table, a separate read-only Person record surface,
   contextual Person creation, explicit empty/loading/no-result states, and
-  320 CSS-pixel reflow with dialog focus restoration. Later edit, import,
-  export, filter, custom-profile, Events, and unbacked theme capabilities
-  remain structurally absent.
+  320 CSS-pixel reflow with Back-to-row focus restoration. The Person surface
+  now preserves every labelled email and phone returned by the current DTO,
+  distinguishes record lifecycle from information state, programmatically
+  announces read-only mode, and styles revision/identifier provenance
+  explicitly. Refresh failures retain the last good rows with an associated
+  stale warning and retry direction, while page-local status remains near the
+  active work at narrow reflow. The obsolete split inspector and narrow detail
+  dialog were removed. Later edit, import, export, filter, custom-profile,
+  Events, and unbacked theme capabilities remain structurally absent.
 - Recoverable canonical mutations now avoid Windows handle failures: directory handles open with flush support and release before staged cleanup or uncommitted-operation discard; sequential mutations also retain an existing regular projection-stale marker.
 - P03 validation workflows are read-only again, and the obsolete one-shot source-mutation workflow has been removed.
 - Review-build policy now prevents an Events destination before `T-B0-P11` completes, and contributor guidance records the domain, application, persistence, privacy, interaction, and installed-artifact work required before Events can be enabled.
