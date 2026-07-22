@@ -47,21 +47,30 @@ The default branch contains the merged P00 contract reconciliation and P01 appli
 
 The accepted P02 source state adds one Rust application composition root shared by the CLI and Tauri, write-authoritative Workspace Sessions with composite path-local and per-user `WorkspaceId` operating-system exclusion, retained capability roots, lock-free read-only Health, structured results and errors, and direct native adapter parity. Cooperating ordinary unconfined Liaison processes on one OS account and machine reject copied workspaces with the same identity independently of `HOME`/XDG overrides. Cross-container Flatpak, macOS App Sandbox, and Windows AppContainer GUI/host-CLI coordination remains unsupported until a shared authority broker/namespace exists; it is not a second valid registry. Merged PR #44 supplied exact-head Linux, macOS, and Windows runtime evidence. P03 now owns recoverable multi-target operations and final mutation preconditions; B0 and a supported public release remain incomplete.
 
-The 2026-07-22 reconciliation found no Liaison application in `/Applications`
-or the current user's Applications directory and no running Liaison process.
-Repository build bundles are not installed-product evidence. Earlier native
-findings, including the historical Tauri argument mismatch, remain useful
-regression cases but do not describe a currently installed app. The corrected
-table-first People/Person source and browser evidence at audit candidate
-`a3fcece` is not P03, P04, installed, or release qualification; a replacement
-may be installed only after the final exact source, operation recovery, native
-persistence, signing state, and single-install checks pass.
+The first 2026-07-22 reconciliation found no Liaison application in the standard
+Applications directories. A later same-day custody check found an arm64-only
+`0.1.0-alpha.1` application at `/Applications/Liaison RM.app`. Its executable
+SHA-256 is `5f08deb40c9fee62515cb09495738083f7a335877b7f8df6ae3827a53d3dd266`;
+it does not match the current local bundles, strict signing verification fails,
+and its source commit is unknown. It remains unqualified forensic input, not
+installed-product or release evidence. The corrected table-first People/Person
+source and browser evidence at audit candidate `a3fcece` is also not P03, P04,
+installed, or release qualification. A replacement may be installed only after
+the final exact source, operation recovery, native persistence, signing state,
+and single-install checks pass.
 
 The same audit found that remote `main` contains false B0/Events fallback
 behavior and is not releaseable. The audit branch preserves useful fail-closed
 containment and design work, but it must be integrated as reviewed vertical
 slices rather than merged wholesale. `T-B0-P03` remains current; P03D, P04,
 P05-P11, B0, and every A0 task remain blocked.
+
+The single convergence receipt is
+[the B0 integration ledger](docs/evidence/b0-integration-ledger-2026-07-22.md).
+It starts from audit source `c5a7c13`, preserves every competing worktree, and
+records reviewed imports without creating a second status authority. The P03O
+task introduced on the divergent DX branch is not present in current machine
+traceability and is not a P03D/P04 prerequisite.
 
 Events is not a current desktop capability. A 2026-07-21 browser reproduction
 against an unmerged prototype found cross-workspace attendee leakage, static

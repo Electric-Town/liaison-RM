@@ -6,6 +6,10 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Added
 
+- A single B0 integration ledger that preserves every recovery branch and dirty
+  worktree, assigns exclusive path ownership, records exact evidence classes,
+  rejects the divergent P03O status as current machine authority, and prevents
+  candidate source, installed bundles, and releases from being conflated.
 - A P03D-candidate Editorial Ledger design contract, semantic-token registry, documented design consultation, amended P04 delivery plan, and deterministic design-contract validator for the future typed React/Tauri migration. P03D remains blocked until accepted P03 and exact gate evidence.
 - Recoverable canonical multi-target-operation groundwork with staged and flushed targets, exact digest/revision preconditions, a durable commit decision, per-target progress, roll-forward recovery, external-edit refusal, projection-stale marking, and fault-injection coverage. P03 remains current until the hardened contract is integrated through every adapter and requalified.
 - A write-authoritative, `Arc`-owned Workspace Session that retains one
@@ -84,6 +88,11 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Changed
 
+- Corrected live installed-product custody after the earlier reconciliation: an
+  arm64-only `0.1.0-alpha.1` application is now present in `/Applications`, but
+  its executable does not match the current local bundles, strict signing
+  verification fails, and its source commit is unknown. It is preserved only
+  for forensic comparison and is not accepted or release evidence.
 - Split the over-broad desktop acceptance ownership: P04 now owns only the
   generated Overview/Workspace/People/Health foundation and transient semantic
   rendering under `FG-B0-P04-001`; P11 owns the complete B0 journey and
