@@ -20,10 +20,13 @@ The adapter does not define person, relationship, event, provider, or sharing ru
 
 ## Current limitations
 
-This R1 draft establishes the vertical slice. The following remain gated before release:
+The current P03 source candidate implements durable operation journals,
+directory flushes, capability-bound replacement, staged cleanup, roll-forward
+recovery, and fault injection for canonical Person mutations. `T-B0-P03`
+remains current until its exact-head cross-platform evidence is accepted.
+The following remain gated before release:
 
-- durable write journal and directory flush behaviour on every supported filesystem;
-- cross-platform atomic-replacement fallback and fault injection;
+- exact-head Linux, macOS, and Windows durability, cleanup, and recovery evidence;
 - complete unknown Markdown-section round-trip tests;
 - duplicate-ID validation across all records;
 - schema-generated format validation;

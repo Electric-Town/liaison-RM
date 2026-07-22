@@ -96,6 +96,16 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Fixed
 
+- Recoverable canonical mutations now avoid Windows handle failures: directory
+  handles open with flush support and release before staged cleanup or
+  uncommitted-operation discard; sequential mutations also retain an existing
+  regular projection-stale marker.
+- P03 validation workflows are read-only again, and the obsolete one-shot
+  source-mutation workflow has been removed.
+- Review-build policy now prevents an Events destination before
+  `T-B0-P11` completes, and contributor guidance records the domain,
+  application, persistence, privacy, interaction, and installed-artifact work
+  required before Events can be enabled.
 - Desktop native operations now share one synchronous busy boundary with
   generation/session checks, stale-result rejection, and explicit cleanup of
   superseded workspace sessions, preventing overlapping switches or Person

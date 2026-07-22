@@ -57,8 +57,11 @@ The published data-model contract for new manifests is
 `WorkspaceSession` is an `Arc`-owned, non-`Clone` capability aggregate. Its
 work guard is the only public route to session-bound repositories. Recovery,
 key, and projection state are explicit unavailable variants until their owning
-phases deliver real capabilities. Later releases add recoverable operations,
-migration, rebuild, repair, checkpoint, and encrypted recovery services.
+phases deliver real capabilities. The current P03 candidate routes canonical
+Person mutations through recoverable operations and recovers pending operations
+during session open; P03 remains current until its exact-head cross-platform
+evidence is accepted. Later releases add migration, rebuild, repair, checkpoint,
+and encrypted recovery services.
 
 ## Outbound ports
 

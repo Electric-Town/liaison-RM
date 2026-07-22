@@ -1,5 +1,7 @@
 //! Capability-bound recoverable operation storage for canonical workspace files.
 
+#[cfg(windows)]
+use cap_fs_ext::OpenOptionsMaybeDirExt;
 use cap_fs_ext::{DirExt, FollowSymlinks, OpenOptionsFollowExt};
 use cap_std::fs::{Dir, OpenOptions};
 use liaison_shared_kernel::{OperationId, WorkspaceId};
@@ -158,6 +160,9 @@ pub(crate) fn execute_with_fault(
     sync_directory(&staged).map_err(|error| {
         map_io("flush staged directory", error).with_operation(context.operation_id)
     })?;
+    // Windows retains capability directory handles without delete sharing.
+    // Release the staged handle before completion removes its directory.
+    drop(staged);
 
     let manifest_bytes = serde_yaml::to_string(&manifest)
         .map_err(|error| {
@@ -224,6 +229,9 @@ pub(crate) fn recover(
                     "committed operation is missing its manifest",
                 ));
             }
+            // Windows directory capabilities do not share deletion access.
+            // Release the child handle before removing the operation itself.
+            drop(operation);
             operations
                 .remove_dir_all(&name)
                 .map_err(|error| map_io("discard incomplete uncommitted operation", error))?;
@@ -246,6 +254,9 @@ pub(crate) fn recover(
             continue;
         }
         if !file_exists(&operation, COMMIT_FILE)? {
+            // The operation directory itself is the removal target, so its
+            // capability must be released before Windows can discard it.
+            drop(operation);
             operations.remove_dir_all(&name).map_err(|error| {
                 map_io("discard uncommitted operation", error).with_operation(manifest.operation_id)
             })?;
@@ -489,6 +500,12 @@ fn mark_projection_stale(
     let projections = root
         .open_dir_nofollow(".liaison/projections")
         .map_err(|error| map_io("open projection directory", error).with_operation(operation_id))?;
+    // A regular marker already proves that every disposable projection is
+    // stale. Retaining it also avoids replacement semantics that differ
+    // between supported filesystems.
+    if file_exists(&projections, "stale")? {
+        return Ok(());
+    }
     let bytes = format!("operation_id: {operation_id}\n").into_bytes();
     let temporary = format!(".stale-{operation_id}.tmp");
     write_new_file(&projections, &temporary, &bytes).map_err(|error| {
@@ -635,8 +652,17 @@ fn file_exists(directory: &Dir, path: &str) -> Result<bool, RecoverableOperation
     }
 }
 
+#[cfg(not(windows))]
 fn sync_directory(directory: &Dir) -> io::Result<()> {
     let file = directory.open(".")?;
+    file.sync_all()
+}
+
+#[cfg(windows)]
+fn sync_directory(directory: &Dir) -> io::Result<()> {
+    let mut options = OpenOptions::new();
+    options.read(true).write(true).maybe_dir(true);
+    let file = directory.open_with(".", &options)?;
     file.sync_all()
 }
 
@@ -745,6 +771,24 @@ mod tests {
     }
 
     #[test]
+    fn incomplete_operation_without_manifest_is_discarded() -> Result<(), Box<dyn std::error::Error>>
+    {
+        let (temporary, root) = setup()?;
+        let operation = context(7).operation_id.to_string();
+        let operation_path = temporary
+            .path()
+            .join(".liaison/operations")
+            .join(&operation);
+        fs::create_dir(&operation_path)?;
+
+        let report = recover(&root, workspace_id())?;
+
+        assert_eq!(report.discarded_before_commit, 1);
+        assert!(!operation_path.exists());
+        Ok(())
+    }
+
+    #[test]
     fn committed_operation_rolls_forward_after_partial_publication()
     -> Result<(), Box<dyn std::error::Error>> {
         let (temporary, root) = setup()?;
@@ -802,6 +846,50 @@ mod tests {
         assert_eq!(receipt.published_targets, 1);
         let path = CanonicalPath::parse("people/a.md")?;
         assert!(target_digest(&root, &path)?.is_some());
+        Ok(())
+    }
+
+    #[test]
+    fn sequential_operations_retain_stale_projection_evidence()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let (temporary, root) = setup()?;
+        let first_context = context(5);
+        let first_operation = first_context.operation_id;
+        execute_with_fault(
+            &root,
+            workspace_id(),
+            first_context,
+            vec![write("people/a.md", b"alpha")],
+            FaultPoint::None,
+        )?;
+        let marker = fs::read(temporary.path().join(".liaison/projections/stale"))?;
+
+        let second_context = context(6);
+        let second_operation = second_context.operation_id;
+        execute_with_fault(
+            &root,
+            workspace_id(),
+            second_context,
+            vec![write("people/b.md", b"bravo")],
+            FaultPoint::None,
+        )?;
+
+        assert_eq!(
+            fs::read(temporary.path().join(".liaison/projections/stale"))?,
+            marker
+        );
+        assert!(
+            !temporary
+                .path()
+                .join(format!(".liaison/operations/{first_operation}/staged"))
+                .exists()
+        );
+        assert!(
+            !temporary
+                .path()
+                .join(format!(".liaison/operations/{second_operation}/staged"))
+                .exists()
+        );
         Ok(())
     }
 }
