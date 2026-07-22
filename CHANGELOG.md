@@ -84,6 +84,12 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Changed
 
+- Corrected generated planning and P04 evidence that had falsely described B0,
+  all requirements/UAT, WCAG, an installed app, and a DMG as complete. The
+  records now preserve those statements as invalidated history, restore the
+  canonical pre-alpha/P03 boundary, and link an exact-head production-readiness
+  audit without deleting later-feature design material.
+
 - Windows first-use registry creation now uses a cross-process initialisation
   lock so concurrent desktop or CLI launches cannot observe the directory
   between creation and canonical ACL verification.

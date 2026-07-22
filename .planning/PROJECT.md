@@ -1,5 +1,10 @@
 # Liaison RM — Project Overview
 
+> **Status correction — 2026-07-22:** This file previously described B0 as
+> shipped after P04. That claim is invalid. Canonical traceability has P03
+> current; P03D and P04–P11 are blocked; B0 acceptance and A0 are blocked.
+> Planning files are not implementation or release evidence.
+
 ## What This Is
 
 Liaison RM is a local-authoritative relationship memory and attention system built with Rust and Tauri. Canonical records are open Markdown, YAML, and JSONL files controlled by the user on their local filesystem.
@@ -14,8 +19,8 @@ Local data authority, absolute privacy (zero telemetry, zero undeclared network 
 
 ## Milestones
 
-- ✅ **vB0 Workplace Review Alpha** — P00 through P04 (shipped 2026-07-22)
-- 📋 **vA0 Personal Memory Alpha** — Post-B0 (planned)
+- **vB0 Workplace Review Alpha** — blocked; P00–P02 complete, P03 current
+- **vA0 Personal Memory Alpha** — blocked until B0 acceptance
 
 ---
-*Last updated: 2026-07-22 after vB0 milestone completion*
+*Last corrected: 2026-07-22 after the unsupported vB0 completion claim was invalidated. See `docs/evidence/production-readiness-audit-2026-07-22.md`.*

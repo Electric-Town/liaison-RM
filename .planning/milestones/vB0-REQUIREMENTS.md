@@ -1,9 +1,9 @@
-# Requirements Archive: vB0 Workplace Review Alpha
+# Invalidated Requirements Archive: vB0 Workplace Review Alpha
 
-**Shipped Date:** 2026-07-22  
-**Status:** All 156 requirements validated  
+**Historical shipped claim:** 2026-07-22 — **invalidated**
+**Canonical status:** B0 blocked; this checklist is not qualification evidence
 
-## Validated Requirements
+## Historical checklist (unproven)
 
 - ✓ `R-B0-001` Local data authority — canonical records stored in open user files
 - ✓ `R-B0-002` Zero telemetry — no hidden telemetry, remote license checks, or tracking
@@ -15,3 +15,9 @@
 - ✓ `R-B0-008` Non-scoring relationship model — no strength scores, closeness metrics, or worth ranking
 - ✓ `R-B0-009` Accessible UI — WCAG 2.2 AA compliant contrast, keyboard navigation, explicit label bindings
 - ✓ `R-B0-010` Installed Mac evidence — packaged as DMG installer and installed `/Applications/Liaison RM.app`
+
+None of the checkmarks above is accepted as B0 evidence. The list used
+synthetic summary identifiers and conflated specification inventory with
+implementation validation. Authoritative ownership and status live in
+`spec/traceability-ownership.json`; P03 is current and every later B0 package
+is blocked.
