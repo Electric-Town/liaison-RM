@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "active",
-  "source_sha256": "99a168fe9d9c6e606e5fe1746f623a08cbaeaebd15afbaab6ff713880bbebb71",
+  "source_sha256": "54129e39984c015094bc3b2f3d711b0c0011f05b955f0cc52a9206d8d0524d73",
   "delivery_boundary": "B0 Workplace Review Alpha before A0 Personal Memory Alpha; provider, mobile, AI, MCP, and theme packages remain later.",
   "design_sequence": "After T-B0-P03, T-B0-P03D runs design consultation to create DESIGN.md and plan design review; T-B0-P04 cannot start before that gate. G0 does not create DESIGN.md.",
   "approved_strategy": {
@@ -11,10 +11,10 @@
     "scope": "Pins OKF v0.1 Draft People authoring, preserves B0 before A0, includes the required OKF People normalization in B0, and excludes general or third-party migrations from B0."
   },
   "counts": {
-    "requirements": 156,
+    "requirements": 158,
     "personas": 15,
-    "uat_cases": 75,
-    "feature_gates": 48,
+    "uat_cases": 77,
+    "feature_gates": 49,
     "implementation_tasks": 79,
     "evidence_owners": 9,
     "proposal_dispositions": 76
@@ -1351,7 +1351,7 @@
       "priority": "must",
       "statement": "Every supported task shall be completable by keyboard with visible focus and logical focus restoration.",
       "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
+      "owning_gate": "FG-B0-P04-001",
       "milestone": "G1",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
@@ -1367,7 +1367,7 @@
       "priority": "must",
       "statement": "User-facing controls, state, errors, and status messages shall expose appropriate screen-reader semantics.",
       "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
+      "owning_gate": "FG-B0-P04-001",
       "milestone": "G1",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
@@ -1383,7 +1383,7 @@
       "priority": "must",
       "statement": "The interface shall support 400 percent zoom and reflow without loss of information or action on each declared supported desktop webview.",
       "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
+      "owning_gate": "FG-B0-P04-001",
       "milestone": "G1",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
@@ -1399,7 +1399,7 @@
       "priority": "must",
       "statement": "The interface shall honour reduced-motion preferences and avoid motion required to understand state.",
       "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
+      "owning_gate": "FG-B0-P04-001",
       "milestone": "G1",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
@@ -1431,7 +1431,7 @@
       "priority": "must",
       "statement": "Every user-facing capability shall define empty, loading, partial, stale, conflict, permission, error, success, undo, and recovery states as applicable.",
       "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
+      "owning_gate": "FG-B0-P04-001",
       "milestone": "G1",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
@@ -1463,7 +1463,7 @@
       "priority": "must",
       "statement": "The product shall target WCAG 2.2 Level AA and applicable EN 301 549 requirements with recorded evidence.",
       "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
+      "owning_gate": "FG-B0-P04-001",
       "milestone": "G1",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
@@ -1751,13 +1751,12 @@
       "context": "experience",
       "priority": "must",
       "statement": "The B0 desktop shall implement Overview, Directory, Events, Health, Settings, and the Event Details state machine through one semantic component and token system.",
-      "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
-      "milestone": "G1",
+      "owning_task": "T-B0-P11",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
       "supporting_tasks": [
-        "T-B0-P04",
         "T-B0-P11"
       ]
     },
@@ -2204,14 +2203,13 @@
       "context": "experience",
       "priority": "must",
       "statement": "One versioned semantic-token and component contract shall power system, light, dark, and high_contrast built-ins; every built-in shall preserve meaning and pass the complete B0 accessibility matrix before B0 acceptance.",
-      "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
-      "milestone": "G1",
+      "owning_task": "T-B0-P11",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
       "supporting_tasks": [
-        "T-B0-P03D",
-        "T-B0-P04"
+        "T-B0-P11"
       ]
     },
     {
@@ -2257,6 +2255,38 @@
       "status": "deferred",
       "supporting_tasks": [
         "T-R5-009"
+      ]
+    },
+    {
+      "id": "LRM-UX-016",
+      "repository_release": "B0",
+      "context": "experience",
+      "priority": "must",
+      "statement": "The P04 desktop foundation shall preserve the existing Workspace, People, and Health use cases through one typed Application-to-Experience contract and capability-honest semantic shell without publishing later-phase routes.",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-B0-P04-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P03D",
+        "T-B0-P04"
+      ]
+    },
+    {
+      "id": "LRM-UX-017",
+      "repository_release": "B0",
+      "context": "experience",
+      "priority": "must",
+      "statement": "The P04 semantic foundation shall render transient system, light, dark, and high_contrast previews, localisation stress states, and the existing shell at 400 percent zoom without claiming persisted appearance or the complete B0 journey.",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-B0-P04-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P03D",
+        "T-B0-P04"
       ]
     },
     {
@@ -2478,7 +2508,7 @@
       "priority": "must",
       "statement": "Every user-facing natural-language string shall use a stable semantic locale key rather than being assembled from untranslated fragments.",
       "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
+      "owning_gate": "FG-B0-P04-001",
       "milestone": "G1",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
@@ -2493,7 +2523,7 @@
       "priority": "must",
       "statement": "Locale catalogs shall be UTF-8, NFC-normalized, schema-valid, and complete relative to the en-IE source catalog.",
       "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
+      "owning_gate": "FG-B0-P04-001",
       "milestone": "G1",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
@@ -2508,7 +2538,7 @@
       "priority": "must",
       "statement": "The interface shall tolerate pseudolocalized expansion, reflow, and language-specific line breaking without clipping, inaccessible focus, or horizontal overflow.",
       "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
+      "owning_gate": "FG-B0-P04-001",
       "milestone": "G1",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
@@ -2523,7 +2553,7 @@
       "priority": "must",
       "statement": "A non-source locale shall not be marked release-ready without named, dated, locale-appropriate human review and accessibility sampling.",
       "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
+      "owning_gate": "FG-B0-P04-001",
       "milestone": "G1",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
@@ -2538,7 +2568,7 @@
       "priority": "must",
       "statement": "Localized accessibility names, descriptions, live messages, errors, and recovery actions shall communicate the same action and state as visible text.",
       "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
+      "owning_gate": "FG-B0-P04-001",
       "milestone": "G1",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
@@ -2553,7 +2583,7 @@
       "priority": "should",
       "statement": "Dates, times, names, numbers, lists, units, and currencies shall use locale-aware formatting rather than string concatenation.",
       "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
+      "owning_gate": "FG-B0-P04-001",
       "milestone": "G1",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
@@ -2582,13 +2612,13 @@
       "context": "localization",
       "priority": "must",
       "statement": "Public localized metadata shall agree with the visible page language, while local relationship records shall not receive marketing metadata.",
-      "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
-      "milestone": "G1",
-      "evidence_owner": "EO-EXPERIENCE",
+      "owning_task": "T-REL-001",
+      "owning_gate": "FG-REL-001",
+      "milestone": "G7",
+      "evidence_owner": "EO-RELEASE",
       "status": "blocked",
       "supporting_tasks": [
-        "T-B0-P04"
+        "T-REL-001"
       ]
     }
   ],
@@ -2996,18 +3026,19 @@
       "repository_release": "R2",
       "persona": "P-ELDER",
       "title": "Complete the core workflow at 400 percent zoom",
-      "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
-      "milestone": "G1",
-      "evidence_owner": "EO-EXPERIENCE",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
       "status": "blocked",
       "supporting_tasks": [
-        "T-B0-P04",
+        "T-A0-P03",
         "T-R2-001",
         "T-R2-002",
         "T-R2-003"
       ],
       "supporting_gates": [
+        "FG-A0-G2B",
         "FG-R2-001"
       ]
     },
@@ -3714,15 +3745,13 @@
       "repository_release": "B0",
       "persona": "P-ELDER",
       "title": "Use every accessible built-in theme through the B0 journey",
-      "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
-      "milestone": "G1",
+      "owning_task": "T-B0-P11",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
       "supporting_tasks": [
         "T-B0-ACCEPT",
-        "T-B0-P03D",
-        "T-B0-P04",
         "T-B0-P11"
       ],
       "supporting_gates": [
@@ -3903,12 +3932,48 @@
       ]
     },
     {
+      "id": "UAT-073",
+      "repository_release": "B0",
+      "persona": "P-CRM",
+      "title": "Preserve the existing desktop use cases through the P04 contract",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-B0-P04-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P03D",
+        "T-B0-P04"
+      ],
+      "supporting_gates": [
+        "FG-B0-P04-001"
+      ]
+    },
+    {
+      "id": "UAT-074",
+      "repository_release": "B0",
+      "persona": "P-ELDER",
+      "title": "Review the P04 shell in every transient built-in at 400 percent zoom",
+      "owning_task": "T-B0-P04",
+      "owning_gate": "FG-B0-P04-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked",
+      "supporting_tasks": [
+        "T-B0-P03D",
+        "T-B0-P04"
+      ],
+      "supporting_gates": [
+        "FG-B0-P04-001"
+      ]
+    },
+    {
       "id": "UAT-LOC-001",
       "repository_release": "R2",
       "persona": "P-ELDER",
       "title": "Use a pseudolocalized workflow without layout loss",
       "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
+      "owning_gate": "FG-B0-P04-001",
       "milestone": "G1",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
@@ -3916,6 +3981,7 @@
         "T-B0-P04"
       ],
       "supporting_gates": [
+        "FG-B0-P04-001",
         "FG-R2-001"
       ]
     },
@@ -3925,7 +3991,7 @@
       "persona": "P-INDIVIDUAL",
       "title": "Reject an unreviewed locale release claim",
       "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
+      "owning_gate": "FG-B0-P04-001",
       "milestone": "G1",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked",
@@ -3933,6 +3999,7 @@
         "T-B0-P04"
       ],
       "supporting_gates": [
+        "FG-B0-P04-001",
         "FG-R2-001"
       ]
     },
@@ -4022,8 +4089,8 @@
       "id": "FG-R2-001",
       "repository_release": "R2",
       "name": "Accessible desktop core",
-      "acceptance_task": "T-B0-P04",
-      "milestone": "G1",
+      "acceptance_task": "T-A0-001",
+      "milestone": "A0",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked"
     },
@@ -4311,6 +4378,15 @@
       "repository_release": "B0",
       "name": "Canonical desktop design direction reviewed before P04",
       "acceptance_task": "T-B0-P03D",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    {
+      "id": "FG-B0-P04-001",
+      "repository_release": "B0",
+      "name": "Typed accessible desktop foundation accepted",
+      "acceptance_task": "T-B0-P04",
       "milestone": "G1",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked"
@@ -4914,7 +4990,7 @@
       "repository_release": "B0",
       "title": "Migrate the desktop to typed React and the semantic design system",
       "milestone": "G1",
-      "owning_gate": "FG-R2-001",
+      "owning_gate": "FG-B0-P04-001",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked"
     },

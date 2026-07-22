@@ -1,24 +1,82 @@
-# Experience Bounded Context & Application Anti-Corruption Boundary
+# Experience bounded context and Application anti-corruption boundary
 
-This directory defines the **Experience bounded context** for the Liaison RM frontend and UI applications.
+Status: P03D candidate; not accepted implementation authority while
+`T-B0-P03D` is blocked.
 
-## Bounded Context Ownership
+Experience owns how an available Application use case is presented in a local
+desktop surface. It does not own Workspace, Person, Event, readiness, recovery,
+relationship, or security meaning. Those words cross this boundary only in
+versioned Application results produced by their owning contexts.
 
-- **Context Name**: Experience
-- **Primary Responsibility**: Local user interaction, active route management, transient input draft state, accessible announcements, error disclosure, and visual design rendering.
-- **Ubiquitous Language**:
-  - **Workspace**: A user-owned directory containing canonical Markdown/YAML records and local sqlite/search projections.
-  - **Person**: A canonical record representing an individual in the user's relationship memory.
-  - **Readiness**: Purpose-specific completeness state (e.g. dietary or workplace accessibility readiness).
-  - **Review Queue**: Reason-only attention queue ordering records needing user review, without subjective human-worth scores.
-  - **Golden Slice**: Request-bearing status and session canary traversing Application, Tauri IPC, and Experience.
+## Owned language
 
-## Anti-Corruption Boundary Rules
+- **Capability** — a stable Application-published identifier saying that a use
+  case is structurally compiled. It is distinct from current availability,
+  permission, writer authority, or a temporary blocking state.
+- **Route** — an Experience-owned navigation identity mapped exhaustively from
+  one or more capabilities. Application and domain crates never publish route
+  names.
+- **Presentation state** — empty, loading, partial, stale, conflict,
+  permission, error, success, undo, and recovery rendering for an applicable
+  result.
+- **Draft** — uncommitted input retained in the current window until a typed
+  Application outcome permits clearing it. A draft is not canonical data.
+- **Announcement** — concise accessible status associated with the action and
+  focus target that caused it.
+- **Disclosure** — the safe public message, recovery action, and correlation
+  reference selected from a typed Application error. Private diagnostic data
+  is never a presentation input.
+- **Transient appearance** — current semantic rendering, preview, and
+  operating-system resolution. Persisted preference belongs to the later
+  Settings application use case.
 
-1. **Domain Isolation**: Domain entities, invariants, and business rules belong strictly to Rust crates in `contexts/` and `crates/liaison-application`. Experience does not duplicate business rules.
-2. **DTO Compatibility**: All IPC payloads traversing the Tauri bridge deserialize through typed DTO definitions in `apps/desktop/src/app/generated/`. Hand-written ad-hoc DTO types are prohibited.
-3. **Local Authority**: No remote network calls, tracking pixels, or telemetry listeners may be imported into the Experience context.
-4. **State Seams**:
-   - Application state (WorkspaceSession, transaction boundaries) → Owned by Rust Application.
-   - Transient state (route selection, draft input, modal visibility) → Owned by Experience UI.
-   - System appearance (light/dark/high-contrast) → Resolved by Experience from OS preferences.
+“Golden slice” is contributor evidence vocabulary, not a product concept. It
+means one request-bearing status/session/mutation/failure scenario that crosses
+Application, Tauri, and Experience without substituting fake success data.
+
+## Anti-corruption boundary
+
+1. Domain entities and invariants remain in their owning Rust contexts.
+   Experience renders typed results and cannot derive a second readiness,
+   maintenance, cohort, relationship, or recovery decision.
+2. Application publishes stable use-case and capability identifiers, command
+   envelopes, safe public errors, and result DTOs. Experience maps them to
+   routes, components, locale keys, focus behavior, and drafts.
+3. The complete Tauri command declaration and TypeScript surface must be
+   generated or compile-checked from the versioned Application contract before
+   P04 can replace the current shell. Handwritten duplicate DTOs are not an
+   accepted boundary.
+4. Structural capability, current availability, permission, authority, and
+   blocking state are separate. An absent capability has no route; a compiled
+   but unavailable capability keeps its stable route and draft with an
+   accessible reason.
+5. A mutation clears its draft only after a matching typed success. Stale,
+   superseded, failed, uncertain, and recovery-required results retain the
+   draft and identify one safe next action.
+6. Experience never reads canonical files, opens repositories, acquires writer
+   authority, handles keys, or constructs context services.
+7. No browser storage is canonical. No remote request, tracking pixel,
+   telemetry listener, remote asset, or provider SDK is allowed in this
+   context without a later accepted capability contract.
+
+## Phase route boundary
+
+P04 may map only the accepted foundation capabilities to Overview, Workspace,
+People, and Health. Directory, Events, Settings, relationships, interactions,
+commitments, Review, and personal-profile customization remain structurally
+absent until their owning tasks deliver real contracts. P11 later composes the
+five-destination B0 workflow; A0 starts only after B0 acceptance.
+
+## Verification boundary
+
+Architecture checks must fail when:
+
+- a Rust Application or domain module contains an Experience route ID;
+- a route lacks an explicit capability mapping;
+- a frontend computes a business outcome or accepts private diagnostic data;
+- a later-phase destination, placeholder, fake bridge result, browser-backed
+  canonical record, or undeclared network request enters the shipped shell; or
+- a failed or stale mutation silently clears a draft.
+
+See `DESIGN.md`, ADR 0014, `docs/architecture/context-map.md`, and
+`docs/standards/ux-review.md`.

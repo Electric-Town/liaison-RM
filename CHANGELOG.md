@@ -6,8 +6,8 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Added
 
-- A canonical P03D Editorial Ledger design contract, semantic-token registry, documented design consultation, amended P04 delivery plan, and deterministic design-contract validator for the typed React/Tauri migration.
-- Recoverable canonical multi-target operations with staged and flushed targets, exact digest/revision preconditions, a durable commit decision, per-target progress, roll-forward recovery, external-edit refusal, projection-stale marking, and fault-injection coverage.
+- A P03D-candidate Editorial Ledger design contract, semantic-token registry, documented design consultation, amended P04 delivery plan, and deterministic design-contract validator for the future typed React/Tauri migration. P03D remains blocked until accepted P03 and exact gate evidence.
+- Recoverable canonical multi-target-operation groundwork with staged and flushed targets, exact digest/revision preconditions, a durable commit decision, per-target progress, roll-forward recovery, external-edit refusal, projection-stale marking, and fault-injection coverage. P03 remains current until the hardened contract is integrated through every adapter and requalified.
 - A write-authoritative, `Arc`-owned Workspace Session that retains one
   capability root, workspace identity/schema, path-free repositories, an
   operating-system writer lock, quiescence, and explicit unavailable recovery,
@@ -84,6 +84,19 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Changed
 
+- Split the over-broad desktop acceptance ownership: P04 now owns only the
+  generated Overview/Workspace/People/Health foundation and transient semantic
+  rendering under `FG-B0-P04-001`; P11 owns the complete B0 journey and
+  persisted built-in appearance, A0 owns relationship-reminder accessibility,
+  and public-site metadata belongs to release evidence.
+- Added a proposed Experience bounded-context decision and explicit
+  Application anti-corruption boundary for capabilities, routes, drafts,
+  announcements, localization, and safe public disclosure. It remains
+  candidate authority until P03D is accepted.
+- Corrected installed-product truth: no Liaison application was present in the
+  standard macOS Applications directories during the 2026-07-22 reconciliation;
+  repository bundles and historical native runs are not installed release
+  evidence.
 - Corrected the People design-review provenance: the approved C+B+A decision
   assigns People to Option C's full-canvas table directory and separate Person
   screen. The later split-detail atlas export remains a non-authoritative visual

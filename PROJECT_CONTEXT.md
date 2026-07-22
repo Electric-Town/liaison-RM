@@ -47,7 +47,21 @@ The default branch contains the merged P00 contract reconciliation and P01 appli
 
 The accepted P02 source state adds one Rust application composition root shared by the CLI and Tauri, write-authoritative Workspace Sessions with composite path-local and per-user `WorkspaceId` operating-system exclusion, retained capability roots, lock-free read-only Health, structured results and errors, and direct native adapter parity. Cooperating ordinary unconfined Liaison processes on one OS account and machine reject copied workspaces with the same identity independently of `HOME`/XDG overrides. Cross-container Flatpak, macOS App Sandbox, and Windows AppContainer GUI/host-CLI coordination remains unsupported until a shared authority broker/namespace exists; it is not a second valid registry. Merged PR #44 supplied exact-head Linux, macOS, and Windows runtime evidence. P03 now owns recoverable multi-target operations and final mutation preconditions; B0 and a supported public release remain incomplete.
 
-The installed macOS alpha launches and renders the local workspace interface. Native QA on 2026-07-18 found that desktop person creation fails at the Tauri argument contract because the frontend request uses camel-case `workspacePath` and `displayName` fields while the Rust request deserializer expects `workspace_path` and `display_name`. CLI Person tests do not prove the installed desktop path. The merged P01 source repairs and retests that bridge in an exact source build, but the separately installed application remains the old failing build until a later release gate installs and verifies a replacement.
+The 2026-07-22 reconciliation found no Liaison application in `/Applications`
+or the current user's Applications directory and no running Liaison process.
+Repository build bundles are not installed-product evidence. Earlier native
+findings, including the historical Tauri argument mismatch, remain useful
+regression cases but do not describe a currently installed app. The corrected
+table-first People/Person source and browser evidence at audit candidate
+`a3fcece` is not P03, P04, installed, or release qualification; a replacement
+may be installed only after the final exact source, operation recovery, native
+persistence, signing state, and single-install checks pass.
+
+The same audit found that remote `main` contains false B0/Events fallback
+behavior and is not releaseable. The audit branch preserves useful fail-closed
+containment and design work, but it must be integrated as reviewed vertical
+slices rather than merged wholesale. `T-B0-P03` remains current; P03D, P04,
+P05-P11, B0, and every A0 task remain blocked.
 
 Events is not a current desktop capability. A 2026-07-21 browser reproduction
 against an unmerged prototype found cross-workspace attendee leakage, static
@@ -826,8 +840,8 @@ Access logs are not used for productivity, attendance-compliance, performance, r
 The current merge order is P00–P11, B0 acceptance, then A0. The complete exit evidence is in `docs/product/roadmap.md`; R0–R6 remains only a long-term capability catalogue.
 
 - **P00–P03:** reconcile truth, establish one typed application and Workspace Session boundary, and route canonical mutations through recoverable multi-target operations.
-- **P03 design gate:** design consultation creates canonical `DESIGN.md`, then plan design review approves an amended P04 direction. G0 does not create `DESIGN.md`.
-- **P04:** deliver the typed accessible desktop system after design consultation and plan design review.
+- **P03 design gate:** after accepted P03, design consultation accepts the candidate `DESIGN.md`, proposed Experience boundary, corrected traceability, and amended P04 plan. Existing candidate design files are not gate evidence by themselves.
+- **P04:** deliver the typed accessible Overview/Workspace/People/Health foundation under `FG-B0-P04-001`; P11 owns the complete Directory/Events/Settings B0 journey and persisted built-in appearance.
 - **P05-OKF/P06/P06-REPAIR/P09-OKF:** after P03/P04, deliver the pinned strict People writer and tolerant Directory projection, then run `T-B0-P06-REPAIR` with preview, exact backup, failure-atomic application, exact receipt, and rollback before the required recoverable OKF People normalization closes `FG-B0-001`; P01/P02 do not expand.
 - **P05/P07/P08:** establish P05's Directory/Event/dietary domain contracts in G1 before P06/P07, keep sensitive security and recovery ownership exclusive to P07/P08, and let G3 consume the accepted P05 contracts without a reverse milestone dependency.
 - **P09–P11:** complete Directory onboarding, immutable event cohorts, exact dietary readiness, least-disclosure brief delivery, and the compiled B0 interface.

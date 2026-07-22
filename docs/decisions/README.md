@@ -48,3 +48,7 @@ A decision record explains why a durable choice was made. It does not duplicate 
 - `0011` separates local checkpoints from encrypted recovery packages.
 - `0012` fixes the delivery order as B0 Workplace Review before A0 Personal Memory.
 - `0013` pins the OKF v0.1 Draft People authoring profile, strict-write/tolerant-read boundary, sealed-data rule, and recoverable B0 normalization seam.
+
+## Proposed working-state decisions
+
+- `0014` assigns desktop route mapping, drafts, focus, announcements, localisation, and safe disclosure to an Experience bounded context. It remains proposed until P03 and the P03D gate are accepted.

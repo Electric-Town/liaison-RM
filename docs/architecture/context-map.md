@@ -39,6 +39,14 @@ All business contexts -> Sharing
 All business contexts -> Automation
   Automation exposes approved application commands and queries
   API, MCP, AI, and plugins cannot bypass context services
+
+Business contexts -> Application -> Experience
+  Business contexts own entities, policy, invariants, and durable meaning
+  Application publishes stable use-case/capability IDs and typed public results
+  Experience alone maps capabilities to desktop routes, drafts, focus,
+  announcements, locale keys, components, and safe disclosure
+  Structural capability, current availability, permission, writer authority,
+  and blocking state remain distinct
 ```
 
 ## Integration patterns
@@ -48,6 +56,7 @@ All business contexts -> Automation
 - Read models may combine public events for dashboards and search.
 - Provider, legacy CRM, vCard, calendar, email, and access formats enter through anti-corruption layers.
 - Cross-context writes are orchestrated by an application workflow with explicit compensation or recovery; no distributed aggregate is assumed.
+- Presentation clients consume Application contracts through an anti-corruption boundary; route IDs and transient presentation state do not enter domain or Application models.
 
 ## Prohibited coupling
 
@@ -56,6 +65,7 @@ All business contexts -> Automation
 - Letting a provider or UI choose business invariants.
 - Treating SQLite foreign keys as the context map.
 - Using a generic `metadata` map to avoid defining owned concepts.
+- Publishing desktop route IDs from a domain or Application context, or deriving a second business outcome in Experience.
 
 ## Evolution
 
