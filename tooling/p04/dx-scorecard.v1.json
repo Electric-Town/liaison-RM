@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "name": "Liaison RM DX Scorecard Contract",
+  "privacy": {
+    "telemetry_enabled": false,
+    "hosted_accounts_required": false,
+    "remote_license_checks": false,
+    "personal_ranking_metrics": false,
+    "airgap_compatible": true
+  },
+  "overall": {
+    "before_score": "4.9/10",
+    "target_score": "9.0/10",
+    "status": "in_progress"
+  },
+  "dimensions": [
+    {
+      "name": "Getting Started",
+      "before": 3,
+      "target": 9,
+      "unit": "score_1_to_10",
+      "evidence_requirements": [
+        "prepared/offline Quick <= 2 minutes",
+        "separate bootstrap",
+        "native timing receipts"
+      ]
+    },
+    {
+      "name": "API/CLI/SDK",
+      "before": 6,
+      "target": 9,
+      "unit": "score_1_to_10",
+      "evidence_requirements": [
+        "request/result generation",
+        "help snapshots",
+        "JSON contract",
+        "exit and claim tests"
+      ]
+    },
+    {
+      "name": "Error Messages",
+      "before": 6,
+      "target": 9,
+      "unit": "score_1_to_10",
+      "evidence_requirements": [
+        "staged adapter migration",
+        "exhaustive catalog",
+        "three traced failures",
+        "accessible disclosure tests"
+      ]
+    },
+    {
+      "name": "Documentation",
+      "before": 4,
+      "target": 9,
+      "unit": "score_1_to_10",
+      "evidence_requirements": [
+        "executable examples",
+        "generated offline status",
+        "link and drift checks"
+      ]
+    },
+    {
+      "name": "Upgrade Path",
+      "before": 7,
+      "target": 9,
+      "unit": "score_1_to_10",
+      "evidence_requirements": [
+        "candidate manifest",
+        "compatibility fixtures",
+        "rehearsal receipt"
+      ]
+    },
+    {
+      "name": "Dev Environment",
+      "before": 5,
+      "target": 9,
+      "unit": "score_1_to_10",
+      "evidence_requirements": [
+        "doctor parity",
+        "labelled macOS/Windows start-state runs"
+      ]
+    },
+    {
+      "name": "Community",
+      "before": 6,
+      "target": 9,
+      "unit": "score_1_to_10",
+      "evidence_requirements": [
+        "task discovery",
+        "safe issue forms",
+        "PR draft checks"
+      ]
+    },
+    {
+      "name": "DX Measurement",
+      "before": 2,
+      "target": 9,
+      "unit": "score_1_to_10",
+      "evidence_requirements": [
+        "governed exact-head scorecard",
+        "benchmark receipts"
+      ]
+    }
+  ],
+  "benchmarks": {
+    "quick_onboarding_seconds_budget": 120,
+    "native_status_launch_seconds_budget": 600
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "name": "Liaison RM Synthetic Scenarios Contract",
+  "scenarios": [
+    {
+      "id": "quick_tour",
+      "name": "Prepared Quick Tour Canary",
+      "description": "Validates workspace initialization, status retrieval, and person creation in an isolated synthetic directory",
+      "steps": [
+        "init_workspace",
+        "fetch_app_status",
+        "create_synthetic_person",
+        "verify_session_continuity",
+        "cleanup_scratch_dir"
+      ]
+    },
+    {
+      "id": "golden_canary",
+      "name": "Golden Canary Request Flow",
+      "description": "Executes request/session/mutation/failure canary through Application, Tauri IPC, and Experience boundaries",
+      "steps": [
+        "acquire_workspace_session",
+        "send_ipc_request",
+        "assert_typed_response",
+        "simulate_contention_failure",
+        "assert_typed_error_envelope"
+      ]
+    },
+    {
+      "id": "typed_errors",
+      "name": "Typed Error Disclosure Canary",
+      "description": "Verifies that semantic errors contain safe cause, problem descriptor, recovery action, and offline help without leaking local paths",
+      "steps": [
+        "trigger_malformed_manifest",
+        "verify_redacted_path",
+        "assert_localized_recovery_action"
+      ]
+    }
+  ]
+}

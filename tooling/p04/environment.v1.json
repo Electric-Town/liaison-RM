@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "name": "Liaison RM Environment Contract",
+  "prerequisites": {
+    "rust": ">=1.75.0",
+    "node": ">=20.0.0",
+    "python": ">=3.11.0",
+    "tauri_cli": ">=2.0.0"
+  },
+  "supported_platforms": [
+    {
+      "os": "macOS",
+      "architectures": ["aarch64", "x86_64"],
+      "level": "tier_1_installed_qualification"
+    },
+    {
+      "os": "Linux",
+      "architectures": ["x86_64"],
+      "level": "tier_1_source_qualification"
+    },
+    {
+      "os": "Windows",
+      "architectures": ["x86_64"],
+      "level": "tier_2_build_only"
+    }
+  ],
+  "output_envelope": {
+    "format": "json",
+    "fields": [
+      "command",
+      "status",
+      "elapsed_ms",
+      "git_sha",
+      "diagnostics",
+      "timestamp"
+    ]
+  }
+}

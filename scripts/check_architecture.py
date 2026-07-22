@@ -123,7 +123,7 @@ def main() -> int:
                 errors.append(f"{context.relative_to(ROOT)}: missing Cargo.toml")
 
     for cargo in sorted(ROOT.rglob("Cargo.toml")):
-        if cargo == ROOT / "Cargo.toml" or "target" in cargo.parts:
+        if cargo == ROOT / "Cargo.toml" or "target" in cargo.parts or ".claude" in cargo.parts:
             continue
         text = cargo.read_text(encoding="utf-8")
         if "[lints]\nworkspace = true" not in text:

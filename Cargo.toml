@@ -17,6 +17,7 @@ members = [
     "crates/liaison-application",
     "crates/liaison-provider-sdk",
     "crates/liaison-shared-kernel",
+    "tooling/xtask",
 ]
 resolver = "2"
 

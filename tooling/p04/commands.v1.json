@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "name": "Liaison RM Commands Contract",
+  "namespace": "p04",
+  "commands": [
+    {
+      "name": "doctor",
+      "summary": "Check contributor environment, dependencies, toolchains, and workspace health",
+      "target_time_seconds": 5
+    },
+    {
+      "name": "quick",
+      "summary": "Run prepared fast verification suite (cargo test workspace + fast policy checks)",
+      "target_time_seconds": 120
+    },
+    {
+      "name": "verify",
+      "summary": "Run full workspace verification suite including architecture, spec, and contract checks",
+      "target_time_seconds": 300
+    },
+    {
+      "name": "qualify",
+      "summary": "Run full exact-HEAD qualification matrix including installed desktop build verification",
+      "target_time_seconds": 600
+    },
+    {
+      "name": "rehearse-upgrade",
+      "summary": "Rehearse schema, API, and DTO upgrade compatibility against recorded fixtures",
+      "target_time_seconds": 30
+    },
+    {
+      "name": "where",
+      "summary": "Locate code ownership, bounded context boundaries, and ubiquitous language definitions",
+      "arguments": ["<concept>"],
+      "target_time_seconds": 2
+    },
+    {
+      "name": "scorecard",
+      "summary": "Compute and print current DX scorecard metrics against 9.0/10 target",
+      "target_time_seconds": 5
+    },
+    {
+      "name": "scenario",
+      "summary": "Run synthetic scenarios and generate privacy-safe receipts",
+      "arguments": ["<scenario_id>"],
+      "target_time_seconds": 60
+    }
+  ]
+}
