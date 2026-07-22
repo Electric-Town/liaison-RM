@@ -57,12 +57,16 @@ def main() -> int:
             page.get_by_label("Primary email optional").fill(email)
             page.get_by_role("button", name="Create profile").click()
             page.locator("#live-status").get_by_text(f"Saved {name}", exact=False).wait_for()
+            page.get_by_role("button", name=f"View {name}", exact=True).wait_for()
 
         assert page.locator("#people-count").inner_text() == "4 people"
         page.get_by_role("searchbox", name="Search people").fill("bravo")
         assert page.locator("#people-count-summary").inner_text() == "Showing 1 of 4 people."
         assert page.locator(".person-row").count() == 1
-        assert page.locator("#person-detail-heading").inner_text() == "Synthetic Bravo"
+        page.wait_for_function(
+            "expected => document.querySelector('#person-detail-heading')?.textContent === expected",
+            arg="Synthetic Bravo",
+        )
 
         page.get_by_role("searchbox", name="Search people").fill("not in this workspace")
         assert page.locator("#people-count-summary").inner_text() == "Showing 0 of 4 people."
@@ -76,7 +80,10 @@ def main() -> int:
         select_bravo = page.get_by_role("button", name="View Synthetic Bravo")
         select_bravo.click()
         assert select_bravo.get_attribute("aria-pressed") == "true"
-        assert page.locator("#person-detail-heading").inner_text() == "Synthetic Bravo"
+        page.wait_for_function(
+            "expected => document.querySelector('#person-detail-heading')?.textContent === expected",
+            arg="Synthetic Bravo",
+        )
 
         page.set_viewport_size({"width": 320, "height": 900})
         assert page.evaluate(

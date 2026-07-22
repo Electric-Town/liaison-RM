@@ -589,7 +589,7 @@
     byId("person-form").reset();
     updateControls();
     byId("person-dialog").showModal();
-    window.requestAnimationFrame(() => byId("person-name").focus());
+    byId("person-name").focus({ preventScroll: true });
   };
 
   const closePersonDialog = () => {
