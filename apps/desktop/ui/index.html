@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en-IE" data-theme="system">
+<html lang="en-IE">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -20,51 +20,32 @@
           <small>Local relationship memory</small>
         </span>
       </div>
-      <div class="topbar-actions">
-        <button id="theme-toggle" class="theme-toggle" type="button" aria-describedby="theme-help" data-operation-lock>
-          <span class="theme-glyph" aria-hidden="true">◐</span>
-          <span>
-            <small>Appearance</small>
-            <strong id="theme-label">System</strong>
-          </span>
-        </button>
-        <span id="theme-help" class="visually-hidden">Choose System, Light, Dark, or High contrast. The choice is kept on this device.</span>
-        <div class="local-status" aria-label="Storage status">
-          <span class="status-dot" aria-hidden="true"></span>
-          <span id="authority-label">Checking local-authoritative review build…</span>
-        </div>
+      <div class="local-status" aria-label="Storage status">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="authority-label">Checking local-authoritative review build…</span>
       </div>
     </header>
 
     <aside class="sidebar" aria-label="Application sections">
-      <div>
-        <button id="sections-toggle" class="sections-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" hidden>
+      <div class="sidebar-main">
+        <button id="sections-toggle" class="sections-toggle" type="button" aria-label="Sections" aria-controls="primary-navigation" aria-expanded="false" hidden>
           <span>Sections</span>
           <strong id="current-section-label">Workspace</strong>
         </button>
         <nav id="primary-navigation" aria-label="Available destinations">
-          <button class="nav-button is-active" type="button" data-route="setup" aria-current="page">
-            <span aria-hidden="true">1</span>
-            <span><strong>Workspace</strong><small>Open local files</small></span>
+          <button class="nav-button is-active" type="button" data-route="setup" aria-label="Workspace" aria-current="page">
+            <span class="nav-index" aria-hidden="true">1</span>
+            <span class="nav-label"><strong>Workspace</strong><small>Open local files</small></span>
           </button>
-          <button class="nav-button" type="button" data-route="people">
-            <span aria-hidden="true">2</span>
-            <span><strong>People</strong><small>Directory records</small></span>
+          <button class="nav-button" type="button" data-route="people" aria-label="People">
+            <span class="nav-index" aria-hidden="true">2</span>
+            <span class="nav-label"><strong>People</strong><small>Directory records</small></span>
           </button>
-          <button class="nav-button" type="button" data-route="health">
-            <span aria-hidden="true">3</span>
-            <span><strong>Health</strong><small>Read-only findings</small></span>
+          <button class="nav-button" type="button" data-route="health" aria-label="Health">
+            <span class="nav-index" aria-hidden="true">3</span>
+            <span class="nav-label"><strong>Health</strong><small>Read-only findings</small></span>
           </button>
         </nav>
-
-        <section class="development-status" aria-labelledby="development-heading">
-          <p id="development-heading" class="sidebar-kicker">In development</p>
-          <ul>
-            <li><strong>Today</strong><span>Overview work is not available in this build.</span></li>
-            <li><strong>Events</strong><span>Cohort and brief work is not available in this build.</span></li>
-            <li><strong>Settings</strong><span>Workspace-backed preferences are not available in this build.</span></li>
-          </ul>
-        </section>
       </div>
 
       <div class="sidebar-note">
@@ -146,12 +127,15 @@
         </div>
       </section>
 
-      <section class="page" data-page="people" aria-labelledby="people-heading" hidden>
-        <div class="page-heading">
+      <section class="page people-page" data-page="people" aria-labelledby="people-heading" hidden>
+        <div class="page-heading people-page-heading">
           <div>
-            <p class="eyebrow">People</p>
-            <h1 id="people-heading" tabindex="-1">People in this workspace</h1>
-            <p>Search and maintain the local profiles returned by the open workspace. Liaison does not score people.</p>
+            <p class="eyebrow">Directory</p>
+            <div class="people-title-row">
+              <h1 id="people-heading" tabindex="-1">People</h1>
+              <span id="people-count" class="people-count">0 people</span>
+            </div>
+            <p>Search the local profiles returned by the open workspace. Liaison does not rank or score people.</p>
           </div>
           <div class="page-actions">
             <button id="refresh-people" class="secondary-button" type="button" data-native-operation="session">Refresh</button>
@@ -161,10 +145,10 @@
 
         <div id="people-workspace-warning" class="notice warning" role="status">
           <span class="notice-mark" aria-hidden="true">!</span>
-          <span><strong>Workspace required.</strong> Open or create a workspace before adding or editing people.</span>
+          <span><strong>Workspace required.</strong> Open or create a workspace before viewing or adding people.</span>
         </div>
 
-        <section class="card directory-card" aria-labelledby="directory-heading">
+        <section class="directory-workspace" aria-labelledby="directory-heading">
           <div class="directory-toolbar">
             <div class="field search-field">
               <label for="people-search">Search people</label>
@@ -173,30 +157,40 @@
             <button id="clear-people-search" class="quiet-button" type="button" disabled>Clear search</button>
           </div>
 
-          <div class="directory-heading">
-            <div>
-              <p class="eyebrow">Local directory</p>
-              <h2 id="directory-heading">Current profiles</h2>
-            </div>
-            <p id="people-count-summary" class="count-summary" role="status" aria-live="polite">No people loaded.</p>
-          </div>
+          <div class="directory-columns">
+            <section class="directory-results" aria-labelledby="directory-heading">
+              <div class="directory-heading">
+                <div>
+                  <p class="eyebrow">Local directory</p>
+                  <h2 id="directory-heading">People in this workspace</h2>
+                </div>
+                <p id="people-count-summary" class="count-summary" role="status" aria-live="polite">No people loaded.</p>
+              </div>
 
-          <div class="table-wrap">
-            <table id="people-table" class="people-table">
-              <caption>People returned by the open local workspace</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Person</th>
-                  <th scope="col">Email</th>
-                  <th scope="col">Phone</th>
-                  <th scope="col">Revision</th>
-                  <th scope="col"><span class="visually-hidden">Actions</span></th>
-                </tr>
-              </thead>
-              <tbody id="people-list">
-                <tr><td class="empty-state" colspan="5">No people loaded.</td></tr>
-              </tbody>
-            </table>
+              <div class="table-wrap">
+                <table id="people-table" class="people-table">
+                  <caption>People returned by the open local workspace</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Person</th>
+                      <th scope="col">Contact</th>
+                      <th scope="col">Record</th>
+                    </tr>
+                  </thead>
+                  <tbody id="people-list">
+                    <tr><td class="empty-state" colspan="3">No people loaded.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <aside id="person-detail" class="person-detail" aria-labelledby="person-detail-heading" aria-live="polite">
+              <div class="detail-empty">
+                <p class="eyebrow">Record detail</p>
+                <h2 id="person-detail-heading">No person selected</h2>
+                <p>Select a person from the directory to inspect the information in their local profile.</p>
+              </div>
+            </aside>
           </div>
         </section>
       </section>
@@ -244,9 +238,8 @@
         <div>
           <p class="eyebrow">Local profile</p>
           <h2 id="person-dialog-title">Add a person</h2>
-          <p id="person-dialog-description">Create a basic profile in the open workspace.</p>
+          <p id="person-dialog-description">Create a name and optional email in the open workspace.</p>
         </div>
-        <span id="person-dialog-revision" class="revision" hidden></span>
       </div>
       <form id="person-form" class="dialog-form">
         <div class="field">
@@ -257,17 +250,27 @@
           <label for="person-email">Primary email <span class="optional">optional</span></label>
           <input id="person-email" name="email" type="email" autocomplete="email" disabled>
         </div>
-        <div id="person-phone-field" class="field" hidden>
-          <label for="person-phone">Primary phone <span class="optional">optional</span></label>
-          <input id="person-phone" name="phone" type="tel" autocomplete="tel" disabled aria-describedby="person-contact-help">
-        </div>
-        <p id="person-contact-help" class="field-help" hidden>Editing changes the first contact point. Any additional contact points remain unchanged.</p>
         <p id="person-form-error" class="form-error" role="alert" hidden></p>
         <div class="dialog-actions">
           <button id="cancel-person" class="secondary-button" type="button">Cancel</button>
           <button id="save-person" class="primary-button" type="submit" data-native-operation="session" disabled>Create profile</button>
         </div>
       </form>
+    </div>
+  </dialog>
+
+  <dialog id="person-detail-dialog" class="person-detail-dialog" aria-labelledby="person-detail-dialog-heading">
+    <div class="detail-dialog-shell">
+      <div class="detail-dialog-toolbar">
+        <button id="close-person-detail" class="secondary-button" type="button">Close details</button>
+      </div>
+      <div id="person-detail-dialog-content">
+        <div class="detail-empty">
+          <p class="eyebrow">Record detail</p>
+          <h2 id="person-detail-dialog-heading">No person selected</h2>
+          <p>Select a person from the directory to inspect the information in their local profile.</p>
+        </div>
+      </div>
     </div>
   </dialog>
 </body>

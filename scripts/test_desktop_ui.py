@@ -292,18 +292,21 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     page.locator("#live-status").get_by_text("Workspace setup did not complete", exact=False).wait_for()
     assert page.get_by_role("button", name="Create local workspace").is_enabled()
     page.get_by_role("button", name="Create local workspace").click()
-    page.get_by_role("heading", name="Remember useful context without scoring people").wait_for()
-    assert page.get_by_role("heading", name="Remember useful context without scoring people").evaluate("el => el === document.activeElement")
+    page.get_by_role("heading", name="People", exact=True).wait_for()
+    assert page.get_by_role("heading", name="People", exact=True).evaluate("el => el === document.activeElement")
     assert page.locator("#people-workspace-warning").is_hidden()
     first_session = page.evaluate("window.__liaisonBridgeState.currentSession()")
     assert page.evaluate("window.__liaisonBridgeState.activeSessions().length") == 1
 
+    page.get_by_role("button", name="Add person").click()
     page.get_by_label("Display name").fill("Alex Murphy")
-    page.get_by_label("Email optional").fill("alex@example.test")
-    page.get_by_label("Email optional").press("Enter")
-    page.get_by_text("Alex Murphy", exact=True).wait_for()
-    assert page.get_by_text("alex@example.test", exact=True).count() == 1
-    assert page.get_by_text("Revision 1", exact=True).count() == 1
+    page.get_by_label("Primary email optional").fill("alex@example.test")
+    page.get_by_label("Primary email optional").press("Enter")
+    page.locator("#people-table").get_by_text("Alex Murphy", exact=True).wait_for()
+    assert page.locator("#people-table").get_by_text("alex@example.test", exact=True).count() == 1
+    assert page.locator("#person-detail").get_by_text("alex@example.test", exact=True).count() == 1
+    assert page.locator("#person-detail").get_by_text("Revision 1", exact=True).count() == 1
+    assert page.get_by_role("button", name="View Alex Murphy").get_attribute("aria-pressed") == "true"
     assert "Saved Alex Murphy" in page.locator("#live-status").inner_text()
 
     page.get_by_role("button", name="Workspace").click()
@@ -313,9 +316,7 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     assert page.locator("#validation-scope").inner_text() == (
         "Read-only folder: /Users/tester/Documents/needs-attention"
     )
-    assert page.locator("#workspace-path-label").inner_text() == (
-        "/Users/tester/Documents/health-only-needs-attention"
-    )
+    assert page.locator("#workspace-path-label").inner_text() == "Family relationships · Family"
     assert page.evaluate("window.__liaisonBridgeState.activeSessions()") == [first_session]
     page.get_by_role("button", name="Workspace").click()
     page.get_by_role("button", name="Open existing workspace").click()
@@ -337,7 +338,7 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     page.get_by_label("Absolute folder path").fill("/Users/tester/Documents/created-replacement")
     page.get_by_label("Workspace name").fill("Created replacement")
     page.get_by_role("button", name="Create local workspace").click()
-    page.get_by_role("heading", name="Remember useful context without scoring people").wait_for()
+    page.get_by_role("heading", name="People", exact=True).wait_for()
     third_session = page.evaluate("window.__liaisonBridgeState.currentSession()")
     assert third_session != second_session
     assert page.evaluate("window.__liaisonBridgeState.activeSessions()") == [third_session]
@@ -348,7 +349,7 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     page.get_by_label("Absolute folder path").fill("/Users/tester/Documents/rolled-back-replacement")
     page.get_by_role("button", name="Open existing workspace").click()
     page.locator("#live-status").get_by_text("Workspace switch did not complete", exact=False).wait_for()
-    assert page.locator("#workspace-path-label").inner_text() == "/Users/tester/Documents/created-replacement"
+    assert page.locator("#workspace-path-label").inner_text() == "Created replacement · Family"
     assert page.evaluate("window.__liaisonBridgeState.activeSessions()") == [third_session]
 
     page.evaluate(
@@ -364,9 +365,7 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     ).wait_for()
     restart_status = page.locator("#live-status").inner_text()
     assert "may still hold writer authority" in restart_status
-    assert page.locator("#workspace-path-label").inner_text() == (
-        "/Users/tester/Documents/created-replacement"
-    )
+    assert page.locator("#workspace-path-label").inner_text() == "Created replacement · Family"
     active_after_cleanup_failure = page.evaluate(
         "window.__liaisonBridgeState.activeSessions()"
     )
@@ -395,9 +394,7 @@ def initialise_overlap_workspace(page: Page, path: str) -> str:
         "Workspace setup did not complete", exact=False
     ).wait_for()
     page.get_by_role("button", name="Create local workspace").click()
-    page.get_by_role(
-        "heading", name="Remember useful context without scoring people"
-    ).wait_for()
+    page.get_by_role("heading", name="People", exact=True).wait_for()
     return page.evaluate("window.__liaisonBridgeState.currentSession()")
 
 
@@ -476,6 +473,7 @@ def test_person_result_cannot_cross_workspace(browser, external_requests: list[s
     source_session = initialise_overlap_workspace(
         page, "/Users/tester/Documents/overlap-person-source"
     )
+    page.get_by_role("button", name="Add person").click()
     page.get_by_label("Display name").fill("Delayed Person")
     page.evaluate(
         """
@@ -483,14 +481,13 @@ def test_person_result_cannot_cross_workspace(browser, external_requests: list[s
         window.__liaisonBridgeState.delayNext("create_person");
         """
     )
-    page.get_by_role("button", name="Save Markdown profile").click()
+    page.get_by_role("button", name="Create profile").click()
     page.wait_for_function(
         'window.__liaisonBridgeState.isDelayed("create_person")'
     )
     assert page.locator("#main-content").get_attribute("aria-busy") == "true"
     assert page.locator("[data-native-operation]:not(:disabled)").count() == 0
 
-    page.get_by_role("button", name="Workspace").click()
     # Native-operation fields are disabled for users. Force a value and event
     # to prove script/programmatic re-entry is rejected by the synchronous
     # guard as well.
@@ -514,6 +511,7 @@ def test_person_result_cannot_cross_workspace(browser, external_requests: list[s
     ) is True
     page.locator("#live-status").get_by_text("Saved Delayed Person", exact=False).wait_for()
     page.wait_for_function("!document.querySelector('#open-workspace').disabled")
+    page.get_by_role("button", name="Workspace").click()
     page.get_by_role("button", name="Open existing workspace").click()
     page.locator("#live-status").get_by_text("Opened workspace", exact=False).wait_for()
     target_session = page.evaluate("window.__liaisonBridgeState.currentSession()")
@@ -524,7 +522,7 @@ def test_person_result_cannot_cross_workspace(browser, external_requests: list[s
     assert source_session in page.evaluate(
         "window.__liaisonBridgeState.closedSessions()"
     )
-    assert page.locator("#people-count").inner_text() == "0"
+    assert page.locator("#people-count").inner_text() == "0 people"
     assert page.get_by_text("Delayed Person", exact=True).count() == 0
     assert "Delayed Person" not in page.locator("#live-status").inner_text()
     assert page.evaluate("window.__liaisonBridgeState.maxInFlightCommands()") == 1
@@ -543,12 +541,16 @@ def test_mobile(browser, external_requests: list[str]) -> None:
         else None,
     )
     load_page(page)
-    page.get_by_role("button", name="People").click()
-    page.get_by_role("heading", name="Remember useful context without scoring people").wait_for()
+    page.get_by_role("button", name="Sections").click()
+    page.get_by_role("button", name="People", exact=True).click()
+    page.get_by_role("heading", name="People", exact=True).wait_for()
     overflow = page.evaluate("document.documentElement.scrollWidth > document.documentElement.clientWidth")
     assert overflow is False
-    assert page.get_by_role("button", name="Workspace").is_visible()
-    assert page.get_by_role("button", name="People").is_visible()
+    assert page.get_by_role("button", name="Sections").is_visible()
+    assert page.locator("#current-section-label").inner_text() == "People"
+    page.get_by_role("button", name="Sections").click()
+    assert page.get_by_role("button", name="Workspace", exact=True).is_visible()
+    assert page.get_by_role("button", name="People", exact=True).is_visible()
     assert page.get_by_role("button", name="Health", exact=True).is_visible()
     SCREENSHOTS.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(SCREENSHOTS / "mobile-people.png"), full_page=True)
