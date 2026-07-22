@@ -13,6 +13,7 @@
     workspace: null,
     people: [],
     peopleLoading: false,
+    peopleRefreshError: "",
     peopleQuery: "",
     selectedPersonId: null,
   };
@@ -50,6 +51,7 @@
 
   const status = (message) => {
     byId("live-status").textContent = message;
+    document.querySelector("[data-page]:not([hidden]) [data-page-status]")?.replaceChildren(message);
   };
 
   const errorText = (error) => {
@@ -151,7 +153,9 @@
       mobileNavigationOpen = false;
       syncNavigationForViewport();
     }
-    destination.querySelector("h1")?.focus();
+    byId("main-content").scrollTo({ top: 0, left: 0, behavior: "auto" });
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    destination.querySelector("h1")?.focus({ preventScroll: true });
   };
 
   const profileLabel = (value) => ({
@@ -197,8 +201,14 @@
     .map((part) => part[0]?.toUpperCase() || "")
     .join("") || "?";
 
-  const primaryContact = (items) => items?.[0]?.value || "";
   const informationValue = (value) => String(value || "").trim() || "Unknown in current profile";
+  const firstContact = (items) => items?.[0]?.value || "";
+  const contactSummary = (items) => {
+    const first = firstContact(items);
+    if (!first) return informationValue("");
+    const additional = Math.max(0, (items?.length || 0) - 1);
+    return additional ? `${first} +${additional} more` : first;
+  };
 
   const matchingPeople = () => {
     const query = state.peopleQuery.trim().toLocaleLowerCase();
@@ -286,10 +296,10 @@
     select.append(identityLayout);
     identity.append(select);
 
-    const email = informationValue(primaryContact(person.emails));
-    const phone = informationValue(primaryContact(person.phones));
-    const informationState = personCell(
-      "Information state",
+    const email = contactSummary(person.emails);
+    const phone = contactSummary(person.phones);
+    const recordState = personCell(
+      "Record state",
       person.archived ? "Archived" : "Active",
       person.archived ? "record-state-cell is-archived" : "record-state-cell is-active",
     );
@@ -300,20 +310,35 @@
       identity,
       personCell("Email", email, "person-contact"),
       personCell("Phone", phone, "person-contact"),
-      informationState,
+      recordState,
       revision,
     );
     return row;
   };
 
-  const detailRow = (term, description) => {
+  const detailRow = (term, description, className = "") => {
     const row = document.createElement("div");
+    if (className) row.className = className;
     const dt = document.createElement("dt");
     const dd = document.createElement("dd");
     dt.textContent = term;
     dd.textContent = informationValue(description);
     row.append(dt, dd);
     return row;
+  };
+
+  const contactRows = (kind, items) => {
+    const contacts = (items || []).filter((item) => String(item?.value || "").trim());
+    if (!contacts.length) return [detailRow(kind, "")];
+    return contacts.map((item, index) => {
+      const label = String(item.label || "").trim();
+      const term = label
+        ? `${kind} · ${label}`
+        : contacts.length > 1
+          ? `${kind} ${index + 1}`
+          : kind;
+      return detailRow(term, item.value);
+    });
   };
 
   const birthdayLabel = (birthday) => {
@@ -342,30 +367,31 @@
       return;
     }
 
-    const contact = primaryContact(person.emails) || primaryContact(person.phones);
+    const contact = firstContact(person.emails) || firstContact(person.phones);
     byId("person-page-avatar").textContent = initials(person.display_name);
     byId("person-page-heading").textContent = person.display_name;
     byId("person-page-summary").textContent = contact
       ? `${contact} · ${person.archived ? "Archived record" : "Active record"}`
       : person.archived
-        ? "No primary contact recorded · Archived record"
-        : "No primary contact recorded · Active record";
+        ? "No contact recorded · Archived record"
+        : "No contact recorded · Active record";
     byId("person-contact-details").replaceChildren(
-      detailRow("Primary email", primaryContact(person.emails)),
-      detailRow("Primary phone", primaryContact(person.phones)),
+      ...contactRows("Email", person.emails),
+      ...contactRows("Phone", person.phones),
       detailRow("Known as", person.aliases?.join(", ")),
       detailRow("Birthday", birthdayLabel(person.birthday)),
     );
     byId("person-record-details").replaceChildren(
-      detailRow("Information state", person.archived ? "Archived" : "Active"),
-      detailRow("Revision", `Revision ${person.revision}`),
-      detailRow("Person ID", person.id),
+      detailRow("Record state", person.archived ? "Archived" : "Active"),
+      detailRow("Revision", `Revision ${person.revision}`, "is-provenance"),
+      detailRow("Person ID", person.id, "is-provenance"),
     );
   };
 
   const renderPeople = () => {
     const list = byId("people-list");
     const count = byId("people-count-summary");
+    byId("people-refresh-notice").hidden = !state.peopleRefreshError;
     const visiblePeople = matchingPeople();
     list.replaceChildren();
     byId("people-count").textContent = `${state.people.length} ${state.people.length === 1 ? "person" : "people"}`;
@@ -491,6 +517,7 @@
     state.workspace = opened.workspace;
     state.people = opened.people;
     state.peopleLoading = false;
+    state.peopleRefreshError = "";
     state.peopleQuery = "";
     state.selectedPersonId = null;
     byId("people-search").value = "";
@@ -665,11 +692,16 @@
     renderPeople();
     renderPersonPage(person);
     navigate("person");
+    status(`Viewing ${person.display_name} as a read-only local record.`);
   });
 
   byId("back-to-people").addEventListener("click", () => {
     const selectedPersonId = state.selectedPersonId;
     navigate("people");
+    const visibleCount = matchingPeople().length;
+    status(state.peopleQuery.trim()
+      ? `Returned to People. Showing ${visibleCount} of ${state.people.length} people.`
+      : `Returned to People. ${state.people.length} ${state.people.length === 1 ? "person" : "people"} loaded.`);
     window.requestAnimationFrame(() => {
       const focusTarget = [...document.querySelectorAll("[data-person-open]")]
         .find((candidate) => candidate.dataset.personId === selectedPersonId);
@@ -729,11 +761,15 @@
     await withNativeOperation(event.currentTarget, "Refreshing…", async (operation) => {
       try {
         if (await refreshPeople(operation)) {
+          state.peopleRefreshError = "";
+          renderPeople();
           status(`Refreshed ${state.people.length} local profile${state.people.length === 1 ? "" : "s"}.`);
         }
       } catch (error) {
         if (operationOwnsCurrentSession(operation)) {
-          status(`People were not refreshed: ${errorText(error)}`);
+          state.peopleRefreshError = errorText(error);
+          renderPeople();
+          status(`People were not refreshed: ${state.peopleRefreshError} Showing the last successfully loaded directory; retry Refresh.`);
         }
       }
     });

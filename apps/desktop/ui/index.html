@@ -156,6 +156,13 @@
             </div>
           </div>
 
+          <p id="people-operation-status" class="operation-status" data-page-status role="status" aria-live="polite">Ready to browse the local directory.</p>
+
+          <div id="people-refresh-notice" class="notice warning directory-refresh-notice" role="status" hidden>
+            <span class="notice-mark" aria-hidden="true">!</span>
+            <span><strong>Directory may be stale.</strong> Refresh failed, so these are the last successfully loaded records. Retry Refresh.</span>
+          </div>
+
           <section class="directory-results" aria-labelledby="directory-heading">
             <div class="directory-heading">
               <div>
@@ -165,14 +172,14 @@
             </div>
 
             <div class="table-wrap">
-              <table id="people-table" class="people-table">
+              <table id="people-table" class="people-table" aria-describedby="people-count-summary people-refresh-notice">
                 <caption>People returned by the open local workspace</caption>
                 <thead>
                   <tr>
                     <th scope="col">Person</th>
                     <th scope="col">Email</th>
                     <th scope="col">Phone</th>
-                    <th scope="col">Information state</th>
+                    <th scope="col">Record state</th>
                     <th scope="col">Revision</th>
                   </tr>
                 </thead>
@@ -188,14 +195,16 @@
       <section id="person-page" class="page person-page" data-page="person" aria-labelledby="person-page-heading" hidden>
         <div class="person-page-toolbar">
           <button id="back-to-people" class="quiet-button back-to-people" type="button">← Back to People</button>
-          <span class="read-only-badge">Read-only local record</span>
+          <span id="person-record-mode" class="read-only-badge">Read-only local record</span>
         </div>
+
+        <p id="person-operation-status" class="operation-status" data-page-status role="status" aria-live="polite">Viewing a local record without changing it.</p>
 
         <header class="person-record-header">
           <span id="person-page-avatar" class="person-detail-avatar" aria-hidden="true">?</span>
           <div>
             <p class="eyebrow">Person record</p>
-            <h1 id="person-page-heading" tabindex="-1">Person</h1>
+            <h1 id="person-page-heading" tabindex="-1" aria-describedby="person-record-mode person-page-summary">Person</h1>
             <p id="person-page-summary">Select a person from the directory.</p>
           </div>
         </header>
