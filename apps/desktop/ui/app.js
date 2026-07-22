@@ -5,6 +5,7 @@
   const ROUTE_LABELS = {
     setup: "Workspace",
     people: "People",
+    person: "Person",
     health: "Health",
   };
 
@@ -21,7 +22,6 @@
     restartRequired: false,
   };
   let dialogReturnFocus = null;
-  let detailReturnFocus = null;
   let mobileNavigationOpen = false;
 
   const byId = (id) => document.getElementById(id);
@@ -136,17 +136,17 @@
   const navigate = (route) => {
     const destination = document.querySelector(`[data-page="${route}"]`);
     if (!destination || !(route in ROUTE_LABELS)) return;
-    if (byId("person-detail-dialog").open) byId("person-detail-dialog").close();
     document.querySelectorAll("[data-page]").forEach((page) => {
       page.hidden = page !== destination;
     });
+    const navigationRoute = route === "person" ? "people" : route;
     document.querySelectorAll("[data-route]").forEach((button) => {
-      const active = button.dataset.route === route;
+      const active = button.dataset.route === navigationRoute;
       button.classList.toggle("is-active", active);
       if (active) button.setAttribute("aria-current", "page");
       else button.removeAttribute("aria-current");
     });
-    byId("current-section-label").textContent = ROUTE_LABELS[route];
+    byId("current-section-label").textContent = ROUTE_LABELS[navigationRoute];
     if (narrowNavigation.matches) {
       mobileNavigationOpen = false;
       syncNavigationForViewport();
@@ -225,7 +225,7 @@
     const row = document.createElement("tr");
     const cell = document.createElement("td");
     cell.className = "empty-state";
-    cell.colSpan = 3;
+    cell.colSpan = 5;
     const description = document.createElement("p");
     description.textContent = message;
     cell.append(description);
@@ -262,11 +262,11 @@
     const select = document.createElement("button");
     select.type = "button";
     select.className = "person-select";
-    select.dataset.personSelect = "true";
+    select.dataset.personOpen = "true";
     select.dataset.personId = person.id;
-    select.setAttribute("aria-controls", narrowNavigation.matches ? "person-detail-dialog" : "person-detail");
-    select.setAttribute("aria-pressed", String(selected));
-    select.setAttribute("aria-label", `View ${person.display_name}`);
+    select.setAttribute("aria-controls", "person-page");
+    if (selected) select.setAttribute("aria-current", "true");
+    select.setAttribute("aria-label", `Open local record for ${person.display_name}`);
     const identityLayout = document.createElement("span");
     identityLayout.className = "person-identity";
     const avatar = document.createElement("span");
@@ -286,15 +286,21 @@
     select.append(identityLayout);
     identity.append(select);
 
-    const email = primaryContact(person.emails);
-    const phone = primaryContact(person.phones);
-    const contact = email || phone || "Unknown in current profile";
-    const revision = personCell("Record", `r${person.revision}`, "revision");
+    const email = informationValue(primaryContact(person.emails));
+    const phone = informationValue(primaryContact(person.phones));
+    const informationState = personCell(
+      "Information state",
+      person.archived ? "Archived" : "Active",
+      person.archived ? "record-state-cell is-archived" : "record-state-cell is-active",
+    );
+    const revision = personCell("Revision", `r${person.revision}`, "revision");
     revision.setAttribute("aria-label", `Revision ${person.revision}`);
 
     row.append(
       identity,
-      personCell("Contact", contact, "person-contact"),
+      personCell("Email", email, "person-contact"),
+      personCell("Phone", phone, "person-contact"),
+      informationState,
       revision,
     );
     return row;
@@ -326,82 +332,34 @@
     return "";
   };
 
-  const renderPersonDetailInto = (
-    detail,
-    headingId,
-    person,
-    emptyMessage = "Select a person from the directory to inspect their local profile.",
-  ) => {
-    detail.replaceChildren();
+  const renderPersonPage = (person) => {
     if (!person) {
-      const empty = document.createElement("div");
-      empty.className = "detail-empty";
-      const eyebrow = document.createElement("p");
-      eyebrow.className = "eyebrow";
-      eyebrow.textContent = "Record detail";
-      const heading = document.createElement("h2");
-      heading.id = headingId;
-      heading.tabIndex = -1;
-      heading.textContent = "No person selected";
-      const description = document.createElement("p");
-      description.textContent = emptyMessage;
-      empty.append(eyebrow, heading, description);
-      detail.append(empty);
+      byId("person-page-avatar").textContent = "?";
+      byId("person-page-heading").textContent = "Person";
+      byId("person-page-summary").textContent = "Select a person from the directory.";
+      byId("person-contact-details").replaceChildren();
+      byId("person-record-details").replaceChildren();
       return;
     }
 
-    const header = document.createElement("header");
-    header.className = "person-detail-header";
-    const avatar = document.createElement("span");
-    avatar.className = "person-detail-avatar";
-    avatar.setAttribute("aria-hidden", "true");
-    avatar.textContent = initials(person.display_name);
-    const titleGroup = document.createElement("div");
-    const eyebrow = document.createElement("p");
-    eyebrow.className = "eyebrow";
-    eyebrow.textContent = "Canonical person record";
-    const heading = document.createElement("h2");
-    heading.id = headingId;
-    heading.tabIndex = -1;
-    heading.textContent = person.display_name;
-    const recordState = document.createElement("p");
-    recordState.className = "record-state";
-    recordState.textContent = person.archived ? "Archived record" : "Active record";
-    titleGroup.append(eyebrow, heading, recordState);
-    header.append(avatar, titleGroup);
-
-    const facts = document.createElement("dl");
-    facts.className = "person-detail-list";
-    facts.append(
+    const contact = primaryContact(person.emails) || primaryContact(person.phones);
+    byId("person-page-avatar").textContent = initials(person.display_name);
+    byId("person-page-heading").textContent = person.display_name;
+    byId("person-page-summary").textContent = contact
+      ? `${contact} · ${person.archived ? "Archived record" : "Active record"}`
+      : person.archived
+        ? "No primary contact recorded · Archived record"
+        : "No primary contact recorded · Active record";
+    byId("person-contact-details").replaceChildren(
       detailRow("Primary email", primaryContact(person.emails)),
       detailRow("Primary phone", primaryContact(person.phones)),
       detailRow("Known as", person.aliases?.join(", ")),
       detailRow("Birthday", birthdayLabel(person.birthday)),
+    );
+    byId("person-record-details").replaceChildren(
+      detailRow("Information state", person.archived ? "Archived" : "Active"),
       detailRow("Revision", `Revision ${person.revision}`),
       detailRow("Person ID", person.id),
-    );
-
-    const provenance = document.createElement("section");
-    provenance.className = "detail-provenance";
-    const provenanceLabel = document.createElement("p");
-    provenanceLabel.className = "eyebrow";
-    provenanceLabel.textContent = "Source";
-    const provenanceHeading = document.createElement("h3");
-    provenanceHeading.textContent = "Local Markdown profile";
-    const provenanceText = document.createElement("p");
-    provenanceText.textContent = "Loaded through the active workspace session. Rebuildable indexes are not the canonical record.";
-    provenance.append(provenanceLabel, provenanceHeading, provenanceText);
-
-    detail.append(header, facts, provenance);
-  };
-
-  const renderPersonDetail = (person, emptyMessage) => {
-    renderPersonDetailInto(byId("person-detail"), "person-detail-heading", person, emptyMessage);
-    renderPersonDetailInto(
-      byId("person-detail-dialog-content"),
-      "person-detail-dialog-heading",
-      person,
-      emptyMessage,
     );
   };
 
@@ -415,32 +373,27 @@
     if (state.peopleLoading) {
       count.textContent = "Loading people…";
       list.append(emptyPeopleRow("Loading profiles from the open workspace…"));
-      renderPersonDetail(null, "People are refreshing from the active workspace.");
     } else if (!state.workspace) {
       count.textContent = "No people loaded.";
       state.selectedPersonId = null;
       list.append(emptyPeopleRow("Open a workspace to load its people.", "Open workspace", () => navigate("setup")));
-      renderPersonDetail(null, "Open a workspace, then select a person to inspect their local profile.");
+      renderPersonPage(null);
     } else if (state.people.length === 0) {
       count.textContent = "0 people in this workspace.";
       state.selectedPersonId = null;
       list.append(emptyPeopleRow("No people yet. Add the first local profile.", "Add first person", openPersonDialog));
-      renderPersonDetail(null, "Add a person to create the first local profile in this workspace.");
+      renderPersonPage(null);
     } else if (visiblePeople.length === 0) {
       count.textContent = `Showing 0 of ${state.people.length} people.`;
       list.append(emptyPeopleRow(
         `No people match “${state.peopleQuery.trim()}”. Try another name, email, phone, or alias, or clear the search.`,
       ));
-      renderPersonDetail(null, "Clear or change the search to select a person.");
     } else {
-      if (!visiblePeople.some((person) => person.id === state.selectedPersonId)) {
-        state.selectedPersonId = visiblePeople[0].id;
-      }
+      if (!state.people.some((person) => person.id === state.selectedPersonId)) state.selectedPersonId = null;
       count.textContent = state.peopleQuery.trim()
         ? `Showing ${visiblePeople.length} of ${state.people.length} people.`
         : `${state.people.length} ${state.people.length === 1 ? "person" : "people"} in this workspace.`;
       visiblePeople.forEach((person) => list.append(renderPersonRow(person)));
-      renderPersonDetail(visiblePeople.find((person) => person.id === state.selectedPersonId));
     }
     updateControls();
   };
@@ -456,8 +409,9 @@
       byId(id).disabled = busy || !ready;
     });
     byId("people-search").disabled = busy || !ready;
-    byId("clear-people-search").disabled = busy || !ready || state.peopleQuery.length === 0;
-    document.querySelectorAll("[data-person-select], [data-directory-action]").forEach((control) => {
+    byId("clear-people-search").hidden = state.peopleQuery.length === 0;
+    byId("clear-people-search").disabled = busy || !ready;
+    document.querySelectorAll("[data-person-open], [data-directory-action]").forEach((control) => {
       control.disabled = busy;
     });
     byId("cancel-person").disabled = Boolean(nativeOperation.active);
@@ -534,12 +488,11 @@
       return false;
     }
     if (byId("person-dialog").open) byId("person-dialog").close();
-    if (byId("person-detail-dialog").open) byId("person-detail-dialog").close();
     state.workspace = opened.workspace;
     state.people = opened.people;
     state.peopleLoading = false;
     state.peopleQuery = "";
-    state.selectedPersonId = state.people[0]?.id || null;
+    state.selectedPersonId = null;
     byId("people-search").value = "";
     byId("workspace-path").value = state.workspace.path;
     showValidation(opened.validation, state.workspace.path, "Active workspace");
@@ -615,9 +568,6 @@
 
   const handleViewportChange = () => {
     syncNavigationForViewport();
-    if (!narrowNavigation.matches && byId("person-detail-dialog").open) {
-      byId("person-detail-dialog").close();
-    }
     renderPeople();
   };
 
@@ -707,34 +657,24 @@
   });
 
   byId("people-list").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-person-select]");
+    const button = event.target.closest("[data-person-open]");
     if (!button) return;
-    const openInDialog = narrowNavigation.matches;
     state.selectedPersonId = button.dataset.personId;
+    const person = state.people.find((candidate) => candidate.id === state.selectedPersonId);
+    if (!person) return;
     renderPeople();
+    renderPersonPage(person);
+    navigate("person");
+  });
+
+  byId("back-to-people").addEventListener("click", () => {
+    const selectedPersonId = state.selectedPersonId;
+    navigate("people");
     window.requestAnimationFrame(() => {
-      const focusTarget = [...document.querySelectorAll("[data-person-select]")]
-        .find((candidate) => candidate.dataset.personId === state.selectedPersonId);
-      if (openInDialog) {
-        detailReturnFocus = focusTarget;
-        byId("person-detail-dialog").showModal();
-        byId("person-detail-dialog-heading")?.focus({ preventScroll: true });
-      } else {
-        focusTarget?.focus({ preventScroll: true });
-      }
+      const focusTarget = [...document.querySelectorAll("[data-person-open]")]
+        .find((candidate) => candidate.dataset.personId === selectedPersonId);
+      focusTarget?.focus({ preventScroll: true });
     });
-  });
-
-  byId("close-person-detail").addEventListener("click", () => {
-    byId("person-detail-dialog").close();
-  });
-
-  byId("person-detail-dialog").addEventListener("close", () => {
-    const focusTarget = detailReturnFocus;
-    detailReturnFocus = null;
-    if (focusTarget?.isConnected && !focusTarget.disabled) {
-      focusTarget.focus({ preventScroll: true });
-    }
   });
 
   byId("cancel-person").addEventListener("click", closePersonDialog);
@@ -770,7 +710,7 @@
         });
         if (!operationOwnsCurrentSession(operation)) return;
         state.people = sortedPeople([...state.people, person]);
-        state.selectedPersonId = person.id;
+        state.selectedPersonId = null;
         renderPeople();
         renderWorkspace();
         closePersonDialog();

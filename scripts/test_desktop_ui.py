@@ -243,7 +243,7 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     load_page(page)
 
     page.get_by_role("heading", name="Choose where Liaison keeps your files").wait_for()
-    assert page.locator("header").count() == 1
+    assert page.locator(".topbar").count() == 1
     assert page.locator("nav").count() == 1
     assert page.locator("main").count() == 1
     assert page.locator("footer").count() == 1
@@ -304,10 +304,21 @@ def test_desktop(page: Page, external_requests: list[str]) -> None:
     page.get_by_label("Primary email optional").press("Enter")
     page.locator("#people-table").get_by_text("Alex Murphy", exact=True).wait_for()
     assert page.locator("#people-table").get_by_text("alex@example.test", exact=True).count() == 1
-    assert page.locator("#person-detail").get_by_text("alex@example.test", exact=True).count() == 1
-    assert page.locator("#person-detail").get_by_text("Revision 1", exact=True).count() == 1
-    assert page.get_by_role("button", name="View Alex Murphy").get_attribute("aria-pressed") == "true"
     assert "Saved Alex Murphy" in page.locator("#live-status").inner_text()
+    page.get_by_role("button", name="Open local record for Alex Murphy").click()
+    page.get_by_role("heading", name="Alex Murphy", exact=True).wait_for()
+    assert page.locator("#person-contact-details").get_by_text(
+        "alex@example.test", exact=True
+    ).count() == 1
+    assert page.locator("#person-record-details").get_by_text(
+        "Revision 1", exact=True
+    ).count() == 1
+    page.get_by_role("button", name="Back to People").click()
+    page.get_by_role("heading", name="People", exact=True).wait_for()
+    page.wait_for_function(
+        "document.activeElement?.getAttribute('aria-label') === "
+        "'Open local record for Alex Murphy'"
+    )
 
     page.get_by_role("button", name="Workspace").click()
     page.get_by_label("Absolute folder path").fill("/Users/tester/Documents/needs-attention")
@@ -613,7 +624,7 @@ def main() -> int:
 
     REPORT.parent.mkdir(parents=True, exist_ok=True)
     REPORT.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
-    print("Desktop UI tests passed: globally serialized native operations, workspace switching/rollback, dual-close restart recovery, stale-person isolation, validation, focus recovery, mobile reflow, dark mode, and zero external requests")
+    print("Desktop UI tests passed: globally serialized native operations, workspace switching/rollback, dual-close restart recovery, stale-person isolation, full-canvas People and separate Person navigation, validation, focus recovery, mobile reflow, dark mode, and zero external requests")
     return 0
 
 

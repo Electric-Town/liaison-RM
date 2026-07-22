@@ -57,16 +57,23 @@ def main() -> int:
             page.get_by_label("Primary email optional").fill(email)
             page.get_by_role("button", name="Create profile").click()
             page.locator("#live-status").get_by_text(f"Saved {name}", exact=False).wait_for()
-            page.get_by_role("button", name=f"View {name}", exact=True).wait_for()
+            page.get_by_role(
+                "button", name=f"Open local record for {name}", exact=True
+            ).wait_for()
 
         assert page.locator("#people-count").inner_text() == "4 people"
         page.get_by_role("searchbox", name="Search people").fill("bravo")
         assert page.locator("#people-count-summary").inner_text() == "Showing 1 of 4 people."
         assert page.locator(".person-row").count() == 1
-        page.wait_for_function(
-            "expected => document.querySelector('#person-detail-heading')?.textContent === expected",
-            arg="Synthetic Bravo",
+        assert page.locator("#person-detail").count() == 0
+        assert page.locator("#person-detail-dialog").count() == 0
+        directory_width = page.locator(".directory-workspace").evaluate(
+            "element => Math.round(element.getBoundingClientRect().width)"
         )
+        results_width = page.locator(".directory-results").evaluate(
+            "element => Math.round(element.getBoundingClientRect().width)"
+        )
+        assert abs(directory_width - results_width) <= 2
 
         page.get_by_role("searchbox", name="Search people").fill("not in this workspace")
         assert page.locator("#people-count-summary").inner_text() == "Showing 0 of 4 people."
@@ -77,34 +84,40 @@ def main() -> int:
         ).is_visible()
 
         page.get_by_role("button", name="Clear search").click()
-        select_bravo = page.get_by_role("button", name="View Synthetic Bravo")
-        select_bravo.click()
-        assert select_bravo.get_attribute("aria-pressed") == "true"
-        page.wait_for_function(
-            "expected => document.querySelector('#person-detail-heading')?.textContent === expected",
-            arg="Synthetic Bravo",
+        open_bravo = page.get_by_role(
+            "button", name="Open local record for Synthetic Bravo"
         )
+        open_bravo.click()
+        page.get_by_role("heading", name="Synthetic Bravo", exact=True).wait_for()
+        assert page.locator("[data-page='person']").is_visible()
+        assert page.locator("#person-contact-details").get_by_text(
+            "bravo@example.test", exact=True
+        ).count() == 1
+        assert page.locator("#person-record-details").get_by_text(
+            "Revision 1", exact=True
+        ).count() == 1
+        assert page.get_by_role("button", name="Back to People").is_visible()
 
         page.set_viewport_size({"width": 320, "height": 900})
         assert page.evaluate(
             "document.documentElement.scrollWidth <= document.documentElement.clientWidth"
         )
-        page.get_by_role("button", name="View Synthetic Bravo").click()
-        page.wait_for_function(
-            "document.querySelector('#person-detail-dialog').open"
-        )
-        assert page.locator("#person-detail-dialog").evaluate("dialog => dialog.open")
-        assert page.locator("#person-detail-dialog-heading").inner_text() == "Synthetic Bravo"
-        assert page.locator("#person-detail-dialog-heading").evaluate(
+        assert page.locator("#person-page-heading").inner_text() == "Synthetic Bravo"
+        assert page.locator("#person-page-heading").evaluate(
             "heading => heading === document.activeElement"
         )
-        page.keyboard.press("Escape")
-        page.wait_for_function(
-            "!document.querySelector('#person-detail-dialog').open"
-        )
-        assert not page.locator("#person-detail-dialog").evaluate("dialog => dialog.open")
-        assert page.get_by_role("button", name="View Synthetic Bravo").evaluate(
+        page.get_by_role("button", name="Back to People").click()
+        page.get_by_role("heading", name="People", exact=True).wait_for()
+        assert page.get_by_role(
+            "button", name="Open local record for Synthetic Bravo"
+        ).evaluate(
             "button => button === document.activeElement"
+        )
+        assert page.get_by_role(
+            "button", name="Open local record for Synthetic Bravo"
+        ).get_attribute("aria-current") == "true"
+        assert page.evaluate(
+            "document.documentElement.scrollWidth <= document.documentElement.clientWidth"
         )
 
         SCREENSHOT.parent.mkdir(parents=True, exist_ok=True)
@@ -113,8 +126,9 @@ def main() -> int:
         browser.close()
 
     print(
-        "People directory regression passed: search, selection, canonical detail, "
-        "320 CSS-pixel reflow, focus return, and zero external requests"
+        "People directory regression passed: full-width table, search, separate "
+        "read-only Person surface, 320 CSS-pixel reflow, focus return, and zero "
+        "external requests"
     )
     return 0
 

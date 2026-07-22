@@ -130,16 +130,11 @@
       <section class="page people-page" data-page="people" aria-labelledby="people-heading" hidden>
         <div class="page-heading people-page-heading">
           <div>
-            <p class="eyebrow">Directory</p>
             <div class="people-title-row">
               <h1 id="people-heading" tabindex="-1">People</h1>
               <span id="people-count" class="people-count">0 people</span>
             </div>
-            <p>Search the local profiles returned by the open workspace. Liaison does not rank or score people.</p>
-          </div>
-          <div class="page-actions">
-            <button id="refresh-people" class="secondary-button" type="button" data-native-operation="session">Refresh</button>
-            <button id="add-person" class="primary-button" type="button" data-native-operation="session" aria-describedby="people-workspace-warning">Add person</button>
+            <p>All records are stored locally and remain under your control.</p>
           </div>
         </div>
 
@@ -152,47 +147,74 @@
           <div class="directory-toolbar">
             <div class="field search-field">
               <label for="people-search">Search people</label>
-              <input id="people-search" type="search" autocomplete="off" placeholder="Name, email, phone, or alias" aria-describedby="people-count-summary">
+              <input id="people-search" type="search" autocomplete="off" placeholder="Search by name, email, phone, or alias" aria-describedby="people-count-summary">
             </div>
-            <button id="clear-people-search" class="quiet-button" type="button" disabled>Clear search</button>
+            <div class="directory-toolbar-actions">
+              <button id="add-person" class="primary-button" type="button" data-native-operation="session" aria-describedby="people-workspace-warning">Add person</button>
+              <button id="refresh-people" class="secondary-button" type="button" data-native-operation="session">Refresh</button>
+              <button id="clear-people-search" class="quiet-button" type="button" hidden>Clear search</button>
+            </div>
           </div>
 
-          <div class="directory-columns">
-            <section class="directory-results" aria-labelledby="directory-heading">
-              <div class="directory-heading">
-                <div>
-                  <p class="eyebrow">Local directory</p>
-                  <h2 id="directory-heading">People in this workspace</h2>
-                </div>
-                <p id="people-count-summary" class="count-summary" role="status" aria-live="polite">No people loaded.</p>
+          <section class="directory-results" aria-labelledby="directory-heading">
+            <div class="directory-heading">
+              <div>
+                <h2 id="directory-heading">All people</h2>
               </div>
+              <p id="people-count-summary" class="count-summary" role="status" aria-live="polite">No people loaded.</p>
+            </div>
 
-              <div class="table-wrap">
-                <table id="people-table" class="people-table">
-                  <caption>People returned by the open local workspace</caption>
-                  <thead>
-                    <tr>
-                      <th scope="col">Person</th>
-                      <th scope="col">Contact</th>
-                      <th scope="col">Record</th>
-                    </tr>
-                  </thead>
-                  <tbody id="people-list">
-                    <tr><td class="empty-state" colspan="3">No people loaded.</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </section>
-
-            <aside id="person-detail" class="person-detail" aria-labelledby="person-detail-heading" aria-live="polite">
-              <div class="detail-empty">
-                <p class="eyebrow">Record detail</p>
-                <h2 id="person-detail-heading">No person selected</h2>
-                <p>Select a person from the directory to inspect the information in their local profile.</p>
-              </div>
-            </aside>
-          </div>
+            <div class="table-wrap">
+              <table id="people-table" class="people-table">
+                <caption>People returned by the open local workspace</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Person</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Phone</th>
+                    <th scope="col">Information state</th>
+                    <th scope="col">Revision</th>
+                  </tr>
+                </thead>
+                <tbody id="people-list">
+                  <tr><td class="empty-state" colspan="5">No people loaded.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
         </section>
+      </section>
+
+      <section id="person-page" class="page person-page" data-page="person" aria-labelledby="person-page-heading" hidden>
+        <div class="person-page-toolbar">
+          <button id="back-to-people" class="quiet-button back-to-people" type="button">← Back to People</button>
+          <span class="read-only-badge">Read-only local record</span>
+        </div>
+
+        <header class="person-record-header">
+          <span id="person-page-avatar" class="person-detail-avatar" aria-hidden="true">?</span>
+          <div>
+            <p class="eyebrow">Person record</p>
+            <h1 id="person-page-heading" tabindex="-1">Person</h1>
+            <p id="person-page-summary">Select a person from the directory.</p>
+          </div>
+        </header>
+
+        <div class="person-record-workspace">
+          <section class="person-record-section" aria-labelledby="person-contact-heading">
+            <h2 id="person-contact-heading">Contact</h2>
+            <dl id="person-contact-details" class="person-detail-list"></dl>
+          </section>
+          <section class="person-record-section" aria-labelledby="person-record-heading">
+            <h2 id="person-record-heading">Record</h2>
+            <dl id="person-record-details" class="person-detail-list"></dl>
+          </section>
+          <section class="person-record-section person-source-section" aria-labelledby="person-source-heading">
+            <p class="eyebrow">Source</p>
+            <h2 id="person-source-heading">Local Markdown profile</h2>
+            <p>Loaded through the active workspace session. Rebuildable indexes are not the canonical record.</p>
+          </section>
+        </div>
       </section>
 
       <section class="page" data-page="health" aria-labelledby="health-heading" hidden>
@@ -259,19 +281,5 @@
     </div>
   </dialog>
 
-  <dialog id="person-detail-dialog" class="person-detail-dialog" aria-labelledby="person-detail-dialog-heading">
-    <div class="detail-dialog-shell">
-      <div class="detail-dialog-toolbar">
-        <button id="close-person-detail" class="secondary-button" type="button">Close details</button>
-      </div>
-      <div id="person-detail-dialog-content">
-        <div class="detail-empty">
-          <p class="eyebrow">Record detail</p>
-          <h2 id="person-detail-dialog-heading">No person selected</h2>
-          <p>Select a person from the directory to inspect the information in their local profile.</p>
-        </div>
-      </div>
-    </div>
-  </dialog>
 </body>
 </html>
