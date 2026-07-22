@@ -107,6 +107,13 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Fixed
 
+- Rebuilt the desktop People tab from a permanent create-form/card scaffold
+  into the approved full-canvas directory treatment: search across loaded
+  local profiles, a semantic selectable table, read-only canonical detail,
+  contextual Person creation, explicit empty/loading/no-result states, and
+  320 CSS-pixel reflow with dialog focus restoration. Later edit, import,
+  export, filter, custom-profile, Events, and unbacked theme capabilities
+  remain structurally absent.
 - Recoverable canonical mutations now avoid Windows handle failures: directory handles open with flush support and release before staged cleanup or uncommitted-operation discard; sequential mutations also retain an existing regular projection-stale marker.
 - P03 validation workflows are read-only again, and the obsolete one-shot source-mutation workflow has been removed.
 - Review-build policy now prevents an Events destination before `T-B0-P11` completes, and contributor guidance records the domain, application, persistence, privacy, interaction, and installed-artifact work required before Events can be enabled.

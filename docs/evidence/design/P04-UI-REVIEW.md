@@ -1,5 +1,15 @@
 # 6-Pillar UI Visual Audit Report: Liaison RM Desktop Interface
 
+> **EVIDENCE INVALIDATED — 2026-07-22**
+>
+> This historical report describes a prototype and claims theme, accessibility,
+> and P04 completion that the active implementation and traceability do not
+> prove. It is preserved for provenance only. See
+> [`../P04-UI-REVIEW.md`](../P04-UI-REVIEW.md) for the corrected invalidation
+> and
+> [`people-directory-design-review-2026-07-22.md`](people-directory-design-review-2026-07-22.md)
+> for the narrower, exact-head P03 People reconciliation.
+
 **Date:** 2026-07-21  
 **Scope:** `apps/desktop/ui/` (`index.html`, `app.js`, `styles.css`)  
 **Design Contract:** [DESIGN.md](../../../DESIGN.md) (Editorial Ledger direction)  
