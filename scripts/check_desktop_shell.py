@@ -326,6 +326,7 @@ def main() -> int:
                 for command in [
                     "add_event_attendee",
                     "create_event",
+                    "finalize_event_cohort",
                     "list_events",
                     "resolve_attendee_gap",
                 ]
