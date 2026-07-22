@@ -627,6 +627,15 @@ impl LiaisonApplication {
         let mut person = repository
             .find(command.person_id)
             .map_err(|error| people_error(&error, command_id))?;
+        if person.revision != command.expected_revision {
+            return Err(people_error(
+                &PeopleError::RevisionConflict {
+                    expected: command.expected_revision.get(),
+                    found: person.revision.get(),
+                },
+                command_id,
+            ));
+        }
 
         let mut emails = Vec::new();
         for email in command.emails {
@@ -661,17 +670,15 @@ impl LiaisonApplication {
             }
         }
 
-        person.display_name = command.display_name;
-        person.emails = emails;
-        person.phones = phones;
-        person.revision = command
-            .expected_revision
-            .next()
-            .map_err(|_| people_error(&PeopleError::RevisionOverflow, command_id))?;
-
-        repository
-            .save(&person, command.expected_revision)
+        let changed = person
+            .replace_contact_details(command.display_name, emails, phones)
             .map_err(|error| people_error(&error, command_id))?;
+
+        if changed {
+            repository
+                .save(&person, command.expected_revision)
+                .map_err(|error| people_error(&error, command_id))?;
+        }
 
         Ok(self.complete(command_id, person_dto(person)))
     }
@@ -1619,10 +1626,11 @@ fn details<const N: usize>(entries: [(&str, Value); N]) -> BTreeMap<String, Valu
 mod tests {
     use super::{
         APPLICATION_CONTRACT_VERSION, AddEventAttendeeCommand, AppStatusDto, CreateEventCommand,
-        CreatePersonCommand, FinalizeEventCohortCommand, InitialiseWorkspaceCommand,
+        CreatePersonCommand, EmailDto, FinalizeEventCohortCommand, InitialiseWorkspaceCommand,
         InspectWorkspaceHealthQuery, LiaisonApplication, ListPeopleQuery, NaiveDate,
-        OpenWorkspaceCommand, ResolveAttendeeGapCommand, RuntimePortError, RuntimePorts,
-        WorkspaceSessionCommand, application_error, details, workspace_initialised_open_error,
+        OpenWorkspaceCommand, PhoneDto, ResolveAttendeeGapCommand, RuntimePortError, RuntimePorts,
+        UpdatePersonCommand, WorkspaceSessionCommand, application_error, details,
+        workspace_initialised_open_error,
     };
     use chrono::{DateTime, TimeZone, Utc};
     use liaison_shared_kernel::{
@@ -1848,6 +1856,107 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn person_update_is_validated_atomic_and_revision_safe() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        let Ok(directory) = directory else {
+            return;
+        };
+        let root = directory.path().join("workspace");
+        let (application, _) = application();
+        let opened = application.initialise_workspace(InitialiseWorkspaceCommand {
+            path: root.to_string_lossy().into_owned(),
+            name: "People updates".to_owned(),
+            profile: WorkspaceProfile::Workplace,
+            build_profile: BuildProfile::ConnectedLocal,
+            locale: "en-IE".to_owned(),
+        });
+        assert!(opened.is_ok());
+        let Ok(opened) = opened else {
+            return;
+        };
+        let session_id = opened.value.workspace.session_id;
+        let created = application.create_person(CreatePersonCommand {
+            session_id,
+            display_name: "Alex Murphy".to_owned(),
+            email: Some("alex@example.test".to_owned()),
+        });
+        assert!(created.is_ok());
+        let Ok(created) = created else {
+            return;
+        };
+        let original = created.value;
+
+        let invalid = application.update_person(UpdatePersonCommand {
+            session_id,
+            person_id: original.id,
+            expected_revision: original.revision,
+            display_name: "   ".to_owned(),
+            emails: Vec::new(),
+            phones: Vec::new(),
+        });
+        assert!(matches!(invalid, Err(error) if error.code == "people.required-field"));
+        let listed = application.list_people(ListPeopleQuery {
+            session_id,
+            include_archived: false,
+        });
+        assert!(matches!(
+            listed,
+            Ok(result)
+                if result.value.len() == 1
+                    && result.value[0].display_name == "Alex Murphy"
+                    && result.value[0].revision == original.revision
+        ));
+
+        let updated = application.update_person(UpdatePersonCommand {
+            session_id,
+            person_id: original.id,
+            expected_revision: original.revision,
+            display_name: "  Alex M.  ".to_owned(),
+            emails: vec![EmailDto {
+                value: "alex.m@example.test".to_owned(),
+                label: "work".to_owned(),
+            }],
+            phones: vec![PhoneDto {
+                value: "+353 1 555 0100".to_owned(),
+                label: "mobile".to_owned(),
+            }],
+        });
+        assert!(updated.is_ok());
+        let Ok(updated) = updated else {
+            return;
+        };
+        assert_eq!(updated.value.display_name, "Alex M.");
+        assert_eq!(updated.value.revision.get(), original.revision.get() + 1);
+
+        let stale_no_op = application.update_person(UpdatePersonCommand {
+            session_id,
+            person_id: original.id,
+            expected_revision: original.revision,
+            display_name: updated.value.display_name.clone(),
+            emails: updated.value.emails.clone(),
+            phones: updated.value.phones.clone(),
+        });
+        assert!(matches!(
+            stale_no_op,
+            Err(error) if error.code == "people.revision-conflict"
+        ));
+
+        let current_no_op = application.update_person(UpdatePersonCommand {
+            session_id,
+            person_id: original.id,
+            expected_revision: updated.value.revision,
+            display_name: updated.value.display_name,
+            emails: updated.value.emails,
+            phones: updated.value.phones,
+        });
+        assert!(matches!(
+            current_no_op,
+            Ok(result) if result.value.revision.get() == original.revision.get() + 1
+        ));
     }
 
     #[test]

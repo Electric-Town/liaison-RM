@@ -183,10 +183,58 @@ def self_test_events_navigation_boundary(errors: list[str]) -> None:
         errors.append("Events navigation boundary self-test rejected a completed P11 route")
 
 
+def check_people_maintenance_command_boundary(
+    registered_commands: str,
+    people_contract_status: str,
+    directory_status: str,
+    errors: list[str],
+) -> None:
+    """Keep Person mutation commands unreachable until both owning gates close."""
+
+    if people_contract_status == "complete" and directory_status == "complete":
+        return
+    premature = sorted(
+        command
+        for command in ["archive_person", "update_person"]
+        if re.search(rf"\b{command}\b", registered_commands)
+    )
+    if premature:
+        errors.append(
+            "desktop invoke handler exposes Person maintenance before both "
+            f"T-B0-P05 and T-B0-P09 complete: {premature}"
+        )
+
+
+def self_test_people_maintenance_command_boundary(errors: list[str]) -> None:
+    blocked_errors: list[str] = []
+    check_people_maintenance_command_boundary(
+        "list_people, update_person, archive_person",
+        "blocked",
+        "blocked",
+        blocked_errors,
+    )
+    if not blocked_errors:
+        errors.append(
+            "Person maintenance boundary self-test did not reject blocked native commands"
+        )
+    complete_errors: list[str] = []
+    check_people_maintenance_command_boundary(
+        "list_people, update_person, archive_person",
+        "complete",
+        "complete",
+        complete_errors,
+    )
+    if complete_errors:
+        errors.append(
+            "Person maintenance boundary self-test rejected commands after both gates completed"
+        )
+
+
 def main() -> int:
     errors: list[str] = []
 
     self_test_events_navigation_boundary(errors)
+    self_test_people_maintenance_command_boundary(errors)
 
     root_cargo = tomllib.loads(load_text(ROOT / "Cargo.toml", errors) or "{}")
     members = root_cargo.get("workspace", {}).get("members", [])
@@ -298,11 +346,18 @@ def main() -> int:
     except json.JSONDecodeError as error:
         errors.append(f"traceability-ownership.json is invalid JSON: {error}")
         traceability = {}
-    p11_status = (
-        traceability.get("task_ownership", {})
-        .get("T-B0-P11", {})
-        .get("status")
+    task_ownership = traceability.get("task_ownership", {})
+    p11_status = task_ownership.get("T-B0-P11", {}).get("status")
+    handler_match = re.search(
+        r"tauri::generate_handler!\[(?P<commands>.*?)\]",
+        rust,
+        flags=re.DOTALL,
     )
+    registered_commands = (
+        handler_match.group("commands") if handler_match is not None else ""
+    )
+    if handler_match is None:
+        errors.append("desktop Rust source is missing the Tauri invoke handler")
     if not isinstance(p11_status, str):
         errors.append("traceability is missing the T-B0-P11 delivery status")
     else:
@@ -311,16 +366,6 @@ def main() -> int:
         )
 
         if p11_status != "complete":
-            handler_match = re.search(
-                r"tauri::generate_handler!\[(?P<commands>.*?)\]",
-                rust,
-                flags=re.DOTALL,
-            )
-            registered_commands = (
-                handler_match.group("commands") if handler_match is not None else ""
-            )
-            if handler_match is None:
-                errors.append("desktop Rust source is missing the Tauri invoke handler")
             premature_commands = sorted(
                 command
                 for command in [
@@ -356,6 +401,18 @@ def main() -> int:
                     "production desktop assets contain unsupported P08-P11 claims or "
                     f"sample state while their owning tasks are blocked: {found_claims}"
                 )
+
+    people_contract_status = task_ownership.get("T-B0-P05", {}).get("status")
+    directory_status = task_ownership.get("T-B0-P09", {}).get("status")
+    if not isinstance(people_contract_status, str) or not isinstance(directory_status, str):
+        errors.append("traceability is missing the P05/P09 Person-maintenance status")
+    else:
+        check_people_maintenance_command_boundary(
+            registered_commands,
+            people_contract_status,
+            directory_status,
+            errors,
+        )
 
     javascript = load_text(UI / "app.js", errors)
     for forbidden in ["fetch(", "XMLHttpRequest", "WebSocket", "EventSource", "sendBeacon", "localStorage", "indexedDB"]:

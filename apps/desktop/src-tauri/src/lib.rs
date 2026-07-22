@@ -42,6 +42,7 @@ struct CreatePersonRequest {
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 struct UpdatePersonRequest {
     session_id: WorkspaceSessionId,
     person_id: liaison_application::PersonId,
@@ -53,6 +54,7 @@ struct UpdatePersonRequest {
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 struct ArchivePersonRequest {
     session_id: WorkspaceSessionId,
     person_id: liaison_application::PersonId,
@@ -145,7 +147,11 @@ fn create_person(
     create_person_impl(&application, request)
 }
 
+// Retained as a P05/P09 incubation boundary. Editing and archiving stay out of
+// the production invoke handler until the revisioned Person contract,
+// reversible archive/restore workflow, and Directory maintenance gates close.
 #[tauri::command]
+#[allow(dead_code)]
 fn update_person(
     application: State<'_, LiaisonApplication>,
     request: UpdatePersonRequest,
@@ -161,6 +167,7 @@ fn update_person(
 }
 
 #[tauri::command]
+#[allow(dead_code)]
 fn archive_person(
     application: State<'_, LiaisonApplication>,
     request: ArchivePersonRequest,
@@ -339,8 +346,6 @@ pub fn run() {
             open_workspace,
             list_people,
             create_person,
-            update_person,
-            archive_person,
             validate_workspace,
             inspect_workspace_health,
             close_workspace
