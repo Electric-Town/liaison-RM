@@ -22,7 +22,7 @@ or gate. Machine-owned traceability remains authoritative.
 | Current | `T-B0-P03` |
 | Blocked | `T-B0-P03D`, `T-B0-P04` through `T-B0-P11`, B0 acceptance, and every A0 task |
 | Candidate source | Audited Workspace/People/Health shell and corrected Option C People flow at the starting source |
-| Installed | An unqualified `/Applications/Liaison RM.app`; this is not accepted or release evidence |
+| Installed | No application is currently present in `/Applications`; an unqualified app observed earlier is recorded below |
 | Released | No supported application and no GitHub release |
 
 `T-B0-P03O` is not present in current machine authority. The divergent DX
@@ -74,9 +74,9 @@ focused validation, remaining gaps, and custody release.
 Repeating a broader tier cannot compensate for a missing human outcome or an
 unimplemented invariant.
 
-## Installed application custody at opening
+## Installed application custody
 
-The live application observed after the earlier reconciliation is:
+An application observed after the earlier reconciliation was:
 
 - path: `/Applications/Liaison RM.app`;
 - version: `0.1.0-alpha.1`;
@@ -87,12 +87,16 @@ The live application observed after the earlier reconciliation is:
 - source provenance: unknown;
 - relationship to current local bundles: executable hash does not match.
 
-It remains in place for forensic comparison. It must not be launched as release
-proof, redistributed, or overwritten until the exact-source artifact lane owns
-replacement and rollback evidence.
+During concurrent reconciliation it disappeared from `/Applications`. The
+integration lane did not remove it. Its recorded hash remains forensic evidence,
+and historical repository bundles remain available for comparison. No bundle is
+currently installed or qualified. Only the exact-source artifact lane may place
+a replacement in `/Applications`, after it owns installation and rollback
+evidence.
 
 ## Integration log
 
 | Date | Source | Result | Validation | Status effect |
 |---|---|---|---|---|
 | 2026-07-22 | `c5a7c13` | Opened the single B0 integration lane | Clean tree; `cargo fmt --all --check`; `cargo check --workspace --all-targets --all-features --locked` | None; P03 remains current |
+| 2026-07-22 | Local Applications custody | Previously observed unqualified app is no longer present | Direct directory check; recorded executable hash retained above | None; installed and released remain false |

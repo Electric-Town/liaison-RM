@@ -89,10 +89,11 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 ### Changed
 
 - Corrected live installed-product custody after the earlier reconciliation: an
-  arm64-only `0.1.0-alpha.1` application is now present in `/Applications`, but
-  its executable does not match the current local bundles, strict signing
-  verification fails, and its source commit is unknown. It is preserved only
-  for forensic comparison and is not accepted or release evidence.
+  arm64-only `0.1.0-alpha.1` application was observed in `/Applications`, but
+  its executable did not match the current local bundles, strict signing
+  verification failed, and its source commit was unknown. It later disappeared
+  during concurrent reconciliation; no application is currently installed or
+  qualified, while the captured hash remains forensic evidence.
 - Split the over-broad desktop acceptance ownership: P04 now owns only the
   generated Overview/Workspace/People/Health foundation and transient semantic
   rendering under `FG-B0-P04-001`; P11 owns the complete B0 journey and

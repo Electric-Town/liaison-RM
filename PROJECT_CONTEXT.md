@@ -50,14 +50,15 @@ The accepted P02 source state adds one Rust application composition root shared 
 The first 2026-07-22 reconciliation found no Liaison application in the standard
 Applications directories. A later same-day custody check found an arm64-only
 `0.1.0-alpha.1` application at `/Applications/Liaison RM.app`. Its executable
-SHA-256 is `5f08deb40c9fee62515cb09495738083f7a335877b7f8df6ae3827a53d3dd266`;
-it does not match the current local bundles, strict signing verification fails,
-and its source commit is unknown. It remains unqualified forensic input, not
-installed-product or release evidence. The corrected table-first People/Person
-source and browser evidence at audit candidate `a3fcece` is also not P03, P04,
-installed, or release qualification. A replacement may be installed only after
-the final exact source, operation recovery, native persistence, signing state,
-and single-install checks pass.
+SHA-256 was `5f08deb40c9fee62515cb09495738083f7a335877b7f8df6ae3827a53d3dd266`;
+it did not match the current local bundles, strict signing verification failed,
+and its source commit was unknown. It subsequently disappeared during
+concurrent reconciliation, so no application is currently installed or
+qualified. The captured hash remains unqualified forensic input. The corrected
+table-first People/Person source and browser evidence at audit candidate
+`a3fcece` is also not P03, P04, installed, or release qualification. A
+replacement may be installed only after the final exact source, operation
+recovery, native persistence, signing state, and single-install checks pass.
 
 The same audit found that remote `main` contains false B0/Events fallback
 behavior and is not releaseable. The audit branch preserves useful fail-closed
