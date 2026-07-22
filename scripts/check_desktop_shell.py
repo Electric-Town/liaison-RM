@@ -23,6 +23,7 @@ class InterfaceParser(HTMLParser):
         self.labels: list[str] = []
         self.inputs: list[str] = []
         self.route_controls: list[str] = []
+        self.pages: list[str] = []
         self.landmarks: set[str] = set()
         self.inline_handlers: list[str] = []
         self.external_urls: list[str] = []
@@ -37,6 +38,8 @@ class InterfaceParser(HTMLParser):
             self.inputs.append(element_id)
         if route := values.get("data-route"):
             self.route_controls.append(route)
+        if page := values.get("data-page"):
+            self.pages.append(page)
         if tag in {"main", "nav", "header", "footer", "aside"}:
             self.landmarks.add(tag)
         for name, value in attrs:
@@ -107,16 +110,28 @@ def check_text_contrast(css: str, errors: list[str]) -> None:
 
 
 def check_events_navigation_boundary(
-    route_controls: list[str], p11_status: str, errors: list[str]
+    route_controls: list[str], pages: list[str], p11_status: str, errors: list[str]
 ) -> None:
-    """Keep Events out of the DOM until its complete workflow is evidenced."""
+    """Keep every P11-owned route out until its complete workflow is evidenced."""
 
     if p11_status == "complete":
         return
-    if "events" in route_controls:
+    forbidden_route_ids = {
+        "attendees",
+        "brief",
+        "cohort",
+        "directory",
+        "events",
+        "readiness",
+        "settings",
+        "today",
+    }
+    found = sorted((set(route_controls) | set(pages)) & forbidden_route_ids)
+    if found:
         errors.append(
-            "desktop HTML includes an Events destination while T-B0-P11 is "
-            f"{p11_status!r}; keep it absent until the complete workflow is evidenced"
+            "desktop HTML includes P11-owned route/page identifiers "
+            f"{found!r} while T-B0-P11 is {p11_status!r}; keep them absent until "
+            "the complete workflow is evidenced"
         )
 
 
@@ -129,7 +144,7 @@ def self_test_events_navigation_boundary(errors: list[str]) -> None:
     )
     visible_errors: list[str] = []
     check_events_navigation_boundary(
-        visible_parser.route_controls, "blocked", visible_errors
+        visible_parser.route_controls, visible_parser.pages, "blocked", visible_errors
     )
     if not visible_errors:
         errors.append(
@@ -140,7 +155,7 @@ def self_test_events_navigation_boundary(errors: list[str]) -> None:
     unrelated_parser.feed('<button type="button" data-route="people">People</button>')
     unrelated_errors: list[str] = []
     check_events_navigation_boundary(
-        unrelated_parser.route_controls, "blocked", unrelated_errors
+        unrelated_parser.route_controls, unrelated_parser.pages, "blocked", unrelated_errors
     )
     if unrelated_errors:
         errors.append(
@@ -148,7 +163,22 @@ def self_test_events_navigation_boundary(errors: list[str]) -> None:
         )
 
     complete_errors: list[str] = []
-    check_events_navigation_boundary(["events"], "complete", complete_errors)
+    alias_parser = InterfaceParser()
+    alias_parser.feed(
+        '<nav><button type="button" data-route="readiness">Cohorts</button></nav>'
+        '<section data-page="events"></section>'
+    )
+    alias_errors: list[str] = []
+    check_events_navigation_boundary(
+        alias_parser.route_controls, alias_parser.pages, "blocked", alias_errors
+    )
+    if not alias_errors:
+        errors.append(
+            "Events navigation boundary self-test did not reject a route alias or hidden page"
+        )
+
+    complete_errors: list[str] = []
+    check_events_navigation_boundary(["events"], ["events"], "complete", complete_errors)
     if complete_errors:
         errors.append("Events navigation boundary self-test rejected a completed P11 route")
 
@@ -276,7 +306,55 @@ def main() -> int:
     if not isinstance(p11_status, str):
         errors.append("traceability is missing the T-B0-P11 delivery status")
     else:
-        check_events_navigation_boundary(parser.route_controls, p11_status, errors)
+        check_events_navigation_boundary(
+            parser.route_controls, parser.pages, p11_status, errors
+        )
+
+        if p11_status != "complete":
+            handler_match = re.search(
+                r"tauri::generate_handler!\[(?P<commands>.*?)\]",
+                rust,
+                flags=re.DOTALL,
+            )
+            registered_commands = (
+                handler_match.group("commands") if handler_match is not None else ""
+            )
+            if handler_match is None:
+                errors.append("desktop Rust source is missing the Tauri invoke handler")
+            premature_commands = sorted(
+                command
+                for command in [
+                    "add_event_attendee",
+                    "create_event",
+                    "list_events",
+                    "resolve_attendee_gap",
+                ]
+                if re.search(rf"\b{command}\b", registered_commands)
+            )
+            if premature_commands:
+                errors.append(
+                    "desktop invoke handler exposes P10/P11 Event commands while "
+                    f"T-B0-P11 is {p11_status!r}: {premature_commands}"
+                )
+
+            production_ui = "\n".join(
+                path.read_text(encoding="utf-8")
+                for path in sorted(UI.rglob("*"))
+                if path.is_file() and path.suffix in {".css", ".html", ".js"}
+            )
+            premature_claims = [
+                "214 people",
+                "Airgap ready",
+                "Catering Brief",
+                "Encrypted Recovery Package",
+                "Local checkpoint intact",
+            ]
+            found_claims = [claim for claim in premature_claims if claim in production_ui]
+            if found_claims:
+                errors.append(
+                    "production desktop assets contain unsupported P08-P11 claims or "
+                    f"sample state while their owning tasks are blocked: {found_claims}"
+                )
 
     javascript = load_text(UI / "app.js", errors)
     for forbidden in ["fetch(", "XMLHttpRequest", "WebSocket", "EventSource", "sendBeacon", "localStorage", "indexedDB"]:

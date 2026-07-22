@@ -11,10 +11,10 @@
 )]
 
 use liaison_application::{
-    AddEventAttendeeCommand, AppStatusDto, ApplicationError, ArchivePersonCommand,
-    BuildProfile, CommandResult, CreateEventCommand, CreatePersonCommand, EmailDto, EventDto,
-    EventId, InitialiseWorkspaceCommand, InspectWorkspaceHealthQuery, LiaisonApplication,
-    ListEventsQuery, ListPeopleQuery, NaiveDate, OpenWorkspaceCommand, PersonDto, PhoneDto,
+    AddEventAttendeeCommand, AppStatusDto, ApplicationError, ArchivePersonCommand, BuildProfile,
+    CommandResult, CreateEventCommand, CreatePersonCommand, EmailDto, EventDto, EventId,
+    InitialiseWorkspaceCommand, InspectWorkspaceHealthQuery, LiaisonApplication, ListEventsQuery,
+    ListPeopleQuery, NaiveDate, OpenWorkspaceCommand, PersonDto, PhoneDto,
     ResolveAttendeeGapCommand, UpdatePersonCommand, WorkspaceClosedDto, WorkspaceOpenDto,
     WorkspaceProfile, WorkspaceSessionCommand, WorkspaceSessionId, WorkspaceValidationDto,
 };
@@ -161,6 +161,9 @@ fn archive_person(
     })
 }
 
+// Retained as a P10/P11 incubation boundary. These commands are deliberately
+// not registered in the production invoke handler until the durable event,
+// grant, recovery, and installed-experience gates are complete.
 #[tauri::command]
 fn create_event(
     application: State<'_, LiaisonApplication>,
@@ -311,10 +314,6 @@ pub fn run() {
             create_person,
             update_person,
             archive_person,
-            create_event,
-            list_events,
-            add_event_attendee,
-            resolve_attendee_gap,
             validate_workspace,
             inspect_workspace_health,
             close_workspace
