@@ -198,6 +198,158 @@ const navigate = (route) => {
   window.scrollTo({ top: 0, behavior: "instant" });
 };
 
+const enableWorkspaceControls = (enabled) => {
+  const personName = byId("person-name");
+  const personEmail = byId("person-email");
+  const personLoc = byId("person-location");
+  const createPerson = byId("create-person");
+  const useLoc = byId("add-person-use-location");
+  const warning = byId("people-workspace-warning");
+
+  if (personName) personName.disabled = !enabled;
+  if (personEmail) personEmail.disabled = !enabled;
+  if (personLoc) personLoc.disabled = !enabled;
+  if (createPerson) createPerson.disabled = !enabled;
+  if (useLoc) useLoc.disabled = !enabled;
+
+  if (warning) {
+    warning.style.display = enabled ? "none" : "block";
+  }
+};
+
+const refreshPeopleList = async () => {
+  if (!state.workspace?.session_id) {
+    state.people = [];
+    renderPeopleTable();
+    return;
+  }
+  try {
+    const operation = { generation: nativeOperation.generation, sessionId: currentSessionId() };
+    const people = await executeNativeSessionCommand("list_people");
+    if (!isCurrentOperation(operation)) return;
+    state.people = Array.isArray(people) ? people : [];
+    renderPeopleTable();
+    updateWorkspaceSummary();
+  } catch (err) {
+    status(errorText(err));
+  }
+};
+
+const updateWorkspaceSummary = () => {
+  const summary = byId("workspace-summary");
+  if (!summary) return;
+
+  if (!state.workspace) {
+    summary.replaceChildren(
+      createSummaryRow("Status", "None selected"),
+      createSummaryRow("Profile", "—"),
+      createSummaryRow("People", "—")
+    );
+    return;
+  }
+
+  const manifest = state.workspace.manifest || {};
+  summary.replaceChildren(
+    createSummaryRow("Status", "Active Workspace"),
+    createSummaryRow("Name", manifest.name || "Local Workspace"),
+    createSummaryRow("Profile", manifest.profile || "Workplace"),
+    createSummaryRow("People Count", `${state.people.length} profiles`),
+    createSummaryRow("Path", state.workspace.path || "Local")
+  );
+
+  const authLabel = byId("authority-label");
+  if (authLabel) {
+    authLabel.textContent = `Local Workspace · ${manifest.name || "Active"}`;
+  }
+};
+
+const createSummaryRow = (dtText, ddText) => {
+  const div = document.createElement("div");
+  const dt = document.createElement("dt");
+  dt.textContent = dtText;
+  const dd = document.createElement("dd");
+  dd.textContent = ddText;
+  div.appendChild(dt);
+  div.appendChild(dd);
+  return div;
+};
+
+const renderPeopleTable = () => {
+  const tbody = byId("people-table-body");
+  if (!tbody) return;
+
+  if (!state.workspace) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 3;
+    td.className = "text-center muted";
+    td.style.padding = "1.5rem";
+    td.textContent = "No workspace open. Create or open a local workspace above.";
+    tr.appendChild(td);
+    tbody.replaceChildren(tr);
+    return;
+  }
+
+  if (state.people.length === 0) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 3;
+    td.className = "text-center muted";
+    td.style.padding = "1.5rem";
+    td.textContent = "No profiles in this workspace yet. Add a person using the form on the left.";
+    tr.appendChild(td);
+    tbody.replaceChildren(tr);
+    return;
+  }
+
+  const rows = state.people.map((person) => {
+    const tr = document.createElement("tr");
+    tr.className = "person-row-clickable";
+    tr.style.borderBottom = "1px solid var(--border)";
+    tr.style.cursor = "pointer";
+    tr.addEventListener("click", () => showPersonDetail(person));
+
+    const tdName = document.createElement("td");
+    tdName.style.padding = "0.65rem 0.8rem";
+    const strong = document.createElement("strong");
+    const initials = (person.display_name || "P").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+    strong.textContent = `${initials} ${person.display_name}`;
+    tdName.appendChild(strong);
+
+    const tdEmail = document.createElement("td");
+    tdEmail.style.padding = "0.65rem 0.8rem";
+    tdEmail.textContent = person.emails?.[0]?.address || "Markdown profile";
+
+    const tdRev = document.createElement("td");
+    tdRev.style.padding = "0.65rem 0.8rem";
+    tdRev.style.color = "var(--muted)";
+    tdRev.textContent = `Revision ${person.revision || 1}`;
+
+    tr.appendChild(tdName);
+    tr.appendChild(tdEmail);
+    tr.appendChild(tdRev);
+    return tr;
+  });
+
+  tbody.replaceChildren(...rows);
+};
+
+const showPersonDetail = (person) => {
+  if (!person) return;
+  const nameHeading = byId("person-heading");
+  const fieldName = byId("field-fullname");
+  const fieldEmail = byId("field-email");
+  const editHeading = byId("edit-person-heading");
+
+  if (nameHeading) nameHeading.textContent = person.display_name;
+  if (fieldName) fieldName.textContent = person.display_name;
+  if (fieldEmail) fieldEmail.textContent = person.emails?.[0]?.address || "Not set";
+  if (editHeading) editHeading.textContent = `Edit ${person.display_name}`;
+
+  status(`Viewing canonical profile: ${person.display_name} (Rev ${person.revision || 1})`);
+  navigate("person");
+};
+
 const updateDrawer = (key) => {
   state.selectedAttendee = key;
   const data = attendeeData[key] || attendeeData.LL;
@@ -220,6 +372,7 @@ const updateDrawer = (key) => {
 };
 
 const bindEvents = () => {
+  // Navigation routes
   document.querySelectorAll("[data-route]").forEach((button) => {
     button.addEventListener("click", () => navigate(button.dataset.route));
   });
@@ -228,18 +381,126 @@ const bindEvents = () => {
     button.addEventListener("click", () => navigate("readiness"));
   });
 
-  document.querySelectorAll(".person-row-clickable").forEach((row) => {
-    row.addEventListener("click", () => {
-      navigate("person");
-    });
-  });
-
   document.querySelectorAll(".attendee-row").forEach((row) => {
     row.addEventListener("click", () => {
       updateDrawer(row.dataset.attendee);
     });
   });
 
+  // Use Default Path button
+  byId("use-default-path")?.addEventListener("click", async () => {
+    try {
+      const path = await invokeValue("default_workspace_path");
+      if (byId("workspace-path")) byId("workspace-path").value = path;
+      status(`Set workspace path to Documents: ${path}`);
+    } catch (err) {
+      status(errorText(err));
+    }
+  });
+
+  // Create Workspace Form Submit
+  byId("workspace-form")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const path = byId("workspace-path")?.value.trim();
+    const name = byId("workspace-name")?.value.trim() || "Workplace review";
+    const profile = byId("workspace-profile")?.value || "workplace";
+    if (!path) {
+      status("Specify an absolute folder path for the workspace.");
+      return;
+    }
+
+    try {
+      status(`Initialising workspace at ${path}...`);
+      const workspace = await invokeValue("initialise_workspace", {
+        request: { path, name, profile }
+      });
+      state.workspace = workspace;
+      nativeOperation.generation++;
+      nativeOperation.active = { generation: nativeOperation.generation };
+
+      enableWorkspaceControls(true);
+      await refreshPeopleList();
+      status(`Created local workspace "${workspace.manifest?.name || name}" at ${path}.`);
+      navigate("people");
+    } catch (err) {
+      status(errorText(err));
+    }
+  });
+
+  // Open Workspace Button
+  byId("open-workspace")?.addEventListener("click", async () => {
+    const path = byId("workspace-path")?.value.trim();
+    if (!path) {
+      status("Enter an absolute workspace folder path above to open.");
+      return;
+    }
+    try {
+      status(`Opening workspace at ${path}...`);
+      const workspace = await invokeValue("open_workspace", { path });
+      state.workspace = workspace;
+      nativeOperation.generation++;
+      nativeOperation.active = { generation: nativeOperation.generation };
+
+      enableWorkspaceControls(true);
+      await refreshPeopleList();
+      status(`Opened workspace "${workspace.manifest?.name || 'Local Workspace'}" at ${path}.`);
+      navigate("people");
+    } catch (err) {
+      status(errorText(err));
+    }
+  });
+
+  // Inspect Workspace Health Button
+  byId("inspect-workspace-health")?.addEventListener("click", async () => {
+    const path = byId("workspace-path")?.value.trim();
+    if (!path) {
+      status("Enter a workspace folder path above to inspect health.");
+      return;
+    }
+    try {
+      status(`Inspecting read-only Health at ${path}...`);
+      const result = await invokeValue("inspect_workspace_health", { path });
+      status(`Health check complete: Manifest valid=${result.manifest_valid}, Profiles=${result.people_count}, Errors=${result.errors?.length || 0}`);
+    } catch (err) {
+      status(errorText(err));
+    }
+  });
+
+  // Create Person Form Submit
+  byId("person-form")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!state.workspace?.session_id) {
+      status("Open or create a workspace before adding people.");
+      return;
+    }
+    const nameInput = byId("person-name");
+    const emailInput = byId("person-email");
+    const displayName = nameInput?.value.trim();
+    const email = emailInput?.value.trim() || null;
+    if (!displayName) return;
+
+    try {
+      status(`Creating canonical Markdown profile for ${displayName}...`);
+      const created = await executeNativeSessionCommand("create_person", {
+        displayName: displayName,
+        email: email,
+      });
+      if (nameInput) nameInput.value = "";
+      if (emailInput) emailInput.value = "";
+      await refreshPeopleList();
+      status(`Saved canonical Markdown profile for ${displayName}.`);
+    } catch (err) {
+      status(errorText(err));
+    }
+  });
+
+  // Refresh People Button
+  byId("refresh-people")?.addEventListener("click", async () => {
+    await refreshPeopleList();
+    status("Refreshed workspace directory from local Markdown files.");
+  });
+
+  // Drawer Close Button
   const closeDrawerBtn = byId("close-drawer-btn");
   if (closeDrawerBtn) {
     closeDrawerBtn.addEventListener("click", () => {
@@ -248,139 +509,7 @@ const bindEvents = () => {
     });
   }
 
-  const recordResponseBtn = byId("drawer-record-response-btn");
-  if (recordResponseBtn) {
-    recordResponseBtn.addEventListener("click", () => {
-      const dialog = byId("record-response-dialog");
-      if (dialog && typeof dialog.showModal === "function") {
-        dialog.showModal();
-      }
-    });
-  }
-
-  const cancelRecordBtn = byId("cancel-record-response");
-  if (cancelRecordBtn) {
-    cancelRecordBtn.addEventListener("click", () => {
-      const dialog = byId("record-response-dialog");
-      if (dialog && typeof dialog.close === "function") {
-        dialog.close();
-      }
-    });
-  }
-
-  const recordResponseForm = byId("record-response-form");
-  if (recordResponseForm) {
-    recordResponseForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const selectVal = byId("record-response-select")?.value || "Verified none";
-      
-      attendeeData.LL.dietary = selectVal;
-      attendeeData.LL.readiness = "Ready";
-      attendeeData.LL.warning = `Verified: ${selectVal}`;
-      attendeeData.LL.resolution = "Recorded & ready";
-
-      if (byId("ll-dietary-status")) byId("ll-dietary-status").textContent = selectVal;
-      const chip = byId("ll-readiness-chip");
-      if (chip) {
-        chip.className = "chip good";
-        chip.textContent = "✓ Ready";
-      }
-
-      if (byId("reconcile-gap-count")) {
-        byId("reconcile-gap-count").textContent = "0 needs clarification";
-        byId("reconcile-gap-count").style.color = "var(--success)";
-      }
-
-      updateDrawer("LL");
-      status(`Recorded dietary response for Liam Lynch: ${selectVal}`);
-
-      const dialog = byId("record-response-dialog");
-      if (dialog && typeof dialog.close === "function") {
-        dialog.close();
-      }
-    });
-  }
-
-  // Inline pencil edit buttons
-  document.querySelectorAll(".inline-edit-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const field = btn.dataset.field;
-      if (!field) return;
-      state.currentEditingField = field;
-      const targetEl = byId(`field-${field}`);
-      const currentVal = targetEl ? targetEl.textContent : "";
-      
-      const titleEl = byId("edit-field-title");
-      if (titleEl) titleEl.textContent = `Edit ${field.replace("_", " ")}`;
-      const inputEl = byId("edit-field-input");
-      if (inputEl) inputEl.value = currentVal;
-
-      const dialog = byId("edit-field-dialog");
-      if (dialog && typeof dialog.showModal === "function") {
-        dialog.showModal();
-      }
-    });
-  });
-
-  const cancelEditField = byId("cancel-edit-field");
-  if (cancelEditField) {
-    cancelEditField.addEventListener("click", () => {
-      const dialog = byId("edit-field-dialog");
-      if (dialog && typeof dialog.close === "function") {
-        dialog.close();
-      }
-    });
-  }
-
-  const editFieldForm = byId("edit-field-form");
-  if (editFieldForm) {
-    editFieldForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const newVal = byId("edit-field-input")?.value || "";
-      const field = state.currentEditingField;
-      if (field) {
-        const targetEl = byId(`field-${field}`);
-        if (targetEl) targetEl.textContent = newVal;
-        status(`Updated ${field}: ${newVal}`);
-      }
-      const dialog = byId("edit-field-dialog");
-      if (dialog && typeof dialog.close === "function") {
-        dialog.close();
-      }
-    });
-  }
-
-  // Desktop vs Narrow preview toggle in Edit Profile view
-  const desktopPreviewBtn = byId("desktop-preview-btn");
-  const narrowPreviewBtn = byId("narrow-preview-btn");
-  const previewBox = byId("live-preview-box");
-
-  if (desktopPreviewBtn && narrowPreviewBtn && previewBox) {
-    desktopPreviewBtn.addEventListener("click", () => {
-      previewBox.classList.remove("is-narrow");
-      desktopPreviewBtn.style.background = "var(--ink)";
-      desktopPreviewBtn.style.color = "#fff";
-      narrowPreviewBtn.style.background = "var(--surface)";
-      narrowPreviewBtn.style.color = "var(--ink)";
-    });
-
-    narrowPreviewBtn.addEventListener("click", () => {
-      previewBox.classList.add("is-narrow");
-      narrowPreviewBtn.style.background = "var(--ink)";
-      narrowPreviewBtn.style.color = "#fff";
-      desktopPreviewBtn.style.background = "var(--surface)";
-      desktopPreviewBtn.style.color = "var(--ink)";
-    });
-  }
-
-  document.querySelectorAll(".save-profile-customisation-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      status("Saved local profile customisation for Aisling Byrne.");
-      navigate("person");
-    });
-  });
-
+  // Themes
   document.querySelectorAll(".theme-card").forEach((card) => {
     card.addEventListener("click", () => {
       applyTheme(card.dataset.theme);
@@ -394,33 +523,27 @@ const bindEvents = () => {
       applyTheme(nextTheme);
     });
   }
-
-  document.querySelectorAll(".view-history-trigger").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const dialog = byId("source-history-dialog");
-      if (dialog && typeof dialog.showModal === "function") {
-        dialog.showModal();
-      }
-    });
-  });
-
-  const closeHistoryBtn = byId("close-history-dialog");
-  if (closeHistoryBtn) {
-    closeHistoryBtn.addEventListener("click", () => {
-      const dialog = byId("source-history-dialog");
-      if (dialog && typeof dialog.close === "function") {
-        dialog.close();
-      }
-    });
-  }
 };
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   applyTheme("light");
   bindEvents();
   updateDrawer("LL");
-  renderTextNode(
-    byId("live-status"),
-    `Liaison RM ${state.productState.app.product_state} ready. ${state.productState.app.connection_state} · ${state.productState.app.release_evidence}`
-  );
+  enableWorkspaceControls(false);
+
+  // Auto-fetch default workspace path from Rust
+  try {
+    const path = await invokeValue("default_workspace_path");
+    if (byId("workspace-path")) byId("workspace-path").value = path;
+  } catch (e) {
+    // Graceful fallback if native bridge offline
+  }
+
+  // Probe App Status from Rust backend
+  try {
+    const app = await invokeValue("app_status");
+    status(`Liaison RM ${app.product_state} ready. ${app.connection_state} · ${app.release_evidence}`);
+  } catch (e) {
+    status(`Liaison RM ${state.productState.app.product_state} ready. ${state.productState.app.connection_state} · ${state.productState.app.release_evidence}`);
+  }
 });
