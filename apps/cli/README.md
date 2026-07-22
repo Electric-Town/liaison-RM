@@ -28,7 +28,9 @@ not supported without a shared broker or authority namespace. `workspace
 validate` is different by design: it runs lock-free,
 one-shot read-only Health so a second process can inspect a contended,
 malformed, or newer-schema workspace without acquiring writer authority.
-Recoverable operations and final mutation preconditions remain later gates.
+`person create` uses the current P03 recoverable-operation path. P03 remains
+current until its exact-head cross-platform operation and recovery evidence is
+accepted; migration, repair, and other broader mutations remain later gates.
 
 The review CLI defaults the manifest declaration to `connected-local` because
 the current artifact has not passed the Airgap dependency and socket-denial

@@ -24,6 +24,13 @@ workspace while keeping read-only Health available.
 - list current person records;
 - validate workspace layout and records without deleting files.
 
+Events is intentionally absent from this review-build navigation. `T-B0-P11`
+owns the complete desktop workflow and remains blocked by its domain, Directory,
+security, recovery, and design dependencies. Do not add a placeholder or a
+page-local attendee implementation. Follow
+[KCS-0014](../../docs/knowledge/KCS-0014-when-may-the-events-destination-be-enabled.md)
+for the delivery sequence and required evidence.
+
 The desktop layer does not construct context services or repositories, own canonical schemas, calculate relationship priority, configure providers, or write files outside application-service ports. Successful native commands return typed `CommandResult` envelopes. Failures return `ApplicationError` values with a stable code, display message, recovery guidance, and private diagnostic details. The interface displays the message and recovery guidance only.
 
 ## Development
