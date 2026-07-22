@@ -12,8 +12,8 @@
 pub use chrono::{DateTime, NaiveDate, Utc};
 pub use liaison_events::EventId;
 use liaison_people::{
-    CreatePerson, EmailAddress, ListPeople, PartialDate, PeopleError, PersonProfile, PhoneNumber,
-    PersonRepository,
+    CreatePerson, EmailAddress, ListPeople, PartialDate, PeopleError, PersonProfile,
+    PersonRepository, PhoneNumber,
 };
 pub use liaison_shared_kernel::{
     CommandId, JobId, OperationId, PersonId, Revision, WorkspaceId, WorkspaceSessionId,
@@ -210,6 +210,12 @@ pub struct ResolveAttendeeGapCommand {
     pub event_id: liaison_events::EventId,
     pub row_id: u32,
     pub action: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FinalizeEventCohortCommand {
+    pub session_id: WorkspaceSessionId,
+    pub event_id: liaison_events::EventId,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -621,13 +627,29 @@ impl LiaisonApplication {
         let mut person = repository
             .find(command.person_id)
             .map_err(|error| people_error(&error, command_id))?;
+        if person.revision != command.expected_revision {
+            return Err(people_error(
+                &PeopleError::RevisionConflict {
+                    expected: command.expected_revision.get(),
+                    found: person.revision.get(),
+                },
+                command_id,
+            ));
+        }
 
         let mut emails = Vec::new();
         for email in command.emails {
             if !email.value.trim().is_empty() {
                 emails.push(
-                    EmailAddress::new(email.value, if email.label.trim().is_empty() { "primary" } else { &email.label })
-                        .map_err(|error| people_error(&error, command_id))?,
+                    EmailAddress::new(
+                        email.value,
+                        if email.label.trim().is_empty() {
+                            "primary"
+                        } else {
+                            &email.label
+                        },
+                    )
+                    .map_err(|error| people_error(&error, command_id))?,
                 );
             }
         }
@@ -635,23 +657,28 @@ impl LiaisonApplication {
         for phone in command.phones {
             if !phone.value.trim().is_empty() {
                 phones.push(
-                    PhoneNumber::new(phone.value, if phone.label.trim().is_empty() { "mobile" } else { &phone.label })
-                        .map_err(|error| people_error(&error, command_id))?,
+                    PhoneNumber::new(
+                        phone.value,
+                        if phone.label.trim().is_empty() {
+                            "mobile"
+                        } else {
+                            &phone.label
+                        },
+                    )
+                    .map_err(|error| people_error(&error, command_id))?,
                 );
             }
         }
 
-        person.display_name = command.display_name;
-        person.emails = emails;
-        person.phones = phones;
-        person.revision = command
-            .expected_revision
-            .next()
-            .map_err(|_| people_error(&PeopleError::RevisionOverflow, command_id))?;
-
-        repository
-            .save(&person, command.expected_revision)
+        let changed = person
+            .replace_contact_details(command.display_name, emails, phones)
             .map_err(|error| people_error(&error, command_id))?;
+
+        if changed {
+            repository
+                .save(&person, command.expected_revision)
+                .map_err(|error| people_error(&error, command_id))?;
+        }
 
         Ok(self.complete(command_id, person_dto(person)))
     }
@@ -675,7 +702,9 @@ impl LiaisonApplication {
             .find(command.person_id)
             .map_err(|error| people_error(&error, command_id))?;
 
-        person.archive().map_err(|error| people_error(&error, command_id))?;
+        person
+            .archive()
+            .map_err(|error| people_error(&error, command_id))?;
         repository
             .save(&person, command.expected_revision)
             .map_err(|error| people_error(&error, command_id))?;
@@ -695,14 +724,24 @@ impl LiaisonApplication {
         work.verify_identity()
             .map_err(|error| workspace_error(&error, command_id))?;
 
-        let event = liaison_events::Event::create(command.name, command.date)
-            .map_err(|err| application_error("events.create-failed", err.to_string(), "check event parameters", BTreeMap::new(), command_id))?;
+        let event = liaison_events::Event::create(command.name, command.date).map_err(|err| {
+            application_error(
+                "events.create-failed",
+                err.to_string(),
+                "check event parameters",
+                BTreeMap::new(),
+                command_id,
+            )
+        })?;
 
-        let mut events_map = self.events.lock().map_err(|_| session_state_unavailable(command_id))?;
+        let mut events_map = self
+            .events
+            .lock()
+            .map_err(|_| session_state_unavailable(command_id))?;
         let list = events_map.entry(command.session_id).or_default();
         list.push(event.clone());
 
-        let dto = self.build_event_dto(&work, &event, command_id)?;
+        let dto = self.build_event_dto(&work, &event);
         Ok(self.complete(command_id, dto))
     }
 
@@ -718,12 +757,15 @@ impl LiaisonApplication {
         work.verify_identity()
             .map_err(|error| workspace_error(&error, command_id))?;
 
-        let mut events_map = self.events.lock().map_err(|_| session_state_unavailable(command_id))?;
+        let mut events_map = self
+            .events
+            .lock()
+            .map_err(|_| session_state_unavailable(command_id))?;
         let list = events_map.entry(query.session_id).or_default();
 
         let mut dtos = Vec::new();
         for event in list.iter() {
-            dtos.push(self.build_event_dto(&work, event, command_id)?);
+            dtos.push(self.build_event_dto(&work, event));
         }
 
         Ok(self.complete(command_id, dtos))
@@ -742,15 +784,37 @@ impl LiaisonApplication {
         work.verify_identity()
             .map_err(|error| workspace_error(&error, command_id))?;
 
-        let mut events_map = self.events.lock().map_err(|_| session_state_unavailable(command_id))?;
+        let mut events_map = self
+            .events
+            .lock()
+            .map_err(|_| session_state_unavailable(command_id))?;
         let list = events_map.entry(command.session_id).or_default();
-        let event = list.iter_mut().find(|e| e.id() == command.event_id)
-            .ok_or_else(|| application_error("events.not-found", "event not found", "verify event id", BTreeMap::new(), command_id))?;
+        let event = list
+            .iter_mut()
+            .find(|e| e.id() == command.event_id)
+            .ok_or_else(|| {
+                application_error(
+                    "events.not-found",
+                    "event not found",
+                    "verify event id",
+                    BTreeMap::new(),
+                    command_id,
+                )
+            })?;
 
-        event.add_selected_person(command.person_id)
-            .map_err(|err| application_error("events.add-attendee-failed", err.to_string(), "verify attendee status", BTreeMap::new(), command_id))?;
+        event
+            .add_selected_person(command.person_id)
+            .map_err(|err| {
+                application_error(
+                    "events.add-attendee-failed",
+                    err.to_string(),
+                    "verify attendee status",
+                    BTreeMap::new(),
+                    command_id,
+                )
+            })?;
 
-        let dto = self.build_event_dto(&work, event, command_id)?;
+        let dto = self.build_event_dto(&work, event);
         Ok(self.complete(command_id, dto))
     }
 
@@ -767,20 +831,113 @@ impl LiaisonApplication {
         work.verify_identity()
             .map_err(|error| workspace_error(&error, command_id))?;
 
-        let mut events_map = self.events.lock().map_err(|_| session_state_unavailable(command_id))?;
+        let mut events_map = self
+            .events
+            .lock()
+            .map_err(|_| session_state_unavailable(command_id))?;
         let list = events_map.entry(command.session_id).or_default();
-        let event = list.iter_mut().find(|e| e.id() == command.event_id)
-            .ok_or_else(|| application_error("events.not-found", "event not found", "verify event id", BTreeMap::new(), command_id))?;
+        let event = list
+            .iter_mut()
+            .find(|e| e.id() == command.event_id)
+            .ok_or_else(|| {
+                application_error(
+                    "events.not-found",
+                    "event not found",
+                    "verify event id",
+                    BTreeMap::new(),
+                    command_id,
+                )
+            })?;
 
-        let today = self.runtime.now().date_naive();
-        if event.finalized_on().is_none() {
-            let _ = event.finalize_cohort(today);
-        }
-        let row_id = serde_json::from_value::<liaison_events::RowId>(serde_json::json!(command.row_id))
-            .map_err(|_| application_error("events.invalid-row", "invalid row id", "check row id", BTreeMap::new(), command_id))?;
-        let _ = event.record_participation(row_id, liaison_events::Participation::Confirmed, today);
+        let participation = match command.action.as_str() {
+            "confirm" => liaison_events::Participation::Confirmed,
+            "attended" => liaison_events::Participation::Attended,
+            "decline" => liaison_events::Participation::Declined,
+            "cancel" => liaison_events::Participation::Cancelled,
+            "no-show" => liaison_events::Participation::NoShow,
+            action => {
+                return Err(application_error(
+                    "events.unsupported-attendee-action",
+                    format!("unsupported attendee action: {action}"),
+                    "choose confirm, attended, decline, cancel, or no-show",
+                    details([(
+                        "allowed_actions",
+                        serde_json::json!(["confirm", "attended", "decline", "cancel", "no-show"]),
+                    )]),
+                    command_id,
+                ));
+            }
+        };
+        let row_id =
+            serde_json::from_value::<liaison_events::RowId>(serde_json::json!(command.row_id))
+                .map_err(|_| {
+                    application_error(
+                        "events.invalid-row",
+                        "invalid row id",
+                        "check row id",
+                        BTreeMap::new(),
+                        command_id,
+                    )
+                })?;
+        event
+            .record_participation(row_id, participation, self.runtime.now().date_naive())
+            .map_err(|error| {
+                application_error(
+                    "events.attendee-transition-failed",
+                    error.to_string(),
+                    "finalize the cohort first, then choose a valid next participation state",
+                    BTreeMap::new(),
+                    command_id,
+                )
+            })?;
 
-        let dto = self.build_event_dto(&work, event, command_id)?;
+        let dto = self.build_event_dto(&work, event);
+        Ok(self.complete(command_id, dto))
+    }
+
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn finalize_event_cohort(
+        &self,
+        command: FinalizeEventCohortCommand,
+    ) -> Result<CommandResult<EventDto>, ApplicationError> {
+        let command_id = self.runtime.next_command_id();
+        let session = self.resolve_session(command.session_id, command_id)?;
+        let work = session
+            .begin_work()
+            .map_err(|error| workspace_session_error(error, command_id))?;
+        work.verify_identity()
+            .map_err(|error| workspace_error(&error, command_id))?;
+
+        let mut events_map = self
+            .events
+            .lock()
+            .map_err(|_| session_state_unavailable(command_id))?;
+        let list = events_map.entry(command.session_id).or_default();
+        let event = list
+            .iter_mut()
+            .find(|event| event.id() == command.event_id)
+            .ok_or_else(|| {
+                application_error(
+                    "events.not-found",
+                    "event not found",
+                    "verify event id",
+                    BTreeMap::new(),
+                    command_id,
+                )
+            })?;
+        event
+            .finalize_cohort(self.runtime.now().date_naive())
+            .map_err(|error| {
+                application_error(
+                    "events.finalize-cohort-failed",
+                    error.to_string(),
+                    "review the cohort state and retry without changing its recorded history",
+                    BTreeMap::new(),
+                    command_id,
+                )
+            })?;
+
+        let dto = self.build_event_dto(&work, event);
         Ok(self.complete(command_id, dto))
     }
 
@@ -789,21 +946,17 @@ impl LiaisonApplication {
         &self,
         work: &liaison_workspace::WorkspaceWorkGuard<'_, BoundMarkdownVault>,
         event: &liaison_events::Event,
-        command_id: CommandId,
-    ) -> Result<EventDto, ApplicationError> {
+    ) -> EventDto {
         let repo = people_repository(work);
-        let policy = liaison_events::ReadinessPolicy::baseline()
-            .map_err(|e| application_error("events.policy-error", e.to_string(), "check baseline policy", BTreeMap::new(), command_id))?;
-
         let rows: Vec<_> = event.active_rows().collect();
         let mut attendees = Vec::with_capacity(rows.len());
-        let mut ready = 0;
-        let mut confirm = 0;
-        let mut exceptions = 0;
+        let ready = 0;
+        let confirm = 0;
+        let exceptions = 0;
         let mut unresolved = 0;
 
         for row in rows {
-            let (person_id, display_name, email, availability) = match &row.identity {
+            let (person_id, display_name, email, action_needed) = match &row.identity {
                 liaison_events::AttendeeIdentity::Resolved { person } => {
                     if let Ok(profile) = repo.find(*person) {
                         let email = profile.emails.first().map(|e| e.value.clone());
@@ -811,83 +964,42 @@ impl LiaisonApplication {
                             Some(*person),
                             profile.display_name,
                             email,
-                            liaison_events::Availability::VerifiedNone,
+                            "Record or verify dietary information".to_owned(),
                         )
                     } else {
                         (
                             Some(*person),
                             format!("Person ({person})"),
                             None,
-                            liaison_events::Availability::Unknown,
+                            "Repair the missing person record".to_owned(),
                         )
                     }
                 }
-                liaison_events::AttendeeIdentity::Unresolved { source_label } => {
-                    (
-                        None,
-                        source_label.clone(),
-                        None,
-                        liaison_events::Availability::Unknown,
-                    )
-                }
+                liaison_events::AttendeeIdentity::Unresolved { source_label } => (
+                    None,
+                    source_label.clone(),
+                    None,
+                    "Resolve the attendee identity".to_owned(),
+                ),
             };
-
-            let view = liaison_events::DietaryOperationalView {
-                availability: availability.clone(),
-                freshness: liaison_events::Freshness::Fresh,
-                conflict: liaison_events::ConflictState::Consistent,
-                disclosure: liaison_events::DisclosureState::Allowed,
-                profile_revision: Revision::INITIAL,
-            };
-
-            let derived = policy.derive(&view);
-            let outcome_str = format!("{:?}", derived.outcome);
-
-            let action_needed = match derived.outcome {
-                liaison_events::DietaryOutcome::VerifiedNone | liaison_events::DietaryOutcome::Provided => {
-                    ready += 1;
-                    "Ready".to_owned()
-                }
-                liaison_events::DietaryOutcome::Stale => {
-                    confirm += 1;
-                    "Confirm".to_owned()
-                }
-                liaison_events::DietaryOutcome::ExcludedFromCatering => {
-                    exceptions += 1;
-                    "Accounted".to_owned()
-                }
-                liaison_events::DietaryOutcome::Conflicting => {
-                    unresolved += 1;
-                    "Compare sources".to_owned()
-                }
-                _ => {
-                    unresolved += 1;
-                    "Resolve gap".to_owned()
-                }
-            };
-
-            let row_id = serde_json::to_value(row.row)
-                .ok()
-                .and_then(|v| v.as_u64())
-                .and_then(|u| u32::try_from(u).ok())
-                .unwrap_or(1);
+            unresolved += 1;
 
             attendees.push(EventAttendeeDto {
-                row_id,
+                row_id: row.row.get(),
                 person_id,
                 display_name,
                 email,
-                availability: format!("{:?}", availability.class()),
-                freshness: "Fresh".to_owned(),
-                conflict: "None".to_owned(),
-                disclosure: "Instruction available".to_owned(),
-                outcome: outcome_str,
+                availability: "Unknown".to_owned(),
+                freshness: "Not evaluated".to_owned(),
+                conflict: "Not evaluated".to_owned(),
+                disclosure: "Not evaluated".to_owned(),
+                outcome: "Unknown".to_owned(),
                 action_needed,
             });
         }
 
         let total = event.active_denominator();
-        Ok(EventDto {
+        EventDto {
             id: event.id(),
             revision: event.revision(),
             name: event.name().to_owned(),
@@ -904,7 +1016,7 @@ impl LiaisonApplication {
                 exceptions,
                 unresolved,
             },
-        })
+        }
     }
 
     pub fn close_workspace(
@@ -932,6 +1044,10 @@ impl LiaisonApplication {
         {
             sessions.remove(&command.session_id);
         }
+        self.events
+            .lock()
+            .map_err(|_| session_state_unavailable(command_id))?
+            .remove(&command.session_id);
         Ok(self.complete(
             command_id,
             WorkspaceClosedDto {
@@ -1509,11 +1625,11 @@ fn details<const N: usize>(entries: [(&str, Value); N]) -> BTreeMap<String, Valu
 #[cfg(test)]
 mod tests {
     use super::{
-        APPLICATION_CONTRACT_VERSION, AddEventAttendeeCommand, AppStatusDto, ArchivePersonCommand,
-        CreateEventCommand, CreatePersonCommand, EmailDto, InitialiseWorkspaceCommand,
+        APPLICATION_CONTRACT_VERSION, AddEventAttendeeCommand, AppStatusDto, CreateEventCommand,
+        CreatePersonCommand, EmailDto, FinalizeEventCohortCommand, InitialiseWorkspaceCommand,
         InspectWorkspaceHealthQuery, LiaisonApplication, ListPeopleQuery, NaiveDate,
-        OpenWorkspaceCommand, PhoneDto, ResolveAttendeeGapCommand, RuntimePortError,
-        RuntimePorts, UpdatePersonCommand, WorkspaceSessionCommand, application_error, details,
+        OpenWorkspaceCommand, PhoneDto, ResolveAttendeeGapCommand, RuntimePortError, RuntimePorts,
+        UpdatePersonCommand, WorkspaceSessionCommand, application_error, details,
         workspace_initialised_open_error,
     };
     use chrono::{DateTime, TimeZone, Utc};
@@ -1740,6 +1856,107 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn person_update_is_validated_atomic_and_revision_safe() {
+        let directory = tempdir();
+        assert!(directory.is_ok());
+        let Ok(directory) = directory else {
+            return;
+        };
+        let root = directory.path().join("workspace");
+        let (application, _) = application();
+        let opened = application.initialise_workspace(InitialiseWorkspaceCommand {
+            path: root.to_string_lossy().into_owned(),
+            name: "People updates".to_owned(),
+            profile: WorkspaceProfile::Workplace,
+            build_profile: BuildProfile::ConnectedLocal,
+            locale: "en-IE".to_owned(),
+        });
+        assert!(opened.is_ok());
+        let Ok(opened) = opened else {
+            return;
+        };
+        let session_id = opened.value.workspace.session_id;
+        let created = application.create_person(CreatePersonCommand {
+            session_id,
+            display_name: "Alex Murphy".to_owned(),
+            email: Some("alex@example.test".to_owned()),
+        });
+        assert!(created.is_ok());
+        let Ok(created) = created else {
+            return;
+        };
+        let original = created.value;
+
+        let invalid = application.update_person(UpdatePersonCommand {
+            session_id,
+            person_id: original.id,
+            expected_revision: original.revision,
+            display_name: "   ".to_owned(),
+            emails: Vec::new(),
+            phones: Vec::new(),
+        });
+        assert!(matches!(invalid, Err(error) if error.code == "people.required-field"));
+        let listed = application.list_people(ListPeopleQuery {
+            session_id,
+            include_archived: false,
+        });
+        assert!(matches!(
+            listed,
+            Ok(result)
+                if result.value.len() == 1
+                    && result.value[0].display_name == "Alex Murphy"
+                    && result.value[0].revision == original.revision
+        ));
+
+        let updated = application.update_person(UpdatePersonCommand {
+            session_id,
+            person_id: original.id,
+            expected_revision: original.revision,
+            display_name: "  Alex M.  ".to_owned(),
+            emails: vec![EmailDto {
+                value: "alex.m@example.test".to_owned(),
+                label: "work".to_owned(),
+            }],
+            phones: vec![PhoneDto {
+                value: "+353 1 555 0100".to_owned(),
+                label: "mobile".to_owned(),
+            }],
+        });
+        assert!(updated.is_ok());
+        let Ok(updated) = updated else {
+            return;
+        };
+        assert_eq!(updated.value.display_name, "Alex M.");
+        assert_eq!(updated.value.revision.get(), original.revision.get() + 1);
+
+        let stale_no_op = application.update_person(UpdatePersonCommand {
+            session_id,
+            person_id: original.id,
+            expected_revision: original.revision,
+            display_name: updated.value.display_name.clone(),
+            emails: updated.value.emails.clone(),
+            phones: updated.value.phones.clone(),
+        });
+        assert!(matches!(
+            stale_no_op,
+            Err(error) if error.code == "people.revision-conflict"
+        ));
+
+        let current_no_op = application.update_person(UpdatePersonCommand {
+            session_id,
+            person_id: original.id,
+            expected_revision: updated.value.revision,
+            display_name: updated.value.display_name,
+            emails: updated.value.emails,
+            phones: updated.value.phones,
+        });
+        assert!(matches!(
+            current_no_op,
+            Ok(result) if result.value.revision.get() == original.revision.get() + 1
+        ));
     }
 
     #[test]
@@ -2481,77 +2698,90 @@ mod tests {
 
     #[test]
     #[allow(clippy::unwrap_used)]
-    fn application_event_and_person_mutation_lifecycle_runs_cleanly() {
+    fn application_event_lifecycle_fails_closed_without_dietary_facts() {
         let directory = tempdir().unwrap();
         let root = directory.path().join("workspace");
         let (application, _) = application();
 
-        let opened = application.initialise_workspace(InitialiseWorkspaceCommand {
-            path: root.to_string_lossy().into_owned(),
-            name: "Event & Person Lifecycle".to_owned(),
-            profile: WorkspaceProfile::Workplace,
-            build_profile: BuildProfile::ConnectedLocal,
-            locale: "en-IE".to_owned(),
-        }).unwrap();
+        let opened = application
+            .initialise_workspace(InitialiseWorkspaceCommand {
+                path: root.to_string_lossy().into_owned(),
+                name: "Event lifecycle".to_owned(),
+                profile: WorkspaceProfile::Workplace,
+                build_profile: BuildProfile::ConnectedLocal,
+                locale: "en-IE".to_owned(),
+            })
+            .unwrap();
 
         let session_id = opened.value.workspace.session_id;
 
-        // 1. Create Person
-        let person = application.create_person(CreatePersonCommand {
-            session_id,
-            display_name: "Alice Smith".to_owned(),
-            email: Some("alice@example.com".to_owned()),
-        }).unwrap().value;
+        let person = application
+            .create_person(CreatePersonCommand {
+                session_id,
+                display_name: "Alice Smith".to_owned(),
+                email: Some("alice@example.test".to_owned()),
+            })
+            .unwrap()
+            .value;
 
-        // 2. Update Person
-        let updated_person = application.update_person(UpdatePersonCommand {
-            session_id,
-            person_id: person.id,
-            expected_revision: person.revision,
-            display_name: "Alice Johnson".to_owned(),
-            emails: vec![EmailDto { value: "alice.johnson@example.com".to_owned(), label: "work".to_owned() }],
-            phones: vec![PhoneDto { value: "+123456789".to_owned(), label: "mobile".to_owned() }],
-        }).unwrap().value;
-
-        assert_eq!(updated_person.display_name, "Alice Johnson");
-        assert_eq!(updated_person.emails[0].value, "alice.johnson@example.com");
-
-        // 3. Create Event
-        let event = application.create_event(CreateEventCommand {
-            session_id,
-            name: "Team Lunch".to_owned(),
-            date: NaiveDate::from_ymd_opt(2026, 7, 21).unwrap(),
-        }).unwrap().value;
+        let event = application
+            .create_event(CreateEventCommand {
+                session_id,
+                name: "Team Lunch".to_owned(),
+                date: NaiveDate::from_ymd_opt(2026, 7, 21).unwrap(),
+            })
+            .unwrap()
+            .value;
 
         assert_eq!(event.name, "Team Lunch");
 
-        // 4. Add Attendee to Event
-        let event_with_attendee = application.add_event_attendee(AddEventAttendeeCommand {
-            session_id,
-            event_id: event.id,
-            person_id: person.id,
-        }).unwrap().value;
+        let event_with_attendee = application
+            .add_event_attendee(AddEventAttendeeCommand {
+                session_id,
+                event_id: event.id,
+                person_id: person.id,
+            })
+            .unwrap()
+            .value;
 
         assert_eq!(event_with_attendee.summary_counts.total, 1);
-        assert_eq!(event_with_attendee.attendees[0].display_name, "Alice Johnson");
+        assert_eq!(event_with_attendee.summary_counts.ready, 0);
+        assert_eq!(event_with_attendee.summary_counts.unresolved, 1);
+        assert_eq!(event_with_attendee.attendees[0].display_name, "Alice Smith");
+        assert_eq!(event_with_attendee.attendees[0].outcome, "Unknown");
 
-        // 5. Resolve Attendee Gap
-        let resolved_event = application.resolve_attendee_gap(ResolveAttendeeGapCommand {
+        let premature = application.resolve_attendee_gap(ResolveAttendeeGapCommand {
             session_id,
             event_id: event.id,
             row_id: event_with_attendee.attendees[0].row_id,
             action: "confirm".to_owned(),
-        }).unwrap().value;
+        });
+        assert_eq!(
+            premature.as_ref().err().map(|error| error.code.as_str()),
+            Some("events.attendee-transition-failed")
+        );
 
-        assert_eq!(resolved_event.summary_counts.ready, 1);
+        let finalized = application
+            .finalize_event_cohort(FinalizeEventCohortCommand {
+                session_id,
+                event_id: event.id,
+            })
+            .unwrap()
+            .value;
+        assert!(finalized.finalized_on.is_some());
 
-        // 6. Archive Person
-        let archived = application.archive_person(ArchivePersonCommand {
-            session_id,
-            person_id: person.id,
-            expected_revision: updated_person.revision,
-        }).unwrap().value;
+        let resolved_event = application
+            .resolve_attendee_gap(ResolveAttendeeGapCommand {
+                session_id,
+                event_id: event.id,
+                row_id: event_with_attendee.attendees[0].row_id,
+                action: "confirm".to_owned(),
+            })
+            .unwrap()
+            .value;
 
-        assert!(archived.archived);
+        assert_eq!(resolved_event.summary_counts.ready, 0);
+        assert_eq!(resolved_event.summary_counts.unresolved, 1);
+        assert_eq!(resolved_event.attendees[0].outcome, "Unknown");
     }
 }

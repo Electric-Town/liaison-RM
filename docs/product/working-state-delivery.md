@@ -1,6 +1,6 @@
 # Working-state delivery contract
 
-Last reconciled: 2026-07-19
+Last reconciled: 2026-07-22
 
 This document tells a contributor what the next product is and prevents roadmap breadth from being mistaken for current implementation. Normative domain and safety rules remain in `SPEC.md`, accepted decision records, schemas, and tests.
 
@@ -22,10 +22,12 @@ The current P02 source state, built on the merged P00 and P01 foundation, contai
 - provider-neutral contracts and a local-folder reference adapter with limited claims;
 - macOS and Windows packaging workflows.
 
-The installed macOS review application is version `0.1.0-alpha.1` and contains
-a universal executable with a linker/ad-hoc code directory, but strict bundle
-verification reports that the application bundle is not signed. It is not
-Developer ID signed, notarised, or a supported public release.
+No Liaison application was present in `/Applications` or the current user's
+Applications directory during the 2026-07-22 reconciliation. Existing
+repository build bundles and historical native evidence are not an installed
+or supported release. The next installation must be built from the final exact
+candidate, leave one canonical application, and prove source/executable
+provenance, signing state, launch, relaunch, native persistence, and recovery.
 
 The P02 source state provides a write-authoritative Workspace Session with
 workspace-local and per-user `WorkspaceId` operating-system exclusion,
@@ -54,8 +56,8 @@ Work-package scores and the rules for dependency and safety overrides are in [B0
 1. Reconcile contracts, decisions, versions, commands, evidence, and stale branch claims.
 2. Add one application composition root, then establish write-authoritative Workspace Session ownership.
 3. Route every canonical mutation through recoverable multi-target operations.
-4. After P03, run design consultation to create canonical `DESIGN.md`, then plan design review to approve an amended P04 direction. G0 does not create or pre-empt this artifact.
-5. Replace the disposable vanilla shell with a typed React/Tauri adapter and an evidence-tested semantic design system.
+4. After P03, accept the candidate `DESIGN.md`, proposed Experience decision, corrected traceability, and amended P04 plan through P03D. Candidate files and browser evidence do not pre-empt this gate.
+5. Replace the disposable vanilla shell with the typed Overview/Workspace/People/Health foundation under `FG-B0-P04-001`; keep Directory, Events, Settings, persisted appearance, and the complete B0 journey owned by their downstream phases.
 6. Establish the P05 Directory/Event/dietary domain contracts in G1 before P06/P07; after P04, add the pinned OKF People schema and strict writer in P05-OKF, tolerant Directory reading in P06, guided backup-first repair in P06-REPAIR, and required legacy-People normalization in P09-OKF. Keep sensitive contracts exclusively in P07/P08, close `FG-B0-001` only at P09-OKF, and let G3 consume the P05 contracts in P09/P10.
 7. Implement Directory security/local policy, checkpoint and encrypted recovery, onboarding import, Events core, and the B0 interface with built-in theme choice and persistence only.
 8. Qualify B0 in the compiled installed Mac application.

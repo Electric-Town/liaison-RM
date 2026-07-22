@@ -80,7 +80,9 @@ fn run_step(name: &str, program: &str, args: &[&str], cwd: &Path) -> Result<(), 
     } else {
         Err(format!(
             "Step '{name}' failed with exit code {}",
-            status.code().map_or_else(|| "signal".to_string(), |c| c.to_string())
+            status
+                .code()
+                .map_or_else(|| "signal".to_string(), |c| c.to_string())
         ))
     }
 }
@@ -148,9 +150,24 @@ fn run_verify(root: &Path) -> Result<(), String> {
     println!("=== Running P04 Full Workspace Verification ===");
     run_step("cargo test", "cargo", &["test", "--workspace"], root)?;
     run_step("check_spec", "python3", &["scripts/check_spec.py"], root)?;
-    run_step("check_architecture", "python3", &["scripts/check_architecture.py"], root)?;
-    run_step("check_repository", "python3", &["scripts/check_repository.py"], root)?;
-    run_step("generate_traceability", "python3", &["scripts/generate_traceability.py"], root)?;
+    run_step(
+        "check_architecture",
+        "python3",
+        &["scripts/check_architecture.py"],
+        root,
+    )?;
+    run_step(
+        "check_repository",
+        "python3",
+        &["scripts/check_repository.py"],
+        root,
+    )?;
+    run_step(
+        "generate_traceability",
+        "python3",
+        &["scripts/generate_traceability.py"],
+        root,
+    )?;
     println!("\nFull verification completed successfully!");
     Ok(())
 }
@@ -158,7 +175,12 @@ fn run_verify(root: &Path) -> Result<(), String> {
 fn run_qualify(root: &Path) -> Result<(), String> {
     println!("=== Running P04 Exact-HEAD Qualification ===");
     run_verify(root)?;
-    run_step("cargo check desktop", "cargo", &["check", "-p", "liaison-desktop"], root)?;
+    run_step(
+        "cargo check desktop",
+        "cargo",
+        &["check", "-p", "liaison-desktop"],
+        root,
+    )?;
     println!("\nQualification completed successfully!");
     Ok(())
 }
@@ -197,9 +219,13 @@ fn run_where(root: &Path, concept: &str) {
         for entry in walkdir::WalkDir::new(base).into_iter().flatten() {
             if entry.file_type().is_file()
                 && entry.path().extension().is_some_and(|e| e == "md")
-                && fs::read_to_string(entry.path()).is_ok_and(|c| c.to_lowercase().contains(&concept_lower))
+                && fs::read_to_string(entry.path())
+                    .is_ok_and(|c| c.to_lowercase().contains(&concept_lower))
             {
-                let rel = entry.path().strip_prefix(root).unwrap_or_else(|_| entry.path());
+                let rel = entry
+                    .path()
+                    .strip_prefix(root)
+                    .unwrap_or_else(|_| entry.path());
                 matches.push(rel.display().to_string());
             }
         }
@@ -208,7 +234,10 @@ fn run_where(root: &Path, concept: &str) {
     if matches.is_empty() {
         println!("No markdown ownership references found for concept '{concept}'.");
     } else {
-        println!("Concept '{concept}' found in {} document(s):", matches.len());
+        println!(
+            "Concept '{concept}' found in {} document(s):",
+            matches.len()
+        );
         for m in matches.iter().take(10) {
             println!(" - {m}");
         }
@@ -228,7 +257,10 @@ fn run_scorecard(root: &Path) -> Result<(), String> {
         .map_err(|e| format!("Failed to parse scorecard JSON: {e}"))?;
 
     println!("Version: {}", json["version"].as_str().unwrap_or("unknown"));
-    println!("Target Score: {}", json["overall"]["target_score"].as_str().unwrap_or("9.0/10"));
+    println!(
+        "Target Score: {}",
+        json["overall"]["target_score"].as_str().unwrap_or("9.0/10")
+    );
     println!("\nDimensions:");
     if let Some(dims) = json["dimensions"].as_array() {
         for d in dims {
@@ -253,7 +285,6 @@ fn run_scenario(root: &Path, scenario_id: Option<&str>) -> Result<(), String> {
     Ok(())
 }
 
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
     let root = root_dir();
@@ -266,10 +297,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             P04Task::Verify => ("verify", run_verify(&root)),
             P04Task::Qualify => ("qualify", run_qualify(&root)),
             P04Task::RehearseUpgrade => ("rehearse-upgrade", run_rehearse_upgrade(&root)),
-            P04Task::Where { concept } => ("where", { run_where(&root, &concept); Ok(()) }),
+            P04Task::Where { concept } => ("where", {
+                run_where(&root, &concept);
+                Ok(())
+            }),
             P04Task::Scorecard => ("scorecard", run_scorecard(&root)),
-            P04Task::Scenario { scenario_id } => ("scenario", run_scenario(&root, scenario_id.as_deref())),
-
+            P04Task::Scenario { scenario_id } => {
+                ("scenario", run_scenario(&root, scenario_id.as_deref()))
+            }
         },
     };
 

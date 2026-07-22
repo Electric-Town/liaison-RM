@@ -11,12 +11,13 @@
 )]
 
 use liaison_application::{
-    AddEventAttendeeCommand, AppStatusDto, ApplicationError, ArchivePersonCommand,
-    BuildProfile, CommandResult, CreateEventCommand, CreatePersonCommand, EmailDto, EventDto,
-    EventId, InitialiseWorkspaceCommand, InspectWorkspaceHealthQuery, LiaisonApplication,
-    ListEventsQuery, ListPeopleQuery, NaiveDate, OpenWorkspaceCommand, PersonDto, PhoneDto,
-    ResolveAttendeeGapCommand, UpdatePersonCommand, WorkspaceClosedDto, WorkspaceOpenDto,
-    WorkspaceProfile, WorkspaceSessionCommand, WorkspaceSessionId, WorkspaceValidationDto,
+    AddEventAttendeeCommand, AppStatusDto, ApplicationError, ArchivePersonCommand, BuildProfile,
+    CommandResult, CreateEventCommand, CreatePersonCommand, EmailDto, EventDto, EventId,
+    FinalizeEventCohortCommand, InitialiseWorkspaceCommand, InspectWorkspaceHealthQuery,
+    LiaisonApplication, ListEventsQuery, ListPeopleQuery, NaiveDate, OpenWorkspaceCommand,
+    PersonDto, PhoneDto, ResolveAttendeeGapCommand, UpdatePersonCommand, WorkspaceClosedDto,
+    WorkspaceOpenDto, WorkspaceProfile, WorkspaceSessionCommand, WorkspaceSessionId,
+    WorkspaceValidationDto,
 };
 use serde::Deserialize;
 use tauri::State;
@@ -41,6 +42,7 @@ struct CreatePersonRequest {
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 struct UpdatePersonRequest {
     session_id: WorkspaceSessionId,
     person_id: liaison_application::PersonId,
@@ -52,6 +54,7 @@ struct UpdatePersonRequest {
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 struct ArchivePersonRequest {
     session_id: WorkspaceSessionId,
     person_id: liaison_application::PersonId,
@@ -60,6 +63,7 @@ struct ArchivePersonRequest {
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 struct CreateEventRequest {
     session_id: WorkspaceSessionId,
     name: String,
@@ -68,7 +72,7 @@ struct CreateEventRequest {
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::struct_field_names)]
+#[allow(clippy::struct_field_names, dead_code)]
 struct AddEventAttendeeRequest {
     session_id: WorkspaceSessionId,
     event_id: EventId,
@@ -77,11 +81,20 @@ struct AddEventAttendeeRequest {
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 struct ResolveAttendeeGapRequest {
     session_id: WorkspaceSessionId,
     event_id: EventId,
     row_id: u32,
     action: String,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
+struct FinalizeEventCohortRequest {
+    session_id: WorkspaceSessionId,
+    event_id: EventId,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize)]
@@ -134,7 +147,11 @@ fn create_person(
     create_person_impl(&application, request)
 }
 
+// Retained as a P05/P09 incubation boundary. Editing and archiving stay out of
+// the production invoke handler until the revisioned Person contract,
+// reversible archive/restore workflow, and Directory maintenance gates close.
 #[tauri::command]
+#[allow(dead_code)]
 fn update_person(
     application: State<'_, LiaisonApplication>,
     request: UpdatePersonRequest,
@@ -150,6 +167,7 @@ fn update_person(
 }
 
 #[tauri::command]
+#[allow(dead_code)]
 fn archive_person(
     application: State<'_, LiaisonApplication>,
     request: ArchivePersonRequest,
@@ -161,7 +179,11 @@ fn archive_person(
     })
 }
 
+// Retained as a P10/P11 incubation boundary. These commands are deliberately
+// not registered in the production invoke handler until the durable event,
+// grant, recovery, and installed-experience gates are complete.
 #[tauri::command]
+#[allow(dead_code)]
 fn create_event(
     application: State<'_, LiaisonApplication>,
     request: CreateEventRequest,
@@ -174,6 +196,7 @@ fn create_event(
 }
 
 #[tauri::command]
+#[allow(dead_code)]
 fn list_events(
     application: State<'_, LiaisonApplication>,
     request: WorkspaceSessionRequest,
@@ -184,6 +207,7 @@ fn list_events(
 }
 
 #[tauri::command]
+#[allow(dead_code)]
 fn add_event_attendee(
     application: State<'_, LiaisonApplication>,
     request: AddEventAttendeeRequest,
@@ -196,6 +220,7 @@ fn add_event_attendee(
 }
 
 #[tauri::command]
+#[allow(dead_code)]
 fn resolve_attendee_gap(
     application: State<'_, LiaisonApplication>,
     request: ResolveAttendeeGapRequest,
@@ -205,6 +230,18 @@ fn resolve_attendee_gap(
         event_id: request.event_id,
         row_id: request.row_id,
         action: request.action,
+    })
+}
+
+#[tauri::command]
+#[allow(dead_code)]
+fn finalize_event_cohort(
+    application: State<'_, LiaisonApplication>,
+    request: FinalizeEventCohortRequest,
+) -> Result<CommandResult<EventDto>, ApplicationError> {
+    application.finalize_event_cohort(FinalizeEventCohortCommand {
+        session_id: request.session_id,
+        event_id: request.event_id,
     })
 }
 
@@ -309,12 +346,6 @@ pub fn run() {
             open_workspace,
             list_people,
             create_person,
-            update_person,
-            archive_person,
-            create_event,
-            list_events,
-            add_event_attendee,
-            resolve_attendee_gap,
             validate_workspace,
             inspect_workspace_health,
             close_workspace

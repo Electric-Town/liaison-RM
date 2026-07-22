@@ -507,7 +507,7 @@ tasks:
     depends_on: [T-B0-P03]
     requirements: []
     uat: []
-    evidence_dependencies: [LRM-UX-012, UAT-062]
+    evidence_dependencies: [LRM-UX-016, LRM-UX-017, UAT-073, UAT-074]
     outputs: [design-consultation, DESIGN.md, selected-semantic-direction, plan-design-review, P04-plan-amendments]
 
   - id: T-B0-P04
@@ -516,8 +516,8 @@ tasks:
     rice: {reach: 8, impact: 2, confidence: 0.80, effort_weeks: 4, score: 3.20}
     contexts: [experience, application]
     depends_on: [T-B0-P03D]
-    requirements: [LRM-UX-001, LRM-UX-002, LRM-UX-003, LRM-UX-004, LRM-UX-006, LRM-UX-008, LRM-UX-009, LRM-UX-012, LRM-L10N-001, LRM-L10N-002, LRM-L10N-003, LRM-L10N-004, LRM-L10N-005, LRM-L10N-006, LRM-L10N-008]
-    uat: [UAT-022, UAT-062, UAT-LOC-001, UAT-LOC-002]
+    requirements: [LRM-UX-001, LRM-UX-002, LRM-UX-003, LRM-UX-004, LRM-UX-006, LRM-UX-008, LRM-UX-016, LRM-UX-017, LRM-L10N-001, LRM-L10N-002, LRM-L10N-003, LRM-L10N-004, LRM-L10N-005, LRM-L10N-006]
+    uat: [UAT-073, UAT-074, UAT-LOC-001, UAT-LOC-002]
     evidence_dependencies: [UAT-041]
     outputs: [React-Tauri-client, generated-DTOs, versioned-semantic-token-contract, component-contract, system-light-dark-high_contrast-registry, Atkinson-provenance, accessibility-and-localisation-ratchet]
 
@@ -623,9 +623,9 @@ tasks:
     rice: {reach: 6, impact: 3, confidence: 0.75, effort_weeks: 6, score: 2.25}
     contexts: [experience, directory, events, recovery]
     depends_on: [T-B0-P04, T-B0-P08, T-B0-P10]
-    requirements: [LRM-WS-008, LRM-UX-005, LRM-UX-011]
-    uat: []
-    evidence_dependencies: [LRM-UX-009, LRM-PK-006, UAT-041, UAT-042, UAT-043, UAT-062]
+    requirements: [LRM-WS-008, LRM-UX-005, LRM-UX-009, LRM-UX-011, LRM-UX-012]
+    uat: [UAT-062]
+    evidence_dependencies: [LRM-PK-006, UAT-041, UAT-042, UAT-043]
     outputs: [Overview, Directory, Events, Health, Settings, Event-Details-state-machine, built-in-theme-choice, built-in-theme-persistence, interruption-recovery]
 
   - id: T-B0-PILOT
@@ -678,7 +678,7 @@ tasks:
     contexts: [relationships, reminders, review-attention]
     depends_on: [T-A0-P02]
     requirements: [LRM-RE-001, LRM-RE-002, LRM-RE-003, LRM-RE-004, LRM-RE-005, LRM-RE-006, LRM-RE-007, LRM-RE-008, LRM-RM-001, LRM-RM-002, LRM-RM-003, LRM-RM-004, LRM-RM-005]
-    uat: [UAT-004, UAT-023, UAT-051, UAT-052]
+    uat: [UAT-004, UAT-022, UAT-023, UAT-051, UAT-052]
     outputs: [relationship-contexts, manual-assessment, derived-freshness, source-linked-reasons, bounded-reminders, reason-only-Review, connector-neutral-handoff]
 
   - id: T-A0-P04
@@ -780,6 +780,6 @@ tasks:
     title: Prepare milestone-scoped public release evidence and support paths
     contexts: [packaging, governance, support]
     depends_on: [T-B0-ACCEPT]
-    requirements: [LRM-PK-008]
+    requirements: [LRM-L10N-008, LRM-PK-008]
     uat: []
     outputs: [install-path, recovery-path, migration-notes, accessibility-evidence, privacy-security-notes, support-path, contribution-path, checksums, provenance, known-issues]

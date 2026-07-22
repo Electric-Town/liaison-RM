@@ -6,8 +6,12 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Added
 
-- A canonical P03D Editorial Ledger design contract, semantic-token registry, documented design consultation, amended P04 delivery plan, and deterministic design-contract validator for the typed React/Tauri migration.
-- Recoverable canonical multi-target operations with staged and flushed targets, exact digest/revision preconditions, a durable commit decision, per-target progress, roll-forward recovery, external-edit refusal, projection-stale marking, and fault-injection coverage.
+- A single B0 integration ledger that preserves every recovery branch and dirty
+  worktree, assigns exclusive path ownership, records exact evidence classes,
+  rejects the divergent P03O status as current machine authority, and prevents
+  candidate source, installed bundles, and releases from being conflated.
+- A P03D-candidate Editorial Ledger design contract, semantic-token registry, documented design consultation, amended P04 delivery plan, and deterministic design-contract validator for the future typed React/Tauri migration. P03D remains blocked until accepted P03 and exact gate evidence.
+- Recoverable canonical multi-target-operation groundwork with staged and flushed targets, exact digest/revision preconditions, a durable commit decision, per-target progress, roll-forward recovery, external-edit refusal, projection-stale marking, and fault-injection coverage. P03 remains current until the hardened contract is integrated through every adapter and requalified.
 - A write-authoritative, `Arc`-owned Workspace Session that retains one
   capability root, workspace identity/schema, path-free repositories, an
   operating-system writer lock, quiescence, and explicit unavailable recovery,
@@ -84,6 +88,38 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Changed
 
+- Corrected live installed-product custody after the earlier reconciliation: an
+  arm64-only `0.1.0-alpha.1` application was observed in `/Applications`, but
+  its executable did not match the current local bundles, strict signing
+  verification failed, and its source commit was unknown. It later disappeared
+  during concurrent reconciliation; no application is currently installed or
+  qualified, while the captured hash remains forensic evidence.
+- Split the over-broad desktop acceptance ownership: P04 now owns only the
+  generated Overview/Workspace/People/Health foundation and transient semantic
+  rendering under `FG-B0-P04-001`; P11 owns the complete B0 journey and
+  persisted built-in appearance, A0 owns relationship-reminder accessibility,
+  and public-site metadata belongs to release evidence.
+- Added a proposed Experience bounded-context decision and explicit
+  Application anti-corruption boundary for capabilities, routes, drafts,
+  announcements, localization, and safe public disclosure. It remains
+  candidate authority until P03D is accepted.
+- Corrected installed-product truth: no Liaison application was present in the
+  standard macOS Applications directories during the 2026-07-22 reconciliation;
+  repository bundles and historical native runs are not installed release
+  evidence.
+- Corrected the People design-review provenance: the approved C+B+A decision
+  assigns People to Option C's full-canvas table directory and separate Person
+  screen. The later split-detail atlas export remains a non-authoritative visual
+  reference. New desktop source and browser renders are candidate evidence only.
+  The historical `3499a6e`/P03O observation remains evidence of that artifact,
+  but a recoverability defect found in the same source reopened P03; branch
+  machine truth is P03 current with P03D, P04, and B0 still closed.
+- Corrected generated planning and P04 evidence that had falsely described B0,
+  all requirements/UAT, WCAG, an installed app, and a DMG as complete. The
+  records now preserve those statements as invalidated history, restore the
+  canonical pre-alpha/P03 boundary, and link an exact-head production-readiness
+  audit without deleting later-feature design material.
+
 - Windows first-use registry creation now uses a cross-process initialisation
   lock so concurrent desktop or CLI launches cannot observe the directory
   between creation and canonical ACL verification.
@@ -101,6 +137,19 @@ All notable changes to Liaison RM are recorded here. The format follows Keep a C
 
 ### Fixed
 
+- Rebuilt the desktop People tab from a permanent create-form/card scaffold
+  into the approved Option C treatment: search across loaded local profiles, a
+  full-width semantic table, a separate read-only Person record surface,
+  contextual Person creation, explicit empty/loading/no-result states, and
+  320 CSS-pixel reflow with Back-to-row focus restoration. The Person surface
+  now preserves every labelled email and phone returned by the current DTO,
+  distinguishes record lifecycle from information state, programmatically
+  announces read-only mode, and styles revision/identifier provenance
+  explicitly. Refresh failures retain the last good rows with an associated
+  stale warning and retry direction, while page-local status remains near the
+  active work at narrow reflow. The obsolete split inspector and narrow detail
+  dialog were removed. Later edit, import, export, filter, custom-profile,
+  Events, and unbacked theme capabilities remain structurally absent.
 - Recoverable canonical mutations now avoid Windows handle failures: directory handles open with flush support and release before staged cleanup or uncommitted-operation discard; sequential mutations also retain an existing regular projection-stale marker.
 - P03 validation workflows are read-only again, and the obsolete one-shot source-mutation workflow has been removed.
 - Review-build policy now prevents an Events destination before `T-B0-P11` completes, and contributor guidance records the domain, application, persistence, privacy, interaction, and installed-artifact work required before Events can be enabled.

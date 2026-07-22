@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the canonical P03D design contract and P04 plan bindings."""
+"""Validate the P03D design candidate and phase-correct P04 plan bindings."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ TOKENS = ROOT / "design" / "semantic-tokens.v1.json"
 PLAN = ROOT / "docs" / "product" / "p04-amended-plan.md"
 CONSULTATION = ROOT / "docs" / "evidence" / "design" / "p03d-design-consultation-2026-07-19.md"
 REVIEW = ROOT / "docs" / "evidence" / "design" / "p03d-plan-design-review-2026-07-19.md"
+TRACEABILITY = ROOT / "spec" / "traceability-ownership.json"
 
 REQUIRED_DESIGN_TERMS = [
     "Editorial Ledger",
@@ -30,6 +31,16 @@ REQUIRED_DESIGN_TERMS = [
     "OperationStatus",
     "Unknown — needs attention",
     "React / TypeScript presentation",
+    "P03D candidate; binding only after `FG-B0-DESIGN-001` acceptance",
+    "P04 preserves only the already implemented foundation through four capability-backed destinations",
+    "P11 later composes the complete B0 navigation",
+    "P04 neither writes an appearance preference nor claims relaunch persistence",
+    "P06 owns Directory pagination, projection, and scale evidence",
+]
+
+FORBIDDEN_P04_OWNERSHIP = [
+    "route-level code splitting for Directory and Events",
+    "The universal Mac review build proves the installed shell, theme persistence, and rollback",
 ]
 
 REQUIRED_TOKENS = {
@@ -59,7 +70,7 @@ REQUIRED_TOKENS = {
 
 def main() -> int:
     errors: list[str] = []
-    for path in [DESIGN, TOKENS, PLAN, CONSULTATION, REVIEW]:
+    for path in [DESIGN, TOKENS, PLAN, CONSULTATION, REVIEW, TRACEABILITY]:
         if not path.is_file():
             errors.append(f"missing design artifact: {path.relative_to(ROOT)}")
 
@@ -67,6 +78,9 @@ def main() -> int:
     for term in REQUIRED_DESIGN_TERMS:
         if term not in design:
             errors.append(f"DESIGN.md is missing required contract term: {term}")
+    for term in FORBIDDEN_P04_OWNERSHIP:
+        if term in design:
+            errors.append(f"DESIGN.md still assigns downstream scope to P04: {term}")
 
     if "http://" in design or "https://" in design:
         errors.append("DESIGN.md must not introduce a runtime remote-asset URL")
@@ -96,6 +110,26 @@ def main() -> int:
             if "resolution rule" not in system_rule:
                 errors.append("semantic token registry must define system as a resolution rule")
 
+    if TRACEABILITY.is_file():
+        try:
+            traceability = json.loads(TRACEABILITY.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as error:
+            errors.append(f"traceability ownership is invalid JSON: {error}")
+        else:
+            p03d_status = (
+                traceability.get("task_ownership", {})
+                .get("T-B0-P03D", {})
+                .get("status")
+            )
+            candidate_marker = (
+                "Status: P03D candidate; binding only after "
+                "`FG-B0-DESIGN-001` acceptance"
+            )
+            if p03d_status != "complete" and candidate_marker not in design:
+                errors.append(
+                    "DESIGN.md must remain candidate-labelled until P03D is complete"
+                )
+
     plan = PLAN.read_text(encoding="utf-8") if PLAN.is_file() else ""
     for required in [
         "generate or compile-check",
@@ -113,7 +147,7 @@ def main() -> int:
             print(f"- {error}", file=sys.stderr)
         return 1
 
-    print("Design-contract check passed: canonical direction, token registry, consultation, review, and P04 plan agree")
+    print("Design-contract check passed: candidate direction, token registry, phase ownership, consultation, review, and P04 plan agree")
     return 0
 
 

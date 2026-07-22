@@ -1,11 +1,11 @@
 # Liaison RM design contract
 
-Version: 1.0.0
-Status: canonical for `T-B0-P04` through `T-B0-P11`
-Decision date: 2026-07-19
+Version: 1.1.0
+Status: P03D candidate; binding only after `FG-B0-DESIGN-001` acceptance
+Decision date: 2026-07-22
 Owning context: Experience
 
-This document is the presentation authority for Liaison RM's Workplace Review Alpha. It was created by the post-P03 design consultation required by `T-B0-P03D`. Product, domain, privacy, recovery, and storage rules remain owned by `SPEC.md`, accepted ADRs, application contracts, and tests. A visual treatment may not weaken those rules.
+This document is the candidate presentation authority for Liaison RM's Workplace Review Alpha. The design consultation and review material is preserved, but `T-B0-P03` is still current and `T-B0-P03D` is blocked; this file is therefore neither accepted P03D evidence nor permission to start P04. Product, domain, privacy, recovery, and storage rules remain owned by `SPEC.md`, accepted ADRs, application contracts, and tests. A visual treatment may not weaken those rules.
 
 ## 1. Experience outcome
 
@@ -27,17 +27,18 @@ The paper treatment is character, not noise. Texture stays on the canvas and nev
 
 ## 2. Scope and route contract
 
-The B0 application exposes five destinations in this order:
+P04 preserves only the already implemented foundation through four capability-backed destinations:
 
-1. **Overview** — workspace authority, recovery, recent operations, and direct routes into unfinished work.
-2. **Directory** — People, Organisations, Groups, Locations, Memberships, import, validation, and repair.
-3. **Events** — Details, Cohort, Attendees, Readiness, and Brief.
-4. **Health** — lock-free inspection, canonical-record findings, projection state, and safe recovery guidance.
-5. **Settings** — built-in appearance choice, accessibility preferences, local policy, key/recovery status, and application evidence.
+1. **Overview** — presentation-only orientation over Application status and the currently held workspace session.
+2. **Workspace** — create, open, resume, close, authority, and recovery state.
+3. **People** — bounded create, list, search, and read-only Person reachability already supplied by the accepted pre-P04 surface.
+4. **Health** — lock-free inspection, canonical-record findings, and safe recovery guidance already supplied by the accepted pre-P04 surface.
+
+P11 later composes the complete B0 navigation from its accepted upstream capabilities: Overview, Directory, Events, Health, and Settings, including Details, Cohort, Attendees, Readiness, and Brief. P04 supplies semantic components and route-mapping seams but does not publish speculative Directory, Events, or Settings route IDs.
 
 Navigation is capability-honest. A destination is visible only when its complete route contract is compiled and available. Liaison does not show disabled "coming soon" items.
 
-At widths below 760 CSS pixels, the permanent rail becomes one labelled **Sections** control. It is never replaced by icon-only navigation or a five-item horizontal scroller. The active destination and active Event stage remain available to assistive technology through `aria-current`.
+At widths below 760 CSS pixels, the permanent rail becomes one labelled **Sections** control. It is never replaced by icon-only navigation or a horizontal scroller. The active destination, and the active Event stage once P11 owns that workflow, remain available to assistive technology through `aria-current`.
 
 ## 3. Application architecture
 
@@ -293,31 +294,31 @@ This is an evidence target, not a claim of certification.
 - Human approval is recorded by locale, source revision, reviewer, and date.
 - Automated stylometry is not an authorship detector or acceptance substitute.
 
-## 13. Theme persistence and rollback
+## 13. Theme preview, persistence, and rollback
 
-B0 persists one built-in selection per workspace owner: `system`, `light`, `dark`, or `high_contrast`.
+P04 renders `system`, `light`, `dark`, and `high_contrast` through one semantic contract. Its preview is transient: cancel, navigation, reload, or a failed preview restores the prior rendering, and `system` follows operating-system changes. P04 neither writes an appearance preference nor claims relaunch persistence.
 
-- Preview is temporary until Save succeeds.
-- A failed save restores the last persisted built-in and announces the failure.
-- Relaunch restores the saved choice before the first meaningful paint.
-- `system` follows subsequent OS changes.
-- Theme changes cannot occur while another native mutation is active.
-- Appearance records contain no relationship, dietary, or identity data.
-- Third-party theme packages are outside B0 and A0.
+P11 Settings later persists one built-in selection per workspace owner:
+
+- preview remains temporary until a Settings application operation succeeds;
+- a failed save restores the last persisted built-in and announces the failure;
+- relaunch restores the saved choice before the first meaningful paint;
+- appearance records contain no relationship, dietary, or identity data; and
+- theme changes serialize with other native mutations.
+
+Third-party theme packages remain outside B0 and A0.
 
 ## 14. Performance budget
 
-P04 measures and enforces:
+P04 measures and enforces for its four-route foundation:
 
 - first meaningful shell render without network access;
-- route-level code splitting for Directory and Events;
-- no unbounded DOM rendering for Directory rows;
-- virtualized or paged Directory results after the validated threshold;
+- bounded rendering for the existing People and Health result sets;
 - no layout shift from font loading after interactive controls appear;
 - no synchronous parsing of the canonical workspace in the webview;
 - no remote font, icon, texture, analytics, or telemetry request.
 
-The exact numeric budgets are recorded from the first P04 baseline and then may tighten, not silently loosen.
+P06 owns Directory pagination, projection, and scale evidence. P10/P11 own Events data-route and complete-workflow performance. Their later budgets may build on P04 components but cannot be claimed from the P04 shell baseline. Exact numeric budgets are recorded from the first owning-phase baseline and then may tighten, not silently loosen.
 
 ## 15. Prohibited patterns
 
@@ -341,11 +342,11 @@ P04 is merge-ready only when:
 1. React/TypeScript replaces the vanilla shell without duplicating domain rules.
 2. Generated or compile-checked DTOs cover every exposed command and result.
 3. The component contract and semantic-token registry are versioned and tested.
-4. All four built-in selections work through one component contract.
+4. All four built-in selections render transiently through one component contract without a persistence claim.
 5. The current Workspace, People, and Health behavior has parity tests before the old shell is removed.
 6. Every normal pull-request matrix passes on Linux, macOS, and Windows.
 7. Browser tests cover keyboard, focus, 320/360 reflow, 400% zoom, reduced motion, en-XA, and zero external requests.
-8. The universal Mac review build proves the installed shell, theme persistence, and rollback.
+8. The universal Mac review build proves the installed shell, transient preview cancellation, operating-system appearance resolution, and fail-closed fallback; P11 owns persistence and save rollback.
 9. Font provenance, licences, hashes, fallbacks, and supported script coverage are recorded.
 10. No closed P05–P11 or A0 behavior is represented as implemented.
 

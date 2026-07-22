@@ -393,7 +393,8 @@ gates:
       - Changelog, migration, known issues, installation, upgrade, backup, restore, rollback, and recovery knowledge are current.
       - Artifacts have checksums and provenance linked to source commit.
       - Claims match test evidence and unresolved risks are disclosed.
-    evidence_required: [release checklist, signed checksums, knowledge validation]
+      - Public localized metadata agrees with visible page language while canonical relationship records remain free of marketing metadata.
+    evidence_required: [release checklist, signed checksums, knowledge validation, public metadata reconciliation, canonical-vault metadata negative fixture]
 
   - id: FG-B0-001
     release: B0
@@ -419,6 +420,18 @@ gates:
       - Plan design review checks the P04 plan against DESIGN.md, the complete B0 journey, localisation, accessibility, recovery, and theme requirements before implementation starts.
       - G0 records this future gate but does not create DESIGN.md or preselect the visual direction.
     evidence_required: [DESIGN.md, design-consultation record, plan-design-review report, amended P04 plan]
+
+  - id: FG-B0-P04-001
+    release: B0
+    name: Typed accessible desktop foundation accepted
+    blocks: [B0]
+    criteria:
+      - One generated Application-to-Tauri-to-Experience contract covers command names, request envelopes, result envelopes, public errors, session continuity, and capability identifiers without handwritten DTO drift.
+      - The replacement client preserves the existing Workspace, People, and Health use cases and exposes only Overview, Workspace, People, and Health; later-phase routes are structurally absent.
+      - One semantic token and component foundation renders transient system, light, dark, and high_contrast previews without claiming persisted appearance or the complete B0 workflow.
+      - Exact-head browser and installed-shell evidence covers keyboard, named screen reader, focus, contrast, non-colour state, 320 and 360 CSS pixel reflow, 400 percent zoom, reduced motion, long content, en-XA, error recovery, offline operation, and zero external requests.
+      - Browser, native, and Application scenarios prove reload-safe writer-session continuity, typed failure, bounded synthetic mutation, draft preservation, and read-only Health parity.
+    evidence_required: [UAT-073, UAT-074, UAT-LOC-001, UAT-LOC-002, generated-contract drift check, legacy-replacement parity report, exact-head installed-shell accessibility evidence]
 
   - id: FG-B0-002
     release: B0
@@ -485,7 +498,7 @@ gates:
     criteria:
       - Relationship assessment, derived freshness, bounded reminders, suppressions, and source-linked reason-only Review remain separate and explainable.
       - Workplace purpose denies assessment, allocation, cadence, ranking, scoring, and every generic task or project field.
-    evidence_required: [UAT-004, UAT-023, UAT-051, UAT-052]
+    evidence_required: [UAT-004, UAT-022, UAT-023, UAT-051, UAT-052]
 
   - id: FG-A0-G2C
     release: A0

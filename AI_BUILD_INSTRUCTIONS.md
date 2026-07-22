@@ -43,14 +43,14 @@ Select one implementation task whose dependencies are complete. Do not combine u
 
 Work follows this order. A later item may be explored in isolation, but it cannot be merged as a competing authority or used to claim the earlier gate complete.
 
-Execution position: G0/P00 and P01 are complete on the default branch; G1 is current and P02 is the active package.
+Execution position: G0/P00 and P01 are complete, P02 is also complete; G1 is current and P03 is the active package. P03D and every later task remain blocked.
 
 1. **P00 — contract truth:** reconcile accepted ADRs, formats, requirements, UAT, gates, tasks, versions, commands, evidence, and stale-branch claims.
 2. **P01 — application composition:** add `liaison-application`, typed commands/DTOs/errors, common CLI/Tauri composition, tolerant Health, and correct validation/error semantics.
 3. **P02 — workspace authority:** add `WorkspaceSession`, composite path-local and per-user `WorkspaceId` advisory writer authority, read-only recovery, quiescence, and explicit schema handling.
 4. **P03 — recoverable operations:** route every canonical mutation through staged multi-target operations with a durable commit decision and roll-forward recovery.
-5. **P03 design gate:** run design consultation to create canonical `DESIGN.md`, then run plan design review against the complete B0 journey and amend P04 before implementation. G0 records this gate but does not create the file or preselect the direction.
-6. **P04 — desktop inbound adapter:** migrate to React/TypeScript/Vite over typed Rust commands and prove Workspace, People, and Health parity before new event UI.
+5. **P03 design gate:** after P03 acceptance, accept the candidate `DESIGN.md`, proposed Experience boundary, corrected machine ownership, and amended P04 plan. Candidate design files or browser evidence do not authorize P04.
+6. **P04 — desktop inbound adapter:** migrate to React/TypeScript/Vite over generated typed Rust commands and prove the Overview/Workspace/People/Health foundation under `FG-B0-P04-001`. Directory, Events, Settings, persisted appearance, and complete-journey acceptance remain P11-owned.
 7. **P05/P05-OKF/P06 — portable domain and People foundation:** establish P05's Directory/Event/dietary contracts in G1 before P06/P07; after P03 and P04, add the pinned OKF v0.1 Draft strict writer/schema port and tolerant Directory reader/domain-validity quarantine under `FG-B0-001`. Do not expand P01/P02.
 8. **P06-REPAIR — guided canonical repair:** `T-B0-P06-REPAIR` runs after P03 and P06, previews invalid-record repair, creates an exact backup, applies through failure-atomic recoverable operations, records an exact receipt, supports exact rollback, and closes `UAT-040` under `FG-R1-002` before P09-OKF.
 9. **P07/P08 — separate security foundations:** keep sensitive types/policy exclusively in P07 under `FG-B0-002`, then prove checkpoint and encrypted clean-install recovery in P08; G3 consumes the earlier P05 contracts rather than preceding these G1 tasks.

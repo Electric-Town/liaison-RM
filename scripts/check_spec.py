@@ -950,6 +950,50 @@ def validate_traceability(
     milestones = ownership.get("milestones", [])
     evidence_owners = ownership.get("evidence_owners", [])
 
+    # P03D split the historical R2 umbrella so P04 cannot accidentally claim
+    # downstream B0, A0, or public-site acceptance. Keep these exact owner
+    # assignments executable rather than relying on prose in the amended plan.
+    expected_task_gates = {
+        "T-B0-P04": "FG-B0-P04-001",
+        "T-B0-P11": "FG-B0-003",
+        "T-A0-P03": "FG-A0-G2B",
+        "T-REL-001": "FG-REL-001",
+    }
+    for task, gate in expected_task_gates.items():
+        if task_ownership.get(task, {}).get("owning_gate") != gate:
+            errors.append(f"{task}: phase ownership must use {gate}")
+
+    expected_requirement_owners = {
+        "LRM-UX-009": ("T-B0-P11", "FG-B0-003"),
+        "LRM-UX-012": ("T-B0-P11", "FG-B0-003"),
+        "LRM-UX-016": ("T-B0-P04", "FG-B0-P04-001"),
+        "LRM-UX-017": ("T-B0-P04", "FG-B0-P04-001"),
+        "LRM-L10N-008": ("T-REL-001", "FG-REL-001"),
+    }
+    for identifier, (task, gate) in expected_requirement_owners.items():
+        edge = requirement_ownership.get(identifier, {})
+        if (edge.get("owning_task"), edge.get("owning_gate")) != (task, gate):
+            errors.append(
+                f"{identifier}: phase ownership must be {task} under {gate}"
+            )
+
+    expected_uat_owners = {
+        "UAT-021": ("T-A0-P01", "FG-A0-G2C"),
+        "UAT-022": ("T-A0-P03", "FG-A0-G2B"),
+        "UAT-062": ("T-B0-P11", "FG-B0-003"),
+        "UAT-073": ("T-B0-P04", "FG-B0-P04-001"),
+        "UAT-074": ("T-B0-P04", "FG-B0-P04-001"),
+    }
+    for identifier, (task, gate) in expected_uat_owners.items():
+        edge = uat_ownership.get(identifier, {})
+        if (edge.get("owning_task"), edge.get("owning_gate")) != (task, gate):
+            errors.append(
+                f"{identifier}: phase ownership must be {task} under {gate}"
+            )
+
+    if gate_ownership.get("FG-R2-001", {}).get("acceptance_task") == "T-B0-P04":
+        errors.append("FG-R2-001: historical umbrella cannot be P04 acceptance")
+
     approved_strategy = ownership.get("approved_strategy", {})
     if approved_strategy.get("approved_sha256") != (
         "795a6e6751cd29a995478e254323f491e68a53ef7c35fa729d8627b87cd37089"

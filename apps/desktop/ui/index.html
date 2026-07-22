@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en-IE" data-theme="light">
+<html lang="en-IE">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
   <meta name="description" content="Liaison RM local relationship memory and attention system.">
   <title>Liaison RM</title>
   <link rel="stylesheet" href="styles.css">
-  <script type="module" src="app.js"></script>
+  <script src="app.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to main content</a>
@@ -17,809 +17,278 @@
         <span class="brand-mark" aria-hidden="true">LR</span>
         <span>
           <strong>Liaison RM</strong>
-          <small>Local relationship memory · B0 Workplace Alpha</small>
+          <small>Local relationship memory</small>
         </span>
       </div>
-      <div style="display:flex; align-items:center; gap:0.75rem;">
-        <button id="topbar-theme-toggle" class="secondary-button" type="button" title="Quick toggle Light/Dark Theme" style="min-height:38px; padding:0.3rem 0.65rem; display:flex; align-items:center; gap:0.4rem;">
-          <span id="theme-toggle-icon">🌙</span> <span id="theme-toggle-text">Dark Mode</span>
-        </button>
-        <div class="local-status" aria-label="Storage status">
-          <span class="status-dot" aria-hidden="true"></span>
-          <span id="authority-label">Local Workspace · Active</span>
-        </div>
+      <div class="local-status" aria-label="Storage status">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="authority-label">Checking local-authoritative review build…</span>
       </div>
     </header>
 
-    <aside class="sidebar" aria-label="Primary navigation">
-      <nav>
-        <button class="nav-button is-active" type="button" data-route="today" aria-current="page">
-          <span aria-hidden="true">1</span> Today
+    <aside class="sidebar" aria-label="Application sections">
+      <div class="sidebar-main">
+        <button id="sections-toggle" class="sections-toggle" type="button" aria-label="Sections" aria-controls="primary-navigation" aria-expanded="false" hidden>
+          <span>Sections</span>
+          <strong id="current-section-label">Workspace</strong>
         </button>
-        <button class="nav-button" type="button" data-route="people">
-          <span aria-hidden="true">2</span> People
-        </button>
-        <button class="nav-button" type="button" data-route="readiness">
-          <span aria-hidden="true">3</span> Events
-        </button>
-        <button class="nav-button" type="button" data-route="health">
-          <span aria-hidden="true">4</span> Health
-        </button>
-        <button class="nav-button" type="button" data-route="settings">
-          <span aria-hidden="true">5</span> Settings
-        </button>
-      </nav>
+        <nav id="primary-navigation" aria-label="Available destinations">
+          <button class="nav-button is-active" type="button" data-route="setup" aria-label="Workspace" aria-current="page">
+            <span class="nav-index" aria-hidden="true">1</span>
+            <span class="nav-label"><strong>Workspace</strong><small>Open local files</small></span>
+          </button>
+          <button class="nav-button" type="button" data-route="people" aria-label="People">
+            <span class="nav-index" aria-hidden="true">2</span>
+            <span class="nav-label"><strong>People</strong><small>Directory records</small></span>
+          </button>
+          <button class="nav-button" type="button" data-route="health" aria-label="Health">
+            <span class="nav-index" aria-hidden="true">3</span>
+            <span class="nav-label"><strong>Health</strong><small>Read-only findings</small></span>
+          </button>
+        </nav>
+      </div>
+
       <div class="sidebar-note">
-        <strong>Local workspace</strong>
-        <p>~/Documents/Liaison RM/Workplace events</p>
-        <span class="chip-badge chip-success" style="margin-top:0.4rem;">● Airgap ready · No network</span>
+        <span class="sidebar-kicker">Local authority</span>
+        <strong>No account required</strong>
+        <p>Canonical records stay in the folder you choose.</p>
       </div>
     </aside>
 
     <main id="main-content" tabindex="-1">
-      <!-- 01 TODAY / OVERVIEW (ATLAS-B07 Dominant Work Surface) -->
-      <section class="page" data-page="today" aria-labelledby="today-heading">
+      <section class="page" data-page="setup" aria-labelledby="setup-heading">
         <div class="page-heading">
           <div>
-            <p class="eyebrow">B0 Workplace Review Alpha</p>
-            <h1 id="today-heading" tabindex="-1">Today · Friday, 24 July 2026</h1>
+            <p class="eyebrow">Workspace</p>
+            <h1 id="setup-heading" tabindex="-1">Choose where Liaison keeps your files</h1>
+            <p>Create a new local workspace or open an existing Liaison folder. No connection is configured in this review build.</p>
           </div>
-          <button class="primary-button" type="button" style="display:inline-flex; align-items:center; gap:0.4rem;">
-            <span>+</span> Quick capture
-          </button>
+          <span class="alpha-badge">Mac review build</span>
         </div>
 
-        <!-- Dominant Hero Action Surface (ATLAS-B07) -->
-        <div class="hero-work-surface hero-danger">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem;">
-            <div>
-              <span class="eyebrow" style="color:var(--danger) !important;">⚠️ Primary Action Needed</span>
-              <h2 style="margin:0.3rem 0; font-size:1.6rem; font-family:var(--font-title);">All-hands lunch — Dietary Reconciliation</h2>
-              <p style="margin:0 0 0.75rem; color:var(--muted);">Friday, 24 July 2026 · 12:00–13:30 · Canteen Building A · Floor 3</p>
-              <div class="callout" style="border-left-color:var(--danger); background:var(--danger-soft); margin:0;">
-                <strong style="color:var(--danger);">1 attendee needs dietary clarification</strong>
-                <span style="font-size:0.88rem; display:block; margin-top:0.2rem;">Resolve remaining gap before generating the least-disclosure catering brief.</span>
-              </div>
-            </div>
-            <div>
-              <button class="primary-button continue-readiness-btn" type="button" style="background:var(--danger); border-color:var(--danger); color:#fff; min-height:44px; padding:0.6rem 1.2rem; font-size:0.95rem;">
-                Continue readiness reconciliation →
-              </button>
-            </div>
-          </div>
+        <div class="notice" role="note">
+          <span class="notice-mark" aria-hidden="true">i</span>
+          <span><strong>Readable by design.</strong> People are stored as Markdown with YAML front matter. Indexes can be rebuilt.</span>
         </div>
 
-        <div class="date-strip" aria-label="Current week date selector">
-          <button class="date-pill" type="button"><small>MON</small><strong>20</strong></button>
-          <button class="date-pill" type="button"><small>TUE</small><strong>21</strong></button>
-          <button class="date-pill" type="button"><small>WED</small><strong>22</strong></button>
-          <button class="date-pill" type="button"><small>THU</small><strong>23</strong></button>
-          <button class="date-pill is-active" type="button" aria-current="date"><small>FRI</small><strong>24</strong></button>
-          <button class="date-pill" type="button"><small>SAT</small><strong>25</strong></button>
-          <button class="date-pill" type="button"><small>SUN</small><strong>26</strong></button>
-        </div>
-
-        <div class="two-column" style="margin-top:1.2rem;">
-          <!-- Upcoming Scheduled Events -->
-          <div class="card">
-            <span class="eyebrow">Upcoming Cohorts</span>
-            <h2 style="margin:0.2rem 0 1rem;">Next workplace events</h2>
-            <div style="display:grid; gap:0.85rem;">
-              <div style="padding-bottom:0.75rem; border-bottom:1px solid var(--border);">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <strong>29 Jul · Team coffee catch-up</strong>
-                  <span class="chip info">Details confirmed</span>
-                </div>
-                <small style="color:var(--muted); display:block; margin-top:0.2rem;">10:00 - 10:30 · Kitchen Building A</small>
-              </div>
+        <div class="two-column workspace-layout">
+          <form id="workspace-form" class="card form-card">
+            <div class="section-heading">
+              <span class="section-number" aria-hidden="true">01</span>
               <div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <strong>06 Aug · Department offsite</strong>
-                  <span class="chip info">Details confirmed</span>
-                </div>
-                <small style="color:var(--muted); display:block; margin-top:0.2rem;">All day · Moniusz Lodge</small>
+                <h2>Create a workspace</h2>
+                <p>Start with a folder you control.</p>
               </div>
             </div>
-            <button class="secondary-button" type="button" data-route="readiness" style="width:100%; margin-top:1.2rem;">View all scheduled events →</button>
-          </div>
+            <div class="field">
+              <label for="workspace-path">Absolute folder path</label>
+              <div class="input-with-action">
+                <input id="workspace-path" name="path" type="text" autocomplete="off" spellcheck="false" required aria-describedby="path-help" data-native-operation="global">
+                <button id="use-default-path" class="secondary-button" type="button" data-native-operation="global">Use Documents</button>
+              </div>
+              <p id="path-help" class="field-help">Use a full path to a folder you control.</p>
+            </div>
+            <div class="field">
+              <label for="workspace-name">Workspace name</label>
+              <input id="workspace-name" name="name" type="text" value="Workplace review" maxlength="120" required data-native-operation="global">
+            </div>
+            <div class="field">
+              <label for="workspace-profile">Workspace profile</label>
+              <select id="workspace-profile" name="profile" data-native-operation="global">
+                <option value="workplace" selected>Workplace</option>
+                <option value="family">Family</option>
+                <option value="team">Team</option>
+                <option value="personal">Personal</option>
+              </select>
+            </div>
+            <button class="primary-button" type="submit" data-native-operation="global">Create local workspace</button>
+          </form>
 
-          <!-- Event Preparation Stepper Preview -->
-          <div class="card">
-            <span class="eyebrow">Workflow Pipeline</span>
-            <h2 style="margin:0.2rem 0 0.8rem;">Preparation stepper</h2>
-            <div class="stepper" aria-label="Overview stepper preview">
-              <div class="step-item is-confirmed"><span class="step-icon">✓</span> Details</div>
-              <div class="step-divider"></div>
-              <div class="step-item is-confirmed"><span class="step-icon">✓</span> Cohort</div>
-              <div class="step-divider"></div>
-              <div class="step-item is-confirmed"><span class="step-icon">✓</span> Attendees</div>
-              <div class="step-divider"></div>
-              <div class="step-item is-action-needed"><span class="step-icon">!</span> Readiness</div>
-              <div class="step-divider"></div>
-              <div class="step-item"><span class="step-icon">5</span> Brief</div>
+          <section class="card workspace-open-card" aria-labelledby="open-heading">
+            <div class="section-heading">
+              <span class="section-number" aria-hidden="true">02</span>
+              <div>
+                <h2 id="open-heading">Open an existing workspace</h2>
+                <p>Validate its manifest through the native application boundary.</p>
+              </div>
             </div>
-            <div style="margin-top:1rem; padding-top:0.75rem; border-top:1px solid var(--border);">
-              <small style="color:var(--muted);">Least-disclosure rule: Only verified dietary instructions enter the brief payload.</small>
-              <button class="secondary-button continue-readiness-btn" type="button" style="width:100%; margin-top:0.6rem;">Open reconciliation table →</button>
+            <div class="button-stack">
+              <button id="open-workspace" class="secondary-button full-width" type="button" data-native-operation="global">Open existing workspace</button>
+              <button id="inspect-workspace-health" class="quiet-button full-width" type="button" data-native-operation="global">Run read-only Health</button>
             </div>
-          </div>
+            <div class="divider" aria-hidden="true"></div>
+            <h3>Current workspace</h3>
+            <dl id="workspace-summary" class="summary-list">
+              <div><dt>Status</dt><dd>None selected</dd></div>
+              <div><dt>Profile</dt><dd>—</dd></div>
+              <div><dt>People</dt><dd>—</dd></div>
+            </dl>
+          </section>
         </div>
       </section>
 
-      <!-- 02 EVENTS -->
-      <section class="page" data-page="events" aria-labelledby="events-heading" hidden>
-        <div class="page-heading">
+      <section class="page people-page" data-page="people" aria-labelledby="people-heading" hidden>
+        <div class="page-heading people-page-heading">
           <div>
-            <p class="eyebrow">Events & Cohorts</p>
-            <h1 id="events-heading" tabindex="-1">Scheduled Workplace Events</h1>
-          </div>
-          <div style="display:flex; align-items:center; gap:0.5rem;">
-            <button class="secondary-button" type="button">&lt; Prev</button>
-            <strong>JUL 20–26, 2026</strong>
-            <button class="secondary-button" type="button">Today</button>
-            <button class="secondary-button" type="button">Next &gt;</button>
+            <div class="people-title-row">
+              <h1 id="people-heading" tabindex="-1">People</h1>
+              <span id="people-count" class="people-count">0 people</span>
+            </div>
+            <p>All records are stored locally and remain under your control.</p>
           </div>
         </div>
 
-        <div style="display:grid; gap:1rem; margin-top:1.2rem;">
-          <!-- Card 1 (Highlighted Active Event) -->
-          <div class="card" style="border:2px solid var(--danger); background:var(--danger-soft); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
-            <div>
-              <span class="eyebrow" style="color:var(--danger) !important;">FRI 24 JUL · TODAY</span>
-              <h2 style="margin:0.2rem 0; color:var(--danger);">All-hands lunch</h2>
-              <small style="color:var(--ink);">12:00 - 13:30 · Canteen Building A · Floor 3</small>
-            </div>
-            <div style="display:flex; align-items:center; gap:0.75rem;">
-              <span class="chip bad">Readiness action needed</span>
-              <button class="primary-button continue-readiness-btn" type="button" style="background:var(--danger); border-color:var(--danger); color:#fff;">Continue readiness ▾</button>
-            </div>
-          </div>
-
-          <!-- Card 2 -->
-          <div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
-            <div>
-              <span class="eyebrow">WED 29 JUL</span>
-              <h2 style="margin:0.2rem 0;">Team coffee catch-up</h2>
-              <small style="color:var(--muted);">10:00 - 10:30 · Kitchen Building A · Floor 3</small>
-            </div>
-            <div style="display:flex; align-items:center; gap:0.75rem;">
-              <span class="chip good">Details confirmed</span>
-              <button class="secondary-button" type="button">Open event ▾</button>
-            </div>
-          </div>
-
-          <!-- Card 3 -->
-          <div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
-            <div>
-              <span class="eyebrow">THU 06 AUG</span>
-              <h2 style="margin:0.2rem 0;">Department offsite</h2>
-              <small style="color:var(--muted);">All day · Moniusz Lodge · Wicklow</small>
-            </div>
-            <div style="display:flex; align-items:center; gap:0.75rem;">
-              <span class="chip good">Details confirmed</span>
-              <button class="secondary-button" type="button">Open event ▾</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 03 EVENT ATTENDEE READINESS (ATLAS-B04 & ATLAS-B05 Clarified) -->
-      <section class="page" data-page="readiness" aria-labelledby="readiness-heading" hidden>
-        <div class="page-heading">
-          <div>
-            <h1 id="readiness-heading" tabindex="-1" style="font-family:var(--font-title); font-size:1.8rem; margin:0;">All-hands lunch</h1>
-            <p style="color:var(--muted); margin:0.2rem 0 0; font-size:0.9rem;">Friday, 24 July 2026 · 12:00–13:30 · Canteen · Building A · Floor 3</p>
-          </div>
-          <div style="display:flex; gap:0.5rem;">
-            <button class="secondary-button" type="button">Export CSV brief</button>
-            <button class="secondary-button" type="button">Export HTML brief</button>
-            <span class="maturity-badge">PDF / Print · A0 Planned</span>
-          </div>
+        <div id="people-workspace-warning" class="notice warning" role="status">
+          <span class="notice-mark" aria-hidden="true">!</span>
+          <span><strong>Workspace required.</strong> Open or create a workspace before viewing or adding people.</span>
         </div>
 
-        <ol class="stepper" aria-label="Event preparation steps">
-          <li class="stepper-item done"><b>✓</b>Details <small style="display:block; font-size:0.7rem; color:var(--success);">Confirmed</small></li>
-          <li class="stepper-item done"><b>✓</b>Cohort <small style="display:block; font-size:0.7rem; color:var(--success);">Confirmed</small></li>
-          <li class="stepper-item done"><b>✓</b>Attendees <small style="display:block; font-size:0.7rem; color:var(--success);">4 confirmed</small></li>
-          <li class="stepper-item current" aria-current="step"><b>!</b>Readiness <small style="display:block; font-size:0.7rem; color:var(--danger);">Action needed</small></li>
-          <li class="stepper-item"><b>○</b>Brief <small style="display:block; font-size:0.7rem; color:var(--muted);">Not started</small></li>
-        </ol>
+        <section class="directory-workspace" aria-labelledby="directory-heading">
+          <div class="directory-toolbar">
+            <div class="field search-field">
+              <label for="people-search">Search people</label>
+              <input id="people-search" type="search" autocomplete="off" placeholder="Search by name, email, phone, or alias" aria-describedby="people-count-summary">
+            </div>
+            <div class="directory-toolbar-actions">
+              <button id="add-person" class="primary-button" type="button" data-native-operation="session" aria-describedby="people-workspace-warning">Add person</button>
+              <button id="refresh-people" class="secondary-button" type="button" data-native-operation="session">Refresh</button>
+              <button id="clear-people-search" class="quiet-button" type="button" hidden>Clear search</button>
+            </div>
+          </div>
 
-        <div class="readiness-container" style="margin-top:1.2rem;">
-          <!-- Left Column: Table & Least Disclosure Check -->
-          <div>
-            <section class="panel">
-              <div class="panel-head">
-                <div>
-                  <h2 style="margin:0;">Attendee reconciliation</h2>
-                  <small style="color:var(--muted);">4 of 4 attendees accounted for · 1 needs clarification</small>
-                </div>
+          <p id="people-operation-status" class="operation-status" data-page-status role="status" aria-live="polite">Ready to browse the local directory.</p>
+
+          <div id="people-refresh-notice" class="notice warning directory-refresh-notice" role="status" hidden>
+            <span class="notice-mark" aria-hidden="true">!</span>
+            <span><strong>Directory may be stale.</strong> Refresh failed, so these are the last successfully loaded records. Retry Refresh.</span>
+          </div>
+
+          <section class="directory-results" aria-labelledby="directory-heading">
+            <div class="directory-heading">
+              <div>
+                <h2 id="directory-heading">All people</h2>
               </div>
-              <div class="table-wrap">
-                <table style="width:100%; border-collapse:collapse;">
-                  <thead>
-                    <tr style="background:var(--sidebar-background); text-align:left; border-bottom:2px solid var(--border);">
-                      <th style="padding:0.6rem;">Attendee</th>
-                      <th style="padding:0.6rem;">Availability</th>
-                      <th style="padding:0.6rem;">Dietary information</th>
-                      <th style="padding:0.6rem;">Disclosure</th>
-                      <th style="padding:0.6rem;">Readiness</th>
-                      <th style="padding:0.6rem;">Next action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr class="attendee-row" data-attendee="AB" style="border-bottom:1px solid var(--border); cursor:pointer;">
-                      <td style="padding:0.6rem;"><strong>AB Aisling Byrne</strong></td>
-                      <td style="padding:0.6rem;">Confirmed 09 Jul</td>
-                      <td style="padding:0.6rem;">No beef</td>
-                      <td style="padding:0.6rem;">Instruction available</td>
-                      <td style="padding:0.6rem;"><span class="chip good">✓ Ready</span></td>
-                      <td style="padding:0.6rem;"><button class="secondary-button view-history-trigger" type="button" style="min-height:36px; padding:0.2rem 0.5rem;">View evidence</button></td>
-                    </tr>
-                    <tr class="attendee-row is-selected" data-attendee="LL" style="border-bottom:1px solid var(--border); background:var(--warning-soft); cursor:pointer;">
-                      <td style="padding:0.6rem;"><strong>LL Liam Lynch</strong></td>
-                      <td style="padding:0.6rem;">Pending</td>
-                      <td style="padding:0.6rem;" id="ll-dietary-status">Not recorded</td>
-                      <td style="padding:0.6rem;">None</td>
-                      <td style="padding:0.6rem;"><span id="ll-readiness-chip" class="chip bad">⚠️ Action needed</span></td>
-                      <td style="padding:0.6rem;"><button id="ll-ask-btn" class="primary-button" type="button" style="min-height:36px; padding:0.2rem 0.5rem; background:var(--action); border-color:var(--action); color:#fff;">Prepare request</button></td>
-                    </tr>
-                    <tr class="attendee-row" data-attendee="JH" style="border-bottom:1px solid var(--border); cursor:pointer;">
-                      <td style="padding:0.6rem;"><strong>JH John Hale</strong></td>
-                      <td style="padding:0.6rem;">Confirmed 02 Jul</td>
-                      <td style="padding:0.6rem;">No shellfish</td>
-                      <td style="padding:0.6rem;">Instruction available</td>
-                      <td style="padding:0.6rem;"><span class="chip good">✓ Ready</span></td>
-                      <td style="padding:0.6rem;"><button class="secondary-button view-history-trigger" type="button" style="min-height:36px; padding:0.2rem 0.5rem;">View evidence</button></td>
-                    </tr>
-                    <tr class="attendee-row" data-attendee="AC" style="cursor:pointer;">
-                      <td style="padding:0.6rem;"><strong>AC Adriana Cerny</strong></td>
-                      <td style="padding:0.6rem;">Confirmed 16 Jun</td>
-                      <td style="padding:0.6rem;">Gluten-free</td>
-                      <td style="padding:0.6rem;">Instruction available</td>
-                      <td style="padding:0.6rem;"><span class="chip good">✓ Ready</span></td>
-                      <td style="padding:0.6rem;"><button class="secondary-button view-history-trigger" type="button" style="min-height:36px; padding:0.2rem 0.5rem;">View evidence</button></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </section>
-
-            <div class="card" style="margin-top:1rem; background:var(--success-soft); border-color:var(--success);">
-              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-                <div style="display:flex; align-items:center; gap:0.6rem;">
-                  <span style="font-size:1.4rem;">🛡️</span>
-                  <div>
-                    <strong>Least-disclosure check</strong>
-                    <p style="margin:0; font-size:0.85rem; color:var(--muted);">Only information necessary for catering and seating will enter the brief.</p>
-                  </div>
-                </div>
-                <div style="font-weight:700; font-size:0.9rem;">
-                  4 attendees total · 3 ready · <span style="color:var(--danger);" id="reconcile-gap-count">1 needs clarification</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Right Column: Attendee Evidence Drawer Panel (ATLAS-B05 Offline Request) -->
-          <aside id="attendee-drawer" class="drawer-panel">
-            <div class="drawer-header">
-              <div style="display:flex; align-items:center; gap:0.75rem;">
-                <div class="person-avatar" id="drawer-avatar" style="width:2.8rem; height:2.8rem; font-size:1.1rem;">LL</div>
-                <div>
-                  <h3 id="drawer-title" style="margin:0; font-size:1.1rem;">Liam Lynch</h3>
-                  <small id="drawer-status-text" style="color:var(--muted);">Pending</small>
-                </div>
-              </div>
-              <button id="close-drawer-btn" class="secondary-button" type="button" style="min-width:32px; min-height:32px; padding:0 0.4rem;">✕</button>
+              <p id="people-count-summary" class="count-summary" role="status" aria-live="polite">No people loaded.</p>
             </div>
 
-            <div style="margin-bottom:0.4rem;">
-              <span class="offline-badge">🔒 No network connection used · Local template only</span>
-            </div>
-
-            <div class="drawer-section" style="background:var(--warning-soft); border-color:var(--warning);">
-              <h4 style="color:var(--warning);">⚠️ Why this needs attention</h4>
-              <p id="drawer-warning-reason" style="color:var(--ink); font-weight:600;">Dietary information is not recorded</p>
-            </div>
-
-            <div class="drawer-section">
-              <h4>📄 Source</h4>
-              <p id="drawer-source-text">No source recorded</p>
-            </div>
-
-            <div class="drawer-section">
-              <h4>💬 Purpose-Bound Template Request</h4>
-              <p id="drawer-request-text">Ask Liam only what catering needs to know</p>
-              <small style="color:var(--muted); display:block; margin-top:0.25rem;">Scope: Dietary requirement · Expiry: 24 Jul 2026</small>
-            </div>
-
-            <div class="drawer-section">
-              <h4>🕒 Resolution</h4>
-              <p id="drawer-resolution-text">Awaiting response</p>
-            </div>
-
-            <div style="display:grid; gap:0.6rem; margin-top:0.4rem;">
-              <button id="drawer-ask-privately-btn" class="primary-button full-width" type="button" style="background:var(--action); border-color:var(--action); color:#fff; display:flex; justify-content:center; align-items:center; gap:0.4rem;">
-                📄 Prepare private request (Local Template)
-              </button>
-              <button id="drawer-record-response-btn" class="secondary-button full-width" type="button" style="display:flex; justify-content:center; align-items:center; gap:0.4rem;">
-                ✏️ Record response (Offline)
-              </button>
-            </div>
-
-            <div class="callout" style="margin:0; padding:0.6rem 0.75rem; background:var(--canvas); border-left-color:var(--border);">
-              <span style="font-size:0.82rem; color:var(--muted);">ⓘ Unknown is not the same as none.</span>
-            </div>
-          </aside>
-        </div>
-      </section>
-
-      <!-- 04 PEOPLE / DIRECTORY (ATLAS-B06 Synthetic Workspaces) -->
-      <section class="page" data-page="people" aria-labelledby="people-heading" hidden>
-        <div class="page-heading">
-          <div>
-            <p class="eyebrow">Directory</p>
-            <h1 id="people-heading" tabindex="-1">Workplace Directory (214 people)</h1>
-          </div>
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-            <button class="primary-button" type="button">+ Add person</button>
-            <button class="secondary-button" type="button">Columns ▾</button>
-            <button class="secondary-button" type="button">Advanced filters</button>
-            <button class="secondary-button" type="button">Preview</button>
-          </div>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem;">
-          <div style="display:flex; gap:0.5rem; flex:1; min-width:260px;">
-            <label for="people-search" class="visually-hidden">Search people</label>
-            <input id="people-search" type="search" placeholder="Search people by name, email, or department..." style="flex:1;">
-          </div>
-          <div style="display:flex; gap:0.5rem;">
-            <button class="secondary-button" type="button">Import CSV ▾</button>
-            <button class="secondary-button" type="button">Export CSV ▾</button>
-          </div>
-        </div>
-
-        <div class="two-column people-layout">
-          <div class="card" style="padding:0; overflow:hidden;">
             <div class="table-wrap">
-              <table style="width:100%; border-collapse:collapse; font-size:0.88rem;">
+              <table id="people-table" class="people-table" aria-describedby="people-count-summary people-refresh-notice">
+                <caption>People returned by the open local workspace</caption>
                 <thead>
-                  <tr style="background:var(--sidebar-background); border-bottom:2px solid var(--border); text-align:left;">
-                    <th style="padding:0.65rem 0.8rem;">Person</th>
-                    <th style="padding:0.65rem 0.8rem;">Organisation / Location</th>
-                    <th style="padding:0.65rem 0.8rem;">Last interaction</th>
+                  <tr>
+                    <th scope="col">Person</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Phone</th>
+                    <th scope="col">Record state</th>
+                    <th scope="col">Revision</th>
                   </tr>
                 </thead>
-                <tbody id="people-table-body">
-                  <tr class="person-row-clickable" data-person="Aisling Byrne" style="border-bottom:1px solid var(--border); cursor:pointer;">
-                    <td style="padding:0.65rem 0.8rem;"><strong>AB Aisling Byrne</strong></td>
-                    <td style="padding:0.65rem 0.8rem;">VP & Co. · Dublin, Ireland</td>
-                    <td style="padding:0.65rem 0.8rem; color:var(--muted);">18 Jul 2026 Email</td>
-                  </tr>
-                  <tr class="person-row-clickable" data-person="Liam Lynch" style="border-bottom:1px solid var(--border); cursor:pointer;">
-                    <td style="padding:0.65rem 0.8rem;"><strong>LL Liam Lynch</strong></td>
-                    <td style="padding:0.65rem 0.8rem;">Building A · Floor 3</td>
-                    <td style="padding:0.65rem 0.8rem; color:var(--muted);">16 Jul 2026 Dietary noted</td>
-                  </tr>
-                  <tr class="person-row-clickable" data-person="John Hale" style="border-bottom:1px solid var(--border); cursor:pointer;">
-                    <td style="padding:0.65rem 0.8rem;"><strong>JH John Hale</strong></td>
-                    <td style="padding:0.65rem 0.8rem;">Operations Dept</td>
-                    <td style="padding:0.65rem 0.8rem; color:var(--muted);">02 Jul 2026 Event catch-up</td>
-                  </tr>
-                  <tr class="person-row-clickable" data-person="Adriana Cerry" style="border-bottom:1px solid var(--border); cursor:pointer;">
-                    <td style="padding:0.65rem 0.8rem;"><strong>AC Adriana Cerry</strong></td>
-                    <td style="padding:0.65rem 0.8rem;">Community Partner</td>
-                    <td style="padding:0.65rem 0.8rem; color:var(--muted);">18 Jun 2026 Menu preference</td>
-                  </tr>
+                <tbody id="people-list">
+                  <tr><td class="empty-state" colspan="5">No people loaded.</td></tr>
                 </tbody>
               </table>
             </div>
-          </div>
+          </section>
+        </section>
+      </section>
 
-          <div class="card form-card">
-            <h2>Batch Operations</h2>
-            <div style="display:grid; gap:0.6rem;">
-              <button class="secondary-button full-width" type="button" style="text-align:left;">
-                <strong>Update existing records</strong><br>
-                <small style="color:var(--muted);">Update details for existing workplace people.</small>
-              </button>
-            </div>
-            <div class="divider" style="margin:0.5rem 0;"></div>
-            <h3>Content Tags</h3>
-            <div style="display:flex; flex-wrap:wrap; gap:0.4rem;">
-              <span class="chip-badge chip-accent">Workplace</span>
-              <span class="chip-badge chip-accent">Community</span>
-              <span class="chip-badge chip-accent">Operations</span>
-            </div>
+      <section id="person-page" class="page person-page" data-page="person" aria-labelledby="person-page-heading" hidden>
+        <div class="person-page-toolbar">
+          <button id="back-to-people" class="quiet-button back-to-people" type="button">← Back to People</button>
+          <span id="person-record-mode" class="read-only-badge">Read-only local record</span>
+        </div>
+
+        <p id="person-operation-status" class="operation-status" data-page-status role="status" aria-live="polite">Viewing a local record without changing it.</p>
+
+        <header class="person-record-header">
+          <span id="person-page-avatar" class="person-detail-avatar" aria-hidden="true">?</span>
+          <div>
+            <p class="eyebrow">Person record</p>
+            <h1 id="person-page-heading" tabindex="-1" aria-describedby="person-record-mode person-page-summary">Person</h1>
+            <p id="person-page-summary">Select a person from the directory.</p>
           </div>
+        </header>
+
+        <div class="person-record-workspace">
+          <section class="person-record-section" aria-labelledby="person-contact-heading">
+            <h2 id="person-contact-heading">Contact</h2>
+            <dl id="person-contact-details" class="person-detail-list"></dl>
+          </section>
+          <section class="person-record-section" aria-labelledby="person-record-heading">
+            <h2 id="person-record-heading">Record</h2>
+            <dl id="person-record-details" class="person-detail-list"></dl>
+          </section>
+          <section class="person-record-section person-source-section" aria-labelledby="person-source-heading">
+            <p class="eyebrow">Source</p>
+            <h2 id="person-source-heading">Local Markdown profile</h2>
+            <p>Loaded through the active workspace session. Rebuildable indexes are not the canonical record.</p>
+          </section>
         </div>
       </section>
 
-      <!-- 05 PERSON DETAIL (ATLAS-B03 Honest A0 Maturity Badges) -->
-      <section class="page" data-page="person" aria-labelledby="person-heading" hidden>
-        <div style="margin-bottom:0.75rem;">
-          <button class="secondary-button" type="button" data-route="people" style="min-height:36px; padding:0.2rem 0.6rem;">← Back to People</button>
-        </div>
-
-        <div class="profile-card">
-          <div class="profile-header">
-            <div class="profile-identity">
-              <div class="profile-avatar-large" id="person-avatar-initials">AB</div>
-              <div>
-                <div style="display:flex; align-items:center; gap:0.6rem;">
-                  <h1 id="person-heading" tabindex="-1" style="margin:0; font-family:var(--font-title); font-size:1.8rem;">Aisling Byrne</h1>
-                  <span class="chip-badge chip-warning">Local record</span>
-                </div>
-                <p id="person-subhead-text" style="margin:0.2rem 0 0; color:var(--muted); font-size:0.9rem;">
-                  aisling.byrne@vp.com · Head of Operations · VP & Co. · Dublin, Ireland
-                </p>
-              </div>
-            </div>
-            <div style="display:flex; gap:0.5rem;">
-              <button id="edit-profile-live-btn" class="primary-button" type="button" data-route="edit-person">Edit profile (Local record)</button>
-              <button id="add-note-btn" class="secondary-button" type="button">Add note</button>
-            </div>
-          </div>
-
-          <div class="topic-tabs" role="tablist">
-            <button class="topic-tab is-active" type="button" role="tab" aria-selected="true">Overview</button>
-            <button class="topic-tab" type="button" role="tab" aria-selected="false">Workplace</button>
-            <button class="topic-tab" type="button" role="tab" aria-selected="false">Personal manual <small class="maturity-badge">A0 Planned</small></button>
-            <button class="topic-tab" type="button" role="tab" aria-selected="false">Important dates <small class="maturity-badge">A0 Planned</small></button>
-            <button class="topic-tab" type="button" role="tab" aria-selected="false">Commitments <small class="maturity-badge">A0 Planned</small></button>
-          </div>
-
-          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1.25rem;">
-            <!-- Left Column: Contact & Workplace -->
-            <div style="display:grid; gap:1.25rem;">
-              <!-- Contact Card -->
-              <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <h3>Contact</h3>
-                  <button class="inline-edit-btn" data-field="all-contact" title="Edit contact section">✏️</button>
-                </div>
-                <dl class="summary-list">
-                  <div><dt>Full name</dt><dd><span id="field-fullname">Aisling Byrne</span> <button class="inline-edit-btn" data-field="name" title="Edit full name">✏️</button></dd></div>
-                  <div><dt>Email</dt><dd><span id="field-email">aisling.byrne@vp.com</span> <button class="inline-edit-btn" data-field="email" title="Edit email">✏️</button></dd></div>
-                  <div><dt>Phone</dt><dd><span id="field-phone">+353 87 123 4567</span> <button class="inline-edit-btn" data-field="phone" title="Edit phone">✏️</button></dd></div>
-                  <div><dt>Preferred contact</dt><dd><span id="field-preferred">Email</span> <button class="inline-edit-btn" data-field="preferred" title="Edit preferred contact">✏️</button></dd></div>
-                  <div><dt>Time zone</dt><dd><span id="field-timezone">Europe/Dublin (UTC+1)</span> <button class="inline-edit-btn" data-field="timezone" title="Edit time zone">✏️</button></dd></div>
-                </dl>
-                <div class="source-footer">SOURCE · USER ENTERED · 12 JUL 2026</div>
-              </div>
-
-              <!-- Workplace Card -->
-              <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <h3>Workplace</h3>
-                  <button class="inline-edit-btn" data-field="all-workplace" title="Edit workplace section">✏️</button>
-                </div>
-                <dl class="summary-list">
-                  <div><dt>Organisation</dt><dd><span id="field-org">VP & Co.</span> <button class="inline-edit-btn" data-field="org" title="Edit organisation">✏️</button></dd></div>
-                  <div><dt>Role</dt><dd><span id="field-role">Head of Operations</span> <button class="inline-edit-btn" data-field="role" title="Edit role">✏️</button></dd></div>
-                  <div><dt>Department</dt><dd><span id="field-dept">Operations</span> <button class="inline-edit-btn" data-field="dept" title="Edit department">✏️</button></dd></div>
-                  <div><dt>Location</dt><dd><span id="field-location">Dublin, Ireland</span> <button class="inline-edit-btn" data-field="location" title="Edit location">✏️</button></dd></div>
-                </dl>
-                <div class="source-footer">SOURCE · USER ENTERED · 12 JUL 2026</div>
-              </div>
-            </div>
-
-            <!-- Right Column: Personal User Manual & A0 Planned Cards -->
-            <div style="display:grid; gap:1.25rem;">
-              <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-                  <h3>Personal user manual</h3>
-                  <span class="maturity-badge">A0 Feature · Planned</span>
-                </div>
-                <div style="display:grid; gap:0.75rem; font-size:0.88rem;">
-                  <div>
-                    <strong style="display:block; color:var(--ink);">How I like to work</strong>
-                    <p id="manual-work-style" style="margin:0.2rem 0 0; color:var(--muted);">Clear plans and early decisions.</p>
-                  </div>
-                  <div>
-                    <strong style="display:block; color:var(--ink);">Best way to reach me</strong>
-                    <p id="manual-reach-style" style="margin:0.2rem 0 0; color:var(--muted);">Email before 4pm works best.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 08 EDIT PROFILE & CUSTOMISATION (ATLAS-B08 Desktop Narrow Reference) -->
-      <section class="page" data-page="edit-person" aria-labelledby="edit-person-heading" hidden>
-        <div style="margin-bottom:0.75rem;">
-          <button class="secondary-button" type="button" data-route="person" style="min-height:36px; padding:0.2rem 0.6rem;">← Back to Aisling Byrne</button>
-        </div>
-
-        <div class="page-heading" style="margin-bottom:0.75rem;">
-          <div style="display:flex; align-items:center; gap:0.8rem;">
-            <div class="profile-avatar-large" style="width:2.8rem; height:2.8rem; font-size:1.1rem;">AB</div>
-            <div>
-              <div style="display:flex; align-items:center; gap:0.6rem;">
-                <h1 id="edit-person-heading" tabindex="-1" style="margin:0; font-family:var(--font-title); font-size:1.6rem;">Edit Aisling Byrne</h1>
-                <span class="chip-badge chip-accent">Profile customisation</span>
-                <span class="maturity-badge">A0 Preview Reference</span>
-              </div>
-            </div>
-          </div>
-          <div style="display:flex; gap:0.5rem;">
-            <button class="secondary-button" type="button" data-route="person">Cancel</button>
-            <button class="primary-button save-profile-customisation-btn" type="button">Save changes</button>
-          </div>
-        </div>
-
-        <div class="notice" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
-          <span>ⓘ Editing locally — changes remain on this device.</span>
-          <button class="secondary-button" type="button" style="min-height:32px; padding:0.2rem 0.5rem;">↶ Undo last edit</button>
-        </div>
-
-        <div class="edit-person-grid">
-          <!-- Column 1: Profile Fields -->
-          <div class="card form-card">
-            <h2>Profile fields</h2>
-            <div style="border-bottom:1px solid var(--border); padding-bottom:0.75rem;">
-              <strong style="display:block; margin-bottom:0.5rem;">˅ Contact</strong>
-              <dl class="summary-list">
-                <div><dt>Full name</dt><dd>Aisling Byrne <button class="inline-edit-btn" type="button">✏️</button></dd></div>
-                <div><dt>Email</dt><dd>aisling.byrne@vp.com <button class="inline-edit-btn" type="button">✏️</button></dd></div>
-                <div><dt>Phone</dt><dd>+353 87 123 4567 <button class="inline-edit-btn" type="button">✏️</button></dd></div>
-                <div>
-                  <dt>Preferred contact</dt>
-                  <dd>
-                    Email <button class="inline-edit-btn" type="button" style="background:var(--highlight); border-color:var(--ink);">✏️</button>
-                    <div class="inline-edit-popover">
-                      <div class="field">
-                        <label for="inline-preferred-select" class="visually-hidden">Edit preferred contact</label>
-                        <select id="inline-preferred-select">
-                          <option value="Email" selected>Email</option>
-                          <option value="Phone">Phone</option>
-                        </select>
-                      </div>
-                      <div style="display:flex; justify-content:flex-end; gap:0.4rem; margin-top:0.6rem;">
-                        <button class="secondary-button" type="button" style="min-height:34px; padding:0.2rem 0.5rem; font-size:0.8rem;">Discard field edit</button>
-                        <button class="primary-button" type="button" style="min-height:34px; padding:0.2rem 0.5rem; font-size:0.8rem;">Apply field edit</button>
-                      </div>
-                    </div>
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </div>
-
-          <!-- Column 2: Tabs & sections -->
-          <div class="card">
-            <h2>Tabs & sections</h2>
-            <small style="color:var(--muted); display:block; margin-bottom:0.6rem;">Hide tabs without deleting their content.</small>
-            <div class="tab-reorder-list">
-              <div class="tab-reorder-item"><span>::: 🏠 Overview 🔒</span><small style="color:var(--muted);">Always shown</small></div>
-              <div class="tab-reorder-item"><span>::: 🏢 Workplace</span><button class="secondary-button" type="button" style="min-height:28px; padding:0 0.4rem; font-size:0.75rem;">👁️ Show</button></div>
-              <div class="tab-reorder-item"><span>::: 📖 Personal manual <small class="maturity-badge">A0</small></span><button class="secondary-button" type="button" style="min-height:28px; padding:0 0.4rem; font-size:0.75rem;">👁️ Show</button></div>
-            </div>
-          </div>
-
-          <!-- Column 3: Live Preview Box (ATLAS-B08 Desktop Narrow Reference) -->
-          <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-              <h3 style="margin:0;">Profile preview</h3>
-              <div style="display:flex; gap:0.3rem;">
-                <button id="desktop-preview-btn" class="secondary-button" type="button" style="min-height:32px; padding:0.1rem 0.5rem; font-size:0.8rem; background:var(--ink); color:#fff;">🖥️ Desktop</button>
-                <button id="narrow-preview-btn" class="secondary-button" type="button" style="min-height:32px; padding:0.1rem 0.5rem; font-size:0.8rem;">🖥️ Narrow (360px)</button>
-              </div>
-            </div>
-            <small style="color:var(--muted); display:block; margin-bottom:0.5rem;">Installed desktop narrow-window reflow reference.</small>
-
-            <div id="live-preview-box" class="live-preview-box">
-              <strong style="display:block; font-size:0.95rem;">Aisling Byrne</strong>
-              <small style="color:var(--muted);">Head of Operations · vp.com · Dublin, Ireland</small>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 06 HEALTH / RECOVERY (ATLAS-B01 Honest Recovery Language) -->
       <section class="page" data-page="health" aria-labelledby="health-heading" hidden>
         <div class="page-heading">
           <div>
-            <p class="eyebrow">Workspace Health</p>
-            <h1 id="health-heading" tabindex="-1">Local Checkpoint & Recovery State</h1>
+            <p class="eyebrow">Workspace health</p>
+            <h1 id="health-heading" tabindex="-1">Validate the open-file workspace</h1>
+            <p>Validation reports problems without deleting or silently rewriting user-authored files.</p>
           </div>
+          <button id="run-validation" class="primary-button" type="button" data-native-operation="session" disabled>Run validation</button>
         </div>
 
-        <!-- Dominant Checkpoint Surface -->
-        <div class="hero-work-surface">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <section class="card health-card" aria-labelledby="validation-result-heading">
+          <div class="section-heading">
+            <span class="section-number" aria-hidden="true">H</span>
             <div>
-              <div style="display:flex; align-items:center; gap:0.6rem;">
-                <span class="status-dot" style="width:1rem; height:1rem;"></span>
-                <h2 style="margin:0; font-size:1.3rem;">Local checkpoint intact</h2>
-              </div>
-              <p style="margin:0.3rem 0 0; font-weight:700;">Recorded today, 24 Jul 2026 · 09:42</p>
-              <small style="color:var(--muted); display:block; margin-top:0.2rem;">All local Markdown records and graph indexes are verified consistent on this device.</small>
-            </div>
-            <div style="display:flex; gap:0.5rem;">
-              <button class="primary-button" type="button">Export local backup archive (JSON)</button>
+              <h2 id="validation-result-heading">Validation result</h2>
+              <p>Read-only findings and a safe recovery direction.</p>
             </div>
           </div>
-        </div>
-
-        <div class="callout" style="margin-bottom:1.2rem; background:var(--canvas); border-left-color:var(--border);">
-          <strong style="color:var(--ink);">Recovery capability boundary:</strong>
-          <span style="font-size:0.88rem; display:block; margin-top:0.2rem;">
-            A local checkpoint protects against workspace mutation errors on this machine. Portable recovery across clean installs without prior Keychain state requires an explicit <strong>Encrypted Recovery Package</strong> export.
-          </span>
-        </div>
-
-        <div class="two-column">
-          <div class="card">
-            <h3>Audit evidence</h3>
-            <ul style="list-style:none; padding:0; margin:0.6rem 0 0; display:grid; gap:0.4rem; font-size:0.85rem; color:var(--muted);">
-              <li>24 Jul 2026, 10:19 · Integrity check passed</li>
-              <li>24 Jul 2026, 09:42 · Local checkpoint created</li>
-              <li>23 Jul 2026, 18:00 · Session local authority verified</li>
-            </ul>
-          </div>
-
-          <div class="card form-card">
-            <h2>Portable Encrypted Recovery</h2>
-            <p style="font-size:0.88rem; color:var(--muted); margin:0.2rem 0 0.75rem;">Export encrypted recovery package for clean-install restoration on another device.</p>
-            <button class="secondary-button full-width" type="button">Export encrypted recovery package...</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 07 SETTINGS (ATLAS-B02 Appearance & System Theme Foundation) -->
-      <section class="page" data-page="settings" aria-labelledby="settings-heading" hidden>
-        <div class="page-heading">
-          <div>
-            <p class="eyebrow">Configuration</p>
-            <h1 id="settings-heading" tabindex="-1">Settings</h1>
-          </div>
-        </div>
-
-        <div class="two-column">
-          <div class="card form-card">
-            <h2>Built-in Theme Selection</h2>
-            <div id="theme-grid" class="theme-grid" role="radiogroup" aria-label="Visual theme choices">
-              <div class="theme-card is-active" data-theme="light" tabindex="0" role="radio" aria-checked="true">
-                <div class="theme-swatch">
-                  <span style="background:#eee8dc;"></span>
-                  <span style="background:#202622;"></span>
-                  <span style="background:#1e5d73;"></span>
-                </div>
-                <strong>Paper (Light)</strong>
-              </div>
-              <div class="theme-card" data-theme="dark" tabindex="0" role="radio" aria-checked="false">
-                <div class="theme-swatch">
-                  <span style="background:#0e1714;"></span>
-                  <span style="background:#f4f1e8;"></span>
-                  <span style="background:#78c8e0;"></span>
-                </div>
-                <strong>Night (Dark)</strong>
-              </div>
-              <div class="theme-card" data-theme="high-contrast" tabindex="0" role="radio" aria-checked="false">
-                <div class="theme-swatch">
-                  <span style="background:#000000;"></span>
-                  <span style="background:#ffffff;"></span>
-                  <span style="background:#00d4ff;"></span>
-                </div>
-                <strong>High Contrast</strong>
-              </div>
-              <div class="theme-card" data-theme="system" tabindex="0" role="radio" aria-checked="false">
-                <div class="theme-swatch">
-                  <span style="background:#888;"></span>
-                  <span style="background:#fff;"></span>
-                  <span style="background:#000;"></span>
-                </div>
-                <strong>System (OS Default)</strong>
-              </div>
-            </div>
-
-            <div class="divider" style="margin:1rem 0;"></div>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <h2>A0 Appearance Controls</h2>
-              <span class="maturity-badge">A0 Planned</span>
-            </div>
-            <div class="field" style="opacity:0.7; margin-top:0.6rem;">
-              <label for="settings-text-scale">Text size (A0)</label>
-              <select id="settings-text-scale" disabled>
-                <option value="100" selected>Standard (Aa)</option>
-              </select>
+          <p id="validation-scope" class="validation-scope">No workspace inspected.</p>
+          <div id="validation-summary" class="health-summary">
+            <span class="health-icon" aria-hidden="true">?</span>
+            <div>
+              <strong>No validation run</strong>
+              <p>Select a workspace, then run validation.</p>
             </div>
           </div>
-
-          <div class="card">
-            <h2>Local Workspace Settings</h2>
-            <p style="color:var(--muted); font-size:0.9rem; margin:0.2rem 0 1rem;">All settings stay private to this device.</p>
-            <div style="display:grid; gap:0.6rem;">
-              <button class="primary-button full-width" type="button">Export local backup archive (JSON)</button>
-            </div>
-          </div>
-        </div>
+          <ul id="validation-findings" class="finding-list"></ul>
+        </section>
       </section>
     </main>
 
     <footer class="statusbar">
-      <span id="workspace-path-label">Local Workspace · ~/Documents/Liaison RM/Workplace events</span>
+      <span id="workspace-path-label">No workspace selected</span>
       <span id="live-status" role="status" aria-live="polite">Ready.</span>
     </footer>
-
-    <!-- Modals & Dialogs with explicit labels -->
-    <dialog id="source-history-dialog" class="profile-dialog">
-      <form method="dialog" style="padding:1rem;">
-        <h2>Attendee Source & Provenance History</h2>
-        <div class="card" style="background:var(--sidebar-background); margin:1rem 0;">
-          <dl class="summary-list">
-            <div><dt>Canonical File Path</dt><dd>people/person-01J4.md</dd></div>
-            <div><dt>Current Revision</dt><dd>Revision 12</dd></div>
-            <div><dt>Writer Authority</dt><dd>Session Local Authority Port</dd></div>
-          </dl>
-        </div>
-        <div style="display:flex; justify-content:flex-end;">
-          <button id="close-history-dialog" class="secondary-button" type="button">Close Audit View</button>
-        </div>
-      </form>
-    </dialog>
-
-    <dialog id="record-response-dialog" class="profile-dialog">
-      <form id="record-response-form" method="dialog" style="padding:1rem;">
-        <h2>Record Dietary Response (Offline)</h2>
-        <div class="field" style="margin-top:1rem;">
-          <label for="record-response-select">Dietary Status</label>
-          <select id="record-response-select">
-            <option value="Verified none">Verified none</option>
-            <option value="No beef">No beef</option>
-            <option value="Gluten-free">Gluten-free</option>
-            <option value="No shellfish">No shellfish</option>
-            <option value="Declined">Declined to state</option>
-            <option value="Unknown">Unknown / Needs clarification</option>
-          </select>
-        </div>
-        <div class="field" style="margin-top:1rem;">
-          <label for="record-response-notes">Notes / Instructions</label>
-          <textarea id="record-response-notes" rows="3" placeholder="Optional notes for catering brief..."></textarea>
-        </div>
-        <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.2rem;">
-          <button id="cancel-record-response" class="secondary-button" type="button">Cancel</button>
-          <button id="save-record-response" class="primary-button" type="submit">Save Response</button>
-        </div>
-      </form>
-    </dialog>
-
-    <dialog id="edit-field-dialog" class="profile-dialog">
-      <form id="edit-field-form" method="dialog" style="padding:1rem;">
-        <h2 id="edit-field-title">Edit Field</h2>
-        <div class="field" style="margin-top:1rem;">
-          <label for="edit-field-input" id="edit-field-label">Field Value</label>
-          <input id="edit-field-input" type="text">
-        </div>
-        <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.2rem;">
-          <button id="cancel-edit-field" class="secondary-button" type="button">Cancel</button>
-          <button id="save-edit-field" class="primary-button" type="submit">Save Field</button>
-        </div>
-      </form>
-    </dialog>
-
-    <dialog id="import-export-dialog" class="profile-dialog">
-      <form method="dialog" style="padding:1rem;">
-        <h2>Export / Import Preview</h2>
-        <div class="field" style="margin:1rem 0;">
-          <label for="import-export-preview-text">Import / Export JSON Data</label>
-          <textarea id="import-export-preview-text" rows="10" style="width:100%; font-family:var(--font-mono); font-size:0.84rem; padding:0.6rem;" readonly></textarea>
-        </div>
-        <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
-          <button id="close-import-export-dialog" class="secondary-button" type="button">Close</button>
-        </div>
-      </form>
-    </dialog>
-
-    <div class="visually-hidden">
-      <label for="brief-text-area">Catering Brief Payload</label>
-      <textarea id="brief-text-area" readonly></textarea>
-    </div>
   </div>
+
+  <dialog id="person-dialog" class="person-dialog" aria-labelledby="person-dialog-title" aria-describedby="person-dialog-description">
+    <div class="dialog-shell">
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">Local profile</p>
+          <h2 id="person-dialog-title">Add a person</h2>
+          <p id="person-dialog-description">Create a name and optional email in the open workspace.</p>
+        </div>
+      </div>
+      <form id="person-form" class="dialog-form">
+        <div class="field">
+          <label for="person-name">Display name</label>
+          <input id="person-name" name="displayName" type="text" maxlength="160" required autofocus disabled>
+        </div>
+        <div class="field">
+          <label for="person-email">Primary email <span class="optional">optional</span></label>
+          <input id="person-email" name="email" type="email" autocomplete="email" disabled>
+        </div>
+        <p id="person-form-error" class="form-error" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button id="cancel-person" class="secondary-button" type="button">Cancel</button>
+          <button id="save-person" class="primary-button" type="submit" data-native-operation="session" disabled>Create profile</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
 </body>
 </html>

@@ -100,6 +100,39 @@ impl PersonProfile {
         self.bump_revision()
     }
 
+    /// Replaces the currently editable contact summary as one aggregate
+    /// revision. Every supplied value is revalidated before any field changes,
+    /// so an invalid or overflowing update leaves the Person unchanged.
+    pub fn replace_contact_details(
+        &mut self,
+        display_name: impl Into<String>,
+        emails: Vec<EmailAddress>,
+        phones: Vec<PhoneNumber>,
+    ) -> Result<bool, PeopleError> {
+        let display_name = display_name.into();
+        let display_name = required(&display_name, "display name")?;
+        let emails = emails
+            .into_iter()
+            .map(|email| EmailAddress::new(email.value, email.label))
+            .collect::<Result<Vec<_>, _>>()?;
+        let phones = phones
+            .into_iter()
+            .map(|phone| PhoneNumber::new(phone.value, phone.label))
+            .collect::<Result<Vec<_>, _>>()?;
+        if self.display_name == display_name && self.emails == emails && self.phones == phones {
+            return Ok(false);
+        }
+        let revision = self
+            .revision
+            .next()
+            .map_err(|_| PeopleError::RevisionOverflow)?;
+        self.display_name = display_name;
+        self.emails = emails;
+        self.phones = phones;
+        self.revision = revision;
+        Ok(true)
+    }
+
     pub fn add_email(
         &mut self,
         value: impl Into<String>,
@@ -400,5 +433,56 @@ mod tests {
             invalid_date,
             Err(PeopleError::InvalidPartialDate { month: 2, day: 30 })
         );
+    }
+
+    #[test]
+    fn replacing_contact_details_is_one_validated_atomic_revision() {
+        let person = PersonProfile::create(PersonId::new(), "Alex Murphy");
+        assert!(person.is_ok());
+        let Ok(mut person) = person else {
+            return;
+        };
+        let before = person.clone();
+        let invalid = person.replace_contact_details(
+            "   ",
+            vec![EmailAddress {
+                value: "not-an-email".to_owned(),
+                label: "primary".to_owned(),
+            }],
+            Vec::new(),
+        );
+        assert_eq!(invalid, Err(PeopleError::RequiredField("display name")));
+        assert_eq!(person, before);
+
+        let invalid_email = person.replace_contact_details(
+            "Alex Murphy",
+            vec![EmailAddress {
+                value: "not-an-email".to_owned(),
+                label: "primary".to_owned(),
+            }],
+            Vec::new(),
+        );
+        assert!(matches!(invalid_email, Err(PeopleError::InvalidEmail(_))));
+        assert_eq!(person, before);
+
+        let email = EmailAddress::new("alex@example.test", "work");
+        let phone = PhoneNumber::new("+353 1 555 0100", "mobile");
+        assert!(email.is_ok());
+        assert!(phone.is_ok());
+        let (Ok(email), Ok(phone)) = (email, phone) else {
+            return;
+        };
+        let changed = person.replace_contact_details("  Alex M.  ", vec![email], vec![phone]);
+        assert_eq!(changed, Ok(true));
+        assert_eq!(person.display_name, "Alex M.");
+        assert_eq!(person.revision.get(), before.revision.get() + 1);
+
+        let unchanged = person.replace_contact_details(
+            person.display_name.clone(),
+            person.emails.clone(),
+            person.phones.clone(),
+        );
+        assert_eq!(unchanged, Ok(false));
+        assert_eq!(person.revision.get(), before.revision.get() + 1);
     }
 }
