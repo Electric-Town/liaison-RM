@@ -1,48 +1,40 @@
-# 6-Pillar UI Visual Audit Report: Liaison RM Desktop Interface
+# P04 design review snapshot — invalidated historical snapshot
 
-**Date:** 2026-07-21  
-**Scope:** `apps/desktop/ui/` (`index.html`, `app.js`, `styles.css`)  
-**Design Contract:** [DESIGN.md](../../../DESIGN.md) (Editorial Ledger direction)  
-**Automated Check Status:** `python3 scripts/check_desktop_shell.py` -> **PASSED**  
-**Token Contrast Status:** `python3 scripts/check_design_tokens.py` -> **PASSED**  
+Status: **invalidated; not an active planning or acceptance source**
 
----
+Superseded: 2026-07-22
 
-## 6-Pillar Assessment & Grading
+Current authority: `docs/product/working-state-delivery.md` and `spec/traceability-ownership.json`
 
-### 1. Copywriting & Tone (4 / 4)
-- **Assessment:** Calm, clear, respectful, non-judgmental editorial copy.
-- **Evidence:** Avoids closeness scores or corporate pipeline terminology. Error messages provide explicit, helpful recovery instructions ("Review the workspace selection and retry.").
-- **Compliance:** 100% aligned with `docs/standards/content-quality.md` and `DESIGN.md`.
+## Preserved provenance
 
-### 2. Visuals & Layout (4 / 4)
-- **Assessment:** Editorial Ledger aesthetic with hard-offset work surface on paper canvas.
-- **Evidence:** Paper canvas background (`--canvas`), dotted note-paper pattern (`--paper-dot`), clear single primary surface (`--surface`) per section, 48px minimum touch/action control targets.
-- **Compliance:** 100% aligned with `DESIGN.md` spatial grid and layout rules.
+- Original commit: `49ee419e30f2d71524dd6fa15badf1ec4b8d0e27`
+- Original Git blob: `bc233e8bc088569231993a126991509c36ec1045`
+- Original file SHA-256: `50653c5b2721d4071d9fb259bc5e358d019176e471dadfccebc2efb0a36bff6e`
+- Original line count: 48
+- The original bytes remain recoverable from Git by commit and blob identity.
+- The annotated `vB0` tag remains preserved at its original object and target; this file does not move, delete, or recreate it.
 
-### 3. Color & Contrast (4 / 4)
-- **Assessment:** Full support for Editorial Light, Editorial Dark, and High Contrast palettes.
-- **Evidence:** Automated token contrast validator checks 20 token pairs across light, dark, and high-contrast modes. All text-on-surface pairs exceed WCAG 2.2 AA 4.5:1 minimums (e.g. Light content 15.29:1, Dark content 14.38:1, High Contrast 21.00:1).
-- **Compliance:** 100% aligned with `design/semantic-tokens.v1.json`.
+## Why this snapshot is invalidated
 
-### 4. Typography & Hierarchy (4 / 4)
-- **Assessment:** Multi-font hierarchy with locally bundled subset fonts.
-- **Evidence:** Atkinson Hyperlegible Next for UI/body text, Source Serif 4 for headings, IBM Plex Mono for paths and hashes. All fonts are locally served with OFL licenses and verified sha256 checksums. Zero runtime web font network requests.
-- **Compliance:** 100% aligned with local airgap and privacy invariants.
+The snapshot scored a static source or visual fixture as completed P04 and broad accessibility/design evidence.
 
-### 5. Spacing & Alignment (4 / 4)
-- **Assessment:** Rigorous 8px spatial layout grid.
-- **Evidence:** Section margins, card padding, and button dimensions follow an 8px modular scale (16px, 24px, 32px, 48px).
-- **Compliance:** 100% aligned with `DESIGN.md` spacing spec.
+It was not bound to an accepted P03/P03D sequence, React/TypeScript P04 implementation, or exact installed artifact.
 
-### 6. Experience Design & Interaction (4 / 4)
-- **Assessment:** Inclusive accessibility and theme switching support.
-- **Evidence:** Visible 3px focus rings (`:focus-visible`), skip-to-content links, labelled `<select id="theme-select">` control allowing instant theme switching (System, Light, Dark, High Contrast), aria-live status regions, and fail-closed error recovery states.
-- **Compliance:** 100% aligned with `docs/standards/ux-review.md` and WCAG 2.2 AA guidelines.
+It also lacks accepted native-workflow, VoiceOver/keyboard/400%/localisation-matrix, and zero-egress receipts.
 
+## Current machine-owned state
 
----
+- P00-P02: complete.
 
-## Overall Audit Score: 24 / 24 (Grade: A+)
+- G1 and `T-B0-P03`: current.
 
-**Conclusion:** The Liaison RM desktop shell fully satisfies all 6 pillars of the UI design review standard and implements the Editorial Ledger design contract cleanly.
+- `T-B0-P03-OBS`, `T-B0-P03D`, `T-B0-P04`, P05-P11, and B0 acceptance: blocked.
+
+- PILOT: deferred after B0; real workplace data remains denied.
+
+- No P03 completion is inferred from PR #65/`3499a6e`, `49ee419`, `vB0`, the installed review app, static screenshots, or the premature `c2f852c` P03O material.
+
+Use the generated traceability report for live counts and ownership.
+
+Do not copy completion percentages, compliance scores, invented UAT identifiers, or shipment language from the preserved snapshot into active planning or release evidence.

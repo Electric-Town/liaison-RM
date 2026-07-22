@@ -1,17 +1,40 @@
-# Requirements Archive: vB0 Workplace Review Alpha
+# vB0 requirements snapshot — invalidated historical snapshot
 
-**Shipped Date:** 2026-07-22  
-**Status:** All 156 requirements validated  
+Status: **invalidated; not an active planning or acceptance source**
 
-## Validated Requirements
+Superseded: 2026-07-22
 
-- ✓ `R-B0-001` Local data authority — canonical records stored in open user files
-- ✓ `R-B0-002` Zero telemetry — no hidden telemetry, remote license checks, or tracking
-- ✓ `R-B0-003` Exact dietary reconciliation — verified dietary readiness for event cohorts
-- ✓ `R-B0-004` Purpose-bound least disclosure — brief exports contain only necessary seating/catering information
-- ✓ `R-B0-005` Immutable brief evidence — brief outputs recorded with cryptographic digest
-- ✓ `R-B0-006` Offline template transport — offline request templates display clear no-network badge
-- ✓ `R-B0-007` Honest recovery language — local checkpoint vs portable encrypted recovery package clearly distinguished
-- ✓ `R-B0-008` Non-scoring relationship model — no strength scores, closeness metrics, or worth ranking
-- ✓ `R-B0-009` Accessible UI — WCAG 2.2 AA compliant contrast, keyboard navigation, explicit label bindings
-- ✓ `R-B0-010` Installed Mac evidence — packaged as DMG installer and installed `/Applications/Liaison RM.app`
+Current authority: `docs/product/working-state-delivery.md` and `spec/traceability-ownership.json`
+
+## Preserved provenance
+
+- Original commit: `49ee419e30f2d71524dd6fa15badf1ec4b8d0e27`
+- Original Git blob: `b2f204e30ae2ae2fc82b01867292de14098992cd`
+- Original file SHA-256: `8702809d8311d6304ce4b33b170dda5a85c11955b56023114d3c054b0ac93d06`
+- Original line count: 17
+- The original bytes remain recoverable from Git by commit and blob identity.
+- The annotated `vB0` tag remains preserved at its original object and target; this file does not move, delete, or recreate it.
+
+## Why this snapshot is invalidated
+
+The snapshot treated the out-of-order `49ee419` source sequence and `vB0` tag as a completed or shipped milestone.
+
+Machine authority did not advance.
+
+The sequence has no accepted P03 identity tuple, observation receipt, P03D/P04/P05-P11 evidence, installed-artifact qualification, or B0 acceptance.
+
+## Current machine-owned state
+
+- P00-P02: complete.
+
+- G1 and `T-B0-P03`: current.
+
+- `T-B0-P03-OBS`, `T-B0-P03D`, `T-B0-P04`, P05-P11, and B0 acceptance: blocked.
+
+- PILOT: deferred after B0; real workplace data remains denied.
+
+- No P03 completion is inferred from PR #65/`3499a6e`, `49ee419`, `vB0`, the installed review app, static screenshots, or the premature `c2f852c` P03O material.
+
+Use the generated traceability report for live counts and ownership.
+
+Do not copy completion percentages, compliance scores, invented UAT identifiers, or shipment language from the preserved snapshot into active planning or release evidence.

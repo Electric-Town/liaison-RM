@@ -6,9 +6,9 @@ The broad R1–R6 catalog remains useful as long-term scope, but it is not the w
 
 ## Current boundary
 
-The current P03 source state is pre-alpha. It has governance and product contracts, one Rust application composition root shared by CLI and Tauri, write-authoritative Workspace Sessions with composite path-local and per-user `WorkspaceId` operating-system exclusion and retained capability roots, lock-free read-only Health, structured results/errors, a narrow Workspace/People/Markdown slice, profile/readiness and reason-only Review foundations, provider contracts, and review packaging workflows. Current cooperating Liaison processes on one OS user account and machine reject copied workspaces with the same identity. `T-B0-P02` is complete with accepted exact-head native platform evidence. P03 is current and introduces recoverable multi-target writes and final mutation preconditions. The source state still lacks sealed dietary persistence, local-purpose authorization, scalable Directory reads, encrypted clean-install recovery, and the cohort-to-brief workflow. B0 assumes one trusted local workspace owner and must structurally omit relationship allocation, ranking, and scoring.
+The current P03 source state is pre-alpha. It has governance and product contracts, one Rust application composition root shared by CLI and Tauri, write-authoritative Workspace Sessions with composite path-local and per-user `WorkspaceId` operating-system exclusion and retained capability roots, lock-free read-only Health, structured results/errors, a narrow Workspace/People/Markdown slice, profile/readiness and reason-only Review foundations, provider contracts, and review packaging workflows. Current cooperating Liaison processes on one OS user account and machine reject copied workspaces with the same identity. `T-B0-P02` is complete with accepted exact-head native platform evidence. Baseline `3499a6e9278fc72d2498a9978df59f30d03722e6` contains the P03 recoverable multi-target write and final-precondition candidate; all seven ordinary-push workflows succeeded, including Windows, but technical P03 acceptance, its exact identity tuple, and D1-B observation remain pending. The reviewed pre-reconciliation main at 2026-07-22, `49ee419e30f2d71524dd6fa15badf1ec4b8d0e27`, contains out-of-order candidate source and red exact-head formatting checks; it does not advance P03, OBS, P03D, P04, P05-P11, or B0. The C3 commit and any merge result are distinct identities requiring their own exact-head receipt; absent that receipt they do not advance acceptance. Separately dispatched notarized run `29899498005` failed for missing Apple credentials and is not release evidence. The source state still lacks accepted sealed dietary persistence, local-purpose authorization, scalable Directory reads, encrypted clean-install recovery, and the cohort-to-brief workflow. B0 assumes one trusted local workspace owner and must structurally omit relationship allocation, ranking, and scoring.
 
-The current installed Mac app is an internal local-authoritative review build. It is not a proven Airgap artifact, notarized public release, or supported daily-use product.
+The current installed Mac app is an unqualified internal review artifact with no source-bound acceptance receipt. The preserved `vB0` tag is an unsupported historical claim. Neither is a proven Airgap artifact, P04/B0 evidence, notarized public release, or supported daily-use product.
 
 ## P00 — Reconcile contracts and truth
 
@@ -16,7 +16,7 @@ Outcome: code, decisions, formats, planning catalogs, commands, documentation, v
 
 Exit evidence:
 
-- ADRs 0001–0012 are accepted and explicitly distinguish decision from implementation status;
+- applicable accepted ADRs, including 0013, 0015, and 0016, explicitly distinguish decision from implementation status;
 - requirements, UAT, feature gates, and implementation tasks encode P00–P11, B0, and A0 without personal-first dependencies;
 - current command and implemented-feature inventories are separate from target surfaces;
 - package/app versions and provider/release evidence do not contradict each other;
@@ -50,12 +50,13 @@ Exit evidence:
 
 P02 owns the readable manifest contract and session authority only. Installed no-account/no-egress workspace creation, projection deletion/rebuild, and the complete canonical round trip remain acceptance evidence rather than P02 implementation claims.
 
-Local source-worktree evidence covers the session aggregate, capability-root
-binding, typed same-path and copied-path contention, different identities,
-quiescence, lock-free Health, hostile registry state, safe first use,
-post-lock manifest checks, process-exit release, and current inbound-adapter
-mutations. Native Windows runtime and exact-head remote matrices remain open;
-P03 still owns recoverable writes and final preconditions.
+Accepted exact-head Linux, macOS, and Windows evidence covers the session
+aggregate, capability-root binding, typed same-path and copied-path contention,
+different identities, quiescence, lock-free Health, hostile registry state,
+safe first use, post-lock manifest checks, process-exit release, and current
+inbound-adapter mutations. P03 owns the implemented candidate for recoverable
+writes and final preconditions, but its hardening, qualification, attestation,
+and exact executable receipt remain open.
 
 ## P03 — Recoverable canonical operations
 
@@ -69,26 +70,45 @@ Exit evidence:
 - minimal activity evidence is recorded once without sensitive payloads;
 - Linux, macOS, and Windows durability/race tests pass.
 
+P03 completion is technical acceptance, not design authority. Its evidence must
+name the qualified-code SHA, merge-result SHA, attestation SHA, and exact
+executable artifact receipt while `FG-B0-001` remains blocked for its other owners.
+
+## P03-OBS — Exact-artifact workplace observation (D1-B/D9)
+
+Outcome: after technical P03 acceptance, observe that exact attested executable
+with synthetic or redacted workplace scenarios and record one distinct Continue,
+Change, or Stop decision. Real workplace personal data remains denied.
+
+Exit evidence:
+
+- the observation repeats the accepted P03 identity tuple rather than inventing a new artifact identity;
+- trigger/deadline, actors/handoffs, tools, missing or wrong information, interruption, correction, disclosure, and failure consequences are recorded;
+- Continue makes P03D eligible; Change or Stop keeps P03D and P04 blocked;
+- the observation receipt is separate from technical P03 acceptance and B0 acceptance.
+
 ## P04 — Typed desktop inbound adapter
 
-P04 cannot begin directly after P03. Once P03 has stabilised typed commands, state, errors, and recoverable-operation contracts, design consultation creates canonical `DESIGN.md`. Plan design review then checks the proposed P04 direction against the complete B0 journey, localisation, recovery states, the semantic theme contract, and the accessibility matrix. G0 records this future gate; it does not create `DESIGN.md` or preselect a visual direction.
+P04 cannot begin directly after P03. After technical P03 acceptance, `T-B0-P03-OBS` becomes current while P03D remains blocked. Only an observation decision of Continue makes P03D eligible; Change or Stop keeps P03D and P04 blocked. Design consultation then creates canonical `DESIGN.md`, and plan design review checks the proposed P04 direction against the complete B0 journey, localisation, recovery states, the semantic theme contract, and the accessibility matrix. G0 records this future gate; it does not create `DESIGN.md` or preselect a visual direction.
 
 Outcome: React/TypeScript/Vite replaces the disposable vanilla shell as a Tauri inbound adapter while Rust remains the only domain, storage, authorization, readiness, and recovery authority.
 
-Entry gate: P03 is stable, gstack design consultation has produced an accepted `DESIGN.md`, and plan design review has passed. The React implementation does not choose its visual language ad hoc.
+Entry gate: P03 is technically accepted with exact identity evidence, D1-B observation records Continue, gstack design consultation has produced an accepted `DESIGN.md`, and plan design review has passed. The React implementation does not choose its visual language ad hoc.
 
 Exit evidence:
 
 - Workspace, People, and Health parity passes before event screens land;
 - generated DTO/result contracts are current;
 - native folder selection replaces raw-path primary UX;
-- one semantic token/component contract provides accessible system, light, dark, and high-contrast built-ins, preserves operating-system reduced-motion preferences, and handles long content;
+- one semantic token/component contract provides system, light, dark, and high-contrast built-ins on the current Workspace, People, and Health surfaces;
+- `UAT-073` proves installed macOS/WKWebView keyboard and VoiceOver operation, en-XA at 400% reflow, read-only Health, basic People, external process interruption before and after COMMIT, theme persistence and OS-following, relaunch/recovery, and zero external requests without product fault hooks;
+- P04 does not own Events, the complete Details-to-Brief theme matrix, or A0 relationship-reminder UAT;
 - density, text-scale, user palette controls, and theme packages are not smuggled into B0/P04;
 - the web fixture uses a deterministic fake bridge and makes no product-authority claim.
 
 ## P05 — G1 domain contracts and atomic OKF authoring seam
 
-Outcome: the G1 `T-B0-P05` defines revisioned People, Organisations, Groups, Locations, Memberships, Events, provenance, explicit field states, and event-local resolutions before P06/P07; G3 consumes those accepted contracts. The separate G1 `T-B0-P05-OKF`, after P03 and P04, owns the pinned OKF v0.1 Draft People schema, strict writer port, Liaison extension mapping, reserved paths, and sealed-plaintext denial under `FG-B0-001`. Sensitive types and policy are owned only by P07/P08 under `FG-B0-002`.
+Outcome: after completed P04, the G1 `T-B0-P05` defines revisioned People, Organisations, Groups, Locations, Memberships, Events, provenance, explicit field states, and event-local resolutions before P06/P07; G3 consumes those accepted contracts. The separate G1 `T-B0-P05-OKF` owns the pinned OKF v0.1 Draft People schema, strict writer port, Liaison extension mapping, reserved paths, and sealed-plaintext denial under `FG-B0-001`. Sensitive types and policy are owned only by P07/P08 under `FG-B0-002`.
 
 Exit evidence:
 
@@ -183,6 +203,7 @@ Exit evidence:
 - interruption-safe drafts and explicit empty/loading/partial/stale/conflict/permission/error/success/undo/recovery states pass;
 - disclosure preview and artifact evidence show scope, grant, revisions, path, checksum, and staleness;
 - system, light, dark, and high-contrast built-in choice persists across relaunch without creating a settings-transfer surface;
+- `UAT-062` completes Details, Cohort, Attendees, Readiness, and Brief in every built-in on the installed B0 artifact; P04 current-surface evidence is a prerequisite, not a substitute;
 - relaunch, offline, readable-file, and native installed-app flows pass.
 
 ## B0 — Workplace Review Alpha
@@ -201,7 +222,7 @@ Later independently gated outcomes include:
 
 - multi-member Sharing, private overlays, encrypted operations, Liaison Cards, and conflict semantics;
 - local/removable-media/WebDAV/S3-compatible provider transport and provider-author tooling;
-- CardDAV, CalDAV/iCalendar, email metadata, migrations, and facilities imports;
+- Google Drive object-store backup, CardDAV, CalDAV/iCalendar, email metadata, migrations, and facilities imports;
 - local OpenAPI, MCP, webhooks, n8n, Ollama, remote AI grants, and WASI plugins;
 - visible provider/import operation receipts and history with no hidden sync, hidden refresh, or unreported egress;
 - source-backed enrichment proposals that cannot directly write confirmed facts or mutate assessment, freshness, or cadence;

@@ -1,33 +1,40 @@
-# Roadmap: Liaison RM
+# GSD roadmap snapshot — invalidated historical snapshot
 
-## Milestones
+Status: **invalidated; not an active planning or acceptance source**
 
-- ✅ **vB0 Workplace Review Alpha** — Phases P00–P04 (shipped 2026-07-22)
-- 📋 **vA0 Personal Memory Alpha** — Phases P05+ (planned)
+Superseded: 2026-07-22
 
-## Phases
+Current authority: `docs/product/working-state-delivery.md` and `spec/traceability-ownership.json`
 
-<details>
-<summary>✅ vB0 Workplace Review Alpha (Phases P00–P04) — SHIPPED 2026-07-22</summary>
+## Preserved provenance
 
-- [x] Phase P00: Product Boundary & Specification (1/1 plan) — completed 2026-07-20
-- [x] Phase P01: Core Architecture & Session Model (1/1 plan) — completed 2026-07-20
-- [x] Phase P02: Local Vault & Persistence Engine (1/1 plan) — completed 2026-07-21
-- [x] Phase P03: Workplace Review Domain Engine (1/1 plan) — completed 2026-07-21
-- [x] Phase P04: Editorial Ledger Desktop Shell & Authority Parity (1/1 plan) — completed 2026-07-22
+- Original commit: `49ee419e30f2d71524dd6fa15badf1ec4b8d0e27`
+- Original Git blob: `2228414a330f2fdc1083da471a8f9de8dd9004d2`
+- Original file SHA-256: `f7a10f15bd4682e46d2b367ed47b218872a2be2cbceef8527bb33a8f1c5a411a`
+- Original line count: 33
+- The original bytes remain recoverable from Git by commit and blob identity.
+- The annotated `vB0` tag remains preserved at its original object and target; this file does not move, delete, or recreate it.
 
-</details>
+## Why this snapshot is invalidated
 
-### 📋 vA0 Personal Memory Alpha (Planned)
+The snapshot treated the out-of-order `49ee419` source sequence and `vB0` tag as a completed or shipped milestone.
 
-- [ ] Phase P05: Personal Memory Domain Engine & Profile Customisation (0/1 plan)
+Machine authority did not advance.
 
-## Progress
+The sequence has no accepted P03 identity tuple, observation receipt, P03D/P04/P05-P11 evidence, installed-artifact qualification, or B0 acceptance.
 
-| Phase | Milestone | Plans Complete | Status | Completed |
-|---|---|---|---|---|
-| P00 Foundation | vB0 | 1/1 | Complete | 2026-07-20 |
-| P01 Architecture | vB0 | 1/1 | Complete | 2026-07-20 |
-| P02 Persistence | vB0 | 1/1 | Complete | 2026-07-21 |
-| P03 Domain Engine | vB0 | 1/1 | Complete | 2026-07-21 |
-| P04 Desktop Shell | vB0 | 1/1 | Complete | 2026-07-22 |
+## Current machine-owned state
+
+- P00-P02: complete.
+
+- G1 and `T-B0-P03`: current.
+
+- `T-B0-P03-OBS`, `T-B0-P03D`, `T-B0-P04`, P05-P11, and B0 acceptance: blocked.
+
+- PILOT: deferred after B0; real workplace data remains denied.
+
+- No P03 completion is inferred from PR #65/`3499a6e`, `49ee419`, `vB0`, the installed review app, static screenshots, or the premature `c2f852c` P03O material.
+
+Use the generated traceability report for live counts and ownership.
+
+Do not copy completion percentages, compliance scores, invented UAT identifiers, or shipment language from the preserved snapshot into active planning or release evidence.

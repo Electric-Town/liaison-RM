@@ -2,12 +2,166 @@
   "schema_version": 1,
   "status": "active",
   "delivery_boundary": "B0 Workplace Review Alpha before A0 Personal Memory Alpha; provider, mobile, AI, MCP, and theme packages remain later.",
-  "design_sequence": "After T-B0-P03, T-B0-P03D runs design consultation to create DESIGN.md and plan design review; T-B0-P04 cannot start before that gate. G0 does not create DESIGN.md.",
+  "design_sequence": "After T-B0-P03 is technically accepted with the qualified-code SHA, merge-result SHA, attestation SHA, and exact executable receipt, T-B0-P03-OBS becomes current and observes that same artifact under D1-B. Every Continue, Change, or Stop outcome completes OBS; only Continue makes T-B0-P03D eligible to run design consultation, create DESIGN.md, and complete plan design review. Change advances one bound replacement task, Stop records a structured preservation/support disposition, and T-B0-P04 cannot start before completed P03D. G0 does not create DESIGN.md.",
+  "p03_resume_authority": {
+    "decision": "D1-B",
+    "source_pull_request": 65,
+    "baseline_commit": "3499a6e9278fc72d2498a9978df59f30d03722e6",
+    "observation_task": "T-B0-P03-OBS",
+    "p03_technical_acceptance": "not-accepted",
+    "qualification_identity_contract": [
+      "qualified-code-sha",
+      "merge-result-sha",
+      "attestation-sha",
+      "exact-executable-artifact-receipt"
+    ],
+    "qualified_artifact_identity": null,
+    "observation_decision": "pending",
+    "observation_receipt_contract": [
+      "record_sha256",
+      "decision_sha256",
+      "observed_qualification_identity",
+      "decision"
+    ],
+    "observation_receipt": null,
+    "replacement_task": null,
+    "stopped_disposition": null,
+    "p03d_eligibility": "blocked",
+    "merge_result_ci": {
+      "event": "push",
+      "conclusion": "success",
+      "workflow_run_ids": [
+        29899084738,
+        29899084740,
+        29899084741,
+        29899084751,
+        29899084753,
+        29899084769,
+        29899084789
+      ]
+    },
+    "notarized_bundle_preflight": {
+      "event": "workflow_dispatch",
+      "run_id": 29899498005,
+      "conclusion": "failure",
+      "failure_boundary": "missing-Apple-credentials",
+      "release_evidence": "not-established"
+    }
+  },
   "approved_strategy": {
     "title": "Liaison RM product strategy and Claudia/PingCRM/OKF reconciliation",
     "status": "integrated-by-g0-contract-reconciliation",
     "approved_sha256": "795a6e6751cd29a995478e254323f491e68a53ef7c35fa729d8627b87cd37089",
     "scope": "Pins OKF v0.1 Draft People authoring, preserves B0 before A0, includes the required OKF People normalization in B0, and excludes general or third-party migrations from B0."
+  },
+  "authority_sources": {
+    "SPEC.md": {
+      "kind": "normative-contract",
+      "sha256": "07a809fe4f08ca2cbb183c881a539a2e2c2d67e8352232b03c547e73187ad07c",
+      "anchors": ["cross-release::LRM-PK-008"]
+    },
+    "docs/decisions/0012-deliver-workplace-review-before-personal-memory.md": {
+      "kind": "accepted-decision",
+      "sha256": "1075adbd1ca7331bc8135aa479d0361f70ab2b0c6cf2288ae5615a283cabb96a",
+      "anchors": ["cross-release::LRM-EV-001", "cross-release::LRM-EV-002", "cross-release::LRM-EV-003", "cross-release::LRM-EV-004", "cross-release::LRM-EV-005", "cross-release::LRM-EV-007", "cross-release::LRM-EV-008", "cross-release::LRM-EV-009", "cross-release::LRM-EV-010", "cross-release::LRM-EV-011", "cross-release::LRM-EV-013", "cross-release::LRM-IN-001", "cross-release::LRM-L10N-001", "cross-release::LRM-L10N-002", "cross-release::LRM-L10N-003", "cross-release::LRM-L10N-004", "cross-release::LRM-L10N-005", "cross-release::LRM-L10N-006", "cross-release::LRM-L10N-008", "cross-release::LRM-OR-001", "cross-release::LRM-OR-002", "cross-release::LRM-OR-003", "cross-release::LRM-OR-004", "cross-release::LRM-PE-001", "cross-release::LRM-PE-002", "cross-release::LRM-PE-003", "cross-release::LRM-PE-004", "cross-release::LRM-PE-005", "cross-release::LRM-PE-006", "cross-release::LRM-PE-008", "cross-release::LRM-PE-009", "cross-release::LRM-PE-010", "cross-release::LRM-RE-001", "cross-release::LRM-RE-002", "cross-release::LRM-RE-003", "cross-release::LRM-RE-004", "cross-release::LRM-RE-005", "cross-release::LRM-UX-001", "cross-release::LRM-UX-002", "cross-release::LRM-UX-003", "cross-release::LRM-UX-004", "cross-release::LRM-UX-005", "cross-release::LRM-UX-006", "cross-release::LRM-UX-007", "cross-release::LRM-UX-008", "cross-release::LRM-UX-012", "cross-release::LRM-WS-001", "cross-release::LRM-WS-002", "cross-release::LRM-WS-003", "cross-release::LRM-WS-004", "cross-release::LRM-WS-005", "cross-release::LRM-WS-006", "cross-release::LRM-WS-008", "cross-release::UAT-001", "cross-release::UAT-002", "cross-release::UAT-003", "cross-release::UAT-004", "cross-release::UAT-008", "cross-release::UAT-009", "cross-release::UAT-010", "cross-release::UAT-011", "cross-release::UAT-012", "cross-release::UAT-017", "cross-release::UAT-021", "cross-release::UAT-023", "cross-release::UAT-025", "cross-release::UAT-040", "cross-release::UAT-073", "cross-release::UAT-LOC-001", "cross-release::UAT-LOC-002"]
+    },
+    "docs/product/working-state-delivery.md": {
+      "kind": "normative-contract",
+      "sha256": "c539f75d59cf55c77340c32a1de1e21650cb6c46fc2469b2604de848ec3456d1",
+      "anchors": ["cross-release::LRM-PK-007", "forward-evidence::T-B0-P01::UAT-042", "forward-evidence::T-B0-P02::UAT-042", "forward-evidence::T-B0-P03D::LRM-UX-009", "forward-evidence::T-B0-P03D::LRM-UX-012", "forward-evidence::T-B0-P03D::LRM-UX-016", "forward-evidence::T-B0-P03D::UAT-062", "forward-evidence::T-B0-P04::UAT-041", "forward-evidence::T-B0-P06::UAT-041", "forward-evidence::T-B0-P07::UAT-043", "forward-evidence::T-B0-P09::UAT-041", "forward-evidence::T-B0-P10::UAT-041", "forward-evidence::T-B0-P11::LRM-PK-006", "forward-evidence::T-B0-P11::UAT-041", "forward-evidence::T-R4-001::UAT-026", "forward-evidence::T-R4-001::UAT-034", "forward-evidence::T-R5-002::LRM-IN-002"]
+    }
+  },
+  "cross_release_ownership_dispositions": {
+    "LRM-WS-001": {"artifact_type":"requirement","repository_release":"R1","owning_task":"T-B0-ACCEPT","task_release":"B0","owning_gate":"FG-B0-003","gate_release":"B0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R1 requirement through T-B0-ACCEPT/FG-B0-003 in the approved B0-before-A0 sequence."},
+    "LRM-WS-002": {"artifact_type":"requirement","repository_release":"R1","owning_task":"T-B0-P02","task_release":"B0","owning_gate":"FG-B0-001","gate_release":"B0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R1 requirement through T-B0-P02/FG-B0-001 in the approved B0-before-A0 sequence."},
+    "LRM-WS-003": {"artifact_type":"requirement","repository_release":"R1","owning_task":"T-B0-P06","task_release":"B0","owning_gate":"FG-B0-001","gate_release":"B0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R1 requirement through T-B0-P06/FG-B0-001 in the approved B0-before-A0 sequence."},
+    "LRM-WS-006": {"artifact_type":"requirement","repository_release":"R1","owning_task":"T-B0-P06","task_release":"B0","owning_gate":"FG-B0-001","gate_release":"B0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R1 requirement through T-B0-P06/FG-B0-001 in the approved B0-before-A0 sequence."},
+    "LRM-WS-004": {"artifact_type":"requirement","repository_release":"R1","owning_task":"T-B0-P03","task_release":"B0","owning_gate":"FG-B0-001","gate_release":"B0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R1 requirement through T-B0-P03/FG-B0-001 in the approved B0-before-A0 sequence."},
+    "LRM-WS-005": {"artifact_type":"requirement","repository_release":"R1","owning_task":"T-B0-P03","task_release":"B0","owning_gate":"FG-B0-001","gate_release":"B0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R1 requirement through T-B0-P03/FG-B0-001 in the approved B0-before-A0 sequence."},
+    "LRM-WS-008": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-B0-P11","task_release":"B0","owning_gate":"FG-B0-003","gate_release":"B0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-B0-P11/FG-B0-003 in the approved B0-before-A0 sequence."},
+    "LRM-UX-005": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-B0-P11","task_release":"B0","owning_gate":"FG-B0-003","gate_release":"B0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-B0-P11/FG-B0-003 in the approved B0-before-A0 sequence."},
+    "LRM-PE-006": {"artifact_type":"requirement","repository_release":"R1","owning_task":"T-A0-P01","task_release":"A0","owning_gate":"FG-A0-G2C","gate_release":"A0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R1 requirement through T-A0-P01/FG-A0-G2C in the approved B0-before-A0 sequence."},
+    "LRM-UX-007": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-A0-P01","task_release":"A0","owning_gate":"FG-A0-G2C","gate_release":"A0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-A0-P01/FG-A0-G2C in the approved B0-before-A0 sequence."},
+    "LRM-PE-001": {"artifact_type":"requirement","repository_release":"R1","owning_task":"T-B0-P05","task_release":"B0","owning_gate":"FG-R3-001","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R1 requirement through T-B0-P05/FG-R3-001 in the approved B0-before-A0 sequence."},
+    "LRM-PE-002": {"artifact_type":"requirement","repository_release":"R1","owning_task":"T-B0-P05","task_release":"B0","owning_gate":"FG-R3-001","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R1 requirement through T-B0-P05/FG-R3-001 in the approved B0-before-A0 sequence."},
+    "LRM-PE-004": {"artifact_type":"requirement","repository_release":"R1","owning_task":"T-B0-P05","task_release":"B0","owning_gate":"FG-R3-001","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R1 requirement through T-B0-P05/FG-R3-001 in the approved B0-before-A0 sequence."},
+    "LRM-PE-005": {"artifact_type":"requirement","repository_release":"R1","owning_task":"T-B0-P05","task_release":"B0","owning_gate":"FG-R3-001","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R1 requirement through T-B0-P05/FG-R3-001 in the approved B0-before-A0 sequence."},
+    "LRM-PE-008": {"artifact_type":"requirement","repository_release":"R3","owning_task":"T-B0-P05","task_release":"B0","owning_gate":"FG-R3-001","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R3 requirement through T-B0-P05/FG-R3-001 in the approved B0-before-A0 sequence."},
+    "LRM-PE-009": {"artifact_type":"requirement","repository_release":"R3","owning_task":"T-B0-P05","task_release":"B0","owning_gate":"FG-R3-001","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R3 requirement through T-B0-P05/FG-R3-001 in the approved B0-before-A0 sequence."},
+    "LRM-PE-010": {"artifact_type":"requirement","repository_release":"R3","owning_task":"T-B0-P05","task_release":"B0","owning_gate":"FG-R3-001","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R3 requirement through T-B0-P05/FG-R3-001 in the approved B0-before-A0 sequence."},
+    "LRM-PE-003": {"artifact_type":"requirement","repository_release":"R1","owning_task":"T-A0-P02","task_release":"A0","owning_gate":"FG-A0-G2A","gate_release":"A0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R1 requirement through T-A0-P02/FG-A0-G2A in the approved B0-before-A0 sequence."},
+    "LRM-IN-001": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-A0-P04","task_release":"A0","owning_gate":"FG-A0-001","gate_release":"A0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-A0-P04/FG-A0-001 in the approved B0-before-A0 sequence."},
+    "LRM-OR-001": {"artifact_type":"requirement","repository_release":"R3","owning_task":"T-B0-P09","task_release":"B0","owning_gate":"FG-R3-002","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R3 requirement through T-B0-P09/FG-R3-002 in the approved B0-before-A0 sequence."},
+    "LRM-OR-002": {"artifact_type":"requirement","repository_release":"R3","owning_task":"T-B0-P09","task_release":"B0","owning_gate":"FG-R3-002","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R3 requirement through T-B0-P09/FG-R3-002 in the approved B0-before-A0 sequence."},
+    "LRM-OR-003": {"artifact_type":"requirement","repository_release":"R3","owning_task":"T-B0-P09","task_release":"B0","owning_gate":"FG-R3-002","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R3 requirement through T-B0-P09/FG-R3-002 in the approved B0-before-A0 sequence."},
+    "LRM-OR-004": {"artifact_type":"requirement","repository_release":"R3","owning_task":"T-B0-P09","task_release":"B0","owning_gate":"FG-R3-002","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R3 requirement through T-B0-P09/FG-R3-002 in the approved B0-before-A0 sequence."},
+    "LRM-RE-001": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-A0-P03","task_release":"A0","owning_gate":"FG-A0-G2B","gate_release":"A0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-A0-P03/FG-A0-G2B in the approved B0-before-A0 sequence."},
+    "LRM-RE-002": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-A0-P03","task_release":"A0","owning_gate":"FG-A0-G2B","gate_release":"A0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-A0-P03/FG-A0-G2B in the approved B0-before-A0 sequence."},
+    "LRM-RE-003": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-A0-P03","task_release":"A0","owning_gate":"FG-A0-G2B","gate_release":"A0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-A0-P03/FG-A0-G2B in the approved B0-before-A0 sequence."},
+    "LRM-RE-004": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-A0-P03","task_release":"A0","owning_gate":"FG-A0-G2B","gate_release":"A0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-A0-P03/FG-A0-G2B in the approved B0-before-A0 sequence."},
+    "LRM-RE-005": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-A0-P03","task_release":"A0","owning_gate":"FG-A0-G2B","gate_release":"A0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-A0-P03/FG-A0-G2B in the approved B0-before-A0 sequence."},
+    "LRM-EV-001": {"artifact_type":"requirement","repository_release":"R3","owning_task":"T-B0-P10","task_release":"B0","owning_gate":"FG-R3-003","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R3 requirement through T-B0-P10/FG-R3-003 in the approved B0-before-A0 sequence."},
+    "LRM-EV-002": {"artifact_type":"requirement","repository_release":"R3","owning_task":"T-B0-P10","task_release":"B0","owning_gate":"FG-R3-003","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R3 requirement through T-B0-P10/FG-R3-003 in the approved B0-before-A0 sequence."},
+    "LRM-EV-003": {"artifact_type":"requirement","repository_release":"R3","owning_task":"T-B0-P10","task_release":"B0","owning_gate":"FG-R3-003","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R3 requirement through T-B0-P10/FG-R3-003 in the approved B0-before-A0 sequence."},
+    "LRM-EV-004": {"artifact_type":"requirement","repository_release":"R3","owning_task":"T-B0-P10","task_release":"B0","owning_gate":"FG-R3-004","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R3 requirement through T-B0-P10/FG-R3-004 in the approved B0-before-A0 sequence."},
+    "LRM-EV-005": {"artifact_type":"requirement","repository_release":"R3","owning_task":"T-B0-P10","task_release":"B0","owning_gate":"FG-R3-004","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R3 requirement through T-B0-P10/FG-R3-004 in the approved B0-before-A0 sequence."},
+    "LRM-EV-007": {"artifact_type":"requirement","repository_release":"B0","owning_task":"T-B0-P10","task_release":"B0","owning_gate":"FG-R3-003","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact B0 requirement through T-B0-P10/FG-R3-003 in the approved B0-before-A0 sequence."},
+    "LRM-EV-008": {"artifact_type":"requirement","repository_release":"B0","owning_task":"T-B0-P10","task_release":"B0","owning_gate":"FG-R3-004","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact B0 requirement through T-B0-P10/FG-R3-004 in the approved B0-before-A0 sequence."},
+    "LRM-EV-009": {"artifact_type":"requirement","repository_release":"B0","owning_task":"T-B0-P10","task_release":"B0","owning_gate":"FG-R3-003","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact B0 requirement through T-B0-P10/FG-R3-003 in the approved B0-before-A0 sequence."},
+    "LRM-EV-010": {"artifact_type":"requirement","repository_release":"B0","owning_task":"T-B0-P10","task_release":"B0","owning_gate":"FG-R3-003","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact B0 requirement through T-B0-P10/FG-R3-003 in the approved B0-before-A0 sequence."},
+    "LRM-EV-011": {"artifact_type":"requirement","repository_release":"B0","owning_task":"T-B0-P10","task_release":"B0","owning_gate":"FG-R3-003","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact B0 requirement through T-B0-P10/FG-R3-003 in the approved B0-before-A0 sequence."},
+    "LRM-EV-013": {"artifact_type":"requirement","repository_release":"B0","owning_task":"T-B0-P10","task_release":"B0","owning_gate":"FG-R3-004","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact B0 requirement through T-B0-P10/FG-R3-004 in the approved B0-before-A0 sequence."},
+    "LRM-UX-001": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-B0-P04","task_release":"B0","owning_gate":"FG-R2-001","gate_release":"R2","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-B0-P04/FG-R2-001 in the approved B0-before-A0 sequence."},
+    "LRM-UX-002": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-B0-P04","task_release":"B0","owning_gate":"FG-R2-001","gate_release":"R2","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-B0-P04/FG-R2-001 in the approved B0-before-A0 sequence."},
+    "LRM-UX-003": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-B0-P04","task_release":"B0","owning_gate":"FG-R2-001","gate_release":"R2","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-B0-P04/FG-R2-001 in the approved B0-before-A0 sequence."},
+    "LRM-UX-004": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-B0-P04","task_release":"B0","owning_gate":"FG-R2-001","gate_release":"R2","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-B0-P04/FG-R2-001 in the approved B0-before-A0 sequence."},
+    "LRM-UX-006": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-B0-P04","task_release":"B0","owning_gate":"FG-R2-001","gate_release":"R2","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-B0-P04/FG-R2-001 in the approved B0-before-A0 sequence."},
+    "LRM-UX-008": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-B0-P04","task_release":"B0","owning_gate":"FG-R2-001","gate_release":"R2","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-B0-P04/FG-R2-001 in the approved B0-before-A0 sequence."},
+    "LRM-UX-012": {"artifact_type":"requirement","repository_release":"B0","owning_task":"T-B0-P04","task_release":"B0","owning_gate":"FG-R2-001","gate_release":"R2","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact B0 requirement through T-B0-P04/FG-R2-001 in the approved B0-before-A0 sequence."},
+    "LRM-L10N-001": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-B0-P04","task_release":"B0","owning_gate":"FG-R2-001","gate_release":"R2","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-B0-P04/FG-R2-001 in the approved B0-before-A0 sequence."},
+    "LRM-L10N-002": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-B0-P04","task_release":"B0","owning_gate":"FG-R2-001","gate_release":"R2","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-B0-P04/FG-R2-001 in the approved B0-before-A0 sequence."},
+    "LRM-L10N-003": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-B0-P04","task_release":"B0","owning_gate":"FG-R2-001","gate_release":"R2","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-B0-P04/FG-R2-001 in the approved B0-before-A0 sequence."},
+    "LRM-L10N-004": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-B0-P04","task_release":"B0","owning_gate":"FG-R2-001","gate_release":"R2","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-B0-P04/FG-R2-001 in the approved B0-before-A0 sequence."},
+    "LRM-L10N-005": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-B0-P04","task_release":"B0","owning_gate":"FG-R2-001","gate_release":"R2","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-B0-P04/FG-R2-001 in the approved B0-before-A0 sequence."},
+    "LRM-L10N-006": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-B0-P04","task_release":"B0","owning_gate":"FG-R2-001","gate_release":"R2","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-B0-P04/FG-R2-001 in the approved B0-before-A0 sequence."},
+    "LRM-L10N-008": {"artifact_type":"requirement","repository_release":"R2","owning_task":"T-B0-P04","task_release":"B0","owning_gate":"FG-R2-001","gate_release":"R2","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 requirement through T-B0-P04/FG-R2-001 in the approved B0-before-A0 sequence."},
+    "LRM-PK-008": {"artifact_type":"requirement","repository_release":"R1","owning_task":"T-REL-001","task_release":"R1","owning_gate":"FG-REL-001","gate_release":"all","authority":"SPEC.md","rationale":"FG-REL-001 is the release-wide publication gate; T-REL-001 owns this exact R1 evaluator-path contract."},
+    "LRM-PK-007": {"artifact_type":"requirement","repository_release":"R0","owning_task":"T-B0-P00","task_release":"B0","owning_gate":"FG-R0-002","gate_release":"R0","authority":"docs/product/working-state-delivery.md","rationale":"P00 re-owned this exact R0 claim-inventory contract under its existing R0 evidence gate."},
+    "UAT-001": {"artifact_type":"uat","repository_release":"R1","owning_task":"T-B0-ACCEPT","task_release":"B0","owning_gate":"FG-B0-003","gate_release":"B0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R1 uat through T-B0-ACCEPT/FG-B0-003 in the approved B0-before-A0 sequence."},
+    "UAT-002": {"artifact_type":"uat","repository_release":"R1","owning_task":"T-A0-P01","task_release":"A0","owning_gate":"FG-A0-G2C","gate_release":"A0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R1 uat through T-A0-P01/FG-A0-G2C in the approved B0-before-A0 sequence."},
+    "UAT-021": {"artifact_type":"uat","repository_release":"R2","owning_task":"T-A0-P01","task_release":"A0","owning_gate":"FG-A0-G2C","gate_release":"A0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 uat through T-A0-P01/FG-A0-G2C in the approved B0-before-A0 sequence."},
+    "UAT-003": {"artifact_type":"uat","repository_release":"R2","owning_task":"T-A0-P02","task_release":"A0","owning_gate":"FG-A0-G2A","gate_release":"A0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 uat through T-A0-P02/FG-A0-G2A in the approved B0-before-A0 sequence."},
+    "UAT-017": {"artifact_type":"uat","repository_release":"R2","owning_task":"T-A0-P02","task_release":"A0","owning_gate":"FG-A0-G2A","gate_release":"A0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 uat through T-A0-P02/FG-A0-G2A in the approved B0-before-A0 sequence."},
+    "UAT-004": {"artifact_type":"uat","repository_release":"R2","owning_task":"T-A0-P03","task_release":"A0","owning_gate":"FG-A0-G2B","gate_release":"A0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 uat through T-A0-P03/FG-A0-G2B in the approved B0-before-A0 sequence."},
+    "UAT-023": {"artifact_type":"uat","repository_release":"R2","owning_task":"T-A0-P03","task_release":"A0","owning_gate":"FG-A0-G2B","gate_release":"A0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 uat through T-A0-P03/FG-A0-G2B in the approved B0-before-A0 sequence."},
+    "UAT-008": {"artifact_type":"uat","repository_release":"R3","owning_task":"T-B0-P09","task_release":"B0","owning_gate":"FG-R3-002","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R3 uat through T-B0-P09/FG-R3-002 in the approved B0-before-A0 sequence."},
+    "UAT-012": {"artifact_type":"uat","repository_release":"R3","owning_task":"T-B0-P09","task_release":"B0","owning_gate":"FG-R3-002","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R3 uat through T-B0-P09/FG-R3-002 in the approved B0-before-A0 sequence."},
+    "UAT-009": {"artifact_type":"uat","repository_release":"R3","owning_task":"T-B0-P10","task_release":"B0","owning_gate":"FG-R3-003","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R3 uat through T-B0-P10/FG-R3-003 in the approved B0-before-A0 sequence."},
+    "UAT-010": {"artifact_type":"uat","repository_release":"R3","owning_task":"T-B0-P10","task_release":"B0","owning_gate":"FG-R3-004","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R3 uat through T-B0-P10/FG-R3-004 in the approved B0-before-A0 sequence."},
+    "UAT-011": {"artifact_type":"uat","repository_release":"R3","owning_task":"T-B0-P10","task_release":"B0","owning_gate":"FG-R3-004","gate_release":"R3","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R3 uat through T-B0-P10/FG-R3-004 in the approved B0-before-A0 sequence."},
+    "UAT-073": {"artifact_type":"uat","repository_release":"B0","owning_task":"T-B0-P04","task_release":"B0","owning_gate":"FG-R2-001","gate_release":"R2","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact B0 uat through T-B0-P04/FG-R2-001 in the approved B0-before-A0 sequence."},
+    "UAT-LOC-001": {"artifact_type":"uat","repository_release":"R2","owning_task":"T-B0-P04","task_release":"B0","owning_gate":"FG-R2-001","gate_release":"R2","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 uat through T-B0-P04/FG-R2-001 in the approved B0-before-A0 sequence."},
+    "UAT-LOC-002": {"artifact_type":"uat","repository_release":"R2","owning_task":"T-B0-P04","task_release":"B0","owning_gate":"FG-R2-001","gate_release":"R2","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R2 uat through T-B0-P04/FG-R2-001 in the approved B0-before-A0 sequence."},
+    "UAT-025": {"artifact_type":"uat","repository_release":"R1","owning_task":"T-B0-P08","task_release":"B0","owning_gate":"FG-B0-002","gate_release":"B0","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R1 uat through T-B0-P08/FG-B0-002 in the approved B0-before-A0 sequence."},
+    "UAT-040": {"artifact_type":"uat","repository_release":"R1","owning_task":"T-B0-P06-REPAIR","task_release":"B0","owning_gate":"FG-R1-002","gate_release":"R1","authority":"docs/decisions/0012-deliver-workplace-review-before-personal-memory.md","rationale":"ADR 0012 re-owns this exact R1 uat through T-B0-P06-REPAIR/FG-R1-002 in the approved B0-before-A0 sequence."}
+  },
+  "forward_evidence_dispositions": {
+    "T-B0-P01::UAT-042": {"task":"T-B0-P01","task_milestone":"G1","artifact_type":"uat","artifact_id":"UAT-042","artifact_owner_task":"T-B0-P03","artifact_milestone":"G1","relationship":"non-blocking-future-contract-input","authority":"docs/product/working-state-delivery.md","rationale":"P01 preserves early application-root compatibility with the later P03 fault matrix without claiming UAT-042; T-B0-P03 retains its sole acceptance ownership."},
+    "T-B0-P02::UAT-042": {"task":"T-B0-P02","task_milestone":"G1","artifact_type":"uat","artifact_id":"UAT-042","artifact_owner_task":"T-B0-P03","artifact_milestone":"G1","relationship":"non-blocking-future-contract-input","authority":"docs/product/working-state-delivery.md","rationale":"P02 exercises Workspace Session foundations against the later P03 recovery target without claiming UAT-042; T-B0-P03 retains its sole acceptance ownership."},
+    "T-B0-P03D::LRM-UX-009": {"task":"T-B0-P03D","task_milestone":"G1","artifact_type":"requirement","artifact_id":"LRM-UX-009","artifact_owner_task":"T-B0-P11","artifact_milestone":"B0","relationship":"non-blocking-future-contract-input","authority":"docs/product/working-state-delivery.md","rationale":"P03D reviews the future complete B0 journey as a non-blocking design input; T-B0-P11 retains implementation and acceptance ownership."},
+    "T-B0-P03D::LRM-UX-012": {"task":"T-B0-P03D","task_milestone":"G1","artifact_type":"requirement","artifact_id":"LRM-UX-012","artifact_owner_task":"T-B0-P04","artifact_milestone":"G1","relationship":"non-blocking-future-contract-input","authority":"docs/product/working-state-delivery.md","rationale":"P03D reviews the future current-surface primitive contract as a non-blocking design input; T-B0-P04 remains the implementation and acceptance owner."},
+    "T-B0-P03D::LRM-UX-016": {"task":"T-B0-P03D","task_milestone":"G1","artifact_type":"requirement","artifact_id":"LRM-UX-016","artifact_owner_task":"T-B0-P11","artifact_milestone":"B0","relationship":"non-blocking-future-contract-input","authority":"docs/product/working-state-delivery.md","rationale":"P03D reviews the future full-journey theme contract without completing it; T-B0-P11 remains the only implementation and acceptance owner."},
+    "T-B0-P03D::UAT-062": {"task":"T-B0-P03D","task_milestone":"G1","artifact_type":"uat","artifact_id":"UAT-062","artifact_owner_task":"T-B0-P11","artifact_milestone":"B0","relationship":"non-blocking-future-contract-input","authority":"docs/product/working-state-delivery.md","rationale":"P03D uses the installed full-journey UAT as a non-blocking design target; the UAT stays blocked and owned by T-B0-P11 until B0 implementation."},
+    "T-B0-P04::UAT-041": {"task":"T-B0-P04","task_milestone":"G1","artifact_type":"uat","artifact_id":"UAT-041","artifact_owner_task":"T-B0-ACCEPT","artifact_milestone":"B0","relationship":"non-blocking-future-contract-input","authority":"docs/product/working-state-delivery.md","rationale":"P04 preserves compatibility with the final installed B0 workflow without claiming UAT-041; T-B0-ACCEPT remains its sole acceptance owner."},
+    "T-B0-P06::UAT-041": {"task":"T-B0-P06","task_milestone":"G1","artifact_type":"uat","artifact_id":"UAT-041","artifact_owner_task":"T-B0-ACCEPT","artifact_milestone":"B0","relationship":"non-blocking-future-contract-input","authority":"docs/product/working-state-delivery.md","rationale":"P06 keeps Directory scale and projection work compatible with final B0 UAT, but cannot complete or block UAT-041 before T-B0-ACCEPT."},
+    "T-B0-P07::UAT-043": {"task":"T-B0-P07","task_milestone":"G1","artifact_type":"uat","artifact_id":"UAT-043","artifact_owner_task":"T-B0-P08","artifact_milestone":"G1","relationship":"non-blocking-future-contract-input","authority":"docs/product/working-state-delivery.md","rationale":"P07 preserves checkpoint behaviour against the later encrypted-recovery workflow without claiming UAT-043; T-B0-P08 retains acceptance ownership."},
+    "T-B0-P09::UAT-041": {"task":"T-B0-P09","task_milestone":"G3","artifact_type":"uat","artifact_id":"UAT-041","artifact_owner_task":"T-B0-ACCEPT","artifact_milestone":"B0","relationship":"non-blocking-future-contract-input","authority":"docs/product/working-state-delivery.md","rationale":"P09 validates onboarding against the later installed workflow as a non-blocking target; UAT-041 remains exclusively owned by T-B0-ACCEPT."},
+    "T-B0-P10::UAT-041": {"task":"T-B0-P10","task_milestone":"G3","artifact_type":"uat","artifact_id":"UAT-041","artifact_owner_task":"T-B0-ACCEPT","artifact_milestone":"B0","relationship":"non-blocking-future-contract-input","authority":"docs/product/working-state-delivery.md","rationale":"P10 preserves Event workflow compatibility with the final installed UAT without claiming acceptance; T-B0-ACCEPT remains the sole owner."},
+    "T-B0-P11::LRM-PK-006": {"task":"T-B0-P11","task_milestone":"B0","artifact_type":"requirement","artifact_id":"LRM-PK-006","artifact_owner_task":"T-B0-ACCEPT","artifact_milestone":"B0","relationship":"non-blocking-future-contract-input","authority":"docs/product/working-state-delivery.md","rationale":"P11 prepares installed delivery evidence against the later B0 qualification contract without completing it; T-B0-ACCEPT remains the sole owner."},
+    "T-B0-P11::UAT-041": {"task":"T-B0-P11","task_milestone":"B0","artifact_type":"uat","artifact_id":"UAT-041","artifact_owner_task":"T-B0-ACCEPT","artifact_milestone":"B0","relationship":"non-blocking-future-contract-input","authority":"docs/product/working-state-delivery.md","rationale":"P11 assembles the installed workflow consumed by UAT-041 without claiming final acceptance; T-B0-ACCEPT remains its sole owner."},
+    "T-R4-001::UAT-026": {"task":"T-R4-001","task_milestone":"G4","artifact_type":"uat","artifact_id":"UAT-026","artifact_owner_task":"T-R4-002","artifact_milestone":"G4","relationship":"non-blocking-future-contract-input","authority":"docs/product/working-state-delivery.md","rationale":"T-R4-001 establishes provider-neutral grant foundations against a later revocation workflow target; T-R4-002 retains UAT-026 acceptance ownership."},
+    "T-R4-001::UAT-034": {"task":"T-R4-001","task_milestone":"G4","artifact_type":"uat","artifact_id":"UAT-034","artifact_owner_task":"T-R4-003","artifact_milestone":"G4","relationship":"non-blocking-future-contract-input","authority":"docs/product/working-state-delivery.md","rationale":"T-R4-001 keeps its grant foundation compatible with later provider conformance evidence without claiming UAT-034; T-R4-003 retains ownership."},
+    "T-R5-002::LRM-IN-002": {"task":"T-R5-002","task_milestone":"G5","artifact_type":"requirement","artifact_id":"LRM-IN-002","artifact_owner_task":"T-R5-003","artifact_milestone":"G5","relationship":"non-blocking-future-contract-input","authority":"docs/product/working-state-delivery.md","rationale":"T-R5-002 keeps signal import compatible with later connection acceptance without claiming LRM-IN-002; T-R5-003 retains sole ownership."}
   },
   "milestones": [
     {
@@ -41,6 +195,14 @@
         "G3"
       ],
       "status": "blocked"
+    },
+    {
+      "id": "PILOT",
+      "name": "Optional governed real workplace-data pilot",
+      "depends_on": [
+        "B0"
+      ],
+      "status": "deferred"
     },
     {
       "id": "G2C",
@@ -528,6 +690,12 @@
       "evidence_owner": "EO-WORKSPACE",
       "status": "current"
     },
+    "T-B0-P03-OBS": {
+      "milestone": "G1",
+      "owning_gate": "FG-B0-DESIGN-001",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
     "T-B0-P03D": {
       "milestone": "G1",
       "owning_gate": "FG-B0-DESIGN-001",
@@ -601,10 +769,10 @@
       "status": "blocked"
     },
     "T-B0-PILOT": {
-      "milestone": "G3",
+      "milestone": "PILOT",
       "owning_gate": "FG-B0-PILOT-001",
       "evidence_owner": "EO-EVENTS",
-      "status": "blocked"
+      "status": "deferred"
     },
     "T-B0-ACCEPT": {
       "milestone": "B0",
@@ -670,6 +838,12 @@
       "milestone": "G5",
       "owning_gate": "FG-R5-006",
       "evidence_owner": "EO-EXPERIENCE",
+      "status": "deferred"
+    },
+    "T-R5-010": {
+      "milestone": "G5",
+      "owning_gate": "FG-R5-007",
+      "evidence_owner": "EO-CONNECTIONS",
       "status": "deferred"
     },
     "T-R6-006": {
@@ -762,11 +936,11 @@
       "status": "current"
     },
     "LRM-WS-007": {
-      "owning_task": "T-B0-P03",
-      "owning_gate": "FG-B0-001",
-      "milestone": "G1",
-      "evidence_owner": "EO-WORKSPACE",
-      "status": "current"
+      "owning_task": "T-R5-005",
+      "owning_gate": "FG-R5-005",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
     },
     "LRM-WS-010": {
       "owning_task": "T-B0-P03",
@@ -1317,9 +1491,9 @@
     "LRM-EV-012": {
       "owning_task": "T-B0-PILOT",
       "owning_gate": "FG-B0-PILOT-001",
-      "milestone": "G3",
+      "milestone": "PILOT",
       "evidence_owner": "EO-EVENTS",
-      "status": "blocked"
+      "status": "deferred"
     },
     "LRM-FA-001": {
       "owning_task": "T-R5-004",
@@ -1434,9 +1608,9 @@
       "status": "deferred"
     },
     "LRM-CO-012": {
-      "owning_task": "T-R4-008",
-      "owning_gate": "FG-R4-001",
-      "milestone": "G4",
+      "owning_task": "T-R5-010",
+      "owning_gate": "FG-R5-007",
+      "milestone": "G5",
       "evidence_owner": "EO-CONNECTIONS",
       "status": "deferred"
     },
@@ -1644,9 +1818,9 @@
       "status": "blocked"
     },
     "LRM-UX-009": {
-      "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
-      "milestone": "G1",
+      "owning_task": "T-B0-P11",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked"
     },
@@ -1654,6 +1828,13 @@
       "owning_task": "T-B0-P04",
       "owning_gate": "FG-R2-001",
       "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "LRM-UX-016": {
+      "owning_task": "T-B0-P11",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "blocked"
     },
@@ -1782,6 +1963,13 @@
       "milestone": "G0",
       "evidence_owner": "EO-GOVERNANCE",
       "status": "complete"
+    },
+    "LRM-PK-010": {
+      "owning_task": "T-B0-P03-OBS",
+      "owning_gate": "FG-B0-DESIGN-001",
+      "milestone": "G1",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
     },
     "LRM-A0-001": {
       "owning_task": "T-A0-001",
@@ -2024,13 +2212,20 @@
       "status": "deferred"
     },
     "UAT-022": {
-      "owning_task": "T-B0-P04",
-      "owning_gate": "FG-R2-001",
-      "milestone": "G1",
-      "evidence_owner": "EO-EXPERIENCE",
+      "owning_task": "T-A0-P03",
+      "owning_gate": "FG-A0-G2B",
+      "milestone": "G2B",
+      "evidence_owner": "EO-PROFILES",
       "status": "blocked"
     },
     "UAT-062": {
+      "owning_task": "T-B0-P11",
+      "owning_gate": "FG-B0-003",
+      "milestone": "B0",
+      "evidence_owner": "EO-EXPERIENCE",
+      "status": "blocked"
+    },
+    "UAT-073": {
       "owning_task": "T-B0-P04",
       "owning_gate": "FG-R2-001",
       "milestone": "G1",
@@ -2316,6 +2511,13 @@
       "milestone": "G5",
       "evidence_owner": "EO-EXPERIENCE",
       "status": "deferred"
+    },
+    "UAT-074": {
+      "owning_task": "T-R5-010",
+      "owning_gate": "FG-R5-007",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
     }
   },
   "gate_ownership": {
@@ -2499,6 +2701,12 @@
       "evidence_owner": "EO-EXPERIENCE",
       "status": "deferred"
     },
+    "FG-R5-007": {
+      "acceptance_task": "T-R5-010",
+      "milestone": "G5",
+      "evidence_owner": "EO-CONNECTIONS",
+      "status": "deferred"
+    },
     "FG-R6-001": {
       "acceptance_task": "T-R6-002",
       "milestone": "G6",
@@ -2573,9 +2781,9 @@
     },
     "FG-B0-PILOT-001": {
       "acceptance_task": "T-B0-PILOT",
-      "milestone": "G3",
+      "milestone": "PILOT",
       "evidence_owner": "EO-EVENTS",
-      "status": "blocked"
+      "status": "deferred"
     },
     "FG-A0-001": {
       "acceptance_task": "T-A0-001",
@@ -3072,7 +3280,7 @@
       "status": "closed-branch-preserved",
       "execution_status": "deferred",
       "milestone": "G1",
-      "condition": "May be reviewed only as design source after P03, design consultation, canonical DESIGN.md, and plan design review; it is not current P04 authority."
+      "condition": "May be reviewed only as design source after accepted P03 technical qualification, exact-artifact T-B0-P03-OBS, and a Continue decision make P03D eligible; design consultation, canonical DESIGN.md, and plan design review must still complete, and this branch is not current P04 authority."
     },
     {
       "reference": "PR #32",

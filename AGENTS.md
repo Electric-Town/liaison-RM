@@ -56,7 +56,7 @@ When sources conflict, stop and create a focused clarification or decision. Do n
 9. Update `CHANGELOG.md` for user-visible, operator-visible, or contributor-visible behaviour.
 10. Complete the pull-request template with risks, rollback, accessibility evidence, and exact validation results.
 
-The accepted working sequence is P00 through P03, the design-consultation and plan-design-review gate, P04 through P11, B0 qualification, then A0. G0 records that future design gate but does not create `DESIGN.md`; it runs only after P03 stabilises the typed state and operation contracts. Do not revive the older personal-desktop-before-event ordering from R1/R2/R3 roadmap prose or a stale pull request.
+The accepted working sequence is P00 through P03, `T-B0-P03-OBS`, the design-consultation and plan-design-review gate, P04 through P11, B0 qualification, then A0. Under D1-B, the observation uses the exact qualified and attested P03 artifact with synthetic or redacted workplace scenarios and records a distinct Continue, Change, or Stop decision. Only Continue permits P03D; Change or Stop keeps P03D and P04 blocked. G0 records that future design gate but does not create `DESIGN.md`. Do not revive the older personal-desktop-before-event ordering from R1/R2/R3 roadmap prose or a stale pull request.
 
 ## Domain-driven design rules
 
@@ -97,7 +97,7 @@ Empty personal, dietary, accessibility, or workplace fields are ambiguous. Use e
 - Airgap builds compile out network clients and listeners; a runtime toggle is insufficient evidence.
 - A local checkpoint and an encrypted recovery package are distinct capabilities. Only the encrypted package may be represented as user-portable recovery after a clean-install restore without prior Keychain state.
 - Destructive operations require preview, confirmation, audit evidence, and a recovery path where technically possible.
-- Migrations require dry-run, an appropriate quiescent checkpoint or encrypted recovery package, deterministic execution, validation, and rollback or explicit irreversibility.
+- General and third-party post-A0 migrations follow `LRM-WS-007`: dry-run, pre-migration backup, deterministic execution, validation, and rollback or explicit irreversibility. The narrow B0 OKF People normalization does not inherit that generic requirement; it follows its stricter, separately owned `LRM-WS-017` and `UAT-066` exact-preview, exact-backup, failure-atomic recovery, idempotent rerun, and exact-rollback contract.
 - Use synthetic fixtures only.
 
 ## Provider, sharing, and plugin rules
@@ -177,7 +177,7 @@ A pull request is not ready for review until:
 - migration, compatibility, privacy, security, accessibility, and rollback effects are addressed;
 - generated files are reproducible;
 - no unrelated changes, staging payloads, diagnostics, or one-shot repair workflows remain;
-- the PR body states every gate that remains closed.
+- the PR body states every gate that remains blocked, deferred, current, or otherwise not complete.
 
 Draft pull requests may be incomplete, but their body must identify the missing work and must not be represented as release-ready.
 

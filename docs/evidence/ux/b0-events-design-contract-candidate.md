@@ -1,12 +1,12 @@
 # B0 Events design contract — candidate
 
-Status: candidate design-contract evidence for `T-B0-P03D`; no production usability or accessibility conformance claim.
+Status: preserved candidate design-contract input. It cannot enter `T-B0-P03D` until P03 is technically accepted, `T-B0-P03-OBS` observes that exact attested artifact, and the recorded D1-B decision is Continue; no production usability or accessibility conformance claim.
 
 This document specifies the five B0 Event stages — Details, Cohort, Attendees, Readiness, Brief — as screen-state contracts against the merged P00 machine contracts. It exists so the future `T-B0-P03D` reconciliation and the P10/P11 implementation start from recorded state coverage instead of inventing it during coding.
 
 What this document is not:
 
-- It is not canonical `DESIGN.md`, and it is never promoted into one. After exact-head P03 evidence, the `T-B0-P03D` design consultation creates canonical `DESIGN.md` with this file as one of its inputs; the plan design review then checks that direction and amends the P04 plan.
+- It is not canonical `DESIGN.md`, and it is never promoted into one. After accepted P03 qualification and attestation, exact-artifact OBS, and a Continue decision make P03D eligible, the `T-B0-P03D` design consultation creates canonical `DESIGN.md` with this file as one input; the plan design review then checks that direction and amends the P04 plan.
 - It is not P04 or P11 implementation authority, and it does not authorise any Events surface to ship.
 - It does not bind exact operation, error, or recovery states; those belong to P03 and are mapped at the P03D reconciliation.
 - It does not amend machine contracts, gates, or task ownership.
@@ -18,7 +18,7 @@ Layering rule: Event presentation remains a design contract against P00 requirem
 - [ADR-0010: Deliver event dietary readiness with structural least disclosure](../../decisions/0010-deliver-event-dietary-readiness-with-structural-least-disclosure.md)
 - `LRM-EV-001` – `LRM-EV-013` in [spec/requirements.json](../../../spec/requirements.json); `UAT-009` – `UAT-012` in [spec/uat-cases.json](../../../spec/uat-cases.json)
 - [docs/product/working-state-delivery.md](../../product/working-state-delivery.md) — B0 boundary and claim language
-- Personas `P-RECEPTION` and `P-EVENTS`; the conditional plan design review of 2026-07-19 names the receptionist persona "Jess" and its decisions D-P03D-01 to D-P03D-16 are directional inputs pending P03D reconciliation
+- Personas `P-RECEPTION` and `P-EVENTS`; the conditional plan design review of 2026-07-19 names the receptionist persona "Jess" and its decisions D-P03D-01 to D-P03D-16 are directional inputs pending technical P03 acceptance, exact-artifact OBS, Continue, and P03D reconciliation
 - The preserved branch `claude/events-readiness-domain` (pull request #41, closed pending its owning P05/P10 milestones) prototypes the same canonical axes and outcomes; requirement language is the authority wherever they differ
 
 All names, organisations, and values below are synthetic.

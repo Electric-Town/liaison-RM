@@ -1,23 +1,40 @@
-# Milestone Archive: vB0 Workplace Review Alpha
+# vB0 roadmap snapshot — invalidated historical snapshot
 
-**Shipped Date:** 2026-07-22  
-**Status:** ✅ Complete  
-**Phases:** P00, P01, P02, P03, P04  
-**Plans:** 5 total plans, 79 implementation tasks  
+Status: **invalidated; not an active planning or acceptance source**
 
-## Phase Details
+Superseded: 2026-07-22
 
-### Phase P00: Product Boundary & Specification
-- Delivered: Domain invariants, B0/A0 separation, authority hierarchy, and AGENTS.md contract.
+Current authority: `docs/product/working-state-delivery.md` and `spec/traceability-ownership.json`
 
-### Phase P01: Core Architecture & Session Model
-- Delivered: `WorkspaceSession`, writer authority isolation, and recoverable operation protocol.
+## Preserved provenance
 
-### Phase P02: Local Vault & Persistence Engine
-- Delivered: Canonical Markdown, YAML, and JSONL formats, SQLite full-text index projections.
+- Original commit: `49ee419e30f2d71524dd6fa15badf1ec4b8d0e27`
+- Original Git blob: `8b1b053ce6d23db52289559c98ebe88c7cb3caea`
+- Original file SHA-256: `d640f7ceea64026f76d90a4a6e7948aa4563e9960950f4231a46a85055bb3398`
+- Original line count: 23
+- The original bytes remain recoverable from Git by commit and blob identity.
+- The annotated `vB0` tag remains preserved at its original object and target; this file does not move, delete, or recreate it.
 
-### Phase P03: Workplace Review Domain Engine
-- Delivered: Event cohort dietary-readiness reconciliation, purpose-bound least disclosure, immutable brief evidence.
+## Why this snapshot is invalidated
 
-### Phase P04: Editorial Ledger Desktop Shell & Authority Parity
-- Delivered: Reconciled 8-screen desktop UI, exact recovery language, system theme, offline request badges, narrow desktop reflow.
+The snapshot treated the out-of-order `49ee419` source sequence and `vB0` tag as a completed or shipped milestone.
+
+Machine authority did not advance.
+
+The sequence has no accepted P03 identity tuple, observation receipt, P03D/P04/P05-P11 evidence, installed-artifact qualification, or B0 acceptance.
+
+## Current machine-owned state
+
+- P00-P02: complete.
+
+- G1 and `T-B0-P03`: current.
+
+- `T-B0-P03-OBS`, `T-B0-P03D`, `T-B0-P04`, P05-P11, and B0 acceptance: blocked.
+
+- PILOT: deferred after B0; real workplace data remains denied.
+
+- No P03 completion is inferred from PR #65/`3499a6e`, `49ee419`, `vB0`, the installed review app, static screenshots, or the premature `c2f852c` P03O material.
+
+Use the generated traceability report for live counts and ownership.
+
+Do not copy completion percentages, compliance scores, invented UAT identifiers, or shipment language from the preserved snapshot into active planning or release evidence.

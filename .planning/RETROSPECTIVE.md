@@ -1,23 +1,40 @@
-# Living Retrospective: Liaison RM
+# GSD retrospective snapshot — invalidated historical snapshot
 
-## Milestone: vB0 — Workplace Review Alpha
+Status: **invalidated; not an active planning or acceptance source**
 
-**Shipped:** 2026-07-22  
-**Phases:** 5 (P00–P04) | **Plans:** 5 | **Tasks:** 79
+Superseded: 2026-07-22
 
-### What Was Built
-- B0 Workplace Review Alpha desktop application shell using Tauri and Vanilla Web Component architecture.
-- Reconciled UI authority (`approved-atlas-authority-and-ux-audit-20260722.md`), exact recovery language (`Local checkpoint intact`), built-in system theme support, and offline request template badges.
-- 8 fully functional screens (Today Overview, Events, Cohort Readiness, People Directory, Person Detail, Health & Recovery, Settings, Edit Profile & Customisation).
+Current authority: `docs/product/working-state-delivery.md` and `spec/traceability-ownership.json`
 
-### What Worked
-- Domain-driven isolation keeping business logic in Rust crates (`liaison_people`, `liaison_events`, `liaison_workspace`) and rendering logic in clean Web Components.
-- Continuous automated verification (`check_desktop_shell.py`, `check_repository.py`, `check_spec.py`) enforcing accessibility and security gates.
+## Preserved provenance
 
-### Key Lessons
-- Clear separation of delivery boundaries (B0 Workplace Review vs A0 Personal Memory) prevents scope creep and keeps audit contracts crisp.
+- Original commit: `49ee419e30f2d71524dd6fa15badf1ec4b8d0e27`
+- Original Git blob: `b0435e91524ff89456269c70a5899ce78b75454d`
+- Original file SHA-256: `eb7d4d6d30429e7ec8fb4893ba3b4f8bd17c476aa918b6fa5569a227b7f0b4ac`
+- Original line count: 23
+- The original bytes remain recoverable from Git by commit and blob identity.
+- The annotated `vB0` tag remains preserved at its original object and target; this file does not move, delete, or recreate it.
 
-### Cost & Quality Observations
-- 100% Rust unit test suite pass across all workspace crates.
-- 0 clippy warnings under strict `-D warnings` settings.
-- WCAG 2.2 AA compliant contrast and 100% explicit `<label for="...">` accessibility coverage.
+## Why this snapshot is invalidated
+
+The snapshot treated the out-of-order `49ee419` source sequence and `vB0` tag as a completed or shipped milestone.
+
+Machine authority did not advance.
+
+The sequence has no accepted P03 identity tuple, observation receipt, P03D/P04/P05-P11 evidence, installed-artifact qualification, or B0 acceptance.
+
+## Current machine-owned state
+
+- P00-P02: complete.
+
+- G1 and `T-B0-P03`: current.
+
+- `T-B0-P03-OBS`, `T-B0-P03D`, `T-B0-P04`, P05-P11, and B0 acceptance: blocked.
+
+- PILOT: deferred after B0; real workplace data remains denied.
+
+- No P03 completion is inferred from PR #65/`3499a6e`, `49ee419`, `vB0`, the installed review app, static screenshots, or the premature `c2f852c` P03O material.
+
+Use the generated traceability report for live counts and ownership.
+
+Do not copy completion percentages, compliance scores, invented UAT identifiers, or shipment language from the preserved snapshot into active planning or release evidence.

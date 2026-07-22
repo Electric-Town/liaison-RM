@@ -41,11 +41,7 @@ gates:
       - Create, open, edit, close, and reopen preserve all supported fields.
       - Unknown extensions and sections survive.
       - Stable IDs survive filename changes.
-    evidence_required:
-      - unit tests
-      - fixture diff report
-      - UAT-001
-      - UAT-002
+    evidence_required: [unit tests, fixture diff report, UAT-001, UAT-002]
 
   - id: FG-R1-002
     release: R1
@@ -94,9 +90,10 @@ gates:
     blocks: [R2-release]
     criteria:
       - Core UAT is keyboard-completable with visible focus.
+      - The exact installed P04 macOS Tauri and WKWebView artifact creates a workspace, closes and reopens or resumes it, opens a separate existing workspace, completes read-only Health degradation and basic People list/create, and repeats the current surfaces in system, light, dark, and high_contrast with OS-following, persistence, external pre/post-COMMIT interruption, relaunch/recovery, en-XA at 400 percent reflow, VoiceOver, and zero external requests; product fault hooks are absent.
       - Named screen-reader, contrast, keyboard, 200 and 400 percent zoom, reflow, target-size, reduced-motion, localisation, and status-message evidence runs in CI and is sampled manually on the shipped surface.
       - Critical and serious applicable defects are resolved or release is blocked.
-    evidence_required: [accessibility CI report, manual accessibility report, human language-review record, UAT-021, UAT-022, UAT-062, UAT-LOC-001, UAT-LOC-002]
+    evidence_required: [accessibility CI report, manual accessibility report, human language-review record, UAT-073, UAT-LOC-001, UAT-LOC-002]
 
   - id: FG-R2-002
     release: R2
@@ -164,7 +161,7 @@ gates:
       - Every active attendee appears in exactly one ordered, versioned readiness outcome derived from orthogonal source facts.
       - Invalid combinations and unresolved identities block readiness explicitly.
       - Duplicates, cancellations, removals, walk-ins, attendance, no-shows, corrections, and event cancellation reconcile to the exact active denominator.
-    evidence_required: [decision-table property tests, attendee-transition matrix, UAT-009, UAT-041]
+    evidence_required: [decision-table property tests, attendee-transition matrix, UAT-009]
 
   - id: FG-R3-004
     release: R3
@@ -175,7 +172,7 @@ gates:
       - Names are absent by default; an opaque attendee identifier is permitted only when the approved policy explicitly requires it.
       - Source revisions and stale-state detection are present.
       - Restricted diagnostic detail, private overlays, hidden-row counts, workspace access, and catering-role grants are structurally absent.
-    evidence_required: [byte-equality disclosure fixture, negative-disclosure fixture, UAT-010, UAT-011, UAT-041]
+    evidence_required: [byte-equality disclosure fixture, negative-disclosure fixture, UAT-010, UAT-011]
 
   - id: FG-R3-005
     release: R3
@@ -301,10 +298,12 @@ gates:
       - Meerkat, Monica, and CRM-in-Markdown imports report mapped, transformed, unresolved, and unsupported data.
       - Source provenance remains.
       - Preview, rollback, and idempotent re-import pass for every supported source.
+      - Every supported generic migration provides a dry-run, pre-migration backup, deterministic repeat, post-migration validation, and rollback or an explicit irreversibility statement.
+      - Where rollback is claimed, restoring the exact pre-migration workspace from its backup passes.
       - Each provider or import operation exposes connector and version, grant, requested and covered source range, attempt and success times, created, updated, skipped and quarantined counts, conflicts, errors, retry, revoke, retention, and history.
       - Hidden refresh, unreported egress, and relationship-reminder pollution are structurally denied.
       - Local voice and OCR are claimed only after their independent denied-network, preview, provenance, and confirmation evidence passes.
-    evidence_required: [UAT-038, UAT-059, UAT-060, UAT-070, synthetic fixtures, operation-receipt and hidden-egress fixtures]
+    evidence_required: [UAT-038, UAT-059, UAT-060, UAT-070, synthetic fixtures, migration determinism and backup-restore fixture, operation-receipt and hidden-egress fixtures]
 
   - id: FG-R5-006
     release: R5
@@ -316,6 +315,17 @@ gates:
       - Workplace schemas, files, CLI, UI, settings, exports, and adapters deny spatial discovery structurally.
       - An equivalent semantic list or table exists and neither view ranks People by a global person or relationship score.
     evidence_required: [UAT-072, denied-network and egress fixtures, coordinate deletion, Workplace structural denial, semantic parity]
+
+  - id: FG-R5-007
+    release: R5
+    name: Google Drive reuses the provider-neutral backup contract
+    blocks: [Google-Drive-backup-release]
+    criteria:
+      - The Google Drive adapter implements object-store@1 behind the Connections anti-corruption boundary.
+      - Google Drive, WebDAV, S3-compatible, and local-folder backup use one application workflow without provider SDKs or DTOs entering product or domain code.
+      - Backup bytes are encrypted before upload and an isolated restore verifies them before success is claimed.
+      - Grants, declared destinations, revocation, retry, and honest backup or single-writer labels pass without a synchronisation overclaim.
+    evidence_required: [UAT-074, UAT-026, UAT-027, UAT-028, UAT-034, provider conformance report, architecture check]
 
   - id: FG-R6-001
     release: R6
@@ -414,11 +424,13 @@ gates:
     name: Canonical desktop design direction reviewed before P04
     blocks: [T-B0-P04]
     criteria:
-      - The gate runs only after P03 stabilises typed command, state, error, and recoverable-operation contracts.
+      - The gate runs only after P03 stabilises typed command, state, error, and recoverable-operation contracts and the D1-B observation task records Continue.
+      - The exact qualified P03 executable is observed with synthetic or redacted workplace scenarios; real workplace personal data is denied.
+      - The observation records the exact artifact identity and a distinct Continue, Change, or Stop decision; Change or Stop leaves P03D and P04 blocked.
       - Design consultation creates canonical DESIGN.md with concrete directions and one selected accessible semantic system.
       - Plan design review checks the P04 plan against DESIGN.md, the complete B0 journey, localisation, accessibility, recovery, and theme requirements before implementation starts.
       - G0 records this future gate but does not create DESIGN.md or preselect the visual direction.
-    evidence_required: [DESIGN.md, design-consultation record, plan-design-review report, amended P04 plan]
+    evidence_required: [exact P03 artifact identity, D9 synthetic-or-redacted observation record, Continue-Change-Stop decision receipt, DESIGN.md, design-consultation record, plan-design-review report, amended P04 plan]
 
   - id: FG-B0-002
     release: B0
@@ -450,10 +462,14 @@ gates:
     name: Real workplace-data pilot governance approved
     blocks: [real-workplace-data]
     criteria:
-      - Synthetic UAT may run before this gate, but real employee dietary, accessibility, email, facilities, or Working With Me data is denied.
-      - Data controller, purpose and legal basis, special-category condition, DPIA decision, notice, retention, rights, incident response, and accountable operators are recorded.
-      - Independent legal and privacy review is dated, scoped, and unresolved conditions block the pilot.
-    evidence_required: [governance checklist, DPIA decision record, participant notice, retention schedule, independent review]
+      - This optional gate is outside the B0 dependency path, so synthetic B0 acceptance may complete while the pilot remains deferred.
+      - The pilot task and gate remain deferred until after exact-artifact B0 acceptance; completing governance records alone cannot activate them.
+      - Real employee dietary, accessibility, email, facilities, or Working With Me data is denied before this gate completes.
+      - Data controller, purpose and legal basis, special-category condition, DPIA decision, retention, rights, incident response, accountable operators, and the immutable participant-notice content artifact are recorded.
+      - Independent legal and privacy review covers that exact content artifact, its reviewed_notice_content_sha256, and the source-record set; only an explicit affirmative authorise conclusion with every condition resolved may qualify, while do-not-authorise, defer, or conditional conclusions keep the pilot denied.
+      - The issued participant-notice content SHA-256 equals reviewed_notice_content_sha256 and issuance evidence is recorded before this gate completes.
+      - Post-B0 technical evidence proves real-data import is denied until the reviewed pilot scope is authorised.
+    evidence_required: [exact-artifact B0 acceptance, governance checklist, DPIA decision record, retention schedule, incident plan, reviewed_notice_content_sha256, affirmative independent review, issued_notice_content_sha256 equals reviewed_notice_content_sha256, participant-notice issuance evidence, post-B0 technical-denial and scoped-authorisation evidence]
 
   - id: FG-A0-001
     release: A0
@@ -485,7 +501,7 @@ gates:
     criteria:
       - Relationship assessment, derived freshness, bounded reminders, suppressions, and source-linked reason-only Review remain separate and explainable.
       - Workplace purpose denies assessment, allocation, cadence, ranking, scoring, and every generic task or project field.
-    evidence_required: [UAT-004, UAT-023, UAT-051, UAT-052]
+    evidence_required: [UAT-004, UAT-022, UAT-023, UAT-051, UAT-052]
 
   - id: FG-A0-G2C
     release: A0

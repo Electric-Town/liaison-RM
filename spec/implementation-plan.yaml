@@ -1,8 +1,8 @@
 schema_version: 2
 status: reconciled
 execution_authority: spec/traceability-ownership.json
-delivery_sequence: [G0, G1, G3, B0, G2C, G2A, G2B, A0, POST-A0, G4, G5, G6, G7]
-delivery_rule: B0 acceptance precedes every A0 task; A0 acceptance precedes provider, mobile, AI, MCP, and theme-package delivery. Dependencies may establish seams but never transfer acceptance ownership.
+delivery_sequence: [G0, G1, G3, B0, PILOT, G2C, G2A, G2B, A0, POST-A0, G4, G5, G6, G7]
+delivery_rule: B0 acceptance precedes every A0 task; the optional real-data PILOT is outside the synthetic B0 acceptance path; A0 acceptance precedes provider, mobile, AI, MCP, and theme-package delivery. Dependencies may establish seams but never transfer acceptance ownership.
 
 tasks:
   - id: T-R0-001
@@ -155,7 +155,7 @@ tasks:
     depends_on: [T-R1-012]
     requirements: []
     uat: []
-    evidence_dependencies: [LRM-PK-001, LRM-WS-008, UAT-022]
+    evidence_dependencies: [LRM-PK-001, LRM-WS-008]
     outputs: [Tauri-app, capability-files, typed-command-contract]
 
   - id: T-R2-002
@@ -165,7 +165,7 @@ tasks:
     depends_on: [T-R2-001]
     requirements: []
     uat: []
-    evidence_dependencies: [LRM-UX-001, LRM-UX-002, LRM-UX-003, LRM-UX-004, LRM-UX-006, UAT-022]
+    evidence_dependencies: [LRM-UX-001, LRM-UX-002, LRM-UX-003, LRM-UX-004, LRM-UX-006]
     outputs: [navigation, status-announcements, error-boundary, accessibility-tests]
 
   - id: T-R2-003
@@ -175,7 +175,7 @@ tasks:
     depends_on: [T-R2-002, T-R1-009]
     requirements: []
     uat: []
-    evidence_dependencies: [LRM-UX-005, UAT-003, UAT-022]
+    evidence_dependencies: [LRM-UX-005, UAT-003]
     outputs: [person-list, search, profile-view, draft-recovery]
 
   - id: T-R2-004
@@ -314,7 +314,7 @@ tasks:
     depends_on: [T-R4-001]
     requirements: [LRM-CO-004]
     uat: [UAT-034]
-    evidence_dependencies: [LRM-CO-001, LRM-CO-005, LRM-CO-012, UAT-027]
+    evidence_dependencies: [LRM-CO-001, LRM-CO-005, UAT-027]
     outputs: [provider-sdk, object-store-contract, conformance-kit, local-reference]
 
   - id: T-R4-004
@@ -360,7 +360,7 @@ tasks:
     title: Implement local, WebDAV, and S3-compatible transports
     contexts: [sharing, connections]
     depends_on: [T-R4-002, T-R4-003, T-R4-005]
-    requirements: [LRM-CO-012]
+    requirements: []
     uat: []
     evidence_dependencies: [LRM-SH-001, UAT-019, UAT-026, UAT-027]
     outputs: [local-transport, WebDAV-adapter, S3-adapter, conformance-evidence]
@@ -405,11 +405,11 @@ tasks:
   - id: T-R5-005
     release: R5
     title: Implement Meerkat, Monica, and CRM-in-Markdown migration adapters
-    contexts: [people, relationships, interactions, events, reminders]
+    contexts: [connections, workspace, people, relationships, interactions, events, reminders, migration]
     depends_on: [T-R5-003, T-R3-005]
-    requirements: [LRM-CO-013]
+    requirements: [LRM-CO-013, LRM-WS-007]
     uat: [UAT-038]
-    outputs: [source-readers, anti-corruption-maps, reconciliation-report]
+    outputs: [source-readers, anti-corruption-maps, reconciliation-report, migration-dry-run, pre-migration-backup, deterministic-migration, post-migration-validation, rollback-or-explicit-irreversibility]
 
   - id: T-R6-001
     release: R6
@@ -495,19 +495,32 @@ tasks:
     rice: {reach: 12, impact: 3, confidence: 0.80, effort_weeks: 5, score: 5.76}
     contexts: [workspace, people]
     depends_on: [T-B0-P02]
-    requirements: [LRM-WS-004, LRM-WS-005, LRM-WS-007, LRM-WS-010]
+    requirements: [LRM-WS-004, LRM-WS-005, LRM-WS-010]
     uat: [UAT-042]
-    outputs: [operation-engine, per-file-final-preconditions, durable-commit-decision, commit-progress-complete, roll-forward-recovery, migration-dry-run, fault-matrix]
+    outputs: [operation-engine, per-file-final-preconditions, durable-commit-decision, commit-progress-complete, roll-forward-recovery, fault-matrix, qualified-code-sha, merge-result-sha, attestation-sha, exact-executable-artifact-receipt]
+
+  - id: T-B0-P03-OBS
+    release: B0
+    title: Observe the exact P03 artifact with a synthetic workplace operator flow
+    plan_alias: D9
+    rice: {reach: 8, impact: 3, confidence: 0.80, effort_weeks: 1, score: 19.20}
+    contexts: [governance, product, experience, workspace]
+    depends_on: [T-B0-P03]
+    requirements: [LRM-PK-010]
+    uat: []
+    evidence_dependencies: [UAT-042]
+    required_artifacts: [qualified-code-sha, merge-result-sha, attestation-sha, exact-executable-artifact-receipt]
+    outputs: [exact-artifact-identity, synthetic-or-redacted-workplace-observation, D9-observation-record, continue-change-stop-decision-receipt]
 
   - id: T-B0-P03D
     release: B0
     title: Run design consultation and plan design review before desktop implementation
     rice: {reach: 8, impact: 2, confidence: 0.80, effort_weeks: 1.5, score: 8.53}
     contexts: [experience, product]
-    depends_on: [T-B0-P03]
+    depends_on: [T-B0-P03-OBS]
     requirements: []
     uat: []
-    evidence_dependencies: [LRM-UX-012, UAT-062]
+    evidence_dependencies: [LRM-UX-009, LRM-UX-012, LRM-UX-016, UAT-062]
     outputs: [design-consultation, DESIGN.md, selected-semantic-direction, plan-design-review, P04-plan-amendments]
 
   - id: T-B0-P04
@@ -516,17 +529,17 @@ tasks:
     rice: {reach: 8, impact: 2, confidence: 0.80, effort_weeks: 4, score: 3.20}
     contexts: [experience, application]
     depends_on: [T-B0-P03D]
-    requirements: [LRM-UX-001, LRM-UX-002, LRM-UX-003, LRM-UX-004, LRM-UX-006, LRM-UX-008, LRM-UX-009, LRM-UX-012, LRM-L10N-001, LRM-L10N-002, LRM-L10N-003, LRM-L10N-004, LRM-L10N-005, LRM-L10N-006, LRM-L10N-008]
-    uat: [UAT-022, UAT-062, UAT-LOC-001, UAT-LOC-002]
+    requirements: [LRM-UX-001, LRM-UX-002, LRM-UX-003, LRM-UX-004, LRM-UX-006, LRM-UX-008, LRM-UX-012, LRM-L10N-001, LRM-L10N-002, LRM-L10N-003, LRM-L10N-004, LRM-L10N-005, LRM-L10N-006, LRM-L10N-008]
+    uat: [UAT-073, UAT-LOC-001, UAT-LOC-002]
     evidence_dependencies: [UAT-041]
-    outputs: [React-Tauri-client, generated-DTOs, versioned-semantic-token-contract, component-contract, system-light-dark-high_contrast-registry, Atkinson-provenance, accessibility-and-localisation-ratchet]
+    outputs: [React-Tauri-client, generated-DTOs, versioned-semantic-token-contract, component-contract, system-light-dark-high_contrast-registry, installed-current-surface-theme-recovery-matrix, Atkinson-provenance, accessibility-and-localisation-ratchet]
 
   - id: T-B0-P05
     release: B0
     title: Define revisioned Directory profile and Event contracts
     rice: {reach: 10, impact: 3, confidence: 0.75, effort_weeks: 5, score: 4.50}
     contexts: [people, organisations, profiles, events]
-    depends_on: [T-B0-P03]
+    depends_on: [T-B0-P04]
     requirements: [LRM-PE-001, LRM-PE-002, LRM-PE-004, LRM-PE-005, LRM-PE-008, LRM-PE-009, LRM-PE-010]
     uat: []
     evidence_dependencies: []
@@ -561,7 +574,7 @@ tasks:
     depends_on: [T-B0-P03, T-B0-P06]
     requirements: []
     uat: [UAT-040]
-    evidence_dependencies: [LRM-WS-006, LRM-WS-007, LRM-WS-010, UAT-042]
+    evidence_dependencies: [LRM-WS-006, LRM-WS-010, UAT-042]
     outputs: [guided-repair-preview, exact-pre-repair-backup, backup-first-failure-atomic-repair, exact-repair-receipt, exact-rollback, recovery-knowledge]
 
   - id: T-B0-P07
@@ -623,20 +636,10 @@ tasks:
     rice: {reach: 6, impact: 3, confidence: 0.75, effort_weeks: 6, score: 2.25}
     contexts: [experience, directory, events, recovery]
     depends_on: [T-B0-P04, T-B0-P08, T-B0-P10]
-    requirements: [LRM-WS-008, LRM-UX-005, LRM-UX-011]
-    uat: []
-    evidence_dependencies: [LRM-UX-009, LRM-PK-006, UAT-041, UAT-042, UAT-043, UAT-062]
-    outputs: [Overview, Directory, Events, Health, Settings, Event-Details-state-machine, built-in-theme-choice, built-in-theme-persistence, interruption-recovery]
-
-  - id: T-B0-PILOT
-    release: B0
-    title: Authorise a real workplace-data pilot independently of synthetic B0 UAT
-    rice: {reach: 2, impact: 3, confidence: 0.70, effort_weeks: 2, score: 2.10}
-    contexts: [product, privacy, events]
-    depends_on: [T-B0-P00]
-    requirements: [LRM-EV-012]
-    uat: []
-    outputs: [data-controller-record, lawful-purpose-record, special-category-condition, DPIA-decision, participant-notice, retention-and-rights-plan, incident-plan, independent-review]
+    requirements: [LRM-WS-008, LRM-UX-005, LRM-UX-009, LRM-UX-011, LRM-UX-016]
+    uat: [UAT-062]
+    evidence_dependencies: [LRM-UX-012, LRM-PK-006, UAT-041, UAT-042, UAT-043]
+    outputs: [Overview, Directory, Events, Health, Settings, Event-Details-state-machine, built-in-theme-choice, built-in-theme-persistence, installed-every-built-in-details-to-brief-matrix, interruption-recovery]
 
   - id: T-B0-ACCEPT
     release: B0
@@ -646,8 +649,18 @@ tasks:
     depends_on: [T-B0-P11]
     requirements: [LRM-WS-001, LRM-PK-006]
     uat: [UAT-001, UAT-041]
-    evidence_dependencies: [LRM-PK-008, UAT-042, UAT-043, UAT-055, UAT-062]
+    evidence_dependencies: [UAT-042, UAT-043, UAT-055, UAT-062]
     outputs: [exact-head-evidence, design-review, native-QA, offline-egress-proof, Mac-review-bundle]
+
+  - id: T-B0-PILOT
+    release: B0
+    title: Authorise a real workplace-data pilot independently of synthetic B0 UAT
+    rice: {reach: 2, impact: 3, confidence: 0.70, effort_weeks: 2, score: 2.10}
+    contexts: [product, privacy, events]
+    depends_on: [T-B0-ACCEPT]
+    requirements: [LRM-EV-012]
+    uat: []
+    outputs: [data-controller-record, lawful-purpose-record, special-category-condition, DPIA-decision, retention-and-rights-plan, incident-plan, participant-notice-draft, reviewed-notice-content-sha256, affirmative-independent-review, issued-notice-content-sha256-match, participant-notice-issuance-evidence, post-B0-pilot-denial-and-authorisation-evidence]
 
   - id: T-A0-P01
     release: A0
@@ -657,7 +670,7 @@ tasks:
     depends_on: [T-B0-ACCEPT]
     requirements: [LRM-WS-012, LRM-WS-013, LRM-WS-014, LRM-WS-015, LRM-PE-006, LRM-PE-007, LRM-PE-011, LRM-PE-012, LRM-PE-013, LRM-PE-014, LRM-PE-015, LRM-UX-007, LRM-UX-010, LRM-UX-013]
     uat: [UAT-002, UAT-020, UAT-021, UAT-045, UAT-046, UAT-050, UAT-053, UAT-054, UAT-056, UAT-063]
-    evidence_dependencies: [LRM-PE-001, LRM-PE-002, LRM-PE-003, LRM-PE-004, LRM-PE-005]
+    evidence_dependencies: [LRM-PE-001, LRM-PE-002, LRM-PE-004, LRM-PE-005]
     outputs: [purpose-bound-contexts, Working-With-Me, merge-split-preview, typed-custom-fields, stable-tabs, safe-rehoming, density-text-scale-motion-palette, settings-round-trip]
 
   - id: T-A0-P02
@@ -678,7 +691,7 @@ tasks:
     contexts: [relationships, reminders, review-attention]
     depends_on: [T-A0-P02]
     requirements: [LRM-RE-001, LRM-RE-002, LRM-RE-003, LRM-RE-004, LRM-RE-005, LRM-RE-006, LRM-RE-007, LRM-RE-008, LRM-RM-001, LRM-RM-002, LRM-RM-003, LRM-RM-004, LRM-RM-005]
-    uat: [UAT-004, UAT-023, UAT-051, UAT-052]
+    uat: [UAT-004, UAT-022, UAT-023, UAT-051, UAT-052]
     outputs: [relationship-contexts, manual-assessment, derived-freshness, source-linked-reasons, bounded-reminders, reason-only-Review, connector-neutral-handoff]
 
   - id: T-A0-P04
@@ -747,6 +760,16 @@ tasks:
     requirements: [LRM-UX-015]
     uat: [UAT-072]
     outputs: [coarse-location-controls, explicit-geocoding-egress, local-denied-mode, coordinate-correction-and-deletion, Workplace-denial, semantic-list-table-parity]
+
+  - id: T-R5-010
+    release: R5
+    title: Implement and qualify the Google Drive object-store backup adapter
+    contexts: [connections, workspace]
+    depends_on: [T-R4-004, T-R4-008]
+    requirements: [LRM-CO-012]
+    uat: [UAT-074]
+    evidence_dependencies: [UAT-026, UAT-027, UAT-028, UAT-034]
+    outputs: [Google-Drive-adapter, object-store-contract-reuse-evidence, encrypted-backup-restore-parity, provider-SDK-domain-isolation]
 
   - id: T-R6-006
     release: R6

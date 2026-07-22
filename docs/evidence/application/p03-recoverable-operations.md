@@ -1,13 +1,14 @@
 # P03 recoverable canonical-operation evidence
 
 Date: 2026-07-19
-Status: source candidate under review; exact-head cross-platform evidence pending
+Reviewed: 2026-07-22
+Status: **invalidated as acceptance evidence; source candidate only; P03 remains current**
 
 ## Claim boundary
 
-This change routes canonical Person creation and revisioned Person updates through a Workspace-owned recoverable operation protocol. It stages every target, flushes staged bytes and the manifest, checks exact final preconditions, persists one durable `COMMIT` decision, publishes targets in stable order with per-target progress, persists `COMPLETE`, and marks the disposable projection stale.
+The candidate source routes canonical Person creation and revisioned Person updates through a Workspace-owned operation protocol. The following description records its intended mechanism and the behavior covered by source tests; it is not an accepted durability, recovery, platform, or installed-artifact claim.
 
-An operation without `COMMIT` is discarded during session open. An operation with `COMMIT` rolls forward. Recovery treats an already-published target with the committed digest as idempotent. If a target differs from both its original precondition and the committed digest, recovery stops with a typed conflict and leaves the external bytes untouched.
+The candidate intends to discard an operation without `COMMIT`, roll forward one with `COMMIT`, treat an already-published target with the committed digest as idempotent, and stop on an external conflict. Independent source review found unresolved publication, evidence-binding, completion/projection ordering, bootstrap/session, untrusted-manifest, bounded-history, and child-process qualification gaps. Until those gaps are resolved and the accepted matrix passes, this document must not state that every crash or external-edit boundary is safe.
 
 The operation manifest contains paths, sizes, hashes, revisions, identifiers, timestamps, phases, and results. It does not contain staged Person content.
 
@@ -61,7 +62,12 @@ The enclosing workspace and application suites continue to cover writer authorit
 
 ## Remaining acceptance evidence
 
-The PR remains draft until the exact head passes:
+Neither PR #65/
+`3499a6e9278fc72d2498a9978df59f30d03722e6`, later main
+`49ee419e30f2d71524dd6fa15badf1ec4b8d0e27`, the unsupported `vB0` tag, nor
+the premature `c2f852c` observation material completes P03. Exact `49ee419`
+fails Rust and Windows formatting checks even though local workspace tests and
+strict Clippy pass. A future qualified head must pass:
 
 ```text
 cargo fmt --all --check
@@ -74,7 +80,7 @@ python3 scripts/check_spec.py
 python3 scripts/generate_traceability.py --check
 ```
 
-The dedicated operation tests must pass on Ubuntu, macOS, and Windows. A final evidence amendment will bind the exact head and workflow run IDs. Until then, `T-B0-P03` is `current`, not complete.
+The dedicated operation tests and the accepted real child-process fault/relaunch matrix must pass on Ubuntu, macOS, and Windows. Technical acceptance must bind pairwise-distinct qualified-code, merge-result, and attestation Git SHAs plus distinct qualification-receipt and executable-artifact SHA-256 identities. Only that accepted tuple completes P03 and makes `T-B0-P03-OBS` current. Until then, `T-B0-P03` is `current`, not complete, and no D1-B session may start.
 
 ## Limits
 

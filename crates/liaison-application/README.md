@@ -23,11 +23,22 @@ and exposes serializable commands, queries, results, and structured errors.
 The current session claims writer authority only while both its workspace-local
 lock and per-user `WorkspaceId` lock handles are live. An independently copied
 workspace with the same identity is denied to cooperating Liaison processes on
-the same user account and machine. `T-B0-P02` remains open pending exact-head
-remote platform qualification. Recovery, key, and projection states are explicitly
-unavailable until P03, workspace security, and Directory projection provide
-their real implementations. P03 also owns durable multi-target commit decisions
-and final mutation preconditions; this P02 boundary does not imply them.
+the same user account and machine. `T-B0-P02` is complete with accepted exact-head
+Linux, macOS, and Windows evidence. Baseline
+`3499a6e9278fc72d2498a9978df59f30d03722e6` also contains the candidate P03
+durable multi-target commit decisions and final mutation preconditions. Those
+operations are implemented candidate source, not accepted P03 capability, until
+hardening, exact qualification, the three-identity attestation, and executable
+artifact receipt complete. Key and Directory projection states remain explicitly
+unavailable until their owning security and Directory tasks provide them.
+
+Later source through `49ee419e30f2d71524dd6fa15badf1ec4b8d0e27`
+adds out-of-order Event and desktop candidates, but exact-head formatting checks
+are red and no accepted P03/OBS identity exists. Its in-memory Event projection,
+static fixtures, `DESIGN.md`, P04 review claims, installed app, and preserved
+`vB0` tag are not application-contract or release evidence. P03 remains current;
+P03D, P04, P05-P11, and B0 acceptance remain blocked; PILOT remains deferred by
+machine authority.
 
 ## Status language
 

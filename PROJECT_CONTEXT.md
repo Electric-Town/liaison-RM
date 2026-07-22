@@ -43,19 +43,30 @@ The current implementation order is governed by [the working-state delivery cont
 
 The Claudia/PingCRM/OKF strategy overlay approved at SHA-256 `795a6e6751cd29a995478e254323f491e68a53ef7c35fa729d8627b87cd37089` is now integrated into the canonical requirements, UAT, gates, tasks, and ownership. It adopts bounded comparator outcomes rather than blanket parity. ADR 0013 pins the B0 People compatibility profile; it does not claim that the current alpha implements it.
 
-The default branch contains the merged P00 contract reconciliation and P01 application composition root together with governance, product and interaction specifications, machine-readable planning, the Rust Workspace/People/CLI and Markdown slice, provider-neutral Connections, Topic Pack contracts, purpose-specific profile readiness, reason-only Review and Attention runtime foundations, localisation architecture, a native Tauri desktop alpha with macOS review bundles and Windows NSIS build configuration, and a public project site. G0, P00, P01, and P02 are complete; G1 is current and P03 recoverable canonical operations are the active package. The repository does not yet have a supported public release.
+The default branch contains accepted P00-P02 foundations plus later candidate source for P03 hardening, P03D design, Events, Profiles, Customisation, and a static desktop shell. Presence on `main` does not make an out-of-order task accepted. G0, P00, P01, and P02 are complete; G1 and P03 are current; `T-B0-P03-OBS`, P03D, P04, P05-P11, and B0 remain blocked; PILOT remains deferred. The repository does not have a supported public release.
 
-The accepted P02 source state adds one Rust application composition root shared by the CLI and Tauri, write-authoritative Workspace Sessions with composite path-local and per-user `WorkspaceId` operating-system exclusion, retained capability roots, lock-free read-only Health, structured results and errors, and direct native adapter parity. Cooperating ordinary unconfined Liaison processes on one OS account and machine reject copied workspaces with the same identity independently of `HOME`/XDG overrides. Cross-container Flatpak, macOS App Sandbox, and Windows AppContainer GUI/host-CLI coordination remains unsupported until a shared authority broker/namespace exists; it is not a second valid registry. Merged PR #44 supplied exact-head Linux, macOS, and Windows runtime evidence. P03 now owns recoverable multi-target operations and final mutation preconditions; B0 and a supported public release remain incomplete.
+PR #65 merged at baseline commit `3499a6e9278fc72d2498a9978df59f30d03722e6`. All seven ordinary-push workflows for that exact merge result succeeded in runs `29899084738`, `29899084740`, `29899084741`, `29899084751`, `29899084753`, `29899084769`, and `29899084789`, including Windows. Separately dispatched notarized-bundle run `29899498005` failed for missing Apple credentials and is not ordinary-push CI or release evidence. The merge contains implemented P03 candidate source but does not technically accept P03. The maintainer selected D1-B. Technical P03 acceptance must first bind qualified-code, merge-result, attestation, and exact executable identities; it makes `T-B0-P03-OBS` (plan alias D9) current while P03D remains blocked. OBS then uses that same executable with synthetic or redacted workplace scenarios and records a distinct Continue, Change, or Stop decision. Only Continue makes P03D eligible; Change or Stop leaves P03D and P04 blocked. ADR 0015 records this boundary.
 
-The installed macOS alpha launches and renders the local workspace interface. Native QA on 2026-07-18 found that desktop person creation fails at the Tauri argument contract because the frontend request uses camel-case `workspacePath` and `displayName` fields while the Rust request deserializer expects `workspace_path` and `display_name`. CLI Person tests do not prove the installed desktop path. The merged P01 source repairs and retests that bridge in an exact source build, but the separately installed application remains the old failing build until a later release gate installs and verifies a replacement.
+The reviewed pre-reconciliation main at 2026-07-22 was `49ee419e30f2d71524dd6fa15badf1ec4b8d0e27`. Its exact-head Rust and Windows workflows fail formatting, and exhaustive evidence review found no accepted qualified-code, merge-result, attestation, qualification-receipt, exact executable, observation-record, observation-decision, or Continue tuple. The unsigned annotated `vB0` tag targets `d5af9b894bbbb7bfdfcb31ce86e5b7201720f57a`, three commits earlier, and has no GitHub Release or source-bound installed-artifact receipt. It is an unsupported historical claim, not a release. Preserve both histories and the tag as provenance; none advances machine status. The C3 commit and any merge result are distinct identities requiring their own exact-head receipt; absent that receipt they do not advance acceptance.
 
-Events is not a current desktop capability. A 2026-07-21 browser reproduction
+`DESIGN.md`, `design/semantic-tokens.v1.json`, the P03D consultation and plan-review records, the amended P04 plan, the approved atlas, static desktop pages, and P04 review reports are non-accepted candidate material. They may be reconciled only after accepted P03 technical evidence and a D1-B Continue decision make P03D eligible; their current presence does not create design or implementation authority.
+
+The accepted P02 source state adds one Rust application composition root shared by the CLI and Tauri, write-authoritative Workspace Sessions with composite path-local and per-user `WorkspaceId` operating-system exclusion, retained capability roots, lock-free read-only Health, structured results and errors, and direct native adapter parity. Cooperating ordinary unconfined Liaison processes on one OS account and machine reject copied workspaces with the same identity independently of `HOME`/XDG overrides. Cross-container Flatpak, macOS App Sandbox, and Windows AppContainer GUI/host-CLI coordination remains unsupported until a shared authority broker/namespace exists; it is not a second valid registry. Merged PR #44 supplied exact-head Linux, macOS, and Windows runtime evidence. The P03 candidate partially covers recoverable multi-target operations, final mutation preconditions, and unknown-content preservation and owns `UAT-042`, but the required second-process, first-process relaunch, pre-/post-commit, and external-edit qualification matrix remains open. P03 therefore remains current until technical qualification and attestation are accepted. ADR 0016 scopes general and third-party post-A0 migration safety under `LRM-WS-007` to `T-R5-005`/`FG-R5-005`; the B0 OKF exception is exclusively `LRM-WS-017`/`UAT-066`. B0 and a supported public release remain incomplete.
+
+Governance records for a possible real workplace-data pilot may be drafted in parallel, but `T-B0-PILOT`, `LRM-EV-012`, and `FG-B0-PILOT-001` remain deferred until after B0 acceptance. PILOT is not a prerequisite for synthetic B0, A0, or provider delivery. Completed records alone cannot authorise real data: the independent conclusion must be exactly `authorise`, every condition must be resolved, post-B0 technical-denial evidence must pass, and both the pilot task and gate must be `complete`; drafted, current, or merely activated states remain denied.
+
+An installed macOS review app exists with executable SHA-256 `3481becb0f307cc02cb6799d49acd24aa271b5aadd81848356dce1b9e527d576`, but no repository receipt binds it to `49ee419`, a workflow, DMG, signing/notarisation, or accepted P04/B0 evidence. The last independently recorded installed alpha from 2026-07-18 showed that desktop Person creation fails at the Tauri argument contract; later source repairs do not requalify that unbound installed artifact. The current static source shell also omits the workspace and Person controls expected by its native bridge. CLI Person tests do not prove the installed desktop path; the app remains an unqualified review artifact.
+
+Events is not an accepted desktop capability. A 2026-07-21 browser reproduction
 against an unmerged prototype found cross-workspace attendee leakage, static
 fallback totals, an undefined-list failure before workspace open, and inert
-filters and history controls. The repository review build keeps the Events
-destination absent until `T-B0-P11` completes. The implementation and evidence
-handoff is [KCS-0014](docs/knowledge/KCS-0014-when-may-the-events-destination-be-enabled.md),
-and `scripts/check_desktop_shell.py` rejects any premature Events route control.
+filters and history controls. Exact `49ee419` nevertheless renders an
+Events-labelled destination and hard-coded readiness data through
+`data-route="readiness"`. The current checker rejects only an exact `events`
+route value, so the alias evades the structural P11 boundary. This is a P0
+source/checker defect to remove in the downstream runtime slice, not permission
+to treat Events as previewed or implemented. The intended handoff remains
+[KCS-0014](docs/knowledge/KCS-0014-when-may-the-events-destination-be-enabled.md).
 
 Do not claim any of the following without exact-head evidence:
 
@@ -566,7 +577,7 @@ Storage invariants:
 - unknown front-matter fields and Markdown sections survive supported round trips;
 - IDs are stable and independent of filenames;
 - writes use validation, revision preconditions, content hashes, journals, and tested recovery;
-- migrations support dry-run, backup, deterministic execution, validation, and rollback or explicit irreversibility;
+- general and third-party post-A0 migrations follow `LRM-WS-007` for dry-run, pre-migration backup, deterministic execution, validation, and rollback or explicit irreversibility; the narrow B0 OKF People normalization is separately and exclusively governed by the stricter `LRM-WS-017`/`UAT-066` contract;
 - secrets never enter canonical files, logs, fixtures, screenshots, or exported settings;
 - fixtures contain synthetic data only.
 
@@ -823,14 +834,17 @@ Access logs are not used for productivity, attendance-compliance, performance, r
 
 ## 22. Delivery roadmap
 
-The current merge order is P00–P11, B0 acceptance, then A0. The complete exit evidence is in `docs/product/roadmap.md`; R0–R6 remains only a long-term capability catalogue.
+The current merge order is P00-P03, D1-B exact-artifact observation, P03D, P04-P11, B0 acceptance, then A0. The complete exit evidence is in `docs/product/roadmap.md`; R0-R6 remains only a long-term capability catalogue.
 
 - **P00–P03:** reconcile truth, establish one typed application and Workspace Session boundary, and route canonical mutations through recoverable multi-target operations.
-- **P03 design gate:** design consultation creates canonical `DESIGN.md`, then plan design review approves an amended P04 direction. G0 does not create `DESIGN.md`.
-- **P04:** deliver the typed accessible desktop system after design consultation and plan design review.
-- **P05-OKF/P06/P06-REPAIR/P09-OKF:** after P03/P04, deliver the pinned strict People writer and tolerant Directory projection, then run `T-B0-P06-REPAIR` with preview, exact backup, failure-atomic application, exact receipt, and rollback before the required recoverable OKF People normalization closes `FG-B0-001`; P01/P02 do not expand.
-- **P05/P07/P08:** establish P05's Directory/Event/dietary domain contracts in G1 before P06/P07, keep sensitive security and recovery ownership exclusive to P07/P08, and let G3 consume the accepted P05 contracts without a reverse milestone dependency.
-- **P09–P11:** complete Directory onboarding, immutable event cohorts, exact dietary readiness, least-disclosure brief delivery, and the compiled B0 interface.
+- **P03 observation checkpoint (D1-B/D9):** after exact P03 qualification and attestation, observe that executable with synthetic or redacted workplace scenarios and record Continue, Change, or Stop. Only Continue advances.
+- **P03 design gate:** after a Continue decision, design consultation creates canonical `DESIGN.md`, then plan design review approves an amended P04 direction. G0 does not create `DESIGN.md`.
+- **P04:** after Continue and P03D, deliver the typed accessible Workspace/People/Health desktop plus semantic token/component foundation and installed current-surface built-in-theme/recovery matrix; do not claim Events or the full B0 journey.
+- **P05/P05-OKF:** after P04, establish P05's Directory/Event/dietary domain contracts and the pinned OKF v0.1 Draft strict People writer in G1; P01/P02 do not expand.
+- **P06/P06-REPAIR:** after P05 and P05-OKF, deliver the tolerant Directory projection, then run `T-B0-P06-REPAIR` with preview, exact backup, failure-atomic application, exact receipt, and rollback before downstream normalization.
+- **P07/P08:** P05 unlocks P07; keep sensitive security and recovery ownership exclusive to P07/P08, and let G3 consume the accepted P05 contracts without a reverse milestone dependency.
+- **P09-OKF:** after P06-REPAIR, perform the required recoverable OKF People normalization before `FG-B0-001` closes.
+- **P09–P11:** complete Directory onboarding, immutable event cohorts, exact dietary readiness, least-disclosure brief delivery, and the compiled B0 interface, including the installed every-built-in Details-to-Brief matrix owned by P11/UAT-062.
 - **B0:** qualify Workplace Review Alpha, including guided canonical repair, in a freshly installed universal Mac review application for one trusted local workspace owner.
 - **A0:** add quick/full capture, source-complete purpose-scoped profiles, explicit fact states, reversible identity review, a source/range unified timeline, custom profile layouts, personal interactions, commitments, distinct last-note/last-interaction context, open loops, and reason-only Review while retaining the complete B0 regression matrix.
 - **After A0:** independently gate general/third-party migrations, sharing, visible provider operations, mobile, Meitheal, CardDAV/calendars/email, facilities, optional spatial discovery, OpenAPI, MCP, staged AI proposals, and plugins.

@@ -4,7 +4,7 @@ title: When may the Events destination be enabled?
 state: Draft
 owner: events
 created: 2026-07-21
-reviewed: 2026-07-21
+reviewed: 2026-07-22
 applies_to:
   - liaison-desktop
   - liaison-application
@@ -27,8 +27,8 @@ related_requirements:
   - LRM-EV-009
   - LRM-EV-010
   - LRM-EV-011
-  - LRM-EV-012
   - LRM-EV-013
+  - LRM-PK-010
 related_uat:
   - UAT-009
   - UAT-010
@@ -36,8 +36,10 @@ related_uat:
   - UAT-012
   - UAT-041
   - UAT-062
+  - UAT-073
 related_adrs:
   - ADR-0010
+  - ADR-0015
 ---
 
 # When may the Events destination be enabled?
@@ -52,11 +54,13 @@ An unmerged desktop prototype exposed an Events destination before the Event bou
 
 The attendee rows were page-local JavaScript state seeded from the People screen. They were not an Event cohort, did not belong to the active `WorkspaceSession`, and had no Event application command or persisted canonical source. The controls were presentational markup without implemented operations. Correcting individual listeners would leave that false architecture in place.
 
-## Current resolution
+## Required resolution and current defect
 
 Keep Events absent from review-build navigation until `T-B0-P11` is complete. Its identifier and order may be reserved in the typed route contract, but no Events control is rendered in the DOM, including a hidden, disabled, placeholder, or “coming soon” control.
 
-`scripts/check_desktop_shell.py` reads the machine-owned `T-B0-P11` status from `spec/traceability-ownership.json` and rejects any static-shell `data-route="events"` control while that task is not complete. The checker contains a negative self-test for the premature-navigation shape. When P04 replaces the static shell, its route tests must preserve the same status-bound rule before this static check is retired.
+The reviewed pre-reconciliation main at 2026-07-22, `49ee419e30f2d71524dd6fa15badf1ec4b8d0e27`, violates that rule: it labels a control **Events** while assigning `data-route="readiness"`, embeds hard-coded readiness/Event pages, and therefore evades the current token-specific checker. This is a P0 source/checker defect; it does not make Events an accepted preview or capability. The C3 commit and any merge result are distinct identities requiring their own exact-head receipt; absent that receipt they do not advance acceptance.
+
+`scripts/check_desktop_shell.py` currently reads the machine-owned `T-B0-P11` status but rejects only an exact static-shell `data-route="events"` value. The downstream source/tooling correction must remove the premature surface and make the guard semantic across labels, routes, pages, imported modules, Tauri commands, and prohibited fixtures. When P04 replaces the static shell, its route tests must preserve the same status-bound rule before this static check is retired.
 
 Do not repair the prototype by adding more page-local attendee arrays, hard-coded totals, fake success messages, browser storage, or direct filesystem access. Event work begins in its owning domain and reaches the interface through the shared application boundary.
 
@@ -64,17 +68,20 @@ Do not repair the prototype by adding more page-local attendee arrays, hard-code
 
 The machine-readable task graph remains authoritative. The shortest accepted route to a working Events destination is:
 
-1. Complete `T-B0-P03`, including exact-head evidence for recoverable multi-target operations and final mutation preconditions.
-2. Run `T-B0-P03D`; create canonical `DESIGN.md`, complete plan design review, and amend P04 before desktop implementation.
-3. Complete `T-B0-P04` for the typed React/Tauri client, generated DTOs, semantic components, localisation, and accessibility ratchet.
-4. Complete `T-B0-P05` for revisioned Directory, Event, and dietary operational-view contracts. Complete `T-B0-P05-OKF`, `T-B0-P06`, `T-B0-P06-REPAIR`, and `T-B0-P09-OKF` so Event selection reads a tolerant, repaired, normalised Directory rather than copying the People screen.
-5. Complete `T-B0-P07` and `T-B0-P08` for purpose grants, sealed values, audit, checkpoints, encrypted recovery packages, and clean-install restore.
-6. Complete `T-B0-P09` for typed organisations, locations, memberships, visible cohort predicates, staged import, and duplicate reconciliation.
-7. Complete `T-B0-P10` for the Event domain, application contract, canonical persistence, immutable cohorts, attendee lifecycle, exact readiness, immutable briefs, and verified delivery.
-8. Complete `T-B0-P11` by wiring the five-stage workflow into the compiled desktop, including interruption and recovery states. Only this task enables the Events destination.
-9. Keep the product labelled a review alpha until `T-B0-ACCEPT` passes against the installed universal Mac artifact.
+1. Technically accept `T-B0-P03`, including the qualified-code SHA, merge-result SHA, attestation SHA, exact executable artifact receipt, and exact-head evidence for recoverable multi-target operations and final mutation preconditions. This does not close broader `FG-B0-001`.
+2. Run `T-B0-P03-OBS` against that same exact artifact with synthetic or redacted workplace scenarios and record Continue, Change, or Stop. Technical acceptance makes OBS current while P03D remains blocked; only Continue makes P03D eligible. Change advances exactly one replacement task and Stop records a preservation/support disposition while P03D/P04 remain blocked.
+3. After Continue, run `T-B0-P03D`; create canonical `DESIGN.md`, complete plan design review, and amend P04 before desktop implementation.
+4. Complete `T-B0-P04` for the typed React/Tauri client, generated DTOs, semantic components, localisation, and installed Workspace/People/Health theme/recovery accessibility ratchet. It does not enable Events.
+5. Complete `T-B0-P05` for revisioned Directory, Event, and dietary operational-view contracts. Complete `T-B0-P05-OKF`, `T-B0-P06`, `T-B0-P06-REPAIR`, and `T-B0-P09-OKF` so Event selection reads a tolerant, repaired, normalised Directory rather than copying the People screen.
+6. Complete `T-B0-P07` and `T-B0-P08` for purpose grants, sealed values, audit, checkpoints, encrypted recovery packages, and clean-install restore.
+7. Complete `T-B0-P09` for typed organisations, locations, memberships, visible cohort predicates, staged import, and duplicate reconciliation.
+8. Complete `T-B0-P10` for the Event domain, application contract, canonical persistence, immutable cohorts, attendee lifecycle, exact readiness, immutable briefs, and verified delivery.
+9. Complete `T-B0-P11` by wiring the five-stage workflow into the compiled desktop, including interruption, recovery, and every-built-in theme states. Only this task enables the Events destination.
+10. Keep the product labelled a review alpha until `T-B0-ACCEPT` passes against the installed universal Mac artifact.
 
-`T-B0-P05` can start after P03 while P03D/P04 proceeds. Later steps may proceed only when their declared dependencies are complete. A draft pull request may show partial work, but it must list the gates that remain closed and must not expose Events as working product behaviour.
+`T-B0-P05` starts only after completed P04, so technically accepted P03, a D1-B OBS Continue decision, completed P03D, and the typed desktop boundary are all already in its dependency chain. Later steps may proceed only when their declared dependencies are complete. A draft pull request may show partial work, but it must list each affected gate as blocked, deferred, current, complete, or otherwise not complete and must not expose Events as working product behaviour.
+
+The optional `LRM-EV-012` real-data pilot guardrail is deliberately not an Events-enablement prerequisite. Synthetic B0 uses invented fixtures; any later real-data pilot remains a separately authorised, post-B0 capability under `FG-B0-PILOT-001`.
 
 ## Required implementation contracts
 
@@ -107,7 +114,7 @@ The machine-readable task graph remains authoritative. The shortest accepted rou
 
 ### Desktop behaviour
 
-The compiled interface implements Details, Cohort, Attendees, Readiness, and Brief as one resumable state machine. The candidate presentation contract in `docs/evidence/ux/b0-events-design-contract-candidate.md` is an input to P03D; it is not implementation authority by itself.
+The P11 compiled interface must implement Details, Cohort, Attendees, Readiness, and Brief as one resumable state machine. The candidate presentation contract in `docs/evidence/ux/b0-events-design-contract-candidate.md` is an input to P03D; it is not implementation authority by itself.
 
 Before P11 can complete:
 
@@ -137,6 +144,6 @@ Use synthetic People, organisations, dietary facts, recipients, and files in eve
 
 ## Pull-request and rollback rule
 
-If P10 or P11 spans more than one pull request, each pull request names its owning task, exact dependency state, implemented vertical slice, tests, and closed and open gates. Partial work stays draft or remains unreachable. Do not mark `T-B0-P10` or `T-B0-P11` complete for scaffolding, route declarations, screenshots, or a happy-path browser fixture.
+If P10 or P11 spans more than one pull request, each pull request names its owning task, exact dependency state, implemented vertical slice, tests, and the exact blocked, deferred, current, or complete state of every affected gate. Partial work stays draft or remains unreachable. Do not mark `T-B0-P10` or `T-B0-P11` complete for scaffolding, route declarations, screenshots, or a happy-path browser fixture.
 
 If a later Events interface regresses before B0 acceptance, remove or hide the Events destination in an ordinary rollback pull request while preserving valid canonical Event records and recovery evidence. Do not delete user records to make the interface appear consistent. Re-enable the destination only after the failing invariant passes again on the submitted exact head.

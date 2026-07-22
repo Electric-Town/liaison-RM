@@ -20,7 +20,7 @@ Liaison RM is a local-authoritative relationship memory and attention system. It
 The product is being built around readable Markdown and YAML records, a shared Rust core, a first-class `liaison` CLI and a native Tauri desktop. Search indexes, caches and graph layouts are projections that can be rebuilt. The workspace stays under the owner’s control.
 
 > [!WARNING]
-> **Pre-alpha.** The current P02 source stack has the tested workspace, People and CLI slice, desktop alpha, and composite path-plus-identity Workspace Session authority. Cooperating ordinary unconfined Liaison processes on one OS account now reject an independently copied workspace with the same identity, regardless of `HOME`/XDG overrides. Flatpak, macOS App Sandbox, and Windows AppContainer host/GUI pairings need a shared authority broker or explicit fail-closed packaging proof and are not current coordination claims. Exact-head remote platform qualification, recoverable multi-target operations, B0, and public binary distribution remain incomplete. There are no signed downloads.
+> **Pre-alpha.** Baseline `3499a6e9278fc72d2498a9978df59f30d03722e6` contains the tested P02 workspace, People and CLI slice, composite path-plus-identity Workspace Session authority, and a P03 recoverable multi-target operation candidate. All seven ordinary-push workflows for that exact merge result succeeded, including Windows, but P03 is not technically accepted until hardening, qualification, three-identity attestation, and the exact executable receipt complete. Later history through `49ee419e30f2d71524dd6fa15badf1ec4b8d0e27` added design, Events, profile, customisation, and static desktop candidates without advancing machine acceptance; its exact-head Rust and Windows checks fail formatting. The preserved unsigned `vB0` tag targets an earlier commit and has no GitHub Release or release artifact, so it is an unsupported historical claim, not a release. Separately dispatched notarized-bundle run `29899498005` failed for missing Apple credentials and supplies no release evidence. Flatpak, macOS App Sandbox, and Windows AppContainer host/GUI pairings still need a shared authority broker or explicit fail-closed packaging proof. B0 and public binary distribution remain incomplete; there are no signed downloads.
 
 ## Why this exists
 
@@ -79,16 +79,16 @@ Do not begin with a new screen or provider integration. Start with a dependency-
 | Surface | On the default branch | Boundary |
 |---|---|---|
 | Open workspace | Create, inspect and validate a versioned local workspace | Complete crash recovery, migrations and projection rebuild remain gated |
-| People | CLI and Rust tests create and list basic person records in readable Markdown | The installed desktop person-create path currently fails at its Tauri argument boundary; the daily Directory and full profile editor are not complete |
+| People | CLI and Rust tests create and list basic person records in readable Markdown; repaired Tauri bridge source also exists | The last independently recorded installed desktop Person-create path currently fails at its old Tauri argument boundary; the restored `49ee419` shell also omits the controls needed to re-prove that bridge end to end, and the daily Directory/full profile editor remain blocked |
 | CLI | Human and JSON output for workspace and person commands | Import, edit, backup, sharing and destructive commands remain gated |
-| Desktop alpha | The installed app launches and renders local workspace controls | Native QA found the person-create request fields broken (`workspacePath`/`displayName` versus `workspace_path`/`display_name`); review builds are not signed public releases |
+| Desktop alpha | A vanilla HTML/CSS/JavaScript review shell and native command bridge exist as candidate source | The visible shell is fixture-backed and not fully connected to the bridge; P04, installed-artifact evidence, accessibility conformance, Airgap, and public release remain blocked |
 | Relationship model | Separate intent, evidence, maintenance status and purpose-specific readiness | Weighted priority and the full relationship workflow are not released |
 | Review and Attention | Reason-only policy, hard suppressions and bounded queue foundations | No claim of a complete personal review experience |
 | Connections | Versioned object-store contract, grant model and local reference adapter | Upload evidence does not prove safe multi-writer synchronisation |
 | Localisation | `en-IE` source catalogue, `en-XA` stress locale and draft locale fixtures | Irish, Japanese and Brazilian Portuguese still require named human review |
-| Packaging | macOS review bundles and Windows NSIS build configuration in CI | Signing, notarisation, clean-machine UAT and supported downloads remain closed |
+| Packaging | macOS review bundles and Windows NSIS build configuration in CI | Signing, notarisation, clean-machine UAT and supported downloads remain incomplete |
 
-The exact status, current branches and open gates live in [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md#2-current-status). Do not treat an open pull request, a prototype or a passing unit test as released behaviour.
+The exact status, current branches, and blocked, deferred, current, or complete gates live in [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md#2-current-status). Do not treat an open pull request, a prototype or a passing unit test as released behaviour.
 
 ## Run the current CLI
 
@@ -117,9 +117,9 @@ cargo run --locked -p liaison-cli -- \
 
 Use `--output json` before the command group for structured output. See [`apps/cli/README.md`](apps/cli/README.md) for the full current command set and error contract.
 
-## Local Installation & Build Guide
+## Local contributor installation and review builds
 
-### 1. Self-Installing the `liaison` CLI
+### 1. Installing the pre-alpha `liaison` CLI from source
 
 To compile and install the canonical `liaison` CLI executable into your local system Cargo binary path (`~/.cargo/bin/liaison`):
 
@@ -133,26 +133,20 @@ Once installed, verify the installation with:
 liaison --version
 ```
 
-### 2. Building the Native Desktop Application
+### 2. Building an unqualified native desktop review bundle
 
-To build the native desktop application bundle (`.app` / `.dmg` on macOS, `.exe` / NSIS installer on Windows):
+The repository contains Tauri packaging configuration, but a local build is not a signed, notarised, clean-machine-tested, or supported release. Follow the current commands in [`apps/desktop/README.md`](apps/desktop/README.md) and the platform workflow rather than treating an output directory as release evidence.
 
-```bash
-cargo tauri build
-```
+### 3. Appearance direction
 
-The compiled release artifact will be generated in `apps/desktop/src-tauri/target/release/bundle/`.
-
-### 3. Appearance & Theming
-
-Liaison RM implements the [Editorial Ledger design contract](DESIGN.md) with four built-in themes:
+The preserved Editorial Ledger candidate and `DESIGN.md` describe four built-in theme roles:
 
 - **System Theme** (Follows operating system preference)
 - **Editorial Light** (Warm paper canvas `#EEE8DC`, surface `#FFFEFB`, action `#1E5D73`)
 - **Editorial Dark** (Quiet dark canvas `#0E1714`, surface `#16231E`, action `#78C8E0`)
 - **High Contrast** (Accessible `#000000` canvas, `#00D4FF` high-contrast action)
 
-Select your preferred theme directly via the **Appearance Theme** picker in the topbar or settings view.
+Those labels and tokens are design inputs. Machine authority still blocks P03D and P04, and the current static picker is not evidence of accepted settings, persistence, accessibility, or installed behavior.
 
 ## The relationship model
 
@@ -284,9 +278,10 @@ The accepted working order is P00 through P11, B0 acceptance, then A0. The broad
 | Gate | Outcome |
 |---|---|
 | **P00–P03** | Reconciled contracts, one typed application/session boundary, and recoverable canonical operations |
-| **P03 design gate** | Design consultation creates `DESIGN.md`, then plan design review approves the P04 direction |
-| **P04–P08** | Typed accessible desktop system, accessible built-in themes, versioned B-domain contracts, scalable Directory, local security, checkpoints, and encrypted recovery packages |
-| **P09–P11** | Directory import, exact event dietary readiness, least-disclosure brief delivery, and the complete installed desktop workflow |
+| **P03 observation (D1-B/D9)** | After separate technical P03 qualification and exact-artifact attestation, observe that executable and record Continue, Change, or Stop; only Continue advances |
+| **P03 design gate (P03D)** | After Continue, design consultation creates `DESIGN.md`, then plan design review approves the P04 direction |
+| **P04–P08** | Typed accessible Workspace/People/Health desktop, semantic token/component foundation with current-surface built-in evidence, versioned B-domain contracts, scalable Directory, local security, checkpoints, and encrypted recovery packages |
+| **P09–P11** | Directory import, exact event dietary readiness, least-disclosure brief delivery, and the complete installed desktop and every-built-in Details-to-Brief workflow |
 | **B0** | Workplace Review Alpha with pinned strict-write/tolerant-read OKF People records, required failure-atomic People normalization, exact event readiness, and qualification in a freshly installed universal Mac review application |
 | **A0** | Personal Memory Alpha with source-complete purpose-scoped profiles, user-organised tabs, reversible identity review, source/range timeline, bounded commitments, reason-only Review, no global person score or automatic merge, and accessible appearance settings without regressing B0 |
 | **After A0** | General and third-party migrations, declarative theme packages, sharing, visible provider operations without hidden sync, mobile, Meitheal, CardDAV/calendars/email, facilities, spatial discovery, OpenAPI, MCP, staged AI proposals, and plugins as independent gates |
@@ -294,7 +289,9 @@ The accepted working order is P00 through P11, B0 acceptance, then A0. The broad
 The first operational wedge is event dietary readiness: select an attendee cohort, identify every unresolved coverage state and produce a least-disclosure catering brief.
 
 ## Current work
-The [working-state delivery contract](docs/product/working-state-delivery.md) and [generated traceability appendix](docs/product/traceability.md) record the accepted B0 Workplace Review then A0 Personal Memory sequence, current implementation truth, and reviewed branch dispositions. Repository state still changes quickly: verify the default-branch head, open pull requests, changed files, and exact-head checks before using any branch as a dependency.
+The [working-state delivery contract](docs/product/working-state-delivery.md) and [generated traceability appendix](docs/product/traceability.md) record the accepted B0 Workplace Review then A0 Personal Memory sequence, current implementation truth, D1-B technical-acceptance/observation/design states, and reviewed branch dispositions. Repository state still changes quickly: verify the default-branch head, open pull requests, changed files, and exact-head checks before using any branch as a dependency.
+
+Current machine authority keeps P03 `current`, `T-B0-P03-OBS` blocked, P03D, P04, P05-P11, and B0 blocked, and PILOT deferred. The later `.planning` archive, P04 static reviews, `DESIGN.md`, visible Events/readiness fixtures, installed review app, and `vB0` tag do not override those states.
 
 B0 includes the required OKF People normalization only; general and third-party migrations remain later work. Across all releases, Liaison prohibits a global person score, a generic task engine, automatic exact/fuzzy identity merge, direct AI writes to confirmed facts, and hidden provider sync, refresh, or egress.
 
