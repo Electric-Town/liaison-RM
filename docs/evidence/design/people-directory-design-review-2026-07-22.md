@@ -3,7 +3,7 @@
 **Date:** 2026-07-22  
 **Surface:** `apps/desktop/ui/` People tab  
 **Branch:** `vscode/production-readiness-audit-20260722`  
-**Implementation commits:** `85ee0b9`, `a309f89`, `d9a2866`  
+**Implementation commits:** `85ee0b9`, `a309f89`, `d9a2866`, `353e358`  
 **Claim boundary:** complete reconciliation of the current P03 Person create/list
 review surface with the approved People directory treatment. This is not P04,
 B0, installed-Mac, screen-reader, packaging, or release qualification.
@@ -51,7 +51,8 @@ capabilities:
   labels missing values `Unknown in current profile` rather than inferring
   verified none;
 - Person creation is a deliberate native dialog rather than a permanent
-  populated-state card;
+  populated-state card; native autofocus is applied synchronously so rapid
+  keyboard input cannot be redirected into the wrong field;
 - no-workspace, empty, loading, no-result, success, form-error, and native-busy
   states retain a visible next action or recovery direction;
 - at 900 CSS pixels the shell becomes a named `Sections` control and record
@@ -139,7 +140,7 @@ surprise reordering.
 
 ## Exact verification
 
-The following checks passed on the shared worktree after `d9a2866`; concurrent
+The following checks passed on the shared worktree after `353e358`; concurrent
 Events/domain changes were present but were neither edited nor staged by this
 work:
 
@@ -155,8 +156,8 @@ python3 scripts/check_design_tokens.py
 Results:
 
 - focused People regression: search, selected canonical detail, no-results,
-  long content, 320 CSS-pixel reflow, dialog focus return, and zero external
-  requests passed;
+  long content, exact created-row identity, 320 CSS-pixel reflow, dialog focus
+  return, and zero external requests passed in ten consecutive runs;
 - full desktop suite: native-operation serialisation, workspace
   switching/rollback, dual-close restart recovery, stale-Person isolation,
   validation, focus recovery, mobile reflow, dark mode, and zero external
@@ -177,4 +178,3 @@ Results:
   local provenance, honest unknown states, keyboard continuity, and clear
   capability limits. The remaining ten points are reserved for the future
   installed-app, localisation, VoiceOver, and P04/B0 qualification gates.
-
