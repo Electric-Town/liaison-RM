@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+"""Focused browser regression for the approved People directory treatment."""
+
+from __future__ import annotations
+
+import os
+import shutil
+from pathlib import Path
+
+from playwright.sync_api import sync_playwright
+
+from test_desktop_ui import load_page
+
+
+SCREENSHOT = Path(
+    os.environ.get(
+        "PEOPLE_DIRECTORY_SCREENSHOT",
+        "artifacts/desktop-screens/people-directory-regression.png",
+    )
+)
+
+
+def main() -> int:
+    external_requests: list[str] = []
+    with sync_playwright() as playwright:
+        executable = os.environ.get("CHROMIUM_PATH") or shutil.which("chromium")
+        browser = playwright.chromium.launch(headless=True, executable_path=executable)
+        page = browser.new_page(viewport={"width": 1280, "height": 900})
+        page.set_default_timeout(8_000)
+        page.on(
+            "request",
+            lambda request: external_requests.append(request.url)
+            if not request.url.startswith("file://")
+            else None,
+        )
+        load_page(page)
+
+        create_workspace = page.get_by_role("button", name="Create local workspace")
+        create_workspace.click()
+        page.locator("#live-status").get_by_text(
+            "Workspace setup did not complete", exact=False
+        ).wait_for()
+        create_workspace.click()
+        page.get_by_role("heading", name="People", exact=True).wait_for()
+
+        for name, email in [
+            ("Synthetic Alpha", "alpha@example.test"),
+            ("Synthetic Bravo", "bravo@example.test"),
+            ("Synthetic Charlie", "charlie@example.test"),
+        ]:
+            page.get_by_role("button", name="Add person").click()
+            page.get_by_label("Display name").fill(name)
+            page.get_by_label("Primary email optional").fill(email)
+            page.get_by_role("button", name="Create profile").click()
+            page.locator("#live-status").get_by_text(f"Saved {name}", exact=False).wait_for()
+
+        assert page.locator("#people-count").inner_text() == "3 people"
+        page.get_by_role("searchbox", name="Search people").fill("bravo")
+        assert page.locator("#people-count-summary").inner_text() == "Showing 1 of 3 people."
+        assert page.locator(".person-row").count() == 1
+        assert page.locator("#person-detail-heading").inner_text() == "Synthetic Bravo"
+
+        page.get_by_role("button", name="Clear search").click()
+        select_bravo = page.get_by_role("button", name="View Synthetic Bravo")
+        select_bravo.click()
+        assert select_bravo.get_attribute("aria-pressed") == "true"
+        assert page.locator("#person-detail-heading").inner_text() == "Synthetic Bravo"
+
+        page.set_viewport_size({"width": 320, "height": 900})
+        assert page.evaluate(
+            "document.documentElement.scrollWidth <= document.documentElement.clientWidth"
+        )
+        page.get_by_role("button", name="View Synthetic Bravo").click()
+        page.wait_for_function(
+            "document.querySelector('#person-detail-dialog').open"
+        )
+        assert page.locator("#person-detail-dialog").evaluate("dialog => dialog.open")
+        assert page.locator("#person-detail-dialog-heading").inner_text() == "Synthetic Bravo"
+        assert page.locator("#person-detail-dialog-heading").evaluate(
+            "heading => heading === document.activeElement"
+        )
+        page.keyboard.press("Escape")
+        page.wait_for_function(
+            "!document.querySelector('#person-detail-dialog').open"
+        )
+        assert not page.locator("#person-detail-dialog").evaluate("dialog => dialog.open")
+        assert page.get_by_role("button", name="View Synthetic Bravo").evaluate(
+            "button => button === document.activeElement"
+        )
+
+        SCREENSHOT.parent.mkdir(parents=True, exist_ok=True)
+        page.screenshot(path=str(SCREENSHOT), full_page=True)
+        assert external_requests == []
+        browser.close()
+
+    print(
+        "People directory regression passed: search, selection, canonical detail, "
+        "320 CSS-pixel reflow, focus return, and zero external requests"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
