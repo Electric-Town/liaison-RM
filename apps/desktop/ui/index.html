@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en-IE">
+<html lang="en-IE" data-theme="system">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -20,25 +20,55 @@
           <small>Local relationship memory</small>
         </span>
       </div>
-      <div class="local-status" aria-label="Storage status">
-        <span class="status-dot" aria-hidden="true"></span>
-        <span id="authority-label">Checking local-authoritative review build…</span>
+      <div class="topbar-actions">
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-describedby="theme-help" data-operation-lock>
+          <span class="theme-glyph" aria-hidden="true">◐</span>
+          <span>
+            <small>Appearance</small>
+            <strong id="theme-label">System</strong>
+          </span>
+        </button>
+        <span id="theme-help" class="visually-hidden">Choose System, Light, Dark, or High contrast. The choice is kept on this device.</span>
+        <div class="local-status" aria-label="Storage status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="authority-label">Checking local-authoritative review build…</span>
+        </div>
       </div>
     </header>
 
-    <aside class="sidebar" aria-label="Primary navigation">
-      <nav>
-        <button class="nav-button is-active" type="button" data-route="setup" aria-current="page">
-          <span aria-hidden="true">1</span> Workspace
+    <aside class="sidebar" aria-label="Application sections">
+      <div>
+        <button id="sections-toggle" class="sections-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" hidden>
+          <span>Sections</span>
+          <strong id="current-section-label">Workspace</strong>
         </button>
-        <button class="nav-button" type="button" data-route="people">
-          <span aria-hidden="true">2</span> People
-        </button>
-        <button class="nav-button" type="button" data-route="health">
-          <span aria-hidden="true">3</span> Health
-        </button>
-      </nav>
+        <nav id="primary-navigation" aria-label="Available destinations">
+          <button class="nav-button is-active" type="button" data-route="setup" aria-current="page">
+            <span aria-hidden="true">1</span>
+            <span><strong>Workspace</strong><small>Open local files</small></span>
+          </button>
+          <button class="nav-button" type="button" data-route="people">
+            <span aria-hidden="true">2</span>
+            <span><strong>People</strong><small>Directory records</small></span>
+          </button>
+          <button class="nav-button" type="button" data-route="health">
+            <span aria-hidden="true">3</span>
+            <span><strong>Health</strong><small>Read-only findings</small></span>
+          </button>
+        </nav>
+
+        <section class="development-status" aria-labelledby="development-heading">
+          <p id="development-heading" class="sidebar-kicker">In development</p>
+          <ul>
+            <li><strong>Today</strong><span>Overview work is not available in this build.</span></li>
+            <li><strong>Events</strong><span>Cohort and brief work is not available in this build.</span></li>
+            <li><strong>Settings</strong><span>Workspace-backed preferences are not available in this build.</span></li>
+          </ul>
+        </section>
+      </div>
+
       <div class="sidebar-note">
+        <span class="sidebar-kicker">Local authority</span>
         <strong>No account required</strong>
         <p>Canonical records stay in the folder you choose.</p>
       </div>
@@ -56,20 +86,26 @@
         </div>
 
         <div class="notice" role="note">
-          <strong>Readable by design.</strong>
-          <span>People are stored as Markdown with YAML front matter. Indexes can be rebuilt.</span>
+          <span class="notice-mark" aria-hidden="true">i</span>
+          <span><strong>Readable by design.</strong> People are stored as Markdown with YAML front matter. Indexes can be rebuilt.</span>
         </div>
 
-        <div class="two-column">
+        <div class="two-column workspace-layout">
           <form id="workspace-form" class="card form-card">
-            <h2>Create a workspace</h2>
+            <div class="section-heading">
+              <span class="section-number" aria-hidden="true">01</span>
+              <div>
+                <h2>Create a workspace</h2>
+                <p>Start with a folder you control.</p>
+              </div>
+            </div>
             <div class="field">
               <label for="workspace-path">Absolute folder path</label>
               <div class="input-with-action">
                 <input id="workspace-path" name="path" type="text" autocomplete="off" spellcheck="false" required aria-describedby="path-help" data-native-operation="global">
                 <button id="use-default-path" class="secondary-button" type="button" data-native-operation="global">Use Documents</button>
               </div>
-              <p id="path-help" class="field-help">Example: /Users/you/Documents/Liaison RM</p>
+              <p id="path-help" class="field-help">Use a full path to a folder you control.</p>
             </div>
             <div class="field">
               <label for="workspace-name">Workspace name</label>
@@ -87,11 +123,18 @@
             <button class="primary-button" type="submit" data-native-operation="global">Create local workspace</button>
           </form>
 
-          <section class="card" aria-labelledby="open-heading">
-            <h2 id="open-heading">Open an existing workspace</h2>
-            <p>Enter its absolute folder path above, then open and validate the existing manifest.</p>
-            <button id="open-workspace" class="secondary-button full-width" type="button" data-native-operation="global">Open existing workspace</button>
-            <button id="inspect-workspace-health" class="secondary-button full-width" type="button" data-native-operation="global">Run read-only Health</button>
+          <section class="card workspace-open-card" aria-labelledby="open-heading">
+            <div class="section-heading">
+              <span class="section-number" aria-hidden="true">02</span>
+              <div>
+                <h2 id="open-heading">Open an existing workspace</h2>
+                <p>Validate its manifest through the native application boundary.</p>
+              </div>
+            </div>
+            <div class="button-stack">
+              <button id="open-workspace" class="secondary-button full-width" type="button" data-native-operation="global">Open existing workspace</button>
+              <button id="inspect-workspace-health" class="quiet-button full-width" type="button" data-native-operation="global">Run read-only Health</button>
+            </div>
             <div class="divider" aria-hidden="true"></div>
             <h3>Current workspace</h3>
             <dl id="workspace-summary" class="summary-list">
@@ -107,40 +150,55 @@
         <div class="page-heading">
           <div>
             <p class="eyebrow">People</p>
-            <h1 id="people-heading" tabindex="-1">Remember useful context without scoring people</h1>
-            <p>Add a basic profile now. Topic Packs, relationships and review reasons arrive in later bounded-context changes.</p>
+            <h1 id="people-heading" tabindex="-1">People in this workspace</h1>
+            <p>Search and maintain the local profiles returned by the open workspace. Liaison does not score people.</p>
           </div>
-          <button id="refresh-people" class="secondary-button" type="button" data-native-operation="session">Refresh list</button>
+          <div class="page-actions">
+            <button id="refresh-people" class="secondary-button" type="button" data-native-operation="session">Refresh</button>
+            <button id="add-person" class="primary-button" type="button" data-native-operation="session" aria-describedby="people-workspace-warning">Add person</button>
+          </div>
         </div>
 
         <div id="people-workspace-warning" class="notice warning" role="status">
-          Open or create a workspace before adding people.
+          <span class="notice-mark" aria-hidden="true">!</span>
+          <span><strong>Workspace required.</strong> Open or create a workspace before adding or editing people.</span>
         </div>
 
-        <div class="two-column people-layout">
-          <form id="person-form" class="card form-card">
-            <h2>Add a person</h2>
-            <div class="field">
-              <label for="person-name">Display name</label>
-              <input id="person-name" name="displayName" type="text" maxlength="160" required disabled>
+        <section class="card directory-card" aria-labelledby="directory-heading">
+          <div class="directory-toolbar">
+            <div class="field search-field">
+              <label for="people-search">Search people</label>
+              <input id="people-search" type="search" autocomplete="off" placeholder="Name, email, phone, or alias" aria-describedby="people-count-summary">
             </div>
-            <div class="field">
-              <label for="person-email">Email <span class="optional">optional</span></label>
-              <input id="person-email" name="email" type="email" autocomplete="email" disabled>
-            </div>
-            <button id="create-person" class="primary-button" type="submit" data-native-operation="session" disabled>Save Markdown profile</button>
-          </form>
+            <button id="clear-people-search" class="quiet-button" type="button" disabled>Clear search</button>
+          </div>
 
-          <section class="card" aria-labelledby="people-list-heading">
-            <div class="card-heading">
-              <h2 id="people-list-heading">People in this workspace</h2>
-              <span id="people-count" class="count-badge">0</span>
+          <div class="directory-heading">
+            <div>
+              <p class="eyebrow">Local directory</p>
+              <h2 id="directory-heading">Current profiles</h2>
             </div>
-            <ul id="people-list" class="people-list">
-              <li class="empty-state">No people loaded.</li>
-            </ul>
-          </section>
-        </div>
+            <p id="people-count-summary" class="count-summary" role="status" aria-live="polite">No people loaded.</p>
+          </div>
+
+          <div class="table-wrap">
+            <table id="people-table" class="people-table">
+              <caption>People returned by the open local workspace</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Person</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Phone</th>
+                  <th scope="col">Revision</th>
+                  <th scope="col"><span class="visually-hidden">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody id="people-list">
+                <tr><td class="empty-state" colspan="5">No people loaded.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </section>
 
       <section class="page" data-page="health" aria-labelledby="health-heading" hidden>
@@ -154,7 +212,13 @@
         </div>
 
         <section class="card health-card" aria-labelledby="validation-result-heading">
-          <h2 id="validation-result-heading">Validation result</h2>
+          <div class="section-heading">
+            <span class="section-number" aria-hidden="true">H</span>
+            <div>
+              <h2 id="validation-result-heading">Validation result</h2>
+              <p>Read-only findings and a safe recovery direction.</p>
+            </div>
+          </div>
           <p id="validation-scope" class="validation-scope">No workspace inspected.</p>
           <div id="validation-summary" class="health-summary">
             <span class="health-icon" aria-hidden="true">?</span>
@@ -173,5 +237,38 @@
       <span id="live-status" role="status" aria-live="polite">Ready.</span>
     </footer>
   </div>
+
+  <dialog id="person-dialog" class="person-dialog" aria-labelledby="person-dialog-title" aria-describedby="person-dialog-description">
+    <div class="dialog-shell">
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">Local profile</p>
+          <h2 id="person-dialog-title">Add a person</h2>
+          <p id="person-dialog-description">Create a basic profile in the open workspace.</p>
+        </div>
+        <span id="person-dialog-revision" class="revision" hidden></span>
+      </div>
+      <form id="person-form" class="dialog-form">
+        <div class="field">
+          <label for="person-name">Display name</label>
+          <input id="person-name" name="displayName" type="text" maxlength="160" required disabled>
+        </div>
+        <div class="field">
+          <label for="person-email">Primary email <span class="optional">optional</span></label>
+          <input id="person-email" name="email" type="email" autocomplete="email" disabled>
+        </div>
+        <div id="person-phone-field" class="field" hidden>
+          <label for="person-phone">Primary phone <span class="optional">optional</span></label>
+          <input id="person-phone" name="phone" type="tel" autocomplete="tel" disabled aria-describedby="person-contact-help">
+        </div>
+        <p id="person-contact-help" class="field-help" hidden>Editing changes the first contact point. Any additional contact points remain unchanged.</p>
+        <p id="person-form-error" class="form-error" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button id="cancel-person" class="secondary-button" type="button">Cancel</button>
+          <button id="save-person" class="primary-button" type="submit" data-native-operation="session" disabled>Create profile</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
 </body>
 </html>

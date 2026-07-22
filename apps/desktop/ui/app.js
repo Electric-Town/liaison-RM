@@ -1,18 +1,40 @@
 (() => {
   "use strict";
 
+  const APPLICATION_CONTRACT_VERSION = 1;
+  const THEME_STORAGE_KEY = "liaison.rm.appearance.v1";
+  const THEMES = ["system", "light", "dark", "high_contrast"];
+  const THEME_LABELS = {
+    system: "System",
+    light: "Light",
+    dark: "Dark",
+    high_contrast: "High contrast",
+  };
+  const ROUTE_LABELS = {
+    setup: "Workspace",
+    people: "People",
+    health: "Health",
+  };
+
   const state = {
     workspace: null,
     people: [],
+    peopleLoading: false,
+    peopleQuery: "",
+    theme: "system",
+    personDialogMode: null,
+    selectedPersonId: null,
   };
   const nativeOperation = {
     generation: 0,
     active: null,
     restartRequired: false,
   };
-  const APPLICATION_CONTRACT_VERSION = 1;
+  let dialogReturnFocus = null;
+  let mobileNavigationOpen = false;
 
   const byId = (id) => document.getElementById(id);
+
   const invoke = async (command, payload = {}) => {
     const tauriInvoke = window.__TAURI__?.core?.invoke;
     if (typeof tauriInvoke !== "function") {
@@ -103,9 +125,60 @@
     }
   };
 
+  const storedTheme = () => {
+    try {
+      const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
+      return THEMES.includes(saved) ? saved : "system";
+    } catch (_error) {
+      return "system";
+    }
+  };
+
+  const applyTheme = (theme, { persist = false, announce = false } = {}) => {
+    const nextTheme = THEMES.includes(theme) ? theme : "system";
+    state.theme = nextTheme;
+    document.documentElement.dataset.theme = nextTheme;
+    byId("theme-label").textContent = THEME_LABELS[nextTheme];
+    byId("theme-toggle").setAttribute(
+      "aria-label",
+      `Change colour theme. Current theme: ${THEME_LABELS[nextTheme]}`,
+    );
+
+    if (!persist) return;
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+      if (announce) {
+        status(`Appearance changed to ${THEME_LABELS[nextTheme]} and will be reused on this device.`);
+      }
+    } catch (_error) {
+      if (announce) {
+        status(`Appearance changed to ${THEME_LABELS[nextTheme]} for this session. This device could not retain the choice.`);
+      }
+    }
+  };
+
+  const narrowNavigation = window.matchMedia("(max-width: 760px)");
+
+  const syncNavigationForViewport = () => {
+    const toggle = byId("sections-toggle");
+    const navigation = byId("primary-navigation");
+    if (narrowNavigation.matches) {
+      toggle.hidden = false;
+      navigation.hidden = !mobileNavigationOpen;
+      toggle.setAttribute("aria-expanded", String(mobileNavigationOpen));
+    } else {
+      toggle.hidden = true;
+      navigation.hidden = false;
+      toggle.setAttribute("aria-expanded", "false");
+      mobileNavigationOpen = false;
+    }
+  };
+
   const navigate = (route) => {
+    const destination = document.querySelector(`[data-page="${route}"]`);
+    if (!destination || !(route in ROUTE_LABELS)) return;
     document.querySelectorAll("[data-page]").forEach((page) => {
-      page.hidden = page.dataset.page !== route;
+      page.hidden = page !== destination;
     });
     document.querySelectorAll("[data-route]").forEach((button) => {
       const active = button.dataset.route === route;
@@ -113,8 +186,12 @@
       if (active) button.setAttribute("aria-current", "page");
       else button.removeAttribute("aria-current");
     });
-    const heading = document.querySelector(`[data-page="${route}"] h1`);
-    heading?.focus();
+    byId("current-section-label").textContent = ROUTE_LABELS[route];
+    if (narrowNavigation.matches) {
+      mobileNavigationOpen = false;
+      syncNavigationForViewport();
+    }
+    destination.querySelector("h1")?.focus();
   };
 
   const profileLabel = (value) => ({
@@ -123,6 +200,16 @@
     team: "Team",
     workplace: "Workplace",
   }[value] || value);
+
+  const summaryRow = (term, description) => {
+    const row = document.createElement("div");
+    const dt = document.createElement("dt");
+    const dd = document.createElement("dd");
+    dt.textContent = term;
+    dd.textContent = description;
+    row.append(dt, dd);
+    return row;
+  };
 
   const renderWorkspace = () => {
     const summary = byId("workspace-summary");
@@ -143,16 +230,6 @@
     byId("workspace-path-label").textContent = state.workspace.path;
   };
 
-  const summaryRow = (term, description) => {
-    const row = document.createElement("div");
-    const dt = document.createElement("dt");
-    const dd = document.createElement("dd");
-    dt.textContent = term;
-    dd.textContent = description;
-    row.append(dt, dd);
-    return row;
-  };
-
   const initials = (name) => name
     .split(/\s+/)
     .filter(Boolean)
@@ -160,36 +237,114 @@
     .map((part) => part[0]?.toUpperCase() || "")
     .join("") || "?";
 
+  const primaryContact = (items) => items?.[0]?.value || "Not recorded";
+
+  const matchingPeople = () => {
+    const query = state.peopleQuery.trim().toLocaleLowerCase();
+    if (!query) return state.people;
+    return state.people.filter((person) => {
+      const values = [
+        person.display_name,
+        ...(person.aliases || []),
+        ...(person.emails || []).map((email) => email.value),
+        ...(person.phones || []).map((phone) => phone.value),
+      ];
+      return values.some((value) => String(value).toLocaleLowerCase().includes(query));
+    });
+  };
+
+  const emptyPeopleRow = (message) => {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.className = "empty-state";
+    cell.colSpan = 5;
+    cell.textContent = message;
+    row.append(cell);
+    return row;
+  };
+
+  const personCell = (label, text, className = "") => {
+    const cell = document.createElement("td");
+    cell.dataset.label = label;
+    if (className) cell.className = className;
+    cell.textContent = text;
+    return cell;
+  };
+
+  const renderPersonRow = (person) => {
+    const row = document.createElement("tr");
+    row.className = "person-row";
+    row.dataset.personId = person.id;
+
+    const identity = document.createElement("td");
+    identity.dataset.label = "Person";
+    const identityLayout = document.createElement("span");
+    identityLayout.className = "person-identity";
+    const avatar = document.createElement("span");
+    avatar.className = "person-avatar";
+    avatar.setAttribute("aria-hidden", "true");
+    avatar.textContent = initials(person.display_name);
+    const details = document.createElement("span");
+    const name = document.createElement("strong");
+    name.textContent = person.display_name;
+    details.append(name);
+    if (person.aliases?.length) {
+      const alias = document.createElement("small");
+      alias.textContent = person.aliases.join(", ");
+      details.append(alias);
+    }
+    identityLayout.append(avatar, details);
+    identity.append(identityLayout);
+
+    const revision = personCell("Revision", String(person.revision), "revision");
+    const action = document.createElement("td");
+    action.dataset.label = "Action";
+    action.className = "row-action";
+    const edit = document.createElement("button");
+    edit.type = "button";
+    edit.className = "quiet-button edit-person";
+    edit.dataset.personId = person.id;
+    edit.dataset.nativeOperation = "session";
+    edit.textContent = "Edit";
+    edit.setAttribute("aria-label", `Edit ${person.display_name}`);
+    action.append(edit);
+
+    row.append(
+      identity,
+      personCell("Email", primaryContact(person.emails)),
+      personCell("Phone", primaryContact(person.phones)),
+      revision,
+      action,
+    );
+    return row;
+  };
+
   const renderPeople = () => {
     const list = byId("people-list");
+    const count = byId("people-count-summary");
+    const visiblePeople = matchingPeople();
     list.replaceChildren();
-    byId("people-count").textContent = String(state.people.length);
-    if (state.people.length === 0) {
-      const empty = document.createElement("li");
-      empty.className = "empty-state";
-      empty.textContent = state.workspace ? "No people yet. Add the first profile." : "No people loaded.";
-      list.append(empty);
-      return;
+
+    if (state.peopleLoading) {
+      count.textContent = "Loading people…";
+      list.append(emptyPeopleRow("Loading profiles from the open workspace…"));
+    } else if (!state.workspace) {
+      count.textContent = "No people loaded.";
+      list.append(emptyPeopleRow("Open a workspace to load its people."));
+    } else if (state.people.length === 0) {
+      count.textContent = "0 people in this workspace.";
+      list.append(emptyPeopleRow("No people yet. Add the first local profile."));
+    } else if (visiblePeople.length === 0) {
+      count.textContent = `Showing 0 of ${state.people.length} people.`;
+      list.append(emptyPeopleRow(`No people match “${state.peopleQuery.trim()}”.`));
+    } else {
+      count.textContent = state.peopleQuery.trim()
+        ? `Showing ${visiblePeople.length} of ${state.people.length} people.`
+        : `${state.people.length} ${state.people.length === 1 ? "person" : "people"} in this workspace.`;
+      visiblePeople.forEach((person) => list.append(renderPersonRow(person)));
     }
-    state.people.forEach((person) => {
-      const row = document.createElement("li");
-      row.className = "person-row";
-      const avatar = document.createElement("span");
-      avatar.className = "person-avatar";
-      avatar.setAttribute("aria-hidden", "true");
-      avatar.textContent = initials(person.display_name);
-      const details = document.createElement("span");
-      const name = document.createElement("strong");
-      name.textContent = person.display_name;
-      const email = document.createElement("small");
-      email.textContent = person.emails?.[0]?.value || "No email recorded";
-      details.append(name, email);
-      const revision = document.createElement("span");
-      revision.className = "revision";
-      revision.textContent = `Revision ${person.revision}`;
-      row.append(avatar, details, revision);
-      list.append(row);
-    });
+    byId("clear-people-search").disabled = state.peopleQuery.length === 0;
+    updateControls();
   };
 
   const updateControls = () => {
@@ -199,22 +354,34 @@
       const needsSession = control.dataset.nativeOperation === "session";
       control.disabled = busy || (needsSession && !ready);
     });
-    ["person-name", "person-email"].forEach((id) => {
+    document.querySelectorAll("[data-operation-lock]").forEach((control) => {
+      control.disabled = busy;
+    });
+    ["person-name", "person-email", "person-phone"].forEach((id) => {
       byId(id).disabled = busy || !ready;
     });
+    byId("cancel-person").disabled = Boolean(nativeOperation.active);
     byId("people-workspace-warning").hidden = ready;
   };
 
   const refreshPeople = async (operation) => {
     if (!operation.sessionId) return false;
-    const people = await invokeValue("list_people", {
-      request: { sessionId: operation.sessionId },
-    });
-    if (!operationOwnsCurrentSession(operation)) return false;
-    state.people = people;
+    state.peopleLoading = true;
     renderPeople();
-    renderWorkspace();
-    return true;
+    try {
+      const people = await invokeValue("list_people", {
+        request: { sessionId: operation.sessionId },
+      });
+      if (!operationOwnsCurrentSession(operation)) return false;
+      state.people = people;
+      return true;
+    } finally {
+      if (operationOwnsCurrentSession(operation)) {
+        state.peopleLoading = false;
+        renderPeople();
+        renderWorkspace();
+      }
+    }
   };
 
   const closeSupersededWorkspace = async (opened) => {
@@ -266,17 +433,21 @@
       }
       return false;
     }
+    if (byId("person-dialog").open) byId("person-dialog").close();
     state.workspace = opened.workspace;
     state.people = opened.people;
+    state.peopleLoading = false;
+    state.peopleQuery = "";
+    byId("people-search").value = "";
     byId("workspace-path").value = state.workspace.path;
-    showValidation(opened.validation, state.workspace.path, "active workspace");
-    updateControls();
+    showValidation(opened.validation, state.workspace.path, "Active workspace");
     renderPeople();
     renderWorkspace();
+    updateControls();
     const health = opened.validation.valid
       ? "Workspace Health is valid."
       : `Workspace Health reports ${opened.validation.findings.length} finding${opened.validation.findings.length === 1 ? "" : "s"}; review Health before editing.`;
-    status(`${action}: ${state.workspace.name}. ${state.people.length} people loaded. ${health}`);
+    status(`${action}: ${state.workspace.name}. ${state.people.length} ${state.people.length === 1 ? "person" : "people"} loaded. ${health}`);
     return true;
   };
 
@@ -303,8 +474,98 @@
     });
   };
 
+  const editPrimaryContact = (items, value, defaultLabel) => {
+    const next = (items || []).map((item) => ({ ...item }));
+    const trimmed = value.trim();
+    if (!trimmed) {
+      if (next.length) next.shift();
+      return next;
+    }
+    if (next.length) {
+      next[0] = { ...next[0], value: trimmed };
+    } else {
+      next.push({ value: trimmed, label: defaultLabel });
+    }
+    return next;
+  };
+
+  const showPersonFormError = (message = "") => {
+    const error = byId("person-form-error");
+    error.textContent = message;
+    error.hidden = !message;
+  };
+
+  const openPersonDialog = (mode, invoker, person = null) => {
+    if (!state.workspace || nativeOperation.active || nativeOperation.restartRequired) return;
+    state.personDialogMode = mode;
+    state.selectedPersonId = person?.id || null;
+    dialogReturnFocus = invoker;
+    showPersonFormError();
+
+    const form = byId("person-form");
+    const title = byId("person-dialog-title");
+    const description = byId("person-dialog-description");
+    const revision = byId("person-dialog-revision");
+    const phoneField = byId("person-phone-field");
+    const contactHelp = byId("person-contact-help");
+    form.reset();
+
+    if (mode === "edit" && person) {
+      title.textContent = "Edit person";
+      description.textContent = "Save changes through the open workspace session.";
+      revision.textContent = `Revision ${person.revision}`;
+      revision.hidden = false;
+      phoneField.hidden = false;
+      contactHelp.hidden = false;
+      byId("person-name").value = person.display_name;
+      byId("person-email").value = person.emails?.[0]?.value || "";
+      byId("person-phone").value = person.phones?.[0]?.value || "";
+      byId("save-person").textContent = "Save changes";
+    } else {
+      title.textContent = "Add a person";
+      description.textContent = "Create a basic profile in the open workspace.";
+      revision.hidden = true;
+      phoneField.hidden = true;
+      contactHelp.hidden = true;
+      byId("save-person").textContent = "Create profile";
+    }
+
+    updateControls();
+    byId("person-dialog").showModal();
+    window.requestAnimationFrame(() => byId("person-name").focus());
+  };
+
+  const closePersonDialog = () => {
+    const dialog = byId("person-dialog");
+    if (dialog.open) dialog.close();
+  };
+
+  const sortedPeople = (people) => people.sort((left, right) => (
+    left.display_name.localeCompare(right.display_name)
+  ));
+
   document.querySelectorAll("[data-route]").forEach((button) => {
     button.addEventListener("click", () => navigate(button.dataset.route));
+  });
+
+  byId("sections-toggle").addEventListener("click", () => {
+    mobileNavigationOpen = !mobileNavigationOpen;
+    syncNavigationForViewport();
+    if (mobileNavigationOpen) {
+      byId("primary-navigation").querySelector("[aria-current=\"page\"]")?.focus();
+    }
+  });
+
+  if (typeof narrowNavigation.addEventListener === "function") {
+    narrowNavigation.addEventListener("change", syncNavigationForViewport);
+  } else {
+    narrowNavigation.addListener(syncNavigationForViewport);
+  }
+
+  byId("theme-toggle").addEventListener("click", () => {
+    if (nativeOperation.active || nativeOperation.restartRequired) return;
+    const nextIndex = (THEMES.indexOf(state.theme) + 1) % THEMES.length;
+    applyTheme(THEMES[nextIndex], { persist: true, announce: true });
   });
 
   byId("use-default-path").addEventListener("click", async (event) => {
@@ -313,7 +574,7 @@
         const path = await invokeValue("default_workspace_path");
         if (!isCurrentOperation(operation)) return;
         byId("workspace-path").value = path;
-        status("Suggested a local Documents folder. Review it before creating the workspace.");
+        status("Suggested the local Documents folder. Review it before creating the workspace.");
       } catch (error) {
         if (isCurrentOperation(operation)) status(errorText(error));
       }
@@ -330,9 +591,7 @@
           name: byId("workspace-name").value,
           profile: byId("workspace-profile").value,
         };
-        const opened = await invokeValue("initialise_workspace", {
-          request,
-        });
+        const opened = await invokeValue("initialise_workspace", { request });
         if (await acceptWorkspace(opened, "Created local workspace", operation)) {
           navigate("people");
         }
@@ -362,9 +621,7 @@
     await withNativeOperation(event.currentTarget, "Inspecting…", async (operation) => {
       try {
         const inspectedPath = byId("workspace-path").value;
-        const report = await invokeValue("inspect_workspace_health", {
-          path: inspectedPath,
-        });
+        const report = await invokeValue("inspect_workspace_health", { path: inspectedPath });
         if (!isCurrentOperation(operation)) return;
         showValidation(report, inspectedPath, "Read-only folder");
         navigate("health");
@@ -379,32 +636,101 @@
     });
   });
 
+  byId("people-search").addEventListener("input", (event) => {
+    state.peopleQuery = event.currentTarget.value;
+    renderPeople();
+  });
+
+  byId("clear-people-search").addEventListener("click", () => {
+    state.peopleQuery = "";
+    byId("people-search").value = "";
+    renderPeople();
+    byId("people-search").focus();
+  });
+
+  byId("add-person").addEventListener("click", (event) => {
+    openPersonDialog("create", event.currentTarget);
+  });
+
+  byId("people-list").addEventListener("click", (event) => {
+    const button = event.target.closest(".edit-person");
+    if (!button) return;
+    const person = state.people.find((candidate) => candidate.id === button.dataset.personId);
+    if (person) openPersonDialog("edit", button, person);
+  });
+
+  byId("cancel-person").addEventListener("click", closePersonDialog);
+
+  byId("person-dialog").addEventListener("cancel", (event) => {
+    if (nativeOperation.active) event.preventDefault();
+  });
+
+  byId("person-dialog").addEventListener("close", () => {
+    state.personDialogMode = null;
+    state.selectedPersonId = null;
+    showPersonFormError();
+    const focusTarget = dialogReturnFocus;
+    dialogReturnFocus = null;
+    if (focusTarget?.isConnected && !focusTarget.disabled && focusTarget.offsetParent !== null) {
+      focusTarget.focus({ preventScroll: true });
+    }
+  });
+
   byId("person-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!state.workspace) return;
-    const form = event.currentTarget;
-    const button = event.submitter || byId("create-person");
+    const button = event.submitter || byId("save-person");
+    const mode = state.personDialogMode;
+    const selectedPersonId = state.selectedPersonId;
+    showPersonFormError();
+
     await withNativeOperation(button, "Saving…", async (operation) => {
       try {
         if (!operation.sessionId) return;
-        const person = await invokeValue("create_person", {
-          request: {
-            sessionId: operation.sessionId,
-            displayName: byId("person-name").value,
-            email: byId("person-email").value || null,
-          },
-        });
-        if (!operationOwnsCurrentSession(operation)) return;
-        state.people.push(person);
-        state.people.sort((left, right) => left.display_name.localeCompare(right.display_name));
-        form.reset();
-        renderPeople();
-        renderWorkspace();
-        status(`Saved ${person.display_name} as a local Markdown profile.`);
-        byId("person-name").focus();
+        let person;
+        if (mode === "edit") {
+          const current = state.people.find((candidate) => candidate.id === selectedPersonId);
+          if (!current) {
+            throw new Error("The selected person is no longer in this workspace. Refresh People and retry.");
+          }
+          person = await invokeValue("update_person", {
+            request: {
+              sessionId: operation.sessionId,
+              personId: current.id,
+              expectedRevision: current.revision,
+              displayName: byId("person-name").value,
+              emails: editPrimaryContact(current.emails, byId("person-email").value, "primary"),
+              phones: editPrimaryContact(current.phones, byId("person-phone").value, "mobile"),
+            },
+          });
+          if (!operationOwnsCurrentSession(operation)) return;
+          state.people = sortedPeople(state.people.map((candidate) => (
+            candidate.id === person.id ? person : candidate
+          )));
+          renderPeople();
+          renderWorkspace();
+          closePersonDialog();
+          status(`Saved changes to ${person.display_name}. Revision ${person.revision}.`);
+        } else {
+          person = await invokeValue("create_person", {
+            request: {
+              sessionId: operation.sessionId,
+              displayName: byId("person-name").value,
+              email: byId("person-email").value || null,
+            },
+          });
+          if (!operationOwnsCurrentSession(operation)) return;
+          state.people = sortedPeople([...state.people, person]);
+          renderPeople();
+          renderWorkspace();
+          closePersonDialog();
+          status(`Saved ${person.display_name} as a local Markdown profile.`);
+        }
       } catch (error) {
         if (operationOwnsCurrentSession(operation)) {
-          status(`Person was not saved: ${errorText(error)}`);
+          const message = `Person was not saved: ${errorText(error)}`;
+          showPersonFormError(message);
+          status(message);
         }
       }
     });
@@ -445,6 +771,8 @@
   });
 
   const start = async () => {
+    applyTheme(storedTheme());
+    syncNavigationForViewport();
     updateControls();
     renderWorkspace();
     renderPeople();
