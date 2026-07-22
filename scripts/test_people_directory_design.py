@@ -47,6 +47,10 @@ def main() -> int:
             ("Synthetic Alpha", "alpha@example.test"),
             ("Synthetic Bravo", "bravo@example.test"),
             ("Synthetic Charlie", "charlie@example.test"),
+            (
+                "Synthetic Catherine With A Deliberately Long Local Profile Name",
+                "catherine-with-a-deliberately-long-local-profile-name@example.test",
+            ),
         ]:
             page.get_by_role("button", name="Add person").click()
             page.get_by_label("Display name").fill(name)
@@ -54,11 +58,19 @@ def main() -> int:
             page.get_by_role("button", name="Create profile").click()
             page.locator("#live-status").get_by_text(f"Saved {name}", exact=False).wait_for()
 
-        assert page.locator("#people-count").inner_text() == "3 people"
+        assert page.locator("#people-count").inner_text() == "4 people"
         page.get_by_role("searchbox", name="Search people").fill("bravo")
-        assert page.locator("#people-count-summary").inner_text() == "Showing 1 of 3 people."
+        assert page.locator("#people-count-summary").inner_text() == "Showing 1 of 4 people."
         assert page.locator(".person-row").count() == 1
         assert page.locator("#person-detail-heading").inner_text() == "Synthetic Bravo"
+
+        page.get_by_role("searchbox", name="Search people").fill("not in this workspace")
+        assert page.locator("#people-count-summary").inner_text() == "Showing 0 of 4 people."
+        assert page.get_by_text(
+            "No people match “not in this workspace”. Try another name, email, "
+            "phone, or alias, or clear the search.",
+            exact=True,
+        ).is_visible()
 
         page.get_by_role("button", name="Clear search").click()
         select_bravo = page.get_by_role("button", name="View Synthetic Bravo")

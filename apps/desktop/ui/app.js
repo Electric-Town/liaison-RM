@@ -428,7 +428,9 @@
       renderPersonDetail(null, "Add a person to create the first local profile in this workspace.");
     } else if (visiblePeople.length === 0) {
       count.textContent = `Showing 0 of ${state.people.length} people.`;
-      list.append(emptyPeopleRow(`No people match “${state.peopleQuery.trim()}”.`, "Clear search", clearPeopleSearch));
+      list.append(emptyPeopleRow(
+        `No people match “${state.peopleQuery.trim()}”. Try another name, email, phone, or alias, or clear the search.`,
+      ));
       renderPersonDetail(null, "Clear or change the search to select a person.");
     } else {
       if (!visiblePeople.some((person) => person.id === state.selectedPersonId)) {
